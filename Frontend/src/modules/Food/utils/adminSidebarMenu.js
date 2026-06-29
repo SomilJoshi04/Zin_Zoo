@@ -1,0 +1,225 @@
+export const adminSidebarMenu = [
+  {
+    type: "link",
+    label: "Dashboard",
+    path: "/admin/food",
+    icon: "LayoutDashboard",
+  },
+
+  {
+    type: "section",
+    label: "FOOD MANAGEMENT",
+    items: [
+
+      {
+        type: "link",
+        label: "Foods List",
+        icon: "Utensils",
+        path: "/admin/food/foods",
+      },
+      {
+        type: "link",
+        label: "Categories",
+        icon: "FolderTree",
+        path: "/admin/food/categories",
+      },
+      {
+        type: "expandable",
+        label: "Orders",
+        icon: "FileText",
+        subItems: [
+          { label: "All Orders", path: "/admin/food/orders/all" },
+          { label: "Pending Orders", path: "/admin/food/orders/pending" },
+          { label: "Accepted Orders", path: "/admin/food/orders/accepted" },
+          { label: "Processing Orders", path: "/admin/food/orders/processing" },
+          { label: "Out For Delivery", path: "/admin/food/orders/out-for-delivery" },
+          { label: "Delivered Orders", path: "/admin/food/orders/delivered" },
+          { label: "Canceled Orders", path: "/admin/food/orders/canceled" },
+        ],
+      },
+    ],
+  },
+  {
+    type: "section",
+    label: "GROCERY MANAGEMENT",
+    items: [
+      {
+        type: "expandable",
+        label: "Products",
+        icon: "ShoppingBag",
+        subItems: [
+          { label: "Products List", path: "/admin/food/grocery-products" },
+        ],
+      },
+      {
+        type: "expandable",
+        label: "Grocery Orders",
+        icon: "FileText",
+        subItems: [
+          { label: "All Orders", path: "/admin/food/grocery-orders/all" },
+          { label: "Pending Orders", path: "/admin/food/grocery-orders/pending" },
+          { label: "Accepted Orders", path: "/admin/food/grocery-orders/accepted" },
+          { label: "Processing Orders", path: "/admin/food/grocery-orders/processing" },
+          { label: "Out For Delivery", path: "/admin/food/grocery-orders/out-for-delivery" },
+          { label: "Delivered Orders", path: "/admin/food/grocery-orders/delivered" },
+          { label: "Canceled Orders", path: "/admin/food/grocery-orders/canceled" },
+        ],
+      },
+      {
+        type: "link",
+        label: "Categories",
+        icon: "LayoutGrid",
+        path: "/admin/food/grocery-categories",
+      },
+    ],
+  },
+  {
+    type: "section",
+    label: "SERVICE MANAGEMENT",
+    items: [
+
+      {
+        type: "expandable",
+        label: "Services",
+        icon: "Briefcase",
+        subItems: [
+          { label: "Services List", path: "/admin/food/services" },
+        ],
+      },
+      {
+        type: "expandable",
+        label: "Bookings",
+        icon: "Calendar",
+        subItems: [
+          { label: "All Bookings", path: "/admin/food/bookings/all" },
+          { label: "Pending Bookings", path: "/admin/food/bookings/pending" },
+          { label: "Completed Bookings", path: "/admin/food/bookings/completed" },
+        ],
+      },
+      {
+        type: "link",
+        label: "Categories",
+        icon: "LayoutGrid",
+        path: "/admin/food/service-categories",
+      },
+    ],
+  },
+
+  // {
+  //   type: "section",
+  //   label: "ORDER MANAGEMENT",
+  //   items: [
+  //     {
+  //       type: "expandable",
+  //       label: "Orders",
+  //       icon: "FileText",
+  //       subItems: [
+  //         { label: "All", path: "/admin/food/orders/all" },
+  //         { label: "Scheduled", path: "/admin/food/orders/scheduled" },
+  //         { label: "Pending", path: "/admin/food/orders/pending" },
+  //         { label: "Accepted", path: "/admin/food/orders/accepted" },
+  //         { label: "Processing", path: "/admin/food/orders/processing" },
+  //         { label: "Food On The Way", path: "/admin/food/orders/food-on-the-way" },
+  //         { label: "Delivered", path: "/admin/food/orders/delivered" },
+  //         { label: "Cancelled", path: "/admin/food/orders/canceled" },
+  //         { label: "Restaurant cancelled", path: "/admin/food/orders/restaurant-cancelled" },
+  //         { label: "Payment Failed", path: "/admin/food/orders/payment-failed" },
+  //         { label: "Refunded", path: "/admin/food/orders/refunded" },
+  //         { label: "Offline Payments", path: "/admin/food/orders/offline-payments" },
+  //       ],
+  //     },
+  //   ],
+  // },
+  {
+    type: "section",
+    label: "REFERRAL & REWARDS",
+    items: [
+      { type: "link", label: "Referral Settings", path: "/admin/food/referral-settings", icon: "Gift" },
+    ],
+  },
+
+  {
+    type: "section",
+    label: "CUSTOMER MANAGEMENT",
+    items: [
+      {
+        type: "link",
+        label: "Customers",
+        path: "/admin/food/customers",
+        icon: "Users",
+      },
+    ],
+  },
+  // {
+
+  {
+    type: "section",
+    label: "HELP & SUPPORT",
+    items: [
+      { type: "link", label: "User Feedback", path: "/admin/food/contact-messages", icon: "Mail" },
+      { type: "link", label: "Safety Emergency Reports", path: "/admin/food/safety-emergency-reports", icon: "AlertTriangle" },
+    ],
+  },
+  {
+    type: "section",
+    label: "REPORT MANAGEMENT",
+    items: [
+      { type: "link", label: "Transaction Report", path: "/admin/food/transaction-report", icon: "FileText" },
+      { type: "link", label: "Order Report", path: "/admin/food/order-report/regular", icon: "FileText" },
+      { type: "link", label: "Tax Report", path: "/admin/food/tax-report", icon: "Receipt" },
+      {
+        type: "expandable",
+        label: "Customer Report",
+        icon: "FileText",
+        subItems: [{ label: "Feedback Experience", path: "/admin/food/customer-report/feedback-experience" }],
+      },
+    ],
+  },
+
+  {
+    type: "section",
+    label: "BANNER SETTINGS",
+    items: [
+      { type: "link", label: "Landing Page Management", path: "/admin/food/hero-banner-management", icon: "Image" },
+      { type: "link", label: "Promotional Banners", path: "/admin/food/promotional-banner", icon: "Megaphone" },
+// { type: "link", label: "General Banners", path: "/admin/food/banners", icon: "Image" },
+    ],
+  },
+
+  {
+    type: "section",
+    label: "SYSTEM SETTINGS",
+    items: [
+      { type: "link", label: "Broadcast Notification", path: "/admin/food/broadcast-notification", icon: "Bell" },
+      { type: "link", label: "Business Setup", path: "/admin/food/business-setup", icon: "Settings" },
+    ],
+  },
+  {
+    type: "section",
+    label: "SUPER POWERS",
+    items: [
+      { type: "link", label: "Feature Settings", path: "/admin/food/feature-settings", icon: "Settings" },
+      { type: "link", label: "Power Scanning", path: "/admin/food/power-scanning", icon: "Zap" },
+    ],
+  },
+  {
+    type: "section",
+    label: "ADMIN ACCESS",
+    items: [
+      { type: "link", label: "Sub Admin List", path: "/admin/food/employees", icon: "UserCog" },
+    ],
+  },
+  {
+    type: "section",
+    label: "PAGES & SOCIAL MEDIA",
+    items: [
+      { type: "link", label: "About Us", path: "/admin/food/pages-social-media/about", icon: "Globe" },
+      { type: "link", label: "Terms & Conditions", path: "/admin/food/pages-social-media/terms", icon: "FileText" },
+      { type: "link", label: "Privacy Policy", path: "/admin/food/pages-social-media/privacy", icon: "Lock" },
+      { type: "link", label: "Support", path: "/admin/food/pages-social-media/support", icon: "Headset" },
+      { type: "link", label: "Refund Policy", path: "/admin/food/pages-social-media/refund", icon: "Receipt" },
+      { type: "link", label: "Shipping Policy", path: "/admin/food/pages-social-media/shipping", icon: "Truck" },
+      { type: "link", label: "Cancellation Policy", path: "/admin/food/pages-social-media/cancellation", icon: "X" },
+    ],
+  },
+];
