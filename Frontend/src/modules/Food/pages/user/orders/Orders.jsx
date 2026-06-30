@@ -21,6 +21,7 @@ export default function Orders() {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState("")
+  const [activeFilter, setActiveFilter] = useState("all")
   const [ratingModal, setRatingModal] = useState({ open: false, order: null })
   const [activeMenuOrderId, setActiveMenuOrderId] = useState(null)
   const [showShareModal, setShowShareModal] = useState(false)
@@ -337,7 +338,7 @@ export default function Orders() {
               pricing: { ...pricing, discount }, // Keep full pricing object for discounts, coupons
               payment: order.payment || {},
               paymentMethod: order.payment?.method || order.paymentMethod,
-              restaurant: order.restaurantId?.restaurantName || order.restaurantId?.name || order.restaurantName || 'Restaurant',
+              restaurant: order.restaurantId?.restaurantName || order.restaurantId?.name || order.restaurantName || (order.items?.[0]?.name ? `${order.items[0].name}${order.items.length > 1 ? ` + ${order.items.length - 1} more` : ''}` : 'Order'),
               restaurantId: order.restaurantId?._id || order.restaurantId,
               restaurantSlug: order.restaurantId?.slug || null,
               restaurantImage: order.restaurantId?.profileImage?.url || order.restaurantId?.profileImage || null,
@@ -359,7 +360,8 @@ export default function Orders() {
               deliveryPartnerId: order.deliveryPartnerId?._id || order.deliveryPartnerId || null,
               deliveryPartnerName: order.deliveryPartnerId?.name || order.deliveryPartnerName || null,
               deliveryPartnerPhone: order.deliveryPartnerId?.phone || order.deliveryPartnerPhone || null,
-              note: order.note || null
+              note: order.note || null,
+              moduleType: order.moduleType || 'food'
             }
           })
 
@@ -436,8 +438,14 @@ export default function Orders() {
     return `${day} ${month}, ${displayHours}:${minutes}${ampm}`
   }
 
-  // Filter orders based on search query
+  // Filter orders based on search query and active filter
   const filteredOrders = orders.filter(order => {
+    // Check moduleType filter
+    if (activeFilter !== 'all') {
+      const orderModule = order.moduleType || 'food'; // Default to food if missing
+      if (orderModule !== activeFilter) return false;
+    }
+
     if (!searchQuery.trim()) return true
 
     const query = searchQuery.toLowerCase()
@@ -739,18 +747,35 @@ Order again from this restaurant in the ${companyName} app.`
       </div>
 
       {/* Search Bar */}
-      <div className="p-4 bg-white dark:bg-slate-900 mt-1">
-        <div className="flex items-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-sm">
-          <Search className="w-5 h-5 text-[#EB590E]" />
-          <input
-            type="text"
-            placeholder="Search by restaurant or dish"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 ml-3 outline-none text-gray-600 dark:text-gray-200 bg-transparent placeholder-gray-400"
-          />
+        <div className="p-4 bg-white dark:bg-slate-900 mt-1">
+          <div className="flex items-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-sm mb-4">
+            <Search className="w-5 h-5 text-[#EB590E]" />
+            <input
+              type="text"
+              placeholder="Search by restaurant or dish"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 ml-3 outline-none text-gray-600 dark:text-gray-200 bg-transparent placeholder-gray-400"
+            />
+          </div>
+
+          {/* Module Filters */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
+            {['all', 'food', 'grocery', 'accessories'].map((filterType) => (
+              <button
+                key={filterType}
+                onClick={() => setActiveFilter(filterType)}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
+                  activeFilter === filterType
+                    ? 'bg-[#EB590E] text-white shadow-md'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+              >
+                {filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
       {/* Orders List */}
       <div className="px-4 py-2 space-y-4">
@@ -786,7 +811,11 @@ Order again from this restaurant in the ${companyName} app.`
             const location = order.restaurantLocation || `${order.address?.city || ''}, ${order.address?.state || ''}`.trim() || 'Location not available'
 
             return (
-              <div key={order.id} className="relative bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden">
+              <div 
+                key={order.id} 
+                className="relative bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 overflow-hidden cursor-pointer hover:border-gray-300 dark:hover:border-slate-600 transition-colors"
+                onClick={() => navigate(`/user/orders/${order.id}`)}
+              >
                 {/* Card Header: Restaurant Info */}
                 <div className="flex items-start justify-between p-4 pb-2">
                   <div className="flex gap-3">
@@ -815,7 +844,10 @@ Order again from this restaurant in the ${companyName} app.`
                         </p>
                       )}
                       {order.restaurantId && (
-                        <Link to={`/user/restaurants/${order.restaurantId}`}>
+                        <Link 
+                          to={`/user/restaurants/${order.restaurantId}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <button className="text-xs text-[#EB590E] font-medium flex items-center mt-1 hover:text-[#D94F0C]">
                             View menu <span className="ml-0.5">&gt;</span>
                           </button>
@@ -826,7 +858,10 @@ Order again from this restaurant in the ${companyName} app.`
 
                   <button
                     type="button"
-                    onClick={() => toggleMenuForOrder(order.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleMenuForOrder(order.id);
+                    }}
                     className="p-1 rounded-full hover:bg-gray-100 transition-colors"
                   >
                     <MoreVertical className="w-5 h-5 text-gray-400" />
@@ -838,14 +873,14 @@ Order again from this restaurant in the ${companyName} app.`
                   <div className="absolute right-3 top-10 z-20 w-40 rounded-xl bg-white shadow-lg border border-gray-100 py-1 text-xs">
                     <button
                       type="button"
-                      onClick={() => handleShareRestaurant(order)}
+                      onClick={(e) => { e.stopPropagation(); handleShareRestaurant(order); }}
                       className="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-800"
                     >
                       Share restaurant
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleViewOrderDetails(order)}
+                      onClick={(e) => { e.stopPropagation(); handleViewOrderDetails(order); }}
                       className="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-800"
                     >
                       Order details
@@ -853,243 +888,21 @@ Order again from this restaurant in the ${companyName} app.`
                   </div>
                 )}
 
-                {/* Separator */}
-                <div className="border-t border-dashed border-gray-200 dark:border-slate-700 mx-4 my-1"></div>
-
-                {/* Items List */}
-                <div className="px-4 py-2 space-y-2">
-                  {order.items && order.items.length > 0 ? (
-                    order.items.map((item, idx) => {
-                      const isVeg = item.isVeg !== undefined ? item.isVeg : (item.category === 'veg' || item.type === 'veg')
-                      const itemName = item.name || item.foodName || 'Item'
-                      const itemQuantity = item.quantity || 1
-                      const itemPrice = item.price || 0
-                      const itemTotal = itemQuantity * itemPrice
-                      const itemImage = item.image || null
-
-                      return (
-                        <div key={item._id || item.id || item.itemId || idx} className="flex items-start gap-3">
-                          {/* Item Image */}
-                          {itemImage && (
-                            <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0">
-                              <img
-                                src={itemImage}
-                                alt={itemName}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  e.target.style.display = 'none'
-                                }}
-                              />
-                            </div>
-                          )}
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start gap-2">
-                              {/* Veg/Non-Veg Icon */}
-                              <div className={`w-4 h-4 border ${isVeg ? 'border-green-600' : 'border-red-600'} flex items-center justify-center p-[2px] flex-shrink-0 mt-0.5`}>
-                                <div className={`w-full h-full rounded-full ${isVeg ? 'bg-green-600' : 'bg-red-600'}`}></div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <span className="text-sm text-gray-800 dark:text-gray-200 font-medium block">
-                                  {itemQuantity} x {itemName}
-                                </span>
-                                {item.variantName ? (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.variantName}</p>
-                                ) : null}
-                                {item.description && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-1">{item.description}</p>
-                                )}
-                              </div>
-                              <div className="text-right flex-shrink-0">
-                                <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">{"\u20B9"}{itemTotal.toFixed(2)}</span>
-                                {itemQuantity > 1 && (
-                                  <p className="text-xs text-gray-500 dark:text-gray-400">{"\u20B9"}{itemPrice.toFixed(2)} each</p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })
-                  ) : (
-                    <p className="text-sm text-gray-500">No items found</p>
-                  )}
-                </div>
-
-                {/* Order Summary Section */}
-                <div className="px-4 py-3 bg-gray-50 dark:bg-slate-950/50 rounded-lg mx-4 mb-2">
-                  <div className="space-y-1.5">
-                    {order.subtotal > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Subtotal</span>
-                        <span className="text-gray-800 dark:text-gray-200 font-medium">{"\u20B9"}{order.subtotal.toFixed(2)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-600 dark:text-gray-400">Delivery Fee</span>
-                      <span className="text-gray-800 dark:text-gray-200 font-medium">
-                        {order.deliveryFee > 0 ? `\u20B9${order.deliveryFee.toFixed(2)}` : "Free"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-600 dark:text-gray-400">Packaging Fee</span>
-                      <span className="text-gray-800 dark:text-gray-200 font-medium">
-                        {order.packagingFee > 0 ? `\u20B9${order.packagingFee.toFixed(2)}` : "Free"}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-gray-600 dark:text-gray-400">Platform Fee</span>
-                      <span className="text-gray-800 dark:text-gray-200 font-medium">
-                        {order.platformFee > 0 ? `\u20B9${order.platformFee.toFixed(2)}` : "Free"}
-                      </span>
-                    </div>
-                    {order.tax > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Tax</span>
-                        <span className="text-gray-800 dark:text-gray-200 font-medium">{"\u20B9"}{order.tax.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {order.pricing?.discount > 0 && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-green-600 dark:text-green-400">Discount</span>
-                        <span className="text-green-600 dark:text-green-400 font-medium">-{"\u20B9"}{order.pricing.discount.toFixed(2)}</span>
-                      </div>
-                    )}
-                    {order.pricing?.couponCode && (
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-600 dark:text-gray-400">Coupon Applied</span>
-                        <span className="text-gray-800 dark:text-gray-200 font-medium">{order.pricing.couponCode}</span>
-                      </div>
-                    )}
-                    <div className="border-t border-gray-200 dark:border-slate-700 pt-1.5 mt-1.5">
-                      <div className="flex justify-between">
-                        <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">Total</span>
-                        <span className="text-base font-bold text-gray-900 dark:text-white">{"\u20B9"}{order.total.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Date and Payment Info */}
-                <div className="px-4 py-2 flex items-center justify-between">
-                  <div className="flex-1">
-                    <p className="text-xs text-gray-400">Order placed on {formatDate(order.createdAt)}</p>
-                    {order.deliveredAt && (
-                      <p className="text-xs text-gray-400 mt-0.5">Delivered on {formatDate(order.deliveredAt)}</p>
-                    )}
-                    {order.payment && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Payment: <span className="font-medium capitalize">
-                          {order.payment.method === 'cash' || order.payment.method === 'cod' ? 'Cash on Delivery' :
-                            order.payment.method === 'wallet' ? 'Wallet' :
-                              order.payment.method === 'razorpay' ? 'Online' :
-                                order.payment.method || 'N/A'}
-                        </span>
-                        {order.payment.status && (
-                          <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] font-medium ${order.payment.status === 'completed' || (order.payment.status === 'cod_pending' && isDelivered) ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                            order.payment.status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                              order.payment.status === 'pending' || order.payment.status === 'cod_pending' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                                'bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-gray-300'
-                            }`}>
-                            {(order.payment.status === 'cod_pending' && isDelivered) ? 'paid' : order.payment.status}
-                          </span>
-                        )}
-                      </p>
-                    )}
-                    {isDelivered && !paymentFailed && (
-                      <p className="text-xs font-medium text-green-600 mt-1">Delivered</p>
-                    )}
-                    {isRestaurantCancelled && (
-                      <p className="text-xs font-medium text-red-500 mt-1">Restaurant Cancelled</p>
-                    )}
-                    {isUserCancelled && (
-                      <p className="text-xs font-medium text-gray-500 mt-1">Cancelled by you</p>
-                    )}
-                    {isCancelled && !isRestaurantCancelled && !isUserCancelled && (
-                      <p className="text-xs font-medium text-gray-500 mt-1">Cancelled</p>
-                    )}
-                  </div>
-                  <div className="flex items-center ml-4">
-                    <Link to={`/user/orders/${order.id}`}>
-                      <button className="text-xs text-[#EB590E] font-medium hover:text-[#D94F0C] flex items-center gap-1">
-                        View Details
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    </Link>
-                  </div>
-                </div>
-
-                {/* Separator */}
-                <div className="border-t border-gray-100 dark:border-zinc-800 mx-4"></div>
-
-                {/* Card Footer: Actions */}
-                <div className="px-4 py-3 flex items-center justify-between">
-                  {/* Left Side: Rating or Error */}
-                  {isRestaurantCancelled ? (
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2">
-                        <div className="bg-red-100 p-1 rounded-full">
-                          <AlertCircle className="w-4 h-4 text-red-500" />
-                        </div>
-                        <span className="text-xs font-semibold text-red-500">Restaurant Cancelled</span>
-                      </div>
-                      <p className="text-xs text-gray-600 ml-7">If prepaid, refund is sent automatically to the original payment method.</p>
-                    </div>
-                  ) : paymentFailed ? (
-                    <div className="flex items-center gap-2">
-                      <div className="bg-red-100 p-1 rounded-full">
-                        <AlertCircle className="w-4 h-4 text-red-500" />
-                      </div>
-                      <span className="text-xs font-semibold text-red-500">Payment failed</span>
-                    </div>
-                  ) : isDelivered && order.restaurantRating && (!order.deliveryPartnerId || order.deliveryPartnerRating) ? (
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm text-gray-800">You rated</span>
-                        <div className="flex bg-yellow-400 text-white px-1 rounded text-[10px] items-center gap-0.5 h-4">
-                          R {order.restaurantRating}<Star className="w-2 h-2 fill-current" />
-                        </div>
-                        {order.deliveryPartnerId && (
-                          <div className="flex bg-blue-500 text-white px-1 rounded text-[10px] items-center gap-0.5 h-4">
-                            D {order.deliveryPartnerRating}<Star className="w-2 h-2 fill-current" />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : isDelivered ? (
-                    <div>
-                      <p className="text-xs text-gray-500">Order delivered</p>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenRating(order)}
-                        className="text-xs text-[#EB590E] font-medium mt-0.5 flex items-center"
-                      >
-                        Rate restaurant & delivery <span className="ml-0.5">&gt;</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-xs text-gray-500">{order.status === 'preparing' ? 'Preparing' : order.status === 'outForDelivery' ? 'Out for delivery' : order.status === 'confirmed' ? 'Order confirmed' : ''}</p>
-                      {/* Countdown Timer */}
-                      {countdowns[order.id] && countdowns[order.id] > 0 && (
-                        <div className="flex items-center gap-1 mt-1 text-xs text-[#EB590E] font-medium">
-                          <Clock size={12} />
-                          <span>{countdowns[order.id]} min{countdowns[order.id] !== 1 ? 's' : ''} remaining</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Right Side: Reorder Button */}
-                  {isDelivered && !paymentFailed && (
-                    <button
-                      onClick={() => handleReorder(order)}
-                      className="bg-[#EB590E] hover:bg-[#D94F0C] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1 shadow-sm transition-colors"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      Reorder
-                    </button>
-                  )}
+                {/* Minimal Footer */}
+                <div className="px-4 py-3 flex items-center justify-between border-t border-gray-100 dark:border-slate-800">
+                  <span className={`text-xs font-medium ${
+                    order.status === 'delivered' ? 'text-green-600' :
+                    (order.isRestaurantCancelled || order.status === 'restaurant_cancelled' || order.status === 'cancelled' || order.isUserCancelled) ? 'text-red-500' :
+                    'text-[#EB590E]'
+                  }`}>
+                    {order.status === 'delivered' ? 'Delivered' :
+                     (order.isRestaurantCancelled || order.status === 'restaurant_cancelled') ? 'Restaurant Cancelled' :
+                     order.isUserCancelled ? 'Cancelled by you' :
+                     order.status === 'cancelled' ? 'Cancelled' :
+                     order.status === 'preparing' ? 'Preparing' :
+                     order.status === 'outForDelivery' ? 'Out for delivery' :
+                     order.status === 'confirmed' ? 'Order confirmed' : 'Pending'}
+                  </span>
                 </div>
               </div>
             )
@@ -1099,7 +912,7 @@ Order again from this restaurant in the ${companyName} app.`
 
       {/* Footer Branding */}
       <div className="flex justify-center mt-8 mb-4">
-        <h1 className="text-4xl font-black text-gray-200 dark:text-zinc-900 tracking-tighter italic capitalize">Switcheats</h1>
+        <h1 className="text-4xl font-black text-gray-200 dark:text-zinc-900 tracking-tighter italic capitalize">ZinZoo</h1>
       </div>
 
       {/* Rating & Feedback Modal */}

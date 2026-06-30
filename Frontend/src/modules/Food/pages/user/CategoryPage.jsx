@@ -1762,7 +1762,9 @@ export default function CategoryPage() {
                 <p className="text-gray-500 dark:text-gray-400 text-sm md:text-base">
                   {searchQuery
                     ? `No restaurants found for "${searchQuery}"`
-                    : "No restaurants found with selected filters"}
+                    : selectedCategory && selectedCategory !== 'all' && activeFilters.size === 0
+                      ? "No restaurants available in this category"
+                      : "No restaurants found with selected filters"}
                 </p>
                 <Button
                   variant="outline"

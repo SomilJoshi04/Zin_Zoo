@@ -3066,3 +3066,23 @@ export const groceryPublicAPI = {
   getProducts: (params) => apiClient.get('/food/grocery/products', { params }),
 };
 
+
+
+export const accessoriesAdminAPI = {
+  getCategories: () => apiClient.get("/accessories/admin/categories"),
+  createCategory: (data) => apiClient.post("/accessories/admin/categories", data),
+  updateCategory: (id, data) => apiClient.put(`/accessories/admin/categories/${id}`, data),
+  deleteCategory: (id) => apiClient.delete(`/accessories/admin/categories/${id}`),
+  toggleCategoryStatus: (id) => apiClient.patch(`/accessories/admin/categories/${id}/status`),
+
+  getProducts: (params) => apiClient.get("/accessories/admin/products", { params }),
+  createProduct: (data) => apiClient.post("/accessories/admin/products", data),
+  updateProduct: (id, data) => apiClient.put(`/accessories/admin/products/${id}`, data),
+  deleteProduct: (id) => apiClient.delete(`/accessories/admin/products/${id}`),
+  toggleProductStatus: (id) => apiClient.patch(`/accessories/admin/products/${id}/status`),
+};
+
+export const accessoriesPublicAPI = {
+  getCategories: () => apiClient.get("/accessories/public/categories"),
+  getProducts: (params) => apiClient.get("/accessories/public/products", { params }),
+};

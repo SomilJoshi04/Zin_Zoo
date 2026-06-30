@@ -6,7 +6,7 @@ import { Card } from "@food/components/ui/card";
 import { Button } from "@food/components/ui/button";
 import { Input } from "@food/components/ui/input";
 import PageNavbar from "@food/components/user/PageNavbar";
-import { groceryPublicAPI } from "@food/api";
+import { accessoriesPublicAPI } from "@food/api";
 import { useCart } from "@food/context/CartContext";
 import { toast } from "sonner";
 import { Skeleton } from "@food/components/ui/skeleton";
@@ -14,7 +14,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { usePublicSocket } from "@food/hooks/usePublicSocket";
 import ModuleSwitcher from "@food/components/user/ModuleSwitcher";
 
-export default function GroceryPage() {
+export default function AccessoriesPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { cart, addToCart, removeFromCart, updateQuantity } = useCart();
@@ -33,20 +33,20 @@ export default function GroceryPage() {
   const banners = [
     {
       id: 1,
-      title: "SUPER SAVER",
-      subtitle: "Upto 50% OFF on daily essentials",
+      title: "STYLE UPGRADE",
+      subtitle: "Upto 50% OFF on premium accessories",
       gradient: "linear-gradient(to right, var(--module-theme-color, #ea580c), #fb923c)"
     },
     {
       id: 2,
-      title: "FARM FRESH",
-      subtitle: "Get fresh fruits & veggies in 10 mins",
+      title: "NEW ARRIVALS",
+      subtitle: "Discover the latest trends in fashion",
       gradient: "linear-gradient(to right, #22c55e, #10b981)"
     },
     {
       id: 3,
-      title: "WEEKEND BLAST",
-      subtitle: "Flat ₹100 cashback on orders above ₹499",
+      title: "LUXURY PICKS",
+      subtitle: "Flat ₹500 cashback on orders above ₹2999",
       gradient: "linear-gradient(to right, #2563eb, #4f46e5)"
     }
   ];
@@ -70,17 +70,17 @@ export default function GroceryPage() {
 
   // Real-time updates from admin panel
   const socketListeners = useMemo(() => ({
-    'grocery:category:update': () => {
-      console.log('[Grocery] Category updated via socket, refetching...');
+    'accessories:category:update': () => {
+      console.log('[accessories] Category updated via socket, refetching...');
       fetchCategories();
     },
-    'grocery:product:update': () => {
-      console.log('[Grocery] Product updated via socket, refetching...');
+    'accessories:product:update': () => {
+      console.log('[accessories] Product updated via socket, refetching...');
       fetchProducts(activeCategory, searchQuery);
     },
     'banner:update': (data) => {
-      if (data?.section === 'grocery') {
-        console.log('[Grocery] Banner updated via socket');
+      if (data?.section === 'accessories') {
+        console.log('[accessories] Banner updated via socket');
         // Banners are currently hardcoded, will be dynamic in Phase 4
       }
     },
@@ -90,12 +90,12 @@ export default function GroceryPage() {
   const fetchCategories = async () => {
     try {
       setLoadingCats(true);
-      const res = await groceryPublicAPI.getCategories();
+      const res = await accessoriesPublicAPI.getCategories();
       if (res.data?.success) {
         setCategories(res.data.data.categories || []);
       }
     } catch (err) {
-      console.error("Failed to load grocery categories", err);
+      console.error("Failed to load accessories categories", err);
     } finally {
       setLoadingCats(false);
     }
@@ -108,12 +108,12 @@ export default function GroceryPage() {
       if (catId) params.categoryId = catId;
       if (search) params.search = search;
 
-      const res = await groceryPublicAPI.getProducts(params);
+      const res = await accessoriesPublicAPI.getProducts(params);
       if (res.data?.success) {
         setProducts(res.data.data.products || []);
       }
     } catch (err) {
-      console.error("Failed to load grocery products", err);
+      console.error("Failed to load accessories products", err);
     } finally {
       setLoadingProds(false);
     }
@@ -149,7 +149,7 @@ export default function GroceryPage() {
       name: product.name,
       price: product.price,
       image: product.image,
-      moduleType: 'grocery',
+      moduleType: 'accessories',
     }, sourcePosition);
     
     // Fly to cart animation
@@ -214,15 +214,15 @@ export default function GroceryPage() {
               <ChevronLeft className="w-6 h-6" />
             </button>
             <div>
-              <h1 className="text-xl font-bold font-poppins text-gray-900 dark:text-white">Zin_ZooMart</h1>
-              <p className="text-xs text-gray-500 font-medium">Delivery in 10-15 mins</p>
+              <h1 className="text-xl font-bold font-poppins text-gray-900 dark:text-white">Zin_Zoo Accessories</h1>
+              <p className="text-xs text-gray-500 font-medium">Premium Accessories</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <div ref={cartIconRef} className="bg-green-50 text-green-700 p-2 rounded-lg flex items-center gap-2 relative cursor-pointer" onClick={() => navigate("/food/user/cart?module=grocery")}>
+              <div ref={cartIconRef} className="bg-green-50 text-green-700 p-2 rounded-lg flex items-center gap-2 relative cursor-pointer" onClick={() => navigate("/food/user/cart?module=accessories")}>
                 <ShoppingCart className="w-5 h-5" />
-                {cart.filter(i => i.moduleType === 'grocery').reduce((a, b) => a + (b.quantity || 1), 0) > 0 && (
+                {cart.filter(i => i.moduleType === 'accessories').reduce((a, b) => a + (b.quantity || 1), 0) > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-[var(--module-theme-color)] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                     {cart.filter(i => i.moduleType === 'grocery').reduce((a, b) => a + (b.quantity || 1), 0)}
+                     {cart.filter(i => i.moduleType === 'accessories').reduce((a, b) => a + (b.quantity || 1), 0)}
                   </span>
                 )}
               </div>
@@ -234,7 +234,7 @@ export default function GroceryPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <Input
-                placeholder="Search for 'Milk', 'Bread'..."
+                placeholder="Search for 'Watches', 'Bags'..."
                 className="pl-10 h-12 bg-gray-100 dark:bg-gray-800 border-none rounded-xl font-medium focus-visible:ring-1 focus-visible:ring-[var(--module-theme-color)]"
                 value={searchQuery}
                 onChange={handleSearch}
@@ -433,7 +433,7 @@ export default function GroceryPage() {
               <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
                 <div className="flex items-center gap-2">
                   <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">
-                    {selectedProduct.category?.name || "Grocery"}
+                    {selectedProduct.category?.name || "accessories"}
                   </span>
                   <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2.5 py-1 rounded-md font-bold">
                     {selectedProduct.unit || '1 pc'}

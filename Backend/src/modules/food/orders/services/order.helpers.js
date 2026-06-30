@@ -269,7 +269,7 @@ export function canExposeOrderToRestaurant(orderLike) {
 
 export async function notifyRestaurantNewOrder(orderDoc) {
   try {
-    if (!orderDoc || !canExposeOrderToRestaurant(orderDoc)) return;
+    if (!orderDoc || !orderDoc.restaurantId || !canExposeOrderToRestaurant(orderDoc)) return;
 
     const io = getIO();
     if (io) {

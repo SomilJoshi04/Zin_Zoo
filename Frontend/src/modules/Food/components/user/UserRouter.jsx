@@ -10,6 +10,7 @@ import ProtectedRoute from "@food/components/ProtectedRoute"
 const Home = lazy(() => import("@food/pages/user/Home"))
 const Coffee = lazy(() => import("@food/pages/user/Coffee"))
 const Under250 = lazy(() => import("@food/pages/user/Under250"))
+const Accessories = lazy(() => import("@food/pages/user/Accessories"))
 const Services = lazy(() => import("@food/pages/user/Services"))
 const ServiceCategoryDetails = lazy(() => import("@food/pages/user/services/ServiceCategoryDetails"))
 const Categories = lazy(() => import("@food/pages/user/Categories"))
@@ -77,6 +78,9 @@ const OrderHelp = lazy(() => import("@food/pages/user/help/OrderHelp"))
 
 // Notifications
 const Notifications = lazy(() => import("@food/pages/user/Notifications"))
+const AccessoriesCategories = lazy(() => import("@food/pages/user/AccessoriesCategories"))
+const GroceryCategories = lazy(() => import("@food/pages/user/GroceryCategories"))
+const ServicesCategories = lazy(() => import("@food/pages/user/ServicesCategories"))
 
 // Wallet
 const Wallet = lazy(() => import("@food/pages/user/Wallet"))
@@ -93,7 +97,11 @@ export default function UserRouter() {
           <Route path="" element={<Home />} />
           <Route path="coffee" element={<Coffee />} />
           <Route path="under-250" element={<Under250 />} />
+          <Route path="under-250/categories" element={<GroceryCategories />} />
+          <Route path="accessories" element={<Accessories />} />
+          <Route path="accessories/categories" element={<AccessoriesCategories />} />
           <Route path="services" element={<Services />} />
+          <Route path="services/categories" element={<ServicesCategories />} />
           <Route path="services/:serviceSlug" element={<ServiceCategoryDetails />} />
           <Route path="categories" element={<Categories />} />
           <Route path="category/:category" element={<CategoryPage />} />
@@ -121,7 +129,7 @@ export default function UserRouter() {
             path="orders/:orderId"
             element={
               <ProtectedRoute requiredRole="user" loginPath="/food/user/auth/login">
-                <OrderTracking />
+                <UserOrderDetails />
               </ProtectedRoute>
             }
           />

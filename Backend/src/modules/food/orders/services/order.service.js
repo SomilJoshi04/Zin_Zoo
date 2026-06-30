@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { FoodOrder, FoodSettings } from '../models/order.model.js';
+import { GroceryOrder } from '../models/groceryOrder.model.js';
 // import { paymentSnapshotFromOrder } from './foodOrderPayment.service.js';
 import { logger } from '../../../../utils/logger.js';
 import { FoodUser } from '../../../../core/users/user.model.js';
@@ -375,16 +376,16 @@ function toObjectId(id, fieldName = 'ID') {
 // ----- Create order -----
 export async function createOrder(userId, dto) {
   try {
+    if (dto.moduleType === 'grocery') {
+      return await createGroceryOrder(userId, dto);
+    }
+
     const restaurantId = toObjectId(dto.restaurantId, 'Restaurant ID');
     const restaurant = await FoodRestaurant.findById(restaurantId)
       .select("status restaurantName zoneId location isAcceptingOrders")
       .lean();
     
     if (!restaurant) throw new ValidationError("Restaurant not found");
-    if (restaurant.status !== "approved")
-      throw new ValidationError("Restaurant not accepting orders");
-    if (restaurant.isAcceptingOrders === false)
-      throw new ValidationError("Restaurant not accepting orders");
 
     const settings = await getDispatchSettings();
     const dispatchMode = settings.dispatchMode;
@@ -488,8 +489,7 @@ export async function createOrder(userId, dto) {
         riderEarning,
     );
 
-    const initialStatus = (paymentMethod === "razorpay" || paymentMethod === "card") ? "pending_payment" : "created";
-    const acceptanceWindowSeconds = await getOrderAcceptanceWindowSeconds();
+    const initialStatus = (paymentMethod === "razorpay" || paymentMethod === "card") ? "pending_payment" : "confirmed";
 
     // Pre-calculate coinsEarned when order is created based on active business settings
     let coinsEarned = 0;
@@ -509,6 +509,7 @@ export async function createOrder(userId, dto) {
     const order = new FoodOrder({
       userId: toObjectId(userId, 'User ID'),
       restaurantId: restaurantId,
+      moduleType: dto.moduleType || 'food',
       zoneId: dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID') : toObjectId(restaurant.zoneId, 'Restaurant Zone ID'),
       items: (dto.items || []).map(item => ({
         ...item,
@@ -520,9 +521,6 @@ export async function createOrder(userId, dto) {
       pricing: normalizedPricing,
       payment,
       orderStatus: initialStatus,
-      acceptanceWindowSeconds,
-      acceptanceDeadlineAt:
-        initialStatus === "created" ? buildAcceptanceDeadline(new Date(), acceptanceWindowSeconds) : null,
       dispatch: { modeAtCreation: dispatchMode, status: "unassigned" },
       statusHistory: [
         {
@@ -567,21 +565,6 @@ export async function createOrder(userId, dto) {
     }
 
     await order.save();
-    void addOrderJob(
-      {
-        action: "ORDER_ACCEPTANCE_TIMEOUT_CHECK",
-        orderMongoId: order._id?.toString?.(),
-        orderId: order._id.toString(),
-      },
-      {
-        delay: acceptanceWindowSeconds * 1000,
-        removeOnComplete: true,
-        removeOnFail: true,
-        jobId: `order-accept-timeout-${order._id?.toString?.()}`,
-      },
-    ).catch((err) => {
-      logger.warn(`Failed to enqueue acceptance timeout check: ${err?.message || err}`);
-    });
 
     if (isWallet) {
       try {
@@ -663,10 +646,18 @@ export async function verifyPayment(userId, dto) {
   const identity = buildOrderIdentityFilter(dto.orderId);
   if (!identity) throw new ValidationError("Order id required");
 
-  const order = await FoodOrder.findOne({
+  let order = await FoodOrder.findOne({
     ...identity,
     userId: new mongoose.Types.ObjectId(userId),
   });
+  
+  if (!order) {
+    order = await GroceryOrder.findOne({
+      ...identity,
+      userId: new mongoose.Types.ObjectId(userId),
+    });
+  }
+  
   if (!order) throw new NotFoundError("Order not found");
   if (order.payment.status === "paid")
     return { order: normalizeOrderForClient(order), payment: order.payment };
@@ -683,34 +674,16 @@ export async function verifyPayment(userId, dto) {
   order.payment.razorpay.signature = dto.razorpaySignature;
   
   const from = order.orderStatus;
-  const acceptanceWindowSeconds = await getOrderAcceptanceWindowSeconds();
-  order.orderStatus = "created";
-  order.acceptanceWindowSeconds = acceptanceWindowSeconds;
-  order.acceptanceDeadlineAt = buildAcceptanceDeadline(new Date(), acceptanceWindowSeconds);
+  order.orderStatus = "confirmed";
 
   pushStatusHistory(order, {
     byRole: "USER",
     byId: userId,
     from: from,
-    to: "created",
+    to: "confirmed",
     note: "Payment verified, order confirmed",
   });
   await order.save();
-  void addOrderJob(
-    {
-      action: "ORDER_ACCEPTANCE_TIMEOUT_CHECK",
-      orderMongoId: order._id?.toString?.(),
-      orderId: order._id.toString(),
-    },
-    {
-      delay: acceptanceWindowSeconds * 1000,
-      removeOnComplete: true,
-      removeOnFail: true,
-      jobId: `order-accept-timeout-${order._id?.toString?.()}`,
-    },
-  ).catch((err) => {
-    logger.warn(`Failed to enqueue acceptance timeout check: ${err?.message || err}`);
-  });
 
   await foodTransactionService.updateTransactionStatus(order._id, 'captured', {
     status: 'captured',
@@ -765,25 +738,188 @@ export async function listOrdersUser(userId, query) {
     userId: new mongoose.Types.ObjectId(userId),
     orderStatus: { $ne: 'pending_payment' }
   };
-  const [docs, total] = await Promise.all([
+  
+  const [foodDocs, groceryDocs] = await Promise.all([
     FoodOrder.find(filter)
-      .populate(
-        "restaurantId",
-        "restaurantName profileImage area city location rating totalRatings",
-      )
+      .populate("restaurantId", "restaurantName profileImage area city location rating totalRatings")
       .populate("dispatch.deliveryPartnerId", "name phone rating totalRatings")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
       .lean(),
-    FoodOrder.countDocuments(filter),
+    GroceryOrder.find(filter)
+      .populate("dispatch.deliveryPartnerId", "name phone rating totalRatings")
+      .lean()
   ]);
+
+  const allDocs = [
+    ...foodDocs.map((doc) => ({ ...normalizeOrderForClient(doc), moduleType: doc.moduleType || 'food' })),
+    ...groceryDocs.map((doc) => ({ ...normalizeOrderForClient(doc), moduleType: doc.moduleType || 'grocery' }))
+  ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const total = allDocs.length;
+  const paginatedDocs = allDocs.slice(skip, skip + limit);
+
   return buildPaginatedResult({
-    docs: docs.map((doc) => normalizeOrderForClient(doc)),
+    docs: paginatedDocs,
     total,
     page,
     limit,
   });
+}
+
+async function createGroceryOrder(userId, dto) {
+  const deliveryAddress = {
+    label: dto.address?.label || "Home",
+    name: dto.address?.name || dto.address?.fullName || dto.customerName || "",
+    fullName: dto.address?.fullName || dto.address?.name || dto.customerName || "",
+    street: dto.address?.street || "",
+    additionalDetails: dto.address?.additionalDetails || "",
+    city: dto.address?.city || "",
+    state: dto.address?.state || "",
+    zipCode: dto.address?.zipCode || "",
+    phone: dto.address?.phone || "",
+    location: dto.address?.location?.coordinates
+      ? { type: "Point", coordinates: dto.address.location.coordinates }
+      : undefined,
+  };
+
+  const paymentMethod = dto.paymentMethod === "card" ? "razorpay" : dto.paymentMethod;
+  const isCash = paymentMethod === "cash";
+  const isWallet = paymentMethod === "wallet";
+
+  const computedSubtotal = (dto.items || []).reduce((sum, item) => {
+    const price = Number(item?.price);
+    const qty = Number(item?.quantity);
+    if (!Number.isFinite(price) || !Number.isFinite(qty)) return sum;
+    return sum + Math.max(0, price) * Math.max(0, qty);
+  }, 0);
+
+  const normalizedPricing = {
+    subtotal: Number(dto.pricing?.subtotal ?? computedSubtotal) || 0,
+    tax: Number(dto.pricing?.tax ?? 0) || 0,
+    packagingFee: Number(dto.pricing?.packagingFee ?? 0) || 0,
+    deliveryFee: Number(dto.pricing?.deliveryFee ?? 0) || 0,
+    platformFee: Number(dto.pricing?.platformFee ?? 0) || 0,
+    discount: Number(dto.pricing?.discount ?? 0) || 0,
+    couponCode: dto.pricing?.couponCode ? String(dto.pricing.couponCode).trim().toUpperCase() : null,
+    total: Number(dto.pricing?.total ?? 0) || 0,
+    currency: String(dto.pricing?.currency || "INR"),
+  };
+
+  const computedTotal = Math.max(
+    0,
+    (Number.isFinite(normalizedPricing.subtotal) ? normalizedPricing.subtotal : 0) +
+      (Number.isFinite(normalizedPricing.tax) ? normalizedPricing.tax : 0) +
+      (Number.isFinite(normalizedPricing.packagingFee) ? normalizedPricing.packagingFee : 0) +
+      (Number.isFinite(normalizedPricing.deliveryFee) ? normalizedPricing.deliveryFee : 0) +
+      (Number.isFinite(normalizedPricing.platformFee) ? normalizedPricing.platformFee : 0) -
+      (Number.isFinite(normalizedPricing.discount) ? normalizedPricing.discount : 0)
+  );
+
+  if (!Number.isFinite(normalizedPricing.total) || normalizedPricing.total <= 0) {
+    normalizedPricing.total = Math.round(computedTotal * 100) / 100;
+  } else {
+    normalizedPricing.total = Math.round(normalizedPricing.total * 100) / 100;
+  }
+
+  const payment = {
+    method: paymentMethod,
+    status: isCash ? "cod_pending" : isWallet ? "paid" : "created",
+    amountDue: normalizedPricing.total || 0,
+    razorpay: {},
+    qr: {},
+  };
+
+  const initialStatus = (paymentMethod === "razorpay" || paymentMethod === "card") ? "pending_payment" : "confirmed";
+
+  const order = new GroceryOrder({
+    userId: toObjectId(userId, 'User ID'),
+    moduleType: dto.moduleType || 'grocery',
+    zoneId: dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID') : null,
+    items: (dto.items || []).map(item => ({
+      itemId: String(item.itemId || item.id),
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      unit: item.unit || '',
+      image: item.image || '',
+      notes: item.notes || ''
+    })),
+    deliveryAddress,
+    customerName: String(dto.customerName || deliveryAddress.fullName || ""),
+    customerPhone: String(dto.customerPhone || deliveryAddress.phone || ""),
+    pricing: normalizedPricing,
+    payment,
+    orderStatus: initialStatus,
+    statusHistory: [
+      {
+        at: new Date(),
+        byRole: "SYSTEM",
+        from: "",
+        to: initialStatus,
+        note: initialStatus === "pending_payment" ? "Order created, awaiting payment" : "Order placed",
+      },
+    ],
+    note: String(dto.note || "")
+  });
+
+  let razorpayPayload = null;
+
+  if (paymentMethod === "razorpay" && isRazorpayConfigured()) {
+    const amountPaise = Math.round((normalizedPricing.total || 0) * 100);
+    if (amountPaise < 100)
+      throw new ValidationError("Amount too low for online payment");
+    try {
+      const rzOrder = await createRazorpayOrder(amountPaise, "INR", order._id.toString());
+      razorpayPayload = {
+        key: getRazorpayKeyId(),
+        orderId: rzOrder.id,
+        amount: rzOrder.amount,
+        currency: rzOrder.currency || "INR",
+      };
+      payment.razorpay = { orderId: rzOrder.id, paymentId: "", signature: "" };
+      payment.status = "created";
+      order.payment = payment;
+    } catch (err) {
+      logger.error(`Razorpay order creation failed: ${err.message}`);
+      throw new ValidationError(err?.message || "Payment gateway error");
+    }
+  }
+
+  await order.save();
+
+  if (isWallet) {
+    try {
+      await userWalletService.deductWalletBalance(userId, order.pricing.total, `Payment for grocery order #${order.order_id || order._id}`, { orderId: order._id });
+    } catch (err) {
+      await GroceryOrder.deleteOne({ _id: order._id });
+      throw err;
+    }
+  }
+
+  try {
+    const isAwaitingOnlinePayment =
+      String(paymentMethod || "").toLowerCase() === "razorpay" &&
+      String(payment?.status || "").toLowerCase() !== "paid";
+      
+    await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
+      title: isAwaitingOnlinePayment
+        ? "Complete Payment to Confirm Grocery Order"
+        : "Grocery Order Confirmed! 🛒",
+      body: isAwaitingOnlinePayment
+        ? `Order #${order.order_id || order._id} is created. Please complete payment.`
+        : `Your grocery order #${order.order_id || order._id} has been placed successfully.`,
+      image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+      data: {
+        type: isAwaitingOnlinePayment ? "order_created_pending_payment" : "order_created",
+        orderId: String(order._id),
+        orderMongoId: order._id.toString(),
+        link: `/food/user/orders/${order._id.toString()}`,
+      },
+    });
+  } catch (err) {
+    logger.warn(`Notifications failed for grocery order ${order._id}: ${err.message}`);
+  }
+
+  return { order: normalizeOrderForClient(order), razorpay: razorpayPayload };
 }
 
 export async function getOrderById(
@@ -793,7 +929,7 @@ export async function getOrderById(
   await expireUnacceptedOrders();
   const identity = buildOrderIdentityFilter(orderId);
   if (!identity) throw new ValidationError("Order id required");
-  const order = await FoodOrder.findOne(identity)
+  let order = await FoodOrder.findOne(identity)
     .populate(
       "restaurantId",
       "restaurantName ownerPhone profileImage area city location rating totalRatings primaryContactNumber",
@@ -802,6 +938,21 @@ export async function getOrderById(
     .populate("userId", "name fullName phone email")
     .select("+deliveryOtp")
     .lean();
+    
+  if (order) {
+    order.moduleType = order.moduleType || 'food';
+  } else {
+    order = await GroceryOrder.findOne(identity)
+      .populate("dispatch.deliveryPartnerId", "name fullName phone phoneNumber rating totalRatings profileImage avatar")
+      .populate("userId", "name fullName phone email")
+      .select("+deliveryOtp")
+      .lean();
+      
+    if (order) {
+      order.moduleType = order.moduleType || 'grocery';
+    }
+  }
+
   if (!order) throw new NotFoundError("Order not found");
 
   // If order document has 0 coinsEarned, dynamically resolve it from the user's wallet transactions
@@ -882,10 +1033,19 @@ export async function getOrderById(
 export async function getDropOtpUser(orderId, userId) {
   const identity = buildOrderIdentityFilter(orderId);
   if (!identity) throw new ValidationError("Order id required");
-  const order = await FoodOrder.findOne({
+  
+  let order = await FoodOrder.findOne({
     ...identity,
     userId: new mongoose.Types.ObjectId(userId),
   }).select("+deliveryOtp");
+  
+  if (!order) {
+    order = await GroceryOrder.findOne({
+      ...identity,
+      userId: new mongoose.Types.ObjectId(userId),
+    }).select("+deliveryOtp");
+  }
+  
   if (!order) throw new NotFoundError("Order not found");
 
   const phase = order.deliveryState?.currentPhase;
@@ -994,10 +1154,18 @@ export async function cancelOrder(orderId, userId, reason) {
   const identity = buildOrderIdentityFilter(orderId);
   if (!identity) throw new ValidationError("Order id required");
 
-  const order = await FoodOrder.findOne({
+  let order = await FoodOrder.findOne({
     ...identity,
     userId: new mongoose.Types.ObjectId(userId),
   });
+  
+  if (!order) {
+    order = await GroceryOrder.findOne({
+      ...identity,
+      userId: new mongoose.Types.ObjectId(userId),
+    });
+  }
+  
   if (!order) throw new NotFoundError("Order not found");
 
   const allowed = ["created"];

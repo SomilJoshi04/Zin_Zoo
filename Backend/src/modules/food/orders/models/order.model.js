@@ -208,6 +208,11 @@ const orderSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             required: false
         },
+        moduleType: {
+            type: String,
+            enum: ['food', 'grocery', 'accessories'],
+            default: 'food'
+        },
         zoneId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'FoodZone',

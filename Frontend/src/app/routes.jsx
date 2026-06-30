@@ -31,10 +31,8 @@ const RedirectToFood = () => {
 };
 
 const RootRedirect = () => {
-  if (isModuleAuthenticated('user')) {
-    return <Navigate to="/food/user" replace />
-  }
-  return <Navigate to="/food/user/auth/login" replace />
+  // Always default to the consumer food app on the root path
+  return <Navigate to="/food/user" replace />
 }
 const AdminRouter = lazy(() => import('../modules/Food/components/admin/AdminRouter'))
 

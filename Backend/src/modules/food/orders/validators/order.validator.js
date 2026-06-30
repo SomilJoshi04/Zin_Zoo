@@ -67,7 +67,8 @@ export function validateCreateOrderDto(body) {
     const schema = z.object({
         items: z.array(orderItemSchema).min(1, 'At least one item required'),
         address: addressSchema,
-        restaurantId: z.string().min(1, 'Restaurant id required'),
+        moduleType: z.enum(['food', 'grocery', 'accessories']).optional(),
+        restaurantId: z.string().optional(),
         restaurantName: z.string().optional(),
         customerName: z.string().optional(),
         customerPhone: z.string().optional(),

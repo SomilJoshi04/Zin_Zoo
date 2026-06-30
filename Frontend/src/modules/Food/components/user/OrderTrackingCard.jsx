@@ -105,6 +105,7 @@ function ordersFingerprint(orders) {
 }
 
 function OrderTrackingCardInner({ hasBottomNav = true }) {
+  return null;
   const navigate = useNavigate();
   const location = useLocation();
   const { orders: contextOrders } = useOrders();

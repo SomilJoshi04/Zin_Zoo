@@ -11,6 +11,8 @@ import servicesUserRoutes from '../modules/services/routes/servicesUser.routes.j
 import servicesPublicRoutes from '../modules/services/routes/servicesPublic.routes.js';
 import userRoutes from '../modules/food/user/routes/user.routes.js';
 import orderUserRoutes from '../modules/food/orders/routes/order.routes.user.js';
+import accessoriesAdminRoutes from '../modules/accessories/routes/accessoriesAdmin.routes.js';
+import accessoriesPublicRoutes from '../modules/accessories/routes/accessoriesPublic.routes.js';
 import paymentRoutes from '../core/payments/payment.routes.js';
 import fcmRoutes from '../core/notifications/fcm.routes.js';
 import notificationRoutes from '../core/notifications/notification.routes.js';
@@ -61,6 +63,12 @@ router.use('/v1/services/user', authMiddleware, requireRoles('USER'), servicesUs
 
 // 10. Services Public API
 router.use('/v1/services/public', servicesPublicRoutes);
+
+// 11. Accessories Admin API (Secured)
+router.use('/v1/accessories/admin', authMiddleware, requireRoles('ADMIN'), accessoriesAdminRoutes);
+
+// 12. Accessories Public API
+router.use('/v1/accessories/public', accessoriesPublicRoutes);
 
 router.use('/v1/food/user', authMiddleware, requireRoles('USER'), userRoutes);
 router.use('/v1/food/notifications', authMiddleware, requireRoles('USER', 'RESTAURANT', 'DELIVERY_PARTNER'), notificationRoutes);

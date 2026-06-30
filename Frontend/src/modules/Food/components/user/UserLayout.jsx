@@ -194,6 +194,14 @@ export default function UserLayout() {
     normalizedPath === "/user/dining" ||
     normalizedPath === "/under-250" ||
     normalizedPath === "/user/under-250" ||
+    normalizedPath === "/accessories" ||
+    normalizedPath === "/user/accessories" ||
+    normalizedPath === "/services" ||
+    normalizedPath === "/user/services" ||
+    normalizedPath === "/car-booking" ||
+    normalizedPath === "/user/car-booking" ||
+    normalizedPath === "/categories" ||
+    normalizedPath === "/user/categories" ||
     isProfileRoot ||
     normalizedPath === "" // Handle empty string case for root relative to /food
 

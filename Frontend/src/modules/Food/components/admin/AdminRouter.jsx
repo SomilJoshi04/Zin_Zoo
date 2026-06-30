@@ -19,6 +19,10 @@ const Category = lazy(() => import("@food/pages/admin/categories/Category"));
 const GroceryCategory = lazy(() => import("@food/pages/admin/grocery/GroceryCategory"));
 const GroceryProductsList = lazy(() => import("@food/pages/admin/grocery/GroceryProductsList"));
 const GroceryOrdersPage = lazy(() => import("@food/pages/admin/grocery/GroceryOrdersPage"));
+
+const AccessoriesCategory = lazy(() => import("@food/pages/admin/accessories/AccessoriesCategory"));
+const AccessoriesProductsList = lazy(() => import("@food/pages/admin/accessories/AccessoriesProductsList"));
+
 const FeeSettings = lazy(() => import("@food/pages/admin/fee-settings/FeeSettings"));
 const ReferralSettings = lazy(() => import("@food/pages/admin/referral-settings/ReferralSettings"));
 // Food Management
@@ -225,7 +229,22 @@ export default function AdminRouter() {
             <Route path="order-detect-delivery" element={<OrderDetectDelivery />} />
             <Route path="order-refunds/new" element={<NewRefundRequests />} />
 
+            {/* RESTAURANT MANAGEMENT */}
+            <Route path="zones" element={<AdminServicePlaceholder title="Zone Setup" />} />
+            <Route path="restaurants" element={<AdminServicePlaceholder title="Restaurants List" />} />
+            <Route path="restaurant-commission" element={<AdminServicePlaceholder title="Restaurant Commission" />} />
+            <Route path="restaurant-reviews" element={<AdminServicePlaceholder title="Restaurant Reviews" />} />
+            <Route path="restaurant-complaints" element={<AdminServicePlaceholder title="Restaurant Complaints" />} />
+
             {/* FOOD & CATEGORY MANAGEMENT */}
+            <Route path="grocery-categories" element={<GroceryCategory />} />
+            <Route path="grocery-products" element={<GroceryProductsList />} />
+
+            {/* Accessories Routes */}
+            <Route path="accessories-categories" element={<AccessoriesCategory />} />
+            <Route path="accessories-products" element={<AccessoriesProductsList />} />
+
+            {/* Services Routes */}
             <Route path="categories" element={<Category />} />
             <Route path="fee-settings" element={<FeeSettings />} />
             <Route path="referral-settings" element={<ReferralSettings />} />
@@ -234,7 +253,6 @@ export default function AdminRouter() {
 
             {/* GROCERY MANAGEMENT */}
             <Route path="grocery-product-approval" element={<AdminServicePlaceholder title="Product Approval" />} />
-            <Route path="grocery-products" element={<GroceryProductsList />} />
             <Route path="grocery-orders/all" element={<GroceryOrdersPage statusKey="all" />} />
             <Route path="grocery-orders/pending" element={<GroceryOrdersPage statusKey="pending" />} />
             <Route path="grocery-orders/accepted" element={<GroceryOrdersPage statusKey="accepted" />} />

@@ -1222,7 +1222,8 @@ function RestaurantDetailsContent() {
       originalPrice: item.originalPrice,
       foodType: item.foodType,
       isVeg: item.foodType === "Veg",
-      preparationTime: item.preparationTime // Add preparationTime property
+      preparationTime: item.preparationTime, // Add preparationTime property
+      moduleType: 'food'
     }
 
     // Get source position for animation from event target

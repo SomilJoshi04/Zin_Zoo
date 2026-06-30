@@ -121,7 +121,7 @@ export default function UserOrderDetails() {
   // Use fetched restaurant data if available, otherwise use order.restaurantId or order.restaurant
   const restaurantObj = restaurant || order.restaurantId || order.restaurant || {}
   const restaurantName =
-    order.restaurantName || restaurantObj.restaurantName || restaurantObj.name || "Restaurant"
+    order.restaurantName || restaurantObj.restaurantName || restaurantObj.name || (order.items?.[0]?.name ? `${order.items[0].name}${order.items.length > 1 ? ` + ${order.items.length - 1} more` : ''}` : "Order")
 
   // Build restaurant address (try restaurant fields first, then fall back)
   const restaurantLocation = (() => {
@@ -666,7 +666,7 @@ export default function UserOrderDetails() {
       </div>
 
       {/* Restaurant Complaint Button - Below Order Details */}
-      {order && (
+      {order && (!order.moduleType || order.moduleType === 'food') && (
         <div className="p-4 pb-24">
           <button
             type="button"

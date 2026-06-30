@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, Fragment } from "react"
 import { createPortal } from "react-dom"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Share2, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2, Sparkles, Banknote, Zap, CheckCircle2, MessageCircle, Send, Mail, Copy, Coins } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
@@ -21,6 +21,7 @@ import { getCompanyNameAsync } from "@food/utils/businessSettings"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { getRestaurantAvailabilityStatus } from "@food/utils/restaurantAvailability"
 import useAppBackNavigation from "@food/hooks/useAppBackNavigation"
+import { isModuleAuthenticated } from "@food/utils/auth"
 import zoopSound from "@food/assets/audio/zomato_sms.mp3"
 const debugLog = (...args) => { }
 const debugWarn = (...args) => { }
@@ -96,6 +97,7 @@ const haversineKm = (lat1, lon1, lat2, lon2) => {
 export default function Cart() {
   const companyName = useCompanyName()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const goBack = useAppBackNavigation()
   const orderSuccessAudioRef = useRef(null)
   const hasRestoredRecipientRef = useRef(false)
@@ -126,7 +128,15 @@ export default function Cart() {
     );
   }
 
-  const { cart, updateQuantity, addToCart, getCartCount, clearCart, cleanCartForRestaurant } = cartContext;
+  const { cart: globalCart, updateQuantity, addToCart, getCartCount: getGlobalCartCount, replaceCart, cleanCartForRestaurant } = cartContext;
+  
+  const activeCartTab = searchParams.get('module') || 'food';
+  const cart = useMemo(() => globalCart.filter(i => i.moduleType === activeCartTab), [globalCart, activeCartTab]);
+
+  const clearCart = () => {
+    const itemsToKeep = globalCart.filter(i => i.moduleType !== activeCartTab);
+    replaceCart(itemsToKeep);
+  };
   const { getDefaultAddress, getDefaultPaymentMethod, setDefaultAddress, addresses, paymentMethods, userProfile, vegMode } = useProfile()
   const { createOrder } = useOrders()
   const { openLocationSelector } = useLocationSelector()
@@ -353,7 +363,7 @@ export default function Cart() {
     }
   }, [isScheduled, availableTimeSlots, scheduledTime])
 
-  const cartCount = getCartCount()
+  const cartCount = cart.reduce((total, item) => total + (item.quantity || 1), 0)
   const getAddressId = (address) => address?.id || address?._id || null
   const normalizeAddressLabel = (label) => {
     if (!label) return ""
@@ -1523,6 +1533,12 @@ export default function Cart() {
 
 
   const handlePlaceOrder = async () => {
+    if (!isModuleAuthenticated('user')) {
+      toast.error("Please login to place your order")
+      navigate("/food/user/auth/login", { state: { returnTo: "/food/user/cart" } })
+      return
+    }
+
     if (!hasSavedAddress) {
       toast.error("Please choose a delivery location to continue")
       openLocationSelector()
@@ -1603,7 +1619,7 @@ export default function Cart() {
       const finalRestaurantId = restaurantData?.restaurantId || restaurantData?._id || null;
       const finalRestaurantName = restaurantData?.name || null;
 
-      if (!finalRestaurantId) {
+      if (activeCartTab === 'food' && !finalRestaurantId) {
         debugError('? CRITICAL: Cannot place order - Restaurant ID is missing!');
         debugError('?? Debug info:', {
           restaurantData: restaurantData ? {
@@ -1624,119 +1640,6 @@ export default function Cart() {
         setIsPlacingOrder(false);
         return;
       }
-
-      // CRITICAL: Validate that ALL cart items belong to the SAME restaurant
-      const cartRestaurantIds = cart
-        .map(item => item.restaurantId)
-        .filter(Boolean)
-        .map(id => String(id).trim()); // Normalize to string and trim
-
-      const cartRestaurantNames = cart
-        .map(item => item.restaurant)
-        .filter(Boolean)
-        .map(name => name.trim().toLowerCase()); // Normalize names
-
-      // Get unique values (after normalization)
-      const uniqueRestaurantIds = [...new Set(cartRestaurantIds)];
-      const uniqueRestaurantNames = [...new Set(cartRestaurantNames)];
-
-      // Check if cart has items from multiple restaurants
-      // Note: If restaurant names match, allow even if IDs differ (same restaurant, different ID format)
-      if (uniqueRestaurantNames.length > 1) {
-        // Different restaurant names = definitely different restaurants
-        debugError('? CRITICAL ERROR: Cart contains items from multiple restaurants!', {
-          restaurantIds: uniqueRestaurantIds,
-          restaurantNames: uniqueRestaurantNames,
-          cartItems: cart.map(item => ({
-            id: item.id,
-            name: item.name,
-            restaurant: item.restaurant,
-            restaurantId: item.restaurantId
-          }))
-        });
-
-        // Automatically clean cart to keep items from the restaurant matching restaurantData
-        if (finalRestaurantId && finalRestaurantName) {
-          debugLog('?? Auto-cleaning cart to keep items from:', finalRestaurantName);
-          cleanCartForRestaurant(finalRestaurantId, finalRestaurantName);
-          toast.error('Cart contained items from different restaurants. Items from other restaurants have been removed.');
-        } else {
-          // If restaurantData is not available, keep items from first restaurant in cart
-          const firstRestaurantId = cart[0]?.restaurantId;
-          const firstRestaurantName = cart[0]?.restaurant;
-          if (firstRestaurantId && firstRestaurantName) {
-            debugLog('?? Auto-cleaning cart to keep items from first restaurant:', firstRestaurantName);
-            cleanCartForRestaurant(firstRestaurantId, firstRestaurantName);
-            toast.error('Cart contained items from different restaurants. Items from other restaurants have been removed.');
-          } else {
-            toast.error('Cart contains items from different restaurants. Please clear cart and try again.');
-          }
-        }
-
-        setIsPlacingOrder(false);
-        return;
-      }
-
-      // If restaurant names match but IDs differ, that's OK (same restaurant, different ID format)
-      // But log a warning in development
-      if (uniqueRestaurantIds.length > 1 && uniqueRestaurantNames.length === 1) {
-        if (process.env.NODE_ENV === 'development') {
-          debugWarn('?? Cart items have different restaurant IDs but same name. This is OK if IDs are in different formats.', {
-            restaurantIds: uniqueRestaurantIds,
-            restaurantName: uniqueRestaurantNames[0]
-          });
-        }
-      }
-
-      // Validate that cart items' restaurantId matches the restaurantData
-      if (cartRestaurantIds.length > 0) {
-        const cartRestaurantId = cartRestaurantIds[0];
-
-        // Check if cart restaurantId matches restaurantData
-        const restaurantIdMatches =
-          cartRestaurantId === finalRestaurantId ||
-          cartRestaurantId === restaurantData?._id?.toString() ||
-          cartRestaurantId === restaurantData?.restaurantId;
-
-        if (!restaurantIdMatches) {
-          debugError('? CRITICAL ERROR: Cart restaurantId does not match restaurantData!', {
-            cartRestaurantId: cartRestaurantId,
-            finalRestaurantId: finalRestaurantId,
-            restaurantDataId: restaurantData?._id?.toString(),
-            restaurantDataRestaurantId: restaurantData?.restaurantId,
-            restaurantDataName: restaurantData?.name,
-            cartRestaurantName: cartRestaurantNames[0]
-          });
-          alert(`Error: Cart items belong to "${cartRestaurantNames[0] || 'Unknown Restaurant'}" but restaurant data doesn't match. Please refresh the page and try again.`);
-          setIsPlacingOrder(false);
-          return;
-        }
-      }
-
-      // Validate restaurant name matches
-      if (cartRestaurantNames.length > 0 && finalRestaurantName) {
-        const cartRestaurantName = cartRestaurantNames[0];
-        if (cartRestaurantName.toLowerCase().trim() !== finalRestaurantName.toLowerCase().trim()) {
-          debugError('? CRITICAL ERROR: Restaurant name mismatch!', {
-            cartRestaurantName: cartRestaurantName,
-            finalRestaurantName: finalRestaurantName
-          });
-          alert(`Error: Cart items belong to "${cartRestaurantName}" but restaurant data shows "${finalRestaurantName}". Please refresh the page and try again.`);
-          setIsPlacingOrder(false);
-          return;
-        }
-      }
-
-      // Log order details for debugging
-      debugLog('? Order validation passed - Placing order with restaurant:', {
-        restaurantId: finalRestaurantId,
-        restaurantName: finalRestaurantName,
-        restaurantDataId: restaurantData?._id,
-        restaurantDataRestaurantId: restaurantData?.restaurantId,
-        cartRestaurantId: cartRestaurantIds[0],
-        cartRestaurantName: cartRestaurantNames[0],
-        cartItemCount: cart.length
-      });
 
       // FINAL VALIDATION: Double-check restaurantId before sending to backend
       const cartRestaurantId = cart[0]?.restaurantId;
@@ -1766,8 +1669,8 @@ export default function Cart() {
         },
         customerName: recipientName,
         customerPhone: recipientPhone || defaultAddress?.phone || "",
-        restaurantId: finalRestaurantId,
-        restaurantName: finalRestaurantName || undefined,
+        restaurantId: activeCartTab === 'food' ? finalRestaurantId : undefined,
+        restaurantName: activeCartTab === 'food' ? (finalRestaurantName || undefined) : undefined,
         pricing: orderPricing,
         note: note || "",
         sendCutlery: sendCutlery !== false,
@@ -1775,6 +1678,7 @@ export default function Cart() {
         // `useZone()` can return `null`. Zod expects string/undefined, not null.
         zoneId: zoneId || undefined,
         scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString() : undefined,
+        moduleType: activeCartTab,
       };
       // Log final order details (including paymentMethod for COD debugging)
       debugLog('?? FINAL: Sending order to backend with:', {
@@ -2004,13 +1908,19 @@ export default function Cart() {
     }
   }
 
-  const handleGoToOrders = () => {
+  const handleContinueShopping = () => {
     setShowOrderSuccess(false)
-    navigate(`/user/orders/${placedOrderId}?confirmed=true`)
+    if (activeCartTab === 'grocery') {
+      navigate('/food/user/under-250')
+    } else if (activeCartTab === 'accessories') {
+      navigate('/food/user/accessories')
+    } else {
+      navigate('/food')
+    }
   }
 
   // Empty cart state - but don't show if order success or placing order modal is active
-  if (cart.length === 0 && !showOrderSuccess && !showPlacingOrder) {
+  if (globalCart.length === 0 && !showOrderSuccess && !showPlacingOrder) {
     return (
       <AnimatedPage className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a]">
         <div className="bg-white dark:bg-[#1a1a1a] border-b dark:border-gray-800 sticky top-0 z-10">
@@ -2064,9 +1974,11 @@ export default function Cart() {
                 <ArrowLeft className="h-4 w-4 md:h-5 md:w-5" />
               </Button>
               <div className="min-w-0">
-                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">{restaurantName}</p>
+                <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
+                  {activeCartTab === 'grocery' ? 'Grocery Store' : restaurantName}
+                </p>
                 <p className="text-sm md:text-base font-medium text-gray-800 dark:text-white truncate">
-                  {restaurantData?.estimatedDeliveryTime || "10-15 mins"} to <span className="font-semibold">Location</span>
+                  {activeCartTab === 'grocery' ? "10-15 mins" : (restaurantData?.estimatedDeliveryTime || "30-40 mins")} to <span className="font-semibold">Location</span>
                   <span className="text-gray-400 dark:text-gray-500 ml-1 text-xs md:text-sm">{defaultAddress ? (formatFullAddress(defaultAddress) || defaultAddress?.formattedAddress || defaultAddress?.address || defaultAddress?.city || "Select address") : "Select address"}</span>
                 </p>
               </div>
@@ -2943,11 +2855,11 @@ export default function Cart() {
 
                 {/* Action Button */}
                 <button
-                  onClick={handleGoToOrders}
+                  onClick={handleContinueShopping}
                   className="mt-10 bg-[#EB590E] hover:bg-[#D94F0C] text-white font-semibold py-4 px-12 rounded-xl shadow-lg shadow-orange-200/70 dark:shadow-orange-950/40 transition-all hover:shadow-xl hover:scale-105"
                   style={{ animation: 'slideUp 0.5s ease-out 1s both' }}
                 >
-                  Track Your Order
+                  Continue Shopping
                 </button>
               </div>
             </div>

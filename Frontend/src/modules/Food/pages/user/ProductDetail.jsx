@@ -132,7 +132,8 @@ export default function ProductDetail() {
       const cartItem = {
         ...product,
         foodType: product.foodType,
-        isVeg: product.isVeg
+        isVeg: product.isVeg,
+        moduleType: 'food'
       }
       for (let i = 0; i < quantity; i++) {
         const result = addToCart(cartItem)

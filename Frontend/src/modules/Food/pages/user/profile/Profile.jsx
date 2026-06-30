@@ -846,7 +846,7 @@ export default function Profile() {
           <div className="flex items-center gap-2 mb-2 px-1">
             <div className="w-1 h-4 bg-[#EB590E] rounded"></div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
-              Food Orders
+              Orders
             </h3>
           </div>
           <div className="space-y-2">

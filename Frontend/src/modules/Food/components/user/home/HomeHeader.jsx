@@ -14,6 +14,8 @@ import quickIcon from "@food/assets/category-icons/quick.png";
 import taxiIcon from "@food/assets/category-icons/taxi.png";
 import hotelIcon from "@food/assets/category-icons/hotel.png";
 import useNotificationInbox from "@food/hooks/useNotificationInbox";
+import ModuleSwitcher from "../ModuleSwitcher";
+import HeaderCartIcon from "../HeaderCartIcon";
 
 const ICON_MAP = {
   CheckCircle2,
@@ -242,6 +244,9 @@ export default function HomeHeader({
                 </div>
               </PopoverContent>
             </Popover>
+
+            <HeaderCartIcon />
+            <ModuleSwitcher />
           </div>
         </div>
 

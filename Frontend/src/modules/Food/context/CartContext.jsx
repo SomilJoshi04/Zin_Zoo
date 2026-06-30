@@ -122,6 +122,7 @@ const normalizeCartData = (rawCart) => {
           price: Number.isFinite(parsedPrice) ? parsedPrice : 0,
           foodType: finalFoodType,
           isVeg: finalFoodType === "Veg",
+        moduleType: item.moduleType || "food",
         restaurant: normalizedRestaurantName,
         restaurantId: normalizedRestaurantId,
         image: normalizedImage,
@@ -186,34 +187,40 @@ export function CartProvider({ children }) {
 
   const addToCart = (item, sourcePosition = null) => {
     const safeCart = normalizeCartData(cart)
-    if (safeCart.length > 0) {
-      const firstItemRestaurantId = safeCart[0]?.restaurantId
-      const firstItemRestaurantName = safeCart[0]?.restaurant
-      const newItemRestaurantId = item?.restaurantId
-      const newItemRestaurantName = item?.restaurant
-      const normalizeName = (name) => (name ? String(name).trim().toLowerCase() : '')
+    const isGrocery = item?.moduleType === 'grocery';
+    
+    // Only check restaurant info if it's food
+    if (!isGrocery) {
+      const foodCart = safeCart.filter(i => i.moduleType !== 'grocery');
+      if (foodCart.length > 0) {
+        const firstItemRestaurantId = foodCart[0]?.restaurantId
+        const firstItemRestaurantName = foodCart[0]?.restaurant
+        const newItemRestaurantId = item?.restaurantId
+        const newItemRestaurantName = item?.restaurant
+        const normalizeName = (name) => (name ? String(name).trim().toLowerCase() : '')
 
-      const firstRestaurantNameNormalized = normalizeName(firstItemRestaurantName)
-      const newRestaurantNameNormalized = normalizeName(newItemRestaurantName)
-      const hasNameMismatch =
-        firstRestaurantNameNormalized &&
-        newRestaurantNameNormalized &&
-        firstRestaurantNameNormalized !== newRestaurantNameNormalized
+        const firstRestaurantNameNormalized = normalizeName(firstItemRestaurantName)
+        const newRestaurantNameNormalized = normalizeName(newItemRestaurantName)
+        const hasNameMismatch =
+          firstRestaurantNameNormalized &&
+          newRestaurantNameNormalized &&
+          firstRestaurantNameNormalized !== newRestaurantNameNormalized
 
-      const hasIdMismatch =
-        !firstRestaurantNameNormalized &&
-        !newRestaurantNameNormalized &&
-        firstItemRestaurantId &&
-        newItemRestaurantId &&
-        String(firstItemRestaurantId) !== String(newItemRestaurantId)
+        const hasIdMismatch =
+          !firstRestaurantNameNormalized &&
+          !newRestaurantNameNormalized &&
+          firstItemRestaurantId &&
+          newItemRestaurantId &&
+          String(firstItemRestaurantId) !== String(newItemRestaurantId)
 
-      if (hasNameMismatch || hasIdMismatch) {
-        const message = `Cart already contains items from "${firstItemRestaurantName || 'another restaurant'}". Please clear cart or complete order first.`
-        return { ok: false, error: message, code: 'RESTAURANT_MISMATCH' }
+        if (hasNameMismatch || hasIdMismatch) {
+          const message = `Cart already contains items from "${firstItemRestaurantName || 'another restaurant'}". Please clear cart or complete order first.`
+          return { ok: false, error: message, code: 'RESTAURANT_MISMATCH' }
+        }
       }
     }
 
-    if (!item?.restaurantId && !item?.restaurant) {
+    if (!isGrocery && !item?.restaurantId && !item?.restaurant) {
       return {
         ok: false,
         error: 'Item is missing restaurant information. Please refresh the page.',
@@ -223,42 +230,39 @@ export function CartProvider({ children }) {
 
     setCart((prev) => {
       const safePrev = normalizeCartData(prev)
-      // CRITICAL: Validate restaurant consistency
-      // If cart already has items, ensure new item belongs to the same restaurant
-      if (safePrev.length > 0) {
-        const firstItemRestaurantId = safePrev[0]?.restaurantId;
-        const firstItemRestaurantName = safePrev[0]?.restaurant;
-        const newItemRestaurantId = item?.restaurantId;
-        const newItemRestaurantName = item?.restaurant;
-        
-        // Normalize restaurant names for comparison (trim and case-insensitive)
-        const normalizeName = (name) => name ? name.trim().toLowerCase() : '';
-        const firstRestaurantNameNormalized = normalizeName(firstItemRestaurantName);
-        const newRestaurantNameNormalized = normalizeName(newItemRestaurantName);
-        
-        // Check restaurant name first (more reliable than IDs which can have different formats)
-        // If names match, allow it even if IDs differ (same restaurant, different ID format)
-        if (firstRestaurantNameNormalized && newRestaurantNameNormalized) {
-          if (firstRestaurantNameNormalized !== newRestaurantNameNormalized) {
-            debugError('❌ Cannot add item: Restaurant name mismatch!', {
-              cartRestaurantId: firstItemRestaurantId,
-              cartRestaurantName: firstItemRestaurantName,
-              newItemRestaurantId: newItemRestaurantId,
-              newItemRestaurantName: newItemRestaurantName
-            });
-            return safePrev;
-          }
-          // Names match - allow it (even if IDs differ, it's the same restaurant)
-        } else if (firstItemRestaurantId && newItemRestaurantId) {
-          // If names are not available, fallback to ID comparison
-          if (firstItemRestaurantId !== newItemRestaurantId) {
-            debugError('❌ Cannot add item: Cart contains items from different restaurant!', {
-              cartRestaurantId: firstItemRestaurantId,
-              cartRestaurantName: firstItemRestaurantName,
-              newItemRestaurantId: newItemRestaurantId,
-              newItemRestaurantName: newItemRestaurantName
-            });
-            return safePrev;
+      
+      if (!isGrocery) {
+        const foodCart = safePrev.filter(i => i.moduleType !== 'grocery');
+        if (foodCart.length > 0) {
+          const firstItemRestaurantId = foodCart[0]?.restaurantId;
+          const firstItemRestaurantName = foodCart[0]?.restaurant;
+          const newItemRestaurantId = item?.restaurantId;
+          const newItemRestaurantName = item?.restaurant;
+          
+          const normalizeName = (name) => name ? name.trim().toLowerCase() : '';
+          const firstRestaurantNameNormalized = normalizeName(firstItemRestaurantName);
+          const newRestaurantNameNormalized = normalizeName(newItemRestaurantName);
+          
+          if (firstRestaurantNameNormalized && newRestaurantNameNormalized) {
+            if (firstRestaurantNameNormalized !== newRestaurantNameNormalized) {
+              debugError('❌ Cannot add item: Restaurant name mismatch!', {
+                cartRestaurantId: firstItemRestaurantId,
+                cartRestaurantName: firstItemRestaurantName,
+                newItemRestaurantId: newItemRestaurantId,
+                newItemRestaurantName: newItemRestaurantName
+              });
+              return safePrev;
+            }
+          } else if (firstItemRestaurantId && newItemRestaurantId) {
+            if (firstItemRestaurantId !== newItemRestaurantId) {
+              debugError('❌ Cannot add item: Cart contains items from different restaurant!', {
+                cartRestaurantId: firstItemRestaurantId,
+                cartRestaurantName: firstItemRestaurantName,
+                newItemRestaurantId: newItemRestaurantId,
+                newItemRestaurantName: newItemRestaurantName
+              });
+              return safePrev;
+            }
           }
         }
       }
@@ -283,8 +287,7 @@ export function CartProvider({ children }) {
         )
       }
       
-      // Validate item has required restaurant info
-      if (!item.restaurantId && !item.restaurant) {
+      if (!isGrocery && !item.restaurantId && !item.restaurant) {
         debugError('❌ Cannot add item: Missing restaurant information!', item);
         return safePrev;
       }
@@ -457,11 +460,13 @@ export function CartProvider({ children }) {
       setCart(safeCart)
       return
     }
-    if (safeCart.length === 0) return;
+    // Only validate food items
+    const foodItems = safeCart.filter(item => item.moduleType !== 'grocery');
+    if (foodItems.length === 0) return;
     
-    // Get unique restaurant IDs and names
-    const restaurantIds = safeCart.map(item => item.restaurantId).filter(Boolean);
-    const restaurantNames = safeCart.map(item => item.restaurant).filter(Boolean);
+    // Get unique restaurant IDs and names from food items only
+    const restaurantIds = foodItems.map(item => item.restaurantId).filter(Boolean);
+    const restaurantNames = foodItems.map(item => item.restaurant).filter(Boolean);
     const uniqueRestaurantIds = [...new Set(restaurantIds)];
     const uniqueRestaurantNames = [...new Set(restaurantNames)];
     
@@ -470,9 +475,9 @@ export function CartProvider({ children }) {
     const uniqueRestaurantNamesNormalized = uniqueRestaurantNames.map(normalizeName);
     const uniqueRestaurantNamesSet = new Set(uniqueRestaurantNamesNormalized);
     
-    // Check if cart has items from multiple restaurants
+    // Check if cart has food items from multiple restaurants
     if (uniqueRestaurantIds.length > 1 || uniqueRestaurantNamesSet.size > 1) {
-      debugWarn('⚠️ Cart contains items from multiple restaurants. Cleaning cart...', {
+      debugWarn('⚠️ Cart contains food items from multiple restaurants. Cleaning cart...', {
         restaurantIds: uniqueRestaurantIds,
         restaurantNames: uniqueRestaurantNames
       });
@@ -487,6 +492,8 @@ export function CartProvider({ children }) {
         const firstRestaurantNameNormalized = normalizeName(firstRestaurantName);
         
         return safePrev.filter((item) => {
+          if (item.moduleType === 'grocery') return true; // keep all grocery items
+          
           const itemRestaurantId = item?.restaurantId;
           const itemRestaurantName = item?.restaurant;
           const itemRestaurantNameNormalized = normalizeName(itemRestaurantName);

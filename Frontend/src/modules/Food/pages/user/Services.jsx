@@ -5,6 +5,8 @@ import { motion } from "framer-motion"
 import { Briefcase, Shield, Clock, PhoneCall, Zap, Droplets, Sparkles, Hammer, PaintRoller, Fan, Wrench, ShieldCheck, ArrowLeft } from "lucide-react"
 import { servicesPublicAPI } from "@food/api"
 import { usePublicSocket } from "@food/hooks/usePublicSocket"
+import ModuleSwitcher from "@food/components/user/ModuleSwitcher"
+import HeaderCartIcon from "@food/components/user/HeaderCartIcon"
 
 export default function Services() {
   const navigate = useNavigate()
@@ -113,6 +115,11 @@ export default function Services() {
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
+
+      {/* Top Right Actions */}
+      <div className="absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-2 z-50">
+        <ModuleSwitcher variant="dark" />
+      </div>
 
       {/* Header Section */}
       <div className="text-center max-w-2xl mx-auto mb-10 md:mb-16 mt-12 md:mt-0">

@@ -75,6 +75,26 @@ export const adminSidebarMenu = [
   },
   {
     type: "section",
+    label: "ACCESSORIES MANAGEMENT",
+    items: [
+      {
+        type: "expandable",
+        label: "Products",
+        icon: "Watch",
+        subItems: [
+          { label: "Products List", path: "/admin/food/accessories-products" },
+        ],
+      },
+      {
+        type: "link",
+        label: "Categories",
+        icon: "LayoutGrid",
+        path: "/admin/food/accessories-categories",
+      },
+    ],
+  },
+  {
+    type: "section",
     label: "SERVICE MANAGEMENT",
     items: [
 
@@ -105,31 +125,7 @@ export const adminSidebarMenu = [
     ],
   },
 
-  // {
-  //   type: "section",
-  //   label: "ORDER MANAGEMENT",
-  //   items: [
-  //     {
-  //       type: "expandable",
-  //       label: "Orders",
-  //       icon: "FileText",
-  //       subItems: [
-  //         { label: "All", path: "/admin/food/orders/all" },
-  //         { label: "Scheduled", path: "/admin/food/orders/scheduled" },
-  //         { label: "Pending", path: "/admin/food/orders/pending" },
-  //         { label: "Accepted", path: "/admin/food/orders/accepted" },
-  //         { label: "Processing", path: "/admin/food/orders/processing" },
-  //         { label: "Food On The Way", path: "/admin/food/orders/food-on-the-way" },
-  //         { label: "Delivered", path: "/admin/food/orders/delivered" },
-  //         { label: "Cancelled", path: "/admin/food/orders/canceled" },
-  //         { label: "Restaurant cancelled", path: "/admin/food/orders/restaurant-cancelled" },
-  //         { label: "Payment Failed", path: "/admin/food/orders/payment-failed" },
-  //         { label: "Refunded", path: "/admin/food/orders/refunded" },
-  //         { label: "Offline Payments", path: "/admin/food/orders/offline-payments" },
-  //       ],
-  //     },
-  //   ],
-  // },
+
   {
     type: "section",
     label: "REFERRAL & REWARDS",
@@ -182,7 +178,7 @@ export const adminSidebarMenu = [
     items: [
       { type: "link", label: "Landing Page Management", path: "/admin/food/hero-banner-management", icon: "Image" },
       { type: "link", label: "Promotional Banners", path: "/admin/food/promotional-banner", icon: "Megaphone" },
-// { type: "link", label: "General Banners", path: "/admin/food/banners", icon: "Image" },
+      // { type: "link", label: "General Banners", path: "/admin/food/banners", icon: "Image" },
     ],
   },
 
