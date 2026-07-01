@@ -122,13 +122,14 @@ const normalizeCartData = (rawCart) => {
           price: Number.isFinite(parsedPrice) ? parsedPrice : 0,
           foodType: finalFoodType,
           isVeg: finalFoodType === "Veg",
-        moduleType: item.moduleType || "food",
-        restaurant: normalizedRestaurantName,
-        restaurantId: normalizedRestaurantId,
-        image: normalizedImage,
-        imageUrl: normalizedImage,
-      }
-    })
+          category: item.category || item.moduleType || "food",
+          moduleType: item.moduleType || item.category || "food",
+          restaurant: normalizedRestaurantName,
+          restaurantId: normalizedRestaurantId,
+          image: normalizedImage,
+          imageUrl: normalizedImage,
+        }
+      })
 }
 
 const resolveCartEntryId = (items, itemId, variantId = "") => {
@@ -187,11 +188,11 @@ export function CartProvider({ children }) {
 
   const addToCart = (item, sourcePosition = null) => {
     const safeCart = normalizeCartData(cart)
-    const isGrocery = item?.moduleType === 'grocery';
+    const isFood = (item?.moduleType || 'food') === 'food';
     
     // Only check restaurant info if it's food
-    if (!isGrocery) {
-      const foodCart = safeCart.filter(i => i.moduleType !== 'grocery');
+    if (isFood) {
+      const foodCart = safeCart.filter(i => (i.moduleType || 'food') === 'food');
       if (foodCart.length > 0) {
         const firstItemRestaurantId = foodCart[0]?.restaurantId
         const firstItemRestaurantName = foodCart[0]?.restaurant
@@ -220,7 +221,7 @@ export function CartProvider({ children }) {
       }
     }
 
-    if (!isGrocery && !item?.restaurantId && !item?.restaurant) {
+    if (isFood && !item?.restaurantId && !item?.restaurant) {
       return {
         ok: false,
         error: 'Item is missing restaurant information. Please refresh the page.',
@@ -231,8 +232,8 @@ export function CartProvider({ children }) {
     setCart((prev) => {
       const safePrev = normalizeCartData(prev)
       
-      if (!isGrocery) {
-        const foodCart = safePrev.filter(i => i.moduleType !== 'grocery');
+      if (isFood) {
+        const foodCart = safePrev.filter(i => (i.moduleType || 'food') === 'food');
         if (foodCart.length > 0) {
           const firstItemRestaurantId = foodCart[0]?.restaurantId;
           const firstItemRestaurantName = foodCart[0]?.restaurant;
@@ -276,6 +277,7 @@ export function CartProvider({ children }) {
               id: item.id,
               name: item.name,
               imageUrl: item.image || item.imageUrl,
+              moduleType: item.moduleType || 'food',
             },
             sourcePosition,
           })
@@ -287,7 +289,7 @@ export function CartProvider({ children }) {
         )
       }
       
-      if (!isGrocery && !item.restaurantId && !item.restaurant) {
+      if (isFood && !item.restaurantId && !item.restaurant) {
         debugError('❌ Cannot add item: Missing restaurant information!', item);
         return safePrev;
       }
@@ -301,6 +303,7 @@ export function CartProvider({ children }) {
             id: item.id,
             name: item.name,
             imageUrl: item.image || item.imageUrl,
+            moduleType: item.moduleType || 'food',
           },
           sourcePosition,
         })
@@ -326,6 +329,7 @@ export function CartProvider({ children }) {
             id: productInfo.id || itemToRemove.id,
             name: productInfo.name || itemToRemove.name,
             imageUrl: productInfo.imageUrl || productInfo.image || itemToRemove.image || itemToRemove.imageUrl,
+            moduleType: productInfo.moduleType || itemToRemove.moduleType || 'food',
           },
           sourcePosition,
         })
@@ -350,6 +354,7 @@ export function CartProvider({ children }) {
               id: productInfo.id || itemToRemove.id,
               name: productInfo.name || itemToRemove.name,
               imageUrl: productInfo.imageUrl || productInfo.image || itemToRemove.image || itemToRemove.imageUrl,
+              moduleType: productInfo.moduleType || itemToRemove.moduleType || 'food',
             },
             sourcePosition,
           })
@@ -372,6 +377,7 @@ export function CartProvider({ children }) {
             id: productInfo.id || existingItem.id,
             name: productInfo.name || existingItem.name,
             imageUrl: productInfo.imageUrl || productInfo.image || existingItem.image || existingItem.imageUrl,
+            moduleType: productInfo.moduleType || existingItem.moduleType || 'food',
           },
           sourcePosition,
         })
@@ -525,6 +531,8 @@ export function CartProvider({ children }) {
         imageUrl: item.image || item.imageUrl,
       },
       quantity: item.quantity || 1,
+      moduleType: item.moduleType || 'food',
+      category: item.category || 'food',
     }))
     
     const itemCount = safeCart.reduce((total, item) => total + (item.quantity || 0), 0)

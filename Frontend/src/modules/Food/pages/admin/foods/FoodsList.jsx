@@ -373,6 +373,10 @@ export default function FoodsList() {
   const handleFoodFormSubmit = async () => {
     if (!ensureActionAccess(foodFormMode === "edit" ? "edit" : "create")) return
 
+    if (!foodForm.restaurantId) {
+      toast.error("Restaurant is required")
+      return
+    }
     if (!String(foodForm.categoryName || "").trim()) {
       toast.error("Please select or enter a category")
       return
@@ -423,6 +427,7 @@ export default function FoodsList() {
       }
 
       const payload = {
+        restaurantId: foodForm.restaurantId || undefined,
         categoryId: foodForm.categoryId || undefined,
         categoryName: String(foodForm.categoryName || "").trim(),
         zoneId: foodForm.zoneId === "global" ? undefined : (foodForm.zoneId || undefined),
@@ -454,7 +459,7 @@ export default function FoodsList() {
       await fetchAllFoods()
     } catch (error) {
       debugError("Error saving food:", error)
-      toast.error(error?.response?.data?.message || "Failed to save food")
+      toast.error(error?.response?.data?.message || error?.response?.data?.error || "Failed to save food")
     } finally {
       setSubmittingFood(false)
     }
@@ -553,6 +558,9 @@ export default function FoodsList() {
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Category
                 </th>
+                <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  Restaurant
+                </th>
                 <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Action
                 </th>
@@ -610,6 +618,9 @@ export default function FoodsList() {
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-800">{food.categoryName || "-"}</span>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-slate-700">{food.restaurantName || "-"}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       <div className="flex items-center justify-center gap-2">
@@ -773,7 +784,7 @@ export default function FoodsList() {
           </DialogHeader>
           <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="hidden">
+              <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Restaurant</label>
                 <select
                   value={foodForm.restaurantId}
@@ -782,9 +793,9 @@ export default function FoodsList() {
                   className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white disabled:bg-slate-100"
                 >
                   <option value="">Select restaurant</option>
-                  {restaurantOptions.map((restaurant) => (
-                    <option key={restaurant.id} value={restaurant.id}>
-                      {restaurant.name}
+                  {restaurantOptions.map(({ id, name }) => (
+                    <option key={id} value={id}>
+                      {name}
                     </option>
                   ))}
                 </select>

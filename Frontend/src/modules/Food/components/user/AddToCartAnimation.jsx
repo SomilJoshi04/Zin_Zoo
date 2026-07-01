@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from "@food/context/CartContext";
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { gsap } from 'gsap';
+import { useActiveModule } from "@food/hooks/useActiveModule";
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -28,7 +29,11 @@ export default function AddToCartAnimation({
   linkTo = '/food/user/cart',
   dynamicBottom = null,
 }) {
-  const { items, itemCount, total, lastAddEvent, lastRemoveEvent } = useCart();
+  const { items: rawItems, lastAddEvent, lastRemoveEvent } = useCart();
+  const activeModule = useActiveModule();
+  const items = useMemo(() => rawItems.filter(item => (item.moduleType || 'food') === activeModule), [rawItems, activeModule]);
+  const itemCount = useMemo(() => items.reduce((sum, item) => sum + (item.quantity || 0), 0), [items]);
+  const total = useMemo(() => items.reduce((sum, item) => sum + (item.price * item.quantity), 0), [items]);
   const location = useLocation();
   const navigate = useNavigate();
   const linkRef = useRef(null);
@@ -51,6 +56,7 @@ export default function AddToCartAnimation({
   useEffect(() => {
     if (lastRemoveEvent && lastRemoveEvent.sourcePosition && linkRef.current) {
       const { product, sourcePosition } = lastRemoveEvent;
+      if ((product?.moduleType || 'food') !== activeModule) return;
 
       // Store the sourcePosition immediately to prevent it from being lost
       const savedSourcePosition = { ...sourcePosition };
@@ -184,12 +190,13 @@ export default function AddToCartAnimation({
         }
       }, 10);
     }
-  }, [lastRemoveEvent]);
+  }, [lastRemoveEvent, activeModule]);
 
   // Handle fly-to-cart animation when product is added
   useEffect(() => {
     if (lastAddEvent && lastAddEvent.sourcePosition && linkRef.current) {
       const { product, sourcePosition } = lastAddEvent;
+      if ((product?.moduleType || 'food') !== activeModule) return;
 
       // Store the sourcePosition immediately to prevent it from being lost
       const savedSourcePosition = { ...sourcePosition };
@@ -324,7 +331,7 @@ export default function AddToCartAnimation({
         }
       }, 150); // Increased delay to ensure pill animation completes
     }
-  }, [lastAddEvent]);
+  }, [lastAddEvent, activeModule]);
 
   // Enhanced GSAP pulse animation when cart changes (but not on removal or fly-to-cart)
   useEffect(() => {

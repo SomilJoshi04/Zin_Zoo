@@ -396,7 +396,7 @@ export const updateFavicon = (url) => {
   const link = document.createElement("link");
   link.rel = "icon";
   link.type = "image/png";
-  link.href = url;
+  link.href = '/zinzoo-logo.png'; // Force Zin Zoo X logo
   // Prevent third-party cookie warning (Cloudinary)
   link.crossOrigin = "anonymous";
   document.head.appendChild(link);
@@ -430,8 +430,8 @@ const resolveFaviconByModule = (settings, moduleName = "user") => {
  * Update page title
  */
 export const updateTitle = (companyName) => {
-  if (companyName && typeof document !== 'undefined') {
-    document.title = companyName;
+  if (typeof document !== 'undefined') {
+    document.title = 'Zin Zoo X'; // Force Zin Zoo X title
   }
 };
 
@@ -526,8 +526,7 @@ export const getCachedSettings = () => {
  * @returns {string} Company name or default "SwitchEats Food"
  */
 export const getCompanyName = () => {
-  const settings = getCachedSettings();
-  return settings?.companyName || "SwitchEats";
+  return "Zin Zoo X";
 };
 
 /**
@@ -535,10 +534,5 @@ export const getCompanyName = () => {
  * @returns {Promise<string>} Company name or default "SwitchEats Food"
  */
 export const getCompanyNameAsync = async () => {
-  try {
-    const settings = await loadBusinessSettings();
-    return settings?.companyName || "SwitchEats";
-  } catch (error) {
-    return "SwitchEats";
-  }
+  return "Zin Zoo X";
 };

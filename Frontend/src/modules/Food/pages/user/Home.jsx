@@ -2772,45 +2772,7 @@ export default function Home() {
                         ))}
                       </div>
 
-                      {/* Integrated Filters Row */}
-                      <div className="px-3 py-1.5">
-                        <div
-                          className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide"
-                          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => setIsFilterOpen(true)}
-                            className="h-6 px-2 rounded-full flex items-center gap-1 bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-gray-800 shadow-sm whitespace-nowrap"
-                          >
-                            <SlidersHorizontal className="h-3 w-3 text-black dark:text-gray-300" />
-                            <span className="text-[9px] font-bold uppercase text-black dark:text-gray-200">Filters</span>
-                          </button>
 
-                          {[
-                            { id: "delivery-under-30", label: "Under 30 mins" },
-                            { id: "delivery-under-45", label: "Under 45 mins" },
-                            { id: "distance-under-1km", label: "Under 1km", icon: MapPin },
-                          ].map((filter) => {
-                            const Icon = filter.icon;
-                            const isActive = activeFilters.has(filter.id);
-                            return (
-                              <button
-                                key={filter.id}
-                                type="button"
-                                onClick={() => toggleFilter(filter.id)}
-                                className={`h-6 px-3 rounded-full flex items-center gap-1.5 whitespace-nowrap transition-all font-bold text-[9px] uppercase ${isActive
-                                  ? "bg-[#FFC107] text-slate-950"
-                                  : "bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 text-gray-600 dark:text-gray-300"
-                                  }`}
-                              >
-                                {Icon && <Icon className="h-2.5 w-2.5" />}
-                                {filter.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -2818,70 +2780,7 @@ export default function Home() {
                 {/* Admin Hero Banners Section - Now below categories */}
                 {HeroBannerSection}
 
-                {/* Filters Sticky Sidebar Header */}
-                <section className="py-2.5 px-4 bg-white/95 dark:bg-[#0a0a0a]/95 backdrop-blur-md sticky top-0 z-[40] -mx-4 w-[calc(100%+2rem)] border-b border-gray-100 dark:border-white/5 shadow-sm transition-colors duration-300">
-                  <div
-                    className="flex items-center gap-2 overflow-x-auto scrollbar-hide px-4"
-                    style={{
-                      scrollbarWidth: "none",
-                      msOverflowStyle: "none",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setIsFilterOpen(true)}
-                      className="h-9 px-4 rounded-full flex items-center gap-1.5 whitespace-nowrap flex-shrink-0 font-bold transition-all bg-white dark:bg-[#1a1a1a] border border-gray-200 shadow-sm active:scale-95"
-                    >
-                      <SlidersHorizontal className="h-4 w-4 text-black" />
-                      <span className="text-xs font-bold text-black dark:text-white uppercase tracking-tight">
-                        Filters
-                      </span>
-                    </button>
 
-                    {[
-                      { id: "delivery-under-30", label: "Under 30 mins" },
-                      { id: "delivery-under-45", label: "Under 45 mins" },
-                      { id: "distance-under-1km", label: "Under 1km", icon: MapPin },
-                      { id: "distance-under-2km", label: "Under 2km", icon: MapPin },
-                    ].map((filter) => {
-                      const Icon = filter.icon;
-                      const isActive = activeFilters.has(filter.id);
-                      return (
-                        <button
-                          key={filter.id}
-                          type="button"
-                          onClick={() => {
-                            const nextFilters = new Set(activeFilters);
-                            if (nextFilters.has(filter.id)) {
-                              nextFilters.delete(filter.id);
-                            } else {
-                              nextFilters.add(filter.id);
-                            }
-                            setActiveFilters(nextFilters);
-                            void applyFiltersAndRefetch(
-                              nextFilters,
-                              sortBy,
-                              selectedCuisine,
-                            );
-                          }}
-                          className={`h-9 px-4 rounded-full flex items-center gap-2 whitespace-nowrap flex-shrink-0 transition-all font-bold shadow-sm active:scale-95 ${isActive
-                            ? "bg-[#FFC107] text-slate-950 border border-[#FFC107] hover:bg-orange-700"
-                            : "bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300"
-                            }`}
-                        >
-                          {Icon && (
-                            <Icon
-                              className={`h-3.5 w-3.5 ${isActive ? "fill-white" : ""}`}
-                            />
-                          )}
-                          <span className="text-xs font-bold tracking-tight">
-                            {filter.label}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
 
               </motion.div>
             ) : (

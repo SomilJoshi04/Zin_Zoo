@@ -1406,7 +1406,7 @@ export default function OrderTracking() {
       {/* Green Header */}
       <motion.div
         className="text-white sticky top-0 z-40"
-        style={{ backgroundColor: isCancelledOrder ? "#dc2626" : themeColor }}
+        style={{ backgroundColor: isCancelledOrder ? "#F97316" : themeColor }}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
@@ -1579,9 +1579,9 @@ export default function OrderTracking() {
               <div key={i} className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-2 min-w-0">
                   <div
-                    className={`w-3.5 h-3.5 mt-0.5 border flex items-center justify-center p-[1px] shrink-0 ${resolvedIsVeg ? "border-[#16a34a] bg-green-50/40 dark:bg-green-900/25" : "border-[#dc2626] bg-red-50/40 dark:bg-red-900/25"}`}
+                    className={`w-3.5 h-3.5 mt-0.5 border flex items-center justify-center p-[1px] shrink-0 ${resolvedIsVeg ? "border-[#16a34a] bg-green-50/40 dark:bg-green-900/25" : "border-[#F97316] bg-red-50/40 dark:bg-red-900/25"}`}
                   >
-                    <div className={`w-full h-full rounded-full ${resolvedIsVeg ? "bg-[#16a34a]" : "bg-[#dc2626]"}`} />
+                    <div className={`w-full h-full rounded-full ${resolvedIsVeg ? "bg-[#16a34a]" : "bg-[#F97316]"}`} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">

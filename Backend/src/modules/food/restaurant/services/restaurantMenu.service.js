@@ -137,11 +137,11 @@ export async function getPublicApprovedRestaurantMenu(restaurantIdOrSlug) {
     if (!restaurant?._id) {
         return null;
     }
-    const hasFood = await FoodItem.exists({ restaurantId: restaurant._id, approvalStatus: 'approved' });
+    const hasFood = await FoodItem.exists({ restaurantId: restaurant._id });
     if (!hasFood) {
         return null;
     }
-    const foods = await FoodItem.find({ restaurantId: restaurant._id, approvalStatus: 'approved' })
+    const foods = await FoodItem.find({ restaurantId: restaurant._id })
         .sort({ createdAt: -1 })
         .limit(2000)
         .lean();

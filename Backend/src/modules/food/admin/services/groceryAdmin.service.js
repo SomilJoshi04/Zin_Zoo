@@ -121,7 +121,7 @@ export async function deleteGroceryProduct(id) {
 
 // ----- Grocery Orders -----
 export async function getGroceryOrders(query = {}) {
-    const filter = {};
+    const filter = { moduleType: 'grocery' };
     if (query.search) {
         filter.$or = [
             { orderId: { $regex: query.search, $options: 'i' } },

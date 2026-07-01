@@ -3080,6 +3080,11 @@ export const accessoriesAdminAPI = {
   updateProduct: (id, data) => apiClient.put(`/accessories/admin/products/${id}`, data),
   deleteProduct: (id) => apiClient.delete(`/accessories/admin/products/${id}`),
   toggleProductStatus: (id) => apiClient.patch(`/accessories/admin/products/${id}/status`),
+
+  // Accessories Orders
+  getOrders: (params) => apiClient.get("/accessories/admin/orders", { params, contextModule: "admin" }),
+  getOrderById: (id) => apiClient.get(`/accessories/admin/orders/${id}`, { contextModule: "admin" }),
+  updateOrderStatus: (id, data) => apiClient.put(`/accessories/admin/orders/${id}/status`, data, { contextModule: "admin" }),
 };
 
 export const accessoriesPublicAPI = {

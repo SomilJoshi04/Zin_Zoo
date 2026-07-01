@@ -329,7 +329,7 @@ export default function AccessoriesCategory() {
 
       autoTable(doc, {
         startY: 35,
-        head: [["SL", "Category", "Diet Scope", "Visibility", "Zone", "Approval"]],
+        head: [["SL", "Category", "Visibility", "Zone", "Approval"]],
         body: tableData,
         theme: "striped",
         headStyles: {
@@ -456,10 +456,9 @@ export default function AccessoriesCategory() {
           <table className="min-w-full table-fixed">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
-                <th className="w-[30%] px-5 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-slate-600">Category</th>
-                <th className="w-[15%] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-slate-600">Diet</th>
-                <th className="w-[15%] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-slate-600">Status</th>
-                <th className="w-[20%] px-5 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-slate-600">Actions</th>
+                <th className="w-[50%] px-5 py-4 text-left text-[11px] font-bold uppercase tracking-wider text-slate-600">Category</th>
+                <th className="w-[25%] px-4 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-slate-600">Status</th>
+                <th className="w-[25%] px-5 py-4 text-right text-[11px] font-bold uppercase tracking-wider text-slate-600">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -509,15 +508,6 @@ export default function AccessoriesCategory() {
                         </div>
                       </td>
 
-                      <td className="px-4 py-5">
-                        <div className="max-w-[180px]">
-                        </div>
-                      </td>
-                      <td className="px-4 py-5 text-center">
-                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${scopeBadgeClass(category?.foodTypeScope)}`}>
-                          {category?.foodTypeScope || "Both"}
-                        </span>
-                      </td>
                       <td className="px-4 py-5 text-center">
                         <button
                           onClick={() => handleToggleStatus(categoryId)}
@@ -593,7 +583,7 @@ export default function AccessoriesCategory() {
                             value={formData.type}
                             onChange={(event) => setFormData((prev) => ({ ...prev, type: event.target.value }))}
                             className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-slate-900"
-                            placeholder="Examples: Vegetables, Dairy, Snacks"
+                            placeholder="Examples: Electronics, Wearables, Bags"
                           />
                         </div>
 

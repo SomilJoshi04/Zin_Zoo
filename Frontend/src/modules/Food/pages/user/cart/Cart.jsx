@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, Fragment } from "react"
 import { createPortal } from "react-dom"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
-import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Share2, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2, Sparkles, Banknote, Zap, CheckCircle2, MessageCircle, Send, Mail, Copy, Coins } from "lucide-react"
+import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Share2, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2, Sparkles, Banknote, Zap, CheckCircle2, MessageCircle, Send, Mail, Copy, Coins, ShoppingCart, ShoppingBag } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import confetti from "canvas-confetti"
 
@@ -97,7 +97,7 @@ const haversineKm = (lat1, lon1, lat2, lon2) => {
 export default function Cart() {
   const companyName = useCompanyName()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const goBack = useAppBackNavigation()
   const orderSuccessAudioRef = useRef(null)
   const hasRestoredRecipientRef = useRef(false)
@@ -130,12 +130,23 @@ export default function Cart() {
 
   const { cart: globalCart, updateQuantity, addToCart, getCartCount: getGlobalCartCount, replaceCart, cleanCartForRestaurant } = cartContext;
   
-  const activeCartTab = searchParams.get('module') || 'food';
-  const cart = useMemo(() => globalCart.filter(i => i.moduleType === activeCartTab), [globalCart, activeCartTab]);
+  const activeCartTab = searchParams.get('module') || 'all';
+  const cart = useMemo(() => {
+    if (activeCartTab === 'all') return globalCart;
+    return globalCart.filter(i => (i.moduleType || 'food') === activeCartTab);
+  }, [globalCart, activeCartTab]);
+
+  const handleTabChange = (tab) => {
+    setSearchParams({ module: tab });
+  };
 
   const clearCart = () => {
-    const itemsToKeep = globalCart.filter(i => i.moduleType !== activeCartTab);
-    replaceCart(itemsToKeep);
+    if (activeCartTab === 'all') {
+      replaceCart([]);
+    } else {
+      const itemsToKeep = globalCart.filter(i => i.moduleType !== activeCartTab);
+      replaceCart(itemsToKeep);
+    }
   };
   const { getDefaultAddress, getDefaultPaymentMethod, setDefaultAddress, addresses, paymentMethods, userProfile, vegMode } = useProfile()
   const { createOrder } = useOrders()
@@ -1282,13 +1293,7 @@ export default function Cart() {
   }
 
   const handleBack = () => {
-    // Priority: slug > restaurantId (both work for the restaurant details route)
-    const idOrSlug = restaurantData?.slug || restaurantId
-    if (idOrSlug) {
-      navigate(`/food/user/restaurants/${idOrSlug}`)
-    } else {
-      goBack()
-    }
+    navigate(-1)
   }
 
   // Handler to select address by label (Home, Office, Other)
@@ -1643,7 +1648,7 @@ export default function Cart() {
 
       // FINAL VALIDATION: Double-check restaurantId before sending to backend
       const cartRestaurantId = cart[0]?.restaurantId;
-      if (cartRestaurantId && cartRestaurantId !== finalRestaurantId &&
+      if (activeCartTab === 'food' && cartRestaurantId && cartRestaurantId !== finalRestaurantId &&
         cartRestaurantId !== restaurantData?._id?.toString() &&
         cartRestaurantId !== restaurantData?.restaurantId) {
         debugError('? CRITICAL: Final validation failed - restaurantId mismatch!', {
@@ -1941,7 +1946,7 @@ export default function Cart() {
             <Utensils className="h-10 w-10 text-gray-400" />
           </div>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">Your cart is empty</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">Add items from a restaurant to start a new order</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">Add items to start a new order</p>
           <Link to="/user">
             <Button
               className="text-white border-0"
@@ -1950,9 +1955,68 @@ export default function Cart() {
                 boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,250,2,114),0.25)",
               }}
             >
-              Browse Restaurants
+              Start Shopping
             </Button>
           </Link>
+        </div>
+      </AnimatedPage>
+    )
+  }
+
+  // Handle empty cart for a specific tab
+  if (cart.length === 0 && !showOrderSuccess && !showPlacingOrder) {
+    return (
+      <AnimatedPage className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a]">
+        <div className="bg-white dark:bg-[#1a1a1a] border-b dark:border-gray-800 sticky top-0 z-10">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              onClick={handleBack}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <span className="font-semibold text-gray-800 dark:text-white">Cart</span>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center py-20 px-4">
+          <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            {activeCartTab === 'grocery' ? (
+              <ShoppingCart className="h-10 w-10 text-gray-400" />
+            ) : activeCartTab === 'accessories' ? (
+              <ShoppingBag className="h-10 w-10 text-gray-400" />
+            ) : activeCartTab === 'all' ? (
+              <ShoppingCart className="h-10 w-10 text-gray-400" />
+            ) : (
+              <Utensils className="h-10 w-10 text-gray-400" />
+            )}
+          </div>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">No items in this category</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">Explore other categories or start shopping</p>
+          <div className="flex gap-4">
+            <Button
+              onClick={() => handleTabChange('all')}
+              className="text-white border-0"
+              style={{
+                background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,250,2,114),0.9), var(--module-theme-color,#FA0272))",
+                boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,250,2,114),0.25)",
+              }}
+            >
+              View All Items
+            </Button>
+            <Link to="/user">
+              <Button
+                className="text-white border-0"
+                style={{
+                  background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,250,2,114),0.9), var(--module-theme-color,#FA0272))",
+                  boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,250,2,114),0.25)",
+                }}
+              >
+                Start Shopping
+              </Button>
+            </Link>
+          </div>
         </div>
       </AnimatedPage>
     )
@@ -1975,10 +2039,10 @@ export default function Cart() {
               </Button>
               <div className="min-w-0">
                 <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400">
-                  {activeCartTab === 'grocery' ? 'Grocery Store' : restaurantName}
+                  {activeCartTab === 'all' ? 'Your Cart' : activeCartTab === 'grocery' ? 'Grocery Store' : activeCartTab === 'accessories' ? 'Accessories Store' : restaurantName}
                 </p>
                 <p className="text-sm md:text-base font-medium text-gray-800 dark:text-white truncate">
-                  {activeCartTab === 'grocery' ? "10-15 mins" : (restaurantData?.estimatedDeliveryTime || "30-40 mins")} to <span className="font-semibold">Location</span>
+                  {activeCartTab === 'all' ? `${globalCart.length} items` : activeCartTab === 'grocery' || activeCartTab === 'accessories' ? "10-15 mins" : (restaurantData?.estimatedDeliveryTime || "30-40 mins")} to <span className="font-semibold">Location</span>
                   <span className="text-gray-400 dark:text-gray-500 ml-1 text-xs md:text-sm">{defaultAddress ? (formatFullAddress(defaultAddress) || defaultAddress?.formattedAddress || defaultAddress?.address || defaultAddress?.city || "Select address") : "Select address"}</span>
                 </p>
               </div>
@@ -2010,6 +2074,38 @@ export default function Cart() {
 
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
           <div className="max-w-3xl mx-auto">
+            {/* Category Tabs */}
+            <div className="flex bg-white dark:bg-[#1a1a1a] rounded-xl p-1 mb-6 shadow-sm border border-slate-100 dark:border-gray-800 overflow-x-auto scrollbar-hide">
+              {['all', 'food', 'grocery', 'accessories'].map((tab) => {
+                const count = tab === 'all' 
+                  ? globalCart.length 
+                  : globalCart.filter(i => (i.moduleType || 'food') === tab).length;
+                
+                return (
+                  <button
+                    key={tab}
+                    onClick={() => handleTabChange(tab)}
+                    className={`flex-1 min-w-[80px] py-2 px-3 text-sm font-medium rounded-lg transition-all capitalize whitespace-nowrap flex items-center justify-center gap-2 ${
+                      activeCartTab === tab
+                        ? 'bg-[#EB590E] text-white shadow-md'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    {tab === 'all' ? 'All Items' : tab}
+                    {count > 0 && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                        activeCartTab === tab 
+                          ? 'bg-white/20 text-white' 
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                      }`}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
             {/* Main Cart Content */}
             <div className="space-y-2 md:space-y-4">
               {/* Cart Items */}
@@ -2020,11 +2116,11 @@ export default function Cart() {
                       {/* Veg/Non-veg indicator */}
                       <div
                         className="w-4 h-4 md:w-5 md:h-5 border-2 flex items-center justify-center mt-1 flex-shrink-0"
-                        style={{ borderColor: item.foodType === 'Veg' || item.isVeg === true ? "#16a34a" : "#dc2626" }}
+                        style={{ borderColor: item.foodType === 'Veg' || item.isVeg === true ? "#16a34a" : "#F97316" }}
                       >
                         <div
                           className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full"
-                          style={{ backgroundColor: item.foodType === 'Veg' || item.isVeg === true ? "#16a34a" : "#dc2626" }}
+                          style={{ backgroundColor: item.foodType === 'Veg' || item.isVeg === true ? "#16a34a" : "#F97316" }}
                         />
                       </div>
 
@@ -2083,15 +2179,17 @@ export default function Cart() {
                   <FileText className="h-4 w-4 md:h-5 md:w-5" />
                   <span className="truncate">{note || "Add a note for the delivery partner"}</span>
                 </button>
-                <button
-                  onClick={() => setSendCutlery(!sendCutlery)}
-                  className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 border rounded-lg md:rounded-xl text-sm md:text-base ${sendCutlery ? 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300' : 'border-[#EB590E] dark:border-[#EB590E]/50 text-[#EB590E] dark:text-[#EB590E] bg-[#FFF2EB] dark:bg-[#EB590E]/10'}`}
-                >
-                  <Utensils className="h-4 w-4 md:h-5 md:w-5" />
-                  <span className="whitespace-nowrap">
-                    {sendCutlery ? "Send cutlery" : "Don't send cutlery"}
-                  </span>
-                </button>
+                {activeCartTab === 'food' && (
+                  <button
+                    onClick={() => setSendCutlery(!sendCutlery)}
+                    className={`flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 border rounded-lg md:rounded-xl text-sm md:text-base ${sendCutlery ? 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300' : 'border-[#EB590E] dark:border-[#EB590E]/50 text-[#EB590E] dark:text-[#EB590E] bg-[#FFF2EB] dark:bg-[#EB590E]/10'}`}
+                  >
+                    <Utensils className="h-4 w-4 md:h-5 md:w-5" />
+                    <span className="whitespace-nowrap">
+                      {sendCutlery ? "Send cutlery" : "Don't send cutlery"}
+                    </span>
+                  </button>
+                )}
               </div>
 
               {/* Note Input */}
@@ -2154,11 +2252,11 @@ export default function Cart() {
                             <div className="absolute top-1 md:top-2 left-1 md:left-2">
                               <div
                                 className="w-3.5 h-3.5 md:w-4 md:h-4 bg-white border flex items-center justify-center rounded"
-                                style={{ borderColor: addon.foodType === 'Veg' || addon.isVeg === true ? "#16a34a" : "#dc2626" }}
+                                style={{ borderColor: addon.foodType === 'Veg' || addon.isVeg === true ? "#16a34a" : "#F97316" }}
                               >
                                 <div
                                   className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full"
-                                  style={{ backgroundColor: addon.foodType === 'Veg' || addon.isVeg === true ? "#16a34a" : "#dc2626" }}
+                                  style={{ backgroundColor: addon.foodType === 'Veg' || addon.isVeg === true ? "#16a34a" : "#F97316" }}
                                 />
                               </div>
                             </div>
@@ -2574,97 +2672,115 @@ export default function Cart() {
       </div>
 
       {/* Bottom Sticky - Place Order */}
-      <div
-        className="bg-white dark:bg-[#1a1a1a] border-t dark:border-gray-800 shadow-lg z-30 flex-shrink-0 fixed bottom-0 left-0 right-0"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">
-          <div className="w-full max-w-lg mx-auto space-y-3">
-            {coinSettings && coinSettings.isActive && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="relative overflow-hidden flex items-center justify-between p-2.5 px-3.5 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-600/10 border border-amber-500/20 dark:border-amber-500/10 rounded-xl"
-              >
-                <div className="flex items-center gap-2">
-                  <Coins className="w-4.5 h-4.5 text-amber-500 animate-pulse shrink-0" />
-                  <span className="text-[11px] font-semibold text-amber-950 dark:text-amber-200">
-                    Earn {coinSettings.minCoinsPerOrder || 1}–{coinSettings.maxCoinsPerOrder || 3} Coins on this order!
-                  </span>
-                </div>
-                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-sm">
-                  1 Coin = ₹{coinSettings.coinToWalletValue || 10}
-                </span>
-              </motion.div>
-            )}
-
-            {/* Pay Using - Slim Pro UI */}
-            <div
-              className="flex items-center justify-between p-2 bg-gray-50 dark:bg-[#222222] rounded-xl border border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-[#282828] active:scale-[0.98] transition-all duration-200 shadow-sm"
-              onClick={() => setShowPaymentSheet(true)}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-lg bg-orange-100/80 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
-                  {selectedPaymentMethod === "wallet" ? (
-                    <Wallet className="h-5 w-5 text-[#EB590E]" />
-                  ) : selectedPaymentMethod === "razorpay" ? (
-                    <Zap className="h-5 w-5 text-[#EB590E]" />
-                  ) : (
-                    <Banknote className="h-5 w-5 text-[#EB590E]" />
-                  )}
-                </div>
-                <div className="leading-tight">
-                  <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold opacity-80">
-                    PAYING WITH
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
-                      {selectedPaymentLabel}
-                    </p>
-                    {selectedPaymentMethod === "wallet" && (
-                      <p className="text-[10px] text-green-600 dark:text-green-400 font-bold bg-green-50 dark:bg-green-900/20 px-1 rounded">
-                        {RUPEE_SYMBOL}{walletBalance.toFixed(0)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-0.5 text-[#EB590E] font-bold text-[11px] uppercase tracking-widest bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-lg">
-                CHANGE <ChevronRight className="h-3.5 w-3.5" />
-              </div>
+      {activeCartTab === 'all' ? (
+        <div
+          className="bg-white dark:bg-[#1a1a1a] border-t dark:border-gray-800 shadow-lg z-30 flex-shrink-0 fixed bottom-0 left-0 right-0"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5">
+            <div className="w-full max-w-lg mx-auto text-center space-y-2">
+              <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">
+                Checkout from specific categories
+              </h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                Please select a specific category tab (Food, Grocery, or Accessories) to proceed with checkout for those items.
+              </p>
             </div>
-
-            {/* Place Order Button */}
-            <button
-              onClick={handlePlaceOrder}
-              disabled={isPlacingOrder || (selectedPaymentMethod === "wallet" && walletBalance < total)}
-              className="w-full text-white px-6 h-12 md:h-14 rounded-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between transition-transform active:scale-[0.98]"
-              style={{
-                background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,250,2,114),0.92), var(--module-theme-color,#FA0272))",
-                boxShadow: "0 12px 24px rgba(var(--module-theme-rgb,250,2,114),0.28)",
-              }}
-            >
-              {(selectedPaymentMethod === "razorpay" || selectedPaymentMethod === "wallet" || selectedPaymentMethod === "cash") && (
-                <div className="text-left flex flex-col justify-center border-r-[1.5px] border-white/20 pr-4">
-                  <span className="text-xs md:text-sm font-semibold text-white/90">{RUPEE_SYMBOL}{total.toFixed(2)}</span>
-                  <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-white/80 mt-[-2px]">Total</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1 mx-auto text-sm md:text-lg tracking-wide">
-                {isPlacingOrder
-                  ? "Processing..."
-                  : !hasSavedAddress
-                    ? "Select Address"
-                    : "Place Order"}
-                <div className="flex align-center h-full">
-                  <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
-                </div>
-              </div>
-            </button>
           </div>
         </div>
-      </div>
+      ) : (
+        <div
+          className="bg-white dark:bg-[#1a1a1a] border-t dark:border-gray-800 shadow-lg z-30 flex-shrink-0 fixed bottom-0 left-0 right-0"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">
+            <div className="w-full max-w-lg mx-auto space-y-3">
+              {coinSettings && coinSettings.isActive && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="relative overflow-hidden flex items-center justify-between p-2.5 px-3.5 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-600/10 border border-amber-500/20 dark:border-amber-500/10 rounded-xl"
+                >
+                  <div className="flex items-center gap-2">
+                    <Coins className="w-4.5 h-4.5 text-amber-500 animate-pulse shrink-0" />
+                    <span className="text-[11px] font-semibold text-amber-950 dark:text-amber-200">
+                      Earn {coinSettings.minCoinsPerOrder || 1}–{coinSettings.maxCoinsPerOrder || 3} Coins on this order!
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-sm">
+                    1 Coin = ₹{coinSettings.coinToWalletValue || 10}
+                  </span>
+                </motion.div>
+              )}
+
+              {/* Pay Using - Slim Pro UI */}
+              <div
+                className="flex items-center justify-between p-2 bg-gray-50 dark:bg-[#222222] rounded-xl border border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-100 dark:hover:bg-[#282828] active:scale-[0.98] transition-all duration-200 shadow-sm"
+                onClick={() => setShowPaymentSheet(true)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-orange-100/80 dark:bg-orange-900/40 flex items-center justify-center flex-shrink-0">
+                    {selectedPaymentMethod === "wallet" ? (
+                      <Wallet className="h-5 w-5 text-[#EB590E]" />
+                    ) : selectedPaymentMethod === "razorpay" ? (
+                      <Zap className="h-5 w-5 text-[#EB590E]" />
+                    ) : (
+                      <Banknote className="h-5 w-5 text-[#EB590E]" />
+                    )}
+                  </div>
+                  <div className="leading-tight">
+                    <p className="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400 font-bold opacity-80">
+                      PAYING WITH
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-100">
+                        {selectedPaymentLabel}
+                      </p>
+                      {selectedPaymentMethod === "wallet" && (
+                        <p className="text-[10px] text-green-600 dark:text-green-400 font-bold bg-green-50 dark:bg-green-900/20 px-1 rounded">
+                          {RUPEE_SYMBOL}{walletBalance.toFixed(0)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-0.5 text-[#EB590E] font-bold text-[11px] uppercase tracking-widest bg-orange-50 dark:bg-orange-900/20 px-2.5 py-1 rounded-lg">
+                  CHANGE <ChevronRight className="h-3.5 w-3.5" />
+                </div>
+              </div>
+
+              {/* Place Order Button */}
+              <button
+                onClick={handlePlaceOrder}
+                disabled={isPlacingOrder || (selectedPaymentMethod === "wallet" && walletBalance < total)}
+                className="w-full text-white px-6 h-12 md:h-14 rounded-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between transition-transform active:scale-[0.98]"
+                style={{
+                  background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,250,2,114),0.92), var(--module-theme-color,#FA0272))",
+                  boxShadow: "0 12px 24px rgba(var(--module-theme-rgb,250,2,114),0.28)",
+                }}
+              >
+                {(selectedPaymentMethod === "razorpay" || selectedPaymentMethod === "wallet" || selectedPaymentMethod === "cash") && (
+                  <div className="text-left flex flex-col justify-center border-r-[1.5px] border-white/20 pr-4">
+                    <span className="text-xs md:text-sm font-semibold text-white/90">{RUPEE_SYMBOL}{total.toFixed(2)}</span>
+                    <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-white/80 mt-[-2px]">Total</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1 mx-auto text-sm md:text-lg tracking-wide">
+                  {isPlacingOrder
+                    ? "Processing..."
+                    : !hasSavedAddress
+                      ? "Select Address"
+                      : "Place Order"}
+                  <div className="flex align-center h-full">
+                    <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
+                  </div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
           {/* Placing Order Modal */}
           {showPlacingOrder && (

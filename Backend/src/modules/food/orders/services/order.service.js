@@ -376,7 +376,7 @@ function toObjectId(id, fieldName = 'ID') {
 // ----- Create order -----
 export async function createOrder(userId, dto) {
   try {
-    if (dto.moduleType === 'grocery') {
+    if (dto.moduleType === 'grocery' || dto.moduleType === 'accessories') {
       return await createGroceryOrder(userId, dto);
     }
 

@@ -22,6 +22,7 @@ const GroceryOrdersPage = lazy(() => import("@food/pages/admin/grocery/GroceryOr
 
 const AccessoriesCategory = lazy(() => import("@food/pages/admin/accessories/AccessoriesCategory"));
 const AccessoriesProductsList = lazy(() => import("@food/pages/admin/accessories/AccessoriesProductsList"));
+const AccessoriesOrdersPage = lazy(() => import("@food/pages/admin/accessories/AccessoriesOrdersPage"));
 
 const FeeSettings = lazy(() => import("@food/pages/admin/fee-settings/FeeSettings"));
 const ReferralSettings = lazy(() => import("@food/pages/admin/referral-settings/ReferralSettings"));
@@ -243,6 +244,7 @@ export default function AdminRouter() {
             {/* Accessories Routes */}
             <Route path="accessories-categories" element={<AccessoriesCategory />} />
             <Route path="accessories-products" element={<AccessoriesProductsList />} />
+            <Route path="accessories-orders/:status" element={<AccessoriesOrdersPage />} />
 
             {/* Services Routes */}
             <Route path="categories" element={<Category />} />

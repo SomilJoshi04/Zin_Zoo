@@ -6,8 +6,24 @@ import { broadcastPublicUpdate } from '../../../config/socket.js';
 // ----- Categories -----
 export async function getCategories(req, res, next) {
     try {
-        const categories = await AccessoriesCategory.find().sort({ sortOrder: 1, createdAt: -1 });
-        res.status(200).json({ success: true, message: 'Accessories categories fetched successfully', data: { categories } });
+        const categories = await AccessoriesCategory.find().sort({ sortOrder: 1, createdAt: -1 }).lean();
+        
+        const categoryIds = categories.map(c => c._id);
+        const productCounts = await AccessoriesProduct.aggregate([
+            { $match: { categoryId: { $in: categoryIds } } },
+            { $group: { _id: '$categoryId', count: { $sum: 1 } } }
+        ]);
+        
+        const countMap = {};
+        productCounts.forEach(pc => { countMap[pc._id.toString()] = pc.count; });
+        
+        const mappedCategories = categories.map(c => ({
+            ...c,
+            id: c._id.toString(),
+            itemCount: countMap[c._id.toString()] || 0
+        }));
+
+        res.status(200).json({ success: true, message: 'Accessories categories fetched successfully', data: { categories: mappedCategories } });
     } catch (error) {
         next(error);
     }
@@ -145,6 +161,109 @@ export async function toggleProductStatus(req, res, next) {
         
         broadcastPublicUpdate('accessories:product:update', { action: 'update', data: product });
         res.status(200).json({ success: true, message: 'Product status toggled successfully', data: { product } });
+    } catch (error) {
+        next(error);
+    }
+}
+
+
+// ----- Orders -----
+export async function getOrders(req, res, next) {
+    try {
+        const { GroceryOrder } = await import('../../food/orders/models/groceryOrder.model.js');
+        const query = req.query || {};
+        const filter = { moduleType: 'accessories' };
+        if (query.search) {
+            filter.$or = [
+                { orderId: { $regex: query.search, $options: 'i' } },
+                { customerName: { $regex: query.search, $options: 'i' } }
+            ];
+        }
+        if (query.status && query.status !== 'all') {
+            const statusMap = {
+                'pending': ['pending_payment', 'created', 'pending'],
+                'accepted': ['confirmed', 'accepted'],
+                'processing': ['preparing', 'processing'],
+                'out-for-delivery': ['picked_up', 'out_for_delivery'],
+                'delivered': ['delivered'],
+                'canceled': ['cancelled', 'cancelled_by_admin', 'cancelled_by_restaurant', 'cancelled_by_user', 'canceled']
+            };
+            const mappedStatuses = statusMap[query.status.toLowerCase()];
+            if (mappedStatuses) {
+                filter.orderStatus = { $in: mappedStatuses };
+            }
+        }
+        
+        const limit = parseInt(query.limit) || 20;
+        const page = parseInt(query.page) || 1;
+        const skip = (page - 1) * limit;
+        
+        const orders = await GroceryOrder.find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean();
+            
+        const total = await GroceryOrder.countDocuments(filter);
+        
+        res.status(200).json({ 
+            success: true, 
+            message: 'Accessories orders fetched successfully', 
+            data: {
+                orders: orders.map(o => ({
+                    ...o,
+                    id: o._id.toString()
+                })),
+                total,
+                page,
+                limit
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function getOrderById(req, res, next) {
+    try {
+        const { id } = req.params;
+        const mongoose = (await import('mongoose')).default;
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: 'Invalid order ID' });
+        }
+        const { GroceryOrder } = await import('../../food/orders/models/groceryOrder.model.js');
+        const order = await GroceryOrder.findOne({ _id: id, moduleType: 'accessories' }).lean();
+        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        res.status(200).json({ success: true, message: 'Order fetched successfully', data: { order } });
+    } catch (error) {
+        next(error);
+    }
+}
+
+export async function updateOrderStatus(req, res, next) {
+    try {
+        const { id } = req.params;
+        const mongoose = (await import('mongoose')).default;
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: 'Invalid order ID' });
+        }
+        const status = req.body?.status;
+        if (!status) {
+             return res.status(400).json({ success: false, message: 'Status is required' });
+        }
+        const { GroceryOrder } = await import('../../food/orders/models/groceryOrder.model.js');
+        const order = await GroceryOrder.findOneAndUpdate(
+            { _id: id, moduleType: 'accessories' },
+            { $set: { orderStatus: status } },
+            { new: true, runValidators: true }
+        );
+        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        
+        // Also broadcast update
+        const { broadcastPublicUpdate } = await import('../../../config/socket.js');
+        broadcastPublicUpdate('accessories:order:update', { action: 'update', data: order });
+        
+        res.status(200).json({ success: true, message: 'Order status updated successfully', data: { order } });
     } catch (error) {
         next(error);
     }

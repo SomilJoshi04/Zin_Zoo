@@ -342,7 +342,7 @@ export async function getRestaurants(query) {
             .skip(skip)
             .limit(limit)
             .select('restaurantName slug location area city status ownerName ownerPhone primaryContactNumber zoneId profileImage coverImages menuImages rating totalRatings isActive')
-            .populate('zoneId', 'name zoneName')
+            .populate({ path: 'zoneId', select: 'name zoneName', strictPopulate: false })
             .lean(),
         FoodRestaurant.countDocuments(filter)
     ]);
@@ -407,17 +407,17 @@ export async function getDashboardStats(query = {}) {
         orderMatch.zoneId = zoneId;
     }
 
-    // const restaurantMatch = {};
-    // if (zoneId) {
-    //     restaurantMatch.zoneId = zoneId;
-    // }
+    const restaurantMatch = {};
+    if (zoneId) {
+        restaurantMatch.zoneId = zoneId;
+    }
 
-    // const zoneRestaurantIds = zoneId
-    //     ? await FoodRestaurant.find({ zoneId }).distinct('_id')
-    //     : null;
-    // const zoneScopedRestaurantMatch = zoneId
-    //     ? { restaurantId: { $in: zoneRestaurantIds || [] } }
-    //     : {};
+    const zoneRestaurantIds = zoneId
+        ? await FoodRestaurant.find({ zoneId }).distinct('_id')
+        : null;
+    const zoneScopedRestaurantMatch = zoneId
+        ? { restaurantId: { $in: zoneRestaurantIds || [] } }
+        : {};
         
     const zoneScopedFoodMatch = zoneId ? { zoneId } : {};
 
@@ -438,7 +438,8 @@ export async function getDashboardStats(query = {}) {
         recentCancelledOrders,
         recentCustomers,
         groceryPending,
-        groceryCompleted
+        groceryCompleted,
+        groceryOrderTotalsAgg
     ] = await Promise.all([
         FoodOrder.aggregate([
             { $match: orderMatch },
@@ -582,7 +583,47 @@ export async function getDashboardStats(query = {}) {
         GroceryOrder.countDocuments({
             ...orderMatch,
             orderStatus: 'delivered'
-        })
+        }),
+        GroceryOrder.aggregate([
+            { $match: orderMatch },
+            {
+                $group: {
+                    _id: null,
+                    totalOrders: { $sum: 1 },
+                    delivered: { $sum: { $cond: [{ $eq: ['$orderStatus', 'delivered'] }, 1, 0] } },
+                    cancelled: {
+                        $sum: {
+                            $cond: [{ $in: ['$orderStatus', CANCELLED_ORDER_STATUSES] }, 1, 0]
+                        }
+                    },
+                    pending: {
+                        $sum: {
+                            $cond: [{ $in: ['$orderStatus', PENDING_ORDER_STATUSES] }, 1, 0]
+                        }
+                    },
+                    revenueTotal: { 
+                        $sum: { 
+                            $cond: [{ $eq: ['$orderStatus', 'delivered'] }, { $ifNull: ['$pricing.total', 0] }, 0] 
+                        } 
+                    },
+                    platformFeeTotal: { 
+                        $sum: { 
+                            $cond: [{ $eq: ['$orderStatus', 'delivered'] }, { $ifNull: ['$pricing.platformFee', 0] }, 0] 
+                        } 
+                    },
+                    deliveryFeeTotal: { 
+                        $sum: { 
+                            $cond: [{ $eq: ['$orderStatus', 'delivered'] }, { $ifNull: ['$pricing.deliveryFee', 0] }, 0] 
+                        } 
+                    },
+                    gstTotal: { 
+                        $sum: { 
+                            $cond: [{ $eq: ['$orderStatus', 'delivered'] }, { $ifNull: ['$pricing.tax', 0] }, 0] 
+                        } 
+                    }
+                }
+            }
+        ])
     ]);
 
     const liveSignals = [];
@@ -651,7 +692,20 @@ export async function getDashboardStats(query = {}) {
     liveSignals.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
     const finalLiveSignals = liveSignals.slice(0, 15);
 
-    const totals = orderTotalsAgg?.[0] || {};
+    const fTotals = orderTotalsAgg?.[0] || {};
+    const gTotals = groceryOrderTotalsAgg?.[0] || {};
+    const totals = {
+        totalOrders: (fTotals.totalOrders || 0) + (gTotals.totalOrders || 0),
+        delivered: (fTotals.delivered || 0) + (gTotals.delivered || 0),
+        cancelled: (fTotals.cancelled || 0) + (gTotals.cancelled || 0),
+        pending: (fTotals.pending || 0) + (gTotals.pending || 0),
+        revenueTotal: (fTotals.revenueTotal || 0) + (gTotals.revenueTotal || 0),
+        commissionTotal: (fTotals.commissionTotal || 0),
+        platformFeeTotal: (fTotals.platformFeeTotal || 0) + (gTotals.platformFeeTotal || 0),
+        deliveryFeeTotal: (fTotals.deliveryFeeTotal || 0) + (gTotals.deliveryFeeTotal || 0),
+        gstTotal: (fTotals.gstTotal || 0) + (gTotals.gstTotal || 0),
+        adminNetProfit: (fTotals.adminNetProfit || 0) + (gTotals.platformFeeTotal || 0) + (gTotals.deliveryFeeTotal || 0)
+    };
 
     const now = new Date();
     const monthlyMap = new Map(
@@ -995,7 +1049,7 @@ export async function getRestaurantReport(query = {}) {
             .skip(skip)
             .limit(limit)
             .select('restaurantName profileImage rating totalRatings status zoneId')
-            .populate('zoneId', 'name zoneName')
+            .populate({ path: 'zoneId', select: 'name zoneName', strictPopulate: false })
             .lean(),
         FoodRestaurant.countDocuments(restaurantFilter)
     ]);
@@ -2219,7 +2273,7 @@ export async function getRestaurantById(id) {
     if (!id || !mongoose.Types.ObjectId.isValid(id)) return null;
     return FoodRestaurant.findById(id)
         .select('-__v')
-        .populate('zoneId', 'name zoneName serviceLocation isActive')
+        .populate({ path: 'zoneId', select: 'name zoneName serviceLocation isActive', strictPopulate: false })
         .lean();
 }
 
@@ -2401,7 +2455,7 @@ export async function updateRestaurantMenuById(id, menu) {
 
 export async function getPendingRestaurants() {
     const restaurants = await FoodRestaurant.find({ status: { $in: ['pending', 'rejected'] } })
-        .populate('zoneId', 'name zoneName')
+        .populate({ path: 'zoneId', select: 'name zoneName', strictPopulate: false })
         .sort({ createdAt: -1 })
         .lean();
     return restaurants.map((r, i) => ({
@@ -2542,7 +2596,7 @@ export async function updateRestaurantById(id, body = {}) {
         void invalidateCache('restaurant_timings:*');
     }
 
-    return FoodRestaurant.findById(id).select('-__v').populate('zoneId', 'name zoneName serviceLocation isActive').lean();
+    return FoodRestaurant.findById(id).select('-__v').populate({ path: 'zoneId', select: 'name zoneName serviceLocation isActive', strictPopulate: false }).lean();
 }
 
 export async function updateRestaurantStatus(id, body = {}) {
@@ -2643,7 +2697,7 @@ export async function updateRestaurantLocation(id, body = {}) {
     }
 
     await doc.save();
-    return FoodRestaurant.findById(id).select('-__v').populate('zoneId', 'name zoneName serviceLocation isActive').lean();
+    return FoodRestaurant.findById(id).select('-__v').populate({ path: 'zoneId', select: 'name zoneName serviceLocation isActive', strictPopulate: false }).lean();
 }
 
 // ----- Categories -----
@@ -3137,7 +3191,13 @@ export async function getFoods(query) {
         FoodItem.countDocuments(filter)
     ]);
 
-    const restaurantIds = Array.from(new Set(list.map((f) => String(f.restaurantId)).filter(Boolean)));
+    const restaurantIds = Array.from(
+        new Set(
+            list
+                .map((f) => (f.restaurantId ? String(f.restaurantId) : ''))
+                .filter((id) => id && id !== 'undefined' && id !== 'null' && mongoose.Types.ObjectId.isValid(id))
+        )
+    );
     const restaurants = restaurantIds.length
         ? await FoodRestaurant.find({ _id: { $in: restaurantIds } }).select('restaurantName').lean()
         : [];
@@ -3191,8 +3251,8 @@ const resolveAdminFoodCategory = async ({ categoryId, categoryName, foodType, pu
     }
 
     if (categoryDoc?.foodTypeScope) {
-        if (pureVegRestaurant && String(categoryDoc.foodTypeScope || '') !== 'Veg') {
-            throw new ValidationError('Pure veg restaurants can only use veg categories');
+        if (pureVegRestaurant && String(categoryDoc.foodTypeScope || '') === 'Non-Veg') {
+            throw new ValidationError('Pure veg restaurants cannot use non-veg categories');
         }
         if (!categoryAllowsFoodType(categoryDoc.foodTypeScope, foodType)) {
             throw new ValidationError(`This ${categoryDoc.foodTypeScope} category cannot accept ${foodType} food`);
@@ -3257,9 +3317,17 @@ const getAdminFoodUpdatedPricing = (existing = {}, body = {}) => {
 };
 
 export async function createFood(body) {
+    const restaurantId = typeof body.restaurantId === 'string' ? body.restaurantId.trim() : '';
+    if (!restaurantId || !mongoose.Types.ObjectId.isValid(restaurantId)) throw new ValidationError('Valid Restaurant ID is required');
+    const restaurant = await FoodRestaurant.findById(restaurantId);
+    if (!restaurant) throw new ValidationError('Restaurant not found');
+
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     if (!name) throw new ValidationError('Food name is required');
     const foodType = body.foodType === 'Veg' ? 'Veg' : 'Non-Veg';
+    if (restaurant.pureVegRestaurant === true && foodType !== 'Veg') {
+        throw new ValidationError('Pure veg restaurants can only add Veg foods');
+    }
     const { price, variants } = getAdminFoodCreatePricing(body);
 
     let categoryName = typeof body.categoryName === 'string' ? body.categoryName.trim() : '';
@@ -3307,11 +3375,18 @@ export async function updateFood(id, body) {
         const nextCategoryName = body.categoryName !== undefined
             ? String(body.categoryName || '').trim()
             : (body.category !== undefined ? String(body.category || '').trim() : doc.categoryName);
+        
+        const restaurant = await FoodRestaurant.findById(doc.restaurantId);
+        
+        if (restaurant?.pureVegRestaurant === true && targetFoodType !== 'Veg') {
+            throw new ValidationError('Pure veg restaurants can only use Veg food types');
+        }
+        
         const { categoryId, categoryName } = await resolveAdminFoodCategory({
             categoryId: body.categoryId !== undefined ? body.categoryId : doc.categoryId,
             categoryName: nextCategoryName,
             foodType: targetFoodType,
-            pureVegRestaurant: restaurant.pureVegRestaurant === true
+            pureVegRestaurant: restaurant?.pureVegRestaurant === true
         });
         doc.categoryId = categoryId;
         doc.categoryName = categoryName;
@@ -5603,3 +5678,18 @@ export function getAdminPermissionCatalog() {
         })),
     };
 }
+
+
+
+
+// force restart
+
+// force restart update 2
+
+// force restart update 3
+
+// force restart update 4
+
+// force restart update 5
+
+// force restart update 6

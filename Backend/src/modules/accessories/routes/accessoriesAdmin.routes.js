@@ -17,4 +17,9 @@ router.put('/products/:id', adminController.updateProduct);
 router.delete('/products/:id', adminController.deleteProduct);
 router.patch('/products/:id/status', adminController.toggleProductStatus);
 
+// Orders
+router.get('/orders', adminController.getOrders);
+router.get('/orders/:id', adminController.getOrderById);
+router.put('/orders/:id/status', adminController.updateOrderStatus);
+
 export default router;

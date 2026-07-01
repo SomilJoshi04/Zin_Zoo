@@ -7,11 +7,10 @@ export default function HeaderCartIcon() {
   const { cart } = useCart();
   const activeModuleId = useActiveModule();
   
-  const moduleCart = cart.filter(item => item.moduleType === activeModuleId);
-  const totalItems = moduleCart.reduce((total, item) => total + (item.quantity || 1), 0);
+  const totalItems = cart.reduce((total, item) => total + (item.quantity || 1), 0);
 
   return (
-    <Link to={`/food/user/cart?module=${activeModuleId}`} className="relative group">
+    <Link to="/food/user/cart" className="relative group">
       <div className="h-8 w-8 flex items-center justify-center rounded-full bg-white/10 border border-white/10 cursor-pointer active:scale-90 transition-all dark:bg-gray-800/50 dark:border-gray-700">
         <ShoppingCart className="h-4 w-4 text-white/90 drop-shadow-sm group-hover:text-[var(--module-theme-color)] transition-colors" />
         {totalItems > 0 && (

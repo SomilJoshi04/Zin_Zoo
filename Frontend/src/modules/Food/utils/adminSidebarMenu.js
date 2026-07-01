@@ -86,6 +86,20 @@ export const adminSidebarMenu = [
         ],
       },
       {
+        type: "expandable",
+        label: "Accessories Orders",
+        icon: "FileText",
+        subItems: [
+          { label: "All Orders", path: "/admin/food/accessories-orders/all" },
+          { label: "Pending Orders", path: "/admin/food/accessories-orders/pending" },
+          { label: "Accepted Orders", path: "/admin/food/accessories-orders/accepted" },
+          { label: "Processing Orders", path: "/admin/food/accessories-orders/processing" },
+          { label: "Out For Delivery", path: "/admin/food/accessories-orders/out-for-delivery" },
+          { label: "Delivered Orders", path: "/admin/food/accessories-orders/delivered" },
+          { label: "Canceled Orders", path: "/admin/food/accessories-orders/canceled" },
+        ],
+      },
+      {
         type: "link",
         label: "Categories",
         icon: "LayoutGrid",

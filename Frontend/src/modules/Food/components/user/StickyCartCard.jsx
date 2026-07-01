@@ -1,14 +1,16 @@
 import { Link } from "react-router-dom"
 import { X, ChevronRight } from "lucide-react"
 import { useCart } from "@food/context/CartContext"
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useActiveModule } from "@food/hooks/useActiveModule"
 
 export default function StickyCartCard() {
   const { cart, getCartCount } = useCart()
   const [isVisible, setIsVisible] = useState(true)
   const [bottomPosition, setBottomPosition] = useState("bottom-[70px]") // Fixed above bottom navigation
   const cartCount = getCartCount()
+  const activeModule = useActiveModule()
 
   // Set fixed position above bottom navigation (no scroll-based movement)
   useEffect(() => {
@@ -38,12 +40,19 @@ export default function StickyCartCard() {
     }
   }, [])
 
-  // Get restaurant info from first cart item or use default
-  const restaurantName = cart[0]?.restaurant || "Restaurant"
-  const restaurantImage = cart[0]?.image || "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&h=200&fit=crop"
+  // Get item module type
+  const cartModuleType = cart[0]?.moduleType || "food"
+  const isFood = cartModuleType === "food"
 
-  // Create restaurant slug from restaurant name
-  const restaurantSlug = restaurantName.toLowerCase().replace(/\s+/g, "-")
+  // Get info based on module type
+  const displayName = isFood 
+    ? (cart[0]?.restaurant || "Restaurant") 
+    : (cart[0]?.storeName || cart[0]?.name || "Store")
+    
+  const displayImage = cart[0]?.image || "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=200&h=200&fit=crop"
+
+  // Create slug from name
+  const displaySlug = displayName.toLowerCase().replace(/\s+/g, "-")
 
   // Calculate total price
   const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity * 83), 0)
@@ -99,26 +108,26 @@ export default function StickyCartCard() {
                 {/* Restaurant Image */}
                 <div className="flex-shrink-0">
                   <img
-                    src={restaurantImage}
-                    alt={restaurantName}
+                    src={displayImage}
+                    alt={displayName}
                     className="w-14 h-14 md:w-16 md:h-16 rounded-lg object-cover"
                   />
                 </div>
 
-                {/* Restaurant Info */}
-                <Link to={`/user/restaurants/${restaurantSlug}`} className="flex-1 min-w-0">
+                {/* Info */}
+                <Link to="/food/user/cart" className="flex-1 min-w-0">
                   <h3 className="font-bold text-gray-900 dark:text-gray-200 text-base md:text-lg mb-0.5 line-clamp-1">
-                    {restaurantName}
+                    {displayName}
                   </h3>
                   <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 text-sm md:text-base">
-                    <span>View Menu</span>
+                    <span>View Cart</span>
                     <ChevronRight className="h-3 w-3 md:h-4 md:w-4" />
                   </div>
                 </Link>
 
                 {/* View Cart Button */}
                 <Link
-                  to="/user/cart"
+                  to="/food/user/cart"
                   className="flex-shrink-0 text-white px-4 py-2.5 md:px-5 md:py-3 rounded-lg font-semibold transition-colors"
                   style={{
                     background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,250,2,114),0.92), var(--module-theme-color,#FA0272))",

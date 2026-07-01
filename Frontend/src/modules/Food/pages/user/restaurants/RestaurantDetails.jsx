@@ -2263,7 +2263,7 @@ function RestaurantDetailsContent() {
                     className={`flex items-center gap-1.5 whitespace-nowrap border-gray-300 bg-white rounded-full ${filters.vegNonVeg === "non-veg" ? "border-red-600 bg-red-50" : ""
                       }`}
                     style={filters.vegNonVeg === "non-veg" ? {
-                      borderColor: "#dc2626",
+                      borderColor: "#F97316",
                       backgroundColor: "#fef2f2",
                       color: "#b91c1c",
                     } : undefined}
@@ -2274,7 +2274,7 @@ function RestaurantDetailsContent() {
                       }))
                     }
                   >
-                    <div className="h-3 w-3 rounded-full bg-red-600" style={{ backgroundColor: "#dc2626" }} />
+                    <div className="h-3 w-3 rounded-full bg-red-600" style={{ backgroundColor: "#F97316" }} />
                     Non-veg
                     {filters.vegNonVeg === "non-veg" && (
                       <X className="h-3 w-3 text-gray-600" />
@@ -2485,8 +2485,8 @@ function RestaurantDetailsContent() {
                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#16a34a" }}></div>
                                   </div>
                                 ) : (
-                                  <div className="w-4 h-4 border-2 border-red-600 flex items-center justify-center rounded-sm flex-shrink-0" style={{ borderColor: "#dc2626" }}>
-                                    <div className="w-2 h-2 bg-red-600 rounded-full" style={{ backgroundColor: "#dc2626" }}></div>
+                                  <div className="w-4 h-4 border-2 border-red-600 flex items-center justify-center rounded-sm flex-shrink-0" style={{ borderColor: "#F97316" }}>
+                                    <div className="w-2 h-2 bg-red-600 rounded-full" style={{ backgroundColor: "#F97316" }}></div>
                                   </div>
                                 )}
                                 {item.isSpicy && <span className="text-xs font-semibold text-red-500">Spicy</span>}
@@ -2712,8 +2712,8 @@ function RestaurantDetailsContent() {
                                               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "#16a34a" }}></div>
                                             </div>
                                           ) : (
-                                            <div className="w-4 h-4 border-2 border-red-600 flex items-center justify-center rounded-sm flex-shrink-0" style={{ borderColor: "#dc2626" }}>
-                                              <div className="w-2 h-2 bg-red-600 rounded-full" style={{ backgroundColor: "#dc2626" }}></div>
+                                            <div className="w-4 h-4 border-2 border-red-600 flex items-center justify-center rounded-sm flex-shrink-0" style={{ borderColor: "#F97316" }}>
+                                              <div className="w-2 h-2 bg-red-600 rounded-full" style={{ backgroundColor: "#F97316" }}></div>
                                             </div>
                                           )}
                                           {item.isSpicy && <span className="text-xs font-semibold text-red-500">Spicy</span>}
@@ -3108,12 +3108,12 @@ function RestaurantDetailsContent() {
                               : "border-gray-200 dark:border-gray-700 bg-white dark:bg-[#2a2a2a] text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600"
                               }`}
                             style={filters.vegNonVeg === "non-veg" ? {
-                              borderColor: "#dc2626",
+                              borderColor: "#F97316",
                               backgroundColor: "#fef2f2",
                               color: "#b91c1c",
                             } : undefined}
                           >
-                            <div className="h-4 w-4 rounded-full bg-red-600 dark:bg-red-500" style={{ backgroundColor: "#dc2626" }} />
+                            <div className="h-4 w-4 rounded-full bg-red-600 dark:bg-red-500" style={{ backgroundColor: "#F97316" }} />
                             <span className="font-medium">Non-veg</span>
                           </button>
                         )}

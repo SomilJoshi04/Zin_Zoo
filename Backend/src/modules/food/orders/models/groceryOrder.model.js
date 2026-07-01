@@ -170,6 +170,11 @@ const groceryOrderSchema = new mongoose.Schema(
             ref: 'FoodUser',
             required: true
         },
+        moduleType: {
+            type: String,
+            enum: ['grocery', 'accessories'],
+            default: 'grocery'
+        },
         zoneId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'FoodZone',
@@ -239,7 +244,8 @@ groceryOrderSchema.pre('save', async function (next) {
     if (!this.order_id) {
         const timestamp = Date.now().toString().slice(-4);
         const random = Math.floor(100 + Math.random() * 900);
-        this.order_id = `GRO-${timestamp}${random}`;
+        const prefix = this.moduleType === 'accessories' ? 'ACC' : 'GRO';
+        this.order_id = `${prefix}-${timestamp}${random}`;
     }
     if (this.order_id) {
         this.orderId = this.order_id;
