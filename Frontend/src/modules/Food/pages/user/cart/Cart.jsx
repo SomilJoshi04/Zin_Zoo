@@ -1293,7 +1293,11 @@ export default function Cart() {
   }
 
   const handleBack = () => {
-    navigate(-1)
+    if (globalCart.length === 0) {
+      navigate('/food')
+    } else {
+      navigate(-1)
+    }
   }
 
   // Handler to select address by label (Home, Office, Other)

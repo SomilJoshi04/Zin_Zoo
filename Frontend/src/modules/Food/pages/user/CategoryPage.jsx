@@ -1322,20 +1322,31 @@ export default function CategoryPage() {
     return applyFiltersAndSorting(filtered)
   }, [selectedCategory, activeFilters, deferredSearchQuery, restaurantsData, categoryKeywords, vegMode, approvedFoodsData, sortBy, availabilityTick, zoneId])
 
+  const [isSwitchingCategory, setIsSwitchingCategory] = useState(false)
   const showRestaurantSkeleton = useDelayedLoading(
-    isLoadingFilterResults || loadingRestaurants || (isEnrichingMenus && selectedCategory !== 'all' && filteredRecommended.length === 0),
+    isLoadingFilterResults || loadingRestaurants || isSwitchingCategory || (isEnrichingMenus && selectedCategory !== 'all' && filteredRecommended.length === 0),
     { delay: 140, minDuration: 360 }
   )
 
   const handleCategorySelect = (category) => {
     const categorySlug = category.slug || category.id
-    setSelectedCategory(categorySlug)
-    // Update URL to reflect category change
-    if (categorySlug === 'all') {
-      navigate('/user/category/all')
-    } else {
-      navigate(`/user/category/${categorySlug}`)
-    }
+    if (categorySlug === selectedCategory) return;
+    
+    setIsSwitchingCategory(true)
+    
+    // Simulate a brief loading state for better UX
+    setTimeout(() => {
+      startTransition(() => {
+        setSelectedCategory(categorySlug)
+        // Update URL to reflect category change
+        if (categorySlug === 'all') {
+          navigate('/food/user/category/all')
+        } else {
+          navigate(`/food/user/category/${categorySlug}`)
+        }
+      })
+      setIsSwitchingCategory(false)
+    }, 400)
   }
 
   // Check if should show grayscale (user out of service)
@@ -1544,7 +1555,7 @@ export default function CategoryPage() {
             </section>
           )}
           {/* Empty State for specific category with no items */}
-          {selectedCategory !== 'all' && filteredRecommended.length === 0 && (
+          {selectedCategory !== 'all' && filteredRecommended.length === 0 && !showRestaurantSkeleton && !isSwitchingCategory && !loadingRestaurants && !isLoadingFilterResults && (
             <div className="flex flex-col items-center justify-center py-16 text-center px-4 bg-gray-50/50 dark:bg-gray-900/10 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
               <div className="w-14 h-14 rounded-full bg-[#FFF2EB] dark:bg-[#EB590E]/10 flex items-center justify-center mb-4">
                 <UtensilsCrossed className="h-6 w-6 text-[#EB590E]" />

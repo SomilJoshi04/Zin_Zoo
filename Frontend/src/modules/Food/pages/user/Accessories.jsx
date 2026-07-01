@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Skeleton } from "@food/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@food/components/ui/sheet";
 import { usePublicSocket } from "@food/hooks/usePublicSocket";
-import ModuleSwitcher from "@food/components/user/ModuleSwitcher";
+import ModuleNavbar from "@food/components/user/ModuleNavbar";
 
 export default function AccessoriesPage() {
   const navigate = useNavigate();
@@ -226,7 +226,6 @@ export default function AccessoriesPage() {
                   </span>
                 )}
               </div>
-              <ModuleSwitcher variant="dark" />
             </div>
           </div>
 
@@ -240,6 +239,10 @@ export default function AccessoriesPage() {
                 onChange={handleSearch}
               />
             </div>
+          </div>
+
+          <div className="bg-white dark:bg-[#1a1a1a]">
+            <ModuleNavbar />
           </div>
         </div>
 

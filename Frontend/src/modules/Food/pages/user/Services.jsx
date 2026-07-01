@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Briefcase, Shield, Clock, PhoneCall, Zap, Droplets, Sparkles, Hammer, PaintRoller, Fan, Wrench, ShieldCheck, ArrowLeft } from "lucide-react"
 import { servicesPublicAPI } from "@food/api"
 import { usePublicSocket } from "@food/hooks/usePublicSocket"
-import ModuleSwitcher from "@food/components/user/ModuleSwitcher"
+import ModuleNavbar from "@food/components/user/ModuleNavbar";
 import HeaderCartIcon from "@food/components/user/HeaderCartIcon"
 
 export default function Services() {
@@ -118,7 +118,6 @@ export default function Services() {
 
       {/* Top Right Actions */}
       <div className="absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-2 z-50">
-        <ModuleSwitcher variant="dark" />
       </div>
 
       {/* Header Section */}
@@ -150,6 +149,10 @@ export default function Services() {
         >
           From quick plumbing fixes to deep home cleaning, explore our range of verified and professional home services.
         </motion.p>
+      </div>
+
+      <div className="mb-8">
+        <ModuleNavbar />
       </div>
 
       {/* Core Services Section */}

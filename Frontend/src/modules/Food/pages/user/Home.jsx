@@ -94,6 +94,7 @@ import { API_BASE_URL } from "@food/api/config";
 import OptimizedImage from "@food/components/OptimizedImage";
 import { getRestaurantAvailabilityStatus } from "@food/utils/restaurantAvailability";
 import HomeHeader from "@food/components/user/home/HomeHeader";
+import ModuleNavbar from "@food/components/user/ModuleNavbar";
 
 import PromoRow from "@food/components/user/home/PromoRow";
 import FestBanner from "@food/components/user/home/FestBanner";
@@ -2620,6 +2621,10 @@ export default function Home() {
                 />
               )}
             </div>
+          </div>
+
+          <div className="mb-4 mt-2">
+            <ModuleNavbar />
           </div>
 
           <AnimatePresence mode="wait">
