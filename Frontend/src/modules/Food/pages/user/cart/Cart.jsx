@@ -1678,7 +1678,7 @@ export default function Cart() {
         // `useZone()` can return `null`. Zod expects string/undefined, not null.
         zoneId: zoneId || undefined,
         scheduledAt: isScheduled ? new Date(`${scheduledDate}T${scheduledTime}:00`).toISOString() : undefined,
-        moduleType: activeCartTab,
+        moduleType: activeCartTab === 'all' ? 'unified' : activeCartTab,
       };
       // Log final order details (including paymentMethod for COD debugging)
       debugLog('?? FINAL: Sending order to backend with:', {
@@ -1812,7 +1812,8 @@ export default function Cart() {
               orderId: verifyOrderId,
               razorpayOrderId: response.razorpay_order_id,
               razorpayPaymentId: response.razorpay_payment_id,
-              razorpaySignature: response.razorpay_signature
+              razorpaySignature: response.razorpay_signature,
+              isUnified: activeCartTab === 'all'
             })
 
             debugLog("? Payment verification response:", verifyResponse.data)
@@ -2070,7 +2071,7 @@ export default function Cart() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-6">
           <div className="max-w-3xl mx-auto">
             {/* Category Tabs */}
-            <div className="flex bg-white dark:bg-[#1a1a1a] rounded-xl p-1 mb-6 shadow-sm border border-slate-100 dark:border-gray-800 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-1.5 bg-white dark:bg-[#1a1a1a] rounded-xl p-1.5 mb-6 shadow-sm border border-slate-100 dark:border-gray-800 overflow-x-auto scrollbar-hide">
               {['all', 'food', 'grocery', 'accessories'].map((tab) => {
                 const count = tab === 'all' 
                   ? globalCart.length 
@@ -2080,7 +2081,7 @@ export default function Cart() {
                   <button
                     key={tab}
                     onClick={() => handleTabChange(tab)}
-                    className={`flex-1 min-w-[80px] py-2 px-3 text-sm font-medium rounded-lg transition-all capitalize whitespace-nowrap flex items-center justify-center gap-2 ${
+                    className={`shrink-0 flex-1 min-w-max py-2 px-3.5 text-sm font-medium rounded-lg transition-all capitalize whitespace-nowrap flex items-center justify-center gap-2 ${
                       activeCartTab === tab
                         ? 'bg-[var(--module-theme-color,#F84E04)] text-white shadow-md'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -2667,23 +2668,7 @@ export default function Cart() {
       </div>
 
       {/* Bottom Sticky - Place Order */}
-      {activeCartTab === 'all' ? (
-        <div
-          className="bg-white dark:bg-[#1a1a1a] border-t dark:border-gray-800 shadow-lg z-30 flex-shrink-0 fixed bottom-0 left-0 right-0"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-        >
-          <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-5">
-            <div className="w-full max-w-lg mx-auto text-center space-y-2">
-              <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                Checkout from specific categories
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Please select a specific category tab (Food, Grocery, or Accessories) to proceed with checkout for those items.
-              </p>
-            </div>
-          </div>
-        </div>
-      ) : (
+
         <div
           className="bg-white dark:bg-[#1a1a1a] border-t dark:border-gray-800 shadow-lg z-30 flex-shrink-0 fixed bottom-0 left-0 right-0"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
@@ -2775,7 +2760,7 @@ export default function Cart() {
             </div>
           </div>
         </div>
-      )}
+
 
           {/* Placing Order Modal */}
           {showPlacingOrder && (

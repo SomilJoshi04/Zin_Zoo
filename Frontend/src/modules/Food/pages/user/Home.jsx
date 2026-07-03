@@ -41,6 +41,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@food/components/ui/sheet";
+
 import Footer from "@food/components/user/Footer";
 import AddToCartButton from "@food/components/user/AddToCartButton";
 import StickyCartCard from "@food/components/user/StickyCartCard";
@@ -1096,6 +1098,7 @@ export default function Home() {
   const [sortBy, setSortBy] = useState(null); // null, 'price-low', 'price-high', 'rating-high', 'rating-low'
   const [selectedCuisine, setSelectedCuisine] = useState(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null);
   const [appliedFilters, setAppliedFilters] = useState({
     activeFilters: new Set(),
     sortBy: null,
@@ -3020,7 +3023,8 @@ export default function Home() {
                     initial={{ opacity: 0, y: 15 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
-                    className="bg-white dark:bg-[#151515] rounded-[20px] overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 group hover:shadow-[0_12px_30px_-6px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col h-full relative"
+                    onClick={() => setSelectedFood(food)}
+                    className="bg-white dark:bg-[#151515] cursor-pointer rounded-[20px] overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 group hover:shadow-[0_12px_30px_-6px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col h-full relative"
                   >
                     {/* Food Image */}
                     <div className="relative aspect-video w-full overflow-hidden bg-gray-50 dark:bg-gray-900">
@@ -3980,6 +3984,107 @@ export default function Home() {
         )}
 
 
+
+      
+      {/* Product Details Bottom Sheet */}
+      <Sheet open={!!selectedFood} onOpenChange={(open) => !open && setSelectedFood(null)}>
+        <SheetContent side="bottom" className="h-[80vh] md:h-[90vh] md:w-[500px] md:mx-auto md:mb-4 rounded-t-3xl md:rounded-3xl p-0 flex flex-col overflow-hidden bg-white dark:bg-[#121212] font-outfit border-0 shadow-2xl z-[99999]">
+          {selectedFood && (
+            <>
+              {/* Image Section */}
+              <div className="relative w-full h-[40%] bg-gray-50 dark:bg-gray-800/40 p-8 flex items-center justify-center border-b dark:border-gray-800">
+                 <button onClick={() => setSelectedFood(null)} className="absolute top-4 right-4 bg-white/50 backdrop-blur-md dark:bg-gray-900/50 p-2 rounded-full z-10 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                   <X className="w-5 h-5" />
+                 </button>
+                 {selectedFood.image ? (
+                   <img src={selectedFood.image} alt={selectedFood.name} className="max-w-full max-h-full object-contain mix-blend-multiply dark:mix-blend-normal" />
+                 ) : (
+                   <ShoppingCart className="w-20 h-20 text-gray-300" />
+                 )}
+              </div>
+              
+              {/* Details Section */}
+              <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider ${selectedFood.foodType === 'Veg' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                    {selectedFood.foodType || "Food"}
+                  </span>
+                  {selectedFood.preparationTime && (
+                    <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2.5 py-1 rounded-md font-bold flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> {selectedFood.preparationTime}
+                    </span>
+                  )}
+                </div>
+                
+                <div>
+                  <SheetTitle className="text-2xl font-black text-gray-900 dark:text-white leading-tight font-poppins mb-1.5">
+                    {selectedFood.name}
+                  </SheetTitle>
+                  <div className="flex items-end gap-2 mt-1">
+                    <span className="font-black text-3xl text-gray-900 dark:text-white font-poppins leading-none">&#8377;{selectedFood.price}</span>
+                    <span className="text-[10px] font-black text-white bg-green-500 px-2 py-0.5 rounded-sm ml-1 mb-1">BESTSELLER</span>
+                  </div>
+                </div>
+                
+                <div className="mt-1">
+                  <h5 className="font-bold text-sm mb-1.5 text-gray-900 dark:text-white">Description</h5>
+                  <SheetDescription className="text-[15px] text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {selectedFood.description || "Fresh and deliciously prepared food from our top kitchen. Delivered hot directly to you."}
+                  </SheetDescription>
+                </div>
+              </div>
+
+              {/* Bottom Sticky Add to Cart Section */}
+              <div className="p-4 border-t dark:border-gray-800 bg-white dark:bg-[#1a1a1a] pb-6 md:pb-4 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
+                {(() => {
+                  const qty = getCartQty(selectedFood.id);
+                  return (
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Total Amount</span>
+                        <span className="font-black text-xl font-poppins">&#8377;{qty > 0 ? selectedFood.price * qty : selectedFood.price}</span>
+                      </div>
+                      
+                      {qty === 0 ? (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const btnRect = e.currentTarget.getBoundingClientRect();
+                            const sourcePosition = { x: btnRect.left, y: btnRect.top };
+                            addToCart({
+                              id: selectedFood.id,
+                              name: selectedFood.name,
+                              price: selectedFood.price,
+                              image: selectedFood.image,
+                              moduleType: 'food',
+                              restaurant: 'Zin Zoo Kitchen',
+                              restaurantId: 'zin_zoo_kitchen'
+                            }, sourcePosition);
+                          }}
+                          className="flex-1 max-w-[200px] bg-[#F84E04] hover:bg-[#D94203] text-white transition-colors h-12 rounded-xl font-extrabold text-sm uppercase tracking-wider shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                        >
+                          <Plus className="w-5 h-5" strokeWidth={3} />
+                          ADD ITEM
+                        </button>
+                      ) : (
+                        <div className="flex-1 max-w-[200px] flex items-center bg-[#F84E04] text-white h-12 rounded-xl overflow-hidden shadow-lg border border-[#F84E04]">
+                          <button onClick={(e) => { e.stopPropagation(); updateQuantity(selectedFood.id, qty - 1); }} className="flex-1 h-full flex items-center justify-center hover:bg-black/10 transition-colors">
+                            <Minus className="w-5 h-5" strokeWidth={3} />
+                          </button>
+                          <span className="w-16 text-center text-lg font-black">{qty}</span>
+                          <button onClick={(e) => { e.stopPropagation(); updateQuantity(selectedFood.id, qty + 1); }} className="flex-1 h-full flex items-center justify-center hover:bg-black/10 transition-colors">
+                            <Plus className="w-5 h-5" strokeWidth={3} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
 
       <StickyCartCard />
       {/* Live order strip: only on homepage (not in UserLayout) */}

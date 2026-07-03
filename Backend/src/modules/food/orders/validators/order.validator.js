@@ -67,7 +67,7 @@ export function validateCreateOrderDto(body) {
     const schema = z.object({
         items: z.array(orderItemSchema).min(1, 'At least one item required'),
         address: addressSchema,
-        moduleType: z.enum(['food', 'grocery', 'accessories']).optional(),
+        moduleType: z.enum(['food', 'grocery', 'accessories', 'all', 'unified']).optional(),
         restaurantId: z.string().optional(),
         restaurantName: z.string().optional(),
         customerName: z.string().optional(),
@@ -94,7 +94,8 @@ export function validateVerifyPaymentDto(body) {
         orderId: z.string().min(1, 'Order id required'),
         razorpayOrderId: z.string().min(1, 'Razorpay order id required'),
         razorpayPaymentId: z.string().min(1, 'Razorpay payment id required'),
-        razorpaySignature: z.string().min(1, 'Razorpay signature required')
+        razorpaySignature: z.string().min(1, 'Razorpay signature required'),
+        isUnified: z.boolean().optional()
     });
     const result = schema.safeParse(body);
     if (!result.success) {

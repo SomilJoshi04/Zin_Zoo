@@ -373,11 +373,142 @@ function toObjectId(id, fieldName = 'ID') {
   return new mongoose.Types.ObjectId(id);
 }
 
+import { FoodItem } from '../../admin/models/food.model.js';
+import { GroceryProduct } from '../../admin/models/groceryProduct.model.js';
+
+
+async function createUnifiedOrder(userId, dto) {
+  for (const item of dto.items) {
+    if (item.moduleType === 'food' || !item.moduleType) {
+      const dbItem = await FoodItem.findById(item.itemId);
+      if (!dbItem || dbItem.isAvailable === false) {
+        throw new Error(`Item Out of Stock: ${item.name}`);
+      }
+    } else {
+      const dbItem = await GroceryProduct.findById(item.itemId);
+      if (!dbItem || dbItem.isActive === false) {
+        throw new Error(`Item Out of Stock: ${item.name}`);
+      }
+    }
+  }
+
+  const moduleItems = { food: [], grocery: [], accessories: [] };
+  for (const item of dto.items) {
+    const mod = item.moduleType || 'food';
+    if (!moduleItems[mod]) moduleItems[mod] = [];
+    moduleItems[mod].push(item);
+  }
+
+  const createdOrders = [];
+  let totalAmountForRazorpay = 0;
+  const originalPaymentMethod = dto.paymentMethod;
+  const masterOrderId = new mongoose.Types.ObjectId();
+
+  const grandSubtotal = Number(dto.pricing.subtotal) || 1;
+  const createdOrderIds = [];
+
+  for (const mod of ['food', 'grocery', 'accessories']) {
+    const items = moduleItems[mod];
+    if (!items || items.length === 0) continue;
+
+    const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
+    const ratio = subtotal / grandSubtotal;
+
+    const subPricing = {
+      subtotal: subtotal,
+      tax: Number((Number(dto.pricing.tax) || 0) * ratio).toFixed(2) * 1,
+      packagingFee: Number((Number(dto.pricing.packagingFee) || 0) * ratio).toFixed(2) * 1,
+      deliveryFee: Number((Number(dto.pricing.deliveryFee) || 0) * ratio).toFixed(2) * 1,
+      platformFee: Number((Number(dto.pricing.platformFee) || 0) * ratio).toFixed(2) * 1,
+      discount: Number((Number(dto.pricing.discount) || 0) * ratio).toFixed(2) * 1,
+      couponCode: dto.pricing.couponCode,
+      currency: dto.pricing.currency
+    };
+    
+    subPricing.total = Math.max(0, subtotal + subPricing.tax + subPricing.packagingFee + subPricing.deliveryFee + subPricing.platformFee - subPricing.discount);
+    totalAmountForRazorpay += subPricing.total;
+
+    const subDto = {
+      ...dto,
+      moduleType: mod,
+      items: items,
+      pricing: subPricing,
+      paymentMethod: originalPaymentMethod === "razorpay" ? "cash" : originalPaymentMethod 
+    };
+
+    let orderObj;
+    if (mod === 'grocery' || mod === 'accessories') {
+       orderObj = await createGroceryOrder(userId, subDto, true);
+    } else {
+       orderObj = await createOrder(userId, subDto, true);
+    }
+    
+    if (orderObj.order) orderObj = orderObj.order;
+    createdOrders.push(orderObj);
+    createdOrderIds.push(orderObj._id.toString());
+  }
+
+  let razorpayPayload = null;
+  if (originalPaymentMethod === "razorpay") {
+    const { isRazorpayConfigured } = await import('../helpers/razorpay.helper.js');
+    if (isRazorpayConfigured()) {
+      const amountPaise = Math.round(totalAmountForRazorpay * 100);
+      if (amountPaise >= 100) {
+        const { createRazorpayOrder, getRazorpayKeyId } = await import('../helpers/razorpay.helper.js');
+        const rzOrder = await createRazorpayOrder(amountPaise, "INR", `unified_${masterOrderId.toString()}`);
+        razorpayPayload = {
+          key: getRazorpayKeyId(),
+          amount: amountPaise,
+          currency: "INR",
+          name: "Unified Checkout",
+          description: "Payment for multiple items",
+          orderId: rzOrder.id,
+        };
+
+        const { FoodOrder } = await import('../../admin/models/order.model.js');
+        const { GroceryOrder } = await import('../../admin/models/groceryOrder.model.js');
+        
+        for (const order of createdOrders) {
+          order.payment.method = "razorpay";
+          order.payment.status = "created";
+          order.payment.razorpay = { orderId: rzOrder.id };
+          order.orderStatus = "pending_payment";
+          order.statusHistory.push({
+            at: new Date(),
+            byRole: "SYSTEM",
+            from: "confirmed",
+            to: "pending_payment",
+            note: "Unified order created, awaiting payment"
+          });
+          
+          if (order.moduleType === 'food') {
+            await FoodOrder.updateOne({ _id: order._id }, { $set: { payment: order.payment, orderStatus: order.orderStatus, statusHistory: order.statusHistory } });
+          } else {
+            await GroceryOrder.updateOne({ _id: order._id }, { $set: { payment: order.payment, orderStatus: order.orderStatus, statusHistory: order.statusHistory } });
+          }
+        }
+      }
+    }
+  }
+
+  return {
+    orderId: masterOrderId,
+    _id: masterOrderId,
+    subOrderIds: createdOrderIds,
+    paymentMethod: originalPaymentMethod,
+    razorpay: razorpayPayload,
+    totalAmount: totalAmountForRazorpay
+  };
+}
+
 // ----- Create order -----
-export async function createOrder(userId, dto) {
+export async function createOrder(userId, dto, bypassRazorpay = false) {
+  if (dto.moduleType === 'all' || dto.moduleType === 'unified') {
+    return await createUnifiedOrder(userId, dto);
+  }
   try {
     if (dto.moduleType === 'grocery' || dto.moduleType === 'accessories') {
-      return await createGroceryOrder(userId, dto);
+      return await createGroceryOrder(userId, dto, bypassRazorpay);
     }
 
     // Fetch default restaurant automatically for restaurant-free checkout
@@ -540,7 +671,7 @@ export async function createOrder(userId, dto) {
 
     let razorpayPayload = null;
 
-    if (paymentMethod === "razorpay" && isRazorpayConfigured()) {
+    if (!bypassRazorpay && paymentMethod === "razorpay" && isRazorpayConfigured()) {
       const amountPaise = Math.round((normalizedPricing.total || 0) * 100);
       if (amountPaise < 100)
         throw new ValidationError("Amount too low for online payment");
@@ -763,7 +894,7 @@ export async function listOrdersUser(userId, query) {
   });
 }
 
-async function createGroceryOrder(userId, dto) {
+async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
   const deliveryAddress = {
     label: dto.address?.label || "Home",
     name: dto.address?.name || dto.address?.fullName || dto.customerName || "",
@@ -861,7 +992,7 @@ async function createGroceryOrder(userId, dto) {
 
   let razorpayPayload = null;
 
-  if (paymentMethod === "razorpay" && isRazorpayConfigured()) {
+  if (!bypassRazorpay && paymentMethod === "razorpay" && isRazorpayConfigured()) {
     const amountPaise = Math.round((normalizedPricing.total || 0) * 100);
     if (amountPaise < 100)
       throw new ValidationError("Amount too low for online payment");
