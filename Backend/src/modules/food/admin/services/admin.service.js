@@ -3316,18 +3316,70 @@ const getAdminFoodUpdatedPricing = (existing = {}, body = {}) => {
     return update;
 };
 
+export async function ensureDefaultRestaurant() {
+    let defaultRest = await FoodRestaurant.findOne({ isDefault: true }).lean();
+    if (!defaultRest) {
+        let zoneId = undefined;
+        try {
+            const FoodZone = mongoose.model('FoodZone');
+            const zone = await FoodZone.findOne().lean();
+            if (zone) zoneId = zone._id;
+        } catch (e) {}
+
+        defaultRest = await FoodRestaurant.findOne({ restaurantName: 'Zin Zoo Kitchen' }).lean();
+        if (!defaultRest) {
+            const newRest = await FoodRestaurant.create({
+                restaurantName: 'Zin Zoo Kitchen',
+                phone: '1234567890',
+                email: 'kitchen@zinzoo.com',
+                status: 'approved',
+                isDefault: true,
+                isAcceptingOrders: true,
+                pureVegRestaurant: false,
+                zoneId,
+                location: {
+                    type: 'Point',
+                    coordinates: [77.5946, 12.9716]
+                },
+                cuisines: ['North Indian', 'Chinese', 'Continental']
+            });
+            defaultRest = newRest.toObject ? newRest.toObject() : newRest;
+            console.log('Seeded default restaurant Zin Zoo Kitchen ID:', defaultRest._id);
+        } else {
+            await FoodRestaurant.updateOne({ _id: defaultRest._id }, { $set: { isDefault: true } });
+        }
+    }
+    try {
+        await mongoose.model('FoodItem').updateMany(
+            { restaurantId: { $ne: defaultRest._id } },
+            { $set: { restaurantId: defaultRest._id } }
+        );
+    } catch (e) {}
+    return defaultRest;
+}
+
 export async function createFood(body) {
-    const restaurantId = typeof body.restaurantId === 'string' ? body.restaurantId.trim() : '';
-    if (!restaurantId || !mongoose.Types.ObjectId.isValid(restaurantId)) throw new ValidationError('Valid Restaurant ID is required');
-    const restaurant = await FoodRestaurant.findById(restaurantId);
-    if (!restaurant) throw new ValidationError('Restaurant not found');
+    // Auto-fallback restaurant checks for a completely restaurant-free flow
+    const defaultRest = await ensureDefaultRestaurant();
+    const restaurantId = defaultRest._id;
 
     const name = typeof body.name === 'string' ? body.name.trim() : '';
     if (!name) throw new ValidationError('Food name is required');
-    const foodType = body.foodType === 'Veg' ? 'Veg' : 'Non-Veg';
-    if (restaurant.pureVegRestaurant === true && foodType !== 'Veg') {
-        throw new ValidationError('Pure veg restaurants can only add Veg foods');
+
+    // Case-insensitive duplicate check
+    const duplicate = await FoodItem.findOne({
+        name: { $regex: new RegExp(`^${name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') }
+    });
+    if (duplicate) {
+        throw new ValidationError('A food item with this name already exists.');
     }
+
+    const foodType = body.foodType === 'Veg' ? 'Veg' : 'Non-Veg';
+    
+    // Pure Veg Restaurant constraint disabled
+    // if (restaurant.pureVegRestaurant === true && foodType !== 'Veg') {
+    //     throw new ValidationError('Pure veg restaurants can only add Veg foods');
+    // }
     const { price, variants } = getAdminFoodCreatePricing(body);
 
     let categoryName = typeof body.categoryName === 'string' ? body.categoryName.trim() : '';
@@ -3336,7 +3388,7 @@ export async function createFood(body) {
         categoryId: body.categoryId,
         categoryName,
         foodType,
-        pureVegRestaurant: restaurant.pureVegRestaurant === true
+        pureVegRestaurant: false // disabled restaurant-level Pure Veg constraint
     });
 
     const doc = new FoodItem({
@@ -3361,7 +3413,18 @@ export async function updateFood(id, body) {
     if (!id || !mongoose.Types.ObjectId.isValid(id)) return null;
     const doc = await FoodItem.findById(id);
     if (!doc) return null;
-    if (body.name !== undefined) doc.name = String(body.name || '').trim();
+    if (body.name !== undefined) {
+        const nextName = String(body.name || '').trim();
+        if (!nextName) throw new ValidationError('Food name is required');
+        const duplicate = await FoodItem.findOne({
+            _id: { $ne: doc._id },
+            name: { $regex: new RegExp(`^${nextName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') }
+        });
+        if (duplicate) {
+            throw new ValidationError('A food item with this name already exists.');
+        }
+        doc.name = nextName;
+    }
     if (body.description !== undefined) doc.description = String(body.description || '').trim();
     const targetFoodType = body.foodType !== undefined ? (body.foodType === 'Veg' ? 'Veg' : 'Non-Veg') : (doc.foodType === 'Veg' ? 'Veg' : 'Non-Veg');
     const pricingUpdate = getAdminFoodUpdatedPricing(doc.toObject(), body);
@@ -3376,17 +3439,17 @@ export async function updateFood(id, body) {
             ? String(body.categoryName || '').trim()
             : (body.category !== undefined ? String(body.category || '').trim() : doc.categoryName);
         
-        const restaurant = await FoodRestaurant.findById(doc.restaurantId);
-        
-        if (restaurant?.pureVegRestaurant === true && targetFoodType !== 'Veg') {
-            throw new ValidationError('Pure veg restaurants can only use Veg food types');
-        }
+        // Comment out restaurant checks
+        // const restaurant = await FoodRestaurant.findById(doc.restaurantId);
+        // if (restaurant?.pureVegRestaurant === true && targetFoodType !== 'Veg') {
+        //     throw new ValidationError('Pure veg restaurants can only use Veg food types');
+        // }
         
         const { categoryId, categoryName } = await resolveAdminFoodCategory({
             categoryId: body.categoryId !== undefined ? body.categoryId : doc.categoryId,
             categoryName: nextCategoryName,
             foodType: targetFoodType,
-            pureVegRestaurant: restaurant?.pureVegRestaurant === true
+            pureVegRestaurant: false // disabled restaurant-level constraint
         });
         doc.categoryId = categoryId;
         doc.categoryName = categoryName;

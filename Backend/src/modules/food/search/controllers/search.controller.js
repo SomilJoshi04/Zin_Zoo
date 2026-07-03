@@ -29,15 +29,67 @@ export const searchController = async (req, res, next) => {
     }
 };
 
-/**
- * Fetch List of Admin-only Categories
- */
 export const listAdminCategoriesController = async (req, res, next) => {
     try {
         const { zoneId } = req.query;
         const categories = await getAdminCategories({ zoneId });
         
         return sendResponse(res, 200, 'Admin categories fetched successfully', { categories });
+    } catch (error) {
+        next(error);
+    }
+};
+
+import mongoose from 'mongoose';
+import { FoodItem } from '../../admin/models/food.model.js';
+
+export const listPublicFoodsController = async (req, res, next) => {
+    try {
+        const { categoryId, search, page = 1, limit = 20 } = req.query;
+        const filter = { isAvailable: true };
+        
+        if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
+            filter.categoryId = new mongoose.Types.ObjectId(categoryId);
+        }
+        
+        if (search) {
+            const term = String(search).trim();
+            if (term) {
+                filter.name = { $regex: new RegExp(term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i') };
+            }
+        }
+        
+        const skip = (parseInt(page) - 1) * parseInt(limit);
+        const limitNum = parseInt(limit);
+        
+        const [foods, total] = await Promise.all([
+            FoodItem.find(filter)
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limitNum)
+                .lean(),
+            FoodItem.countDocuments(filter)
+        ]);
+        
+        const formattedFoods = foods.map(f => ({
+            _id: f._id,
+            id: f._id,
+            name: f.name,
+            description: f.description || '',
+            price: f.price,
+            image: f.image || '',
+            foodType: f.foodType || 'Non-Veg',
+            isAvailable: f.isAvailable,
+            preparationTime: f.preparationTime || '',
+            variants: f.variants || []
+        }));
+        
+        return sendResponse(res, 200, 'Public foods fetched successfully', {
+            foods: formattedFoods,
+            total,
+            page: parseInt(page),
+            limit: limitNum
+        });
     } catch (error) {
         next(error);
     }

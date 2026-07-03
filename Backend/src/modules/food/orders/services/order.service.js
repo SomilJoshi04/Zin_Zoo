@@ -380,12 +380,10 @@ export async function createOrder(userId, dto) {
       return await createGroceryOrder(userId, dto);
     }
 
-    const restaurantId = toObjectId(dto.restaurantId, 'Restaurant ID');
-    const restaurant = await FoodRestaurant.findById(restaurantId)
-      .select("status restaurantName zoneId location isAcceptingOrders")
-      .lean();
-    
-    if (!restaurant) throw new ValidationError("Restaurant not found");
+    // Fetch default restaurant automatically for restaurant-free checkout
+    const { ensureDefaultRestaurant } = await import('../../admin/services/admin.service.js');
+    const restaurant = await ensureDefaultRestaurant();
+    const restaurantId = restaurant._id;
 
     const settings = await getDispatchSettings();
     const dispatchMode = settings.dispatchMode;
@@ -510,7 +508,7 @@ export async function createOrder(userId, dto) {
       userId: toObjectId(userId, 'User ID'),
       restaurantId: restaurantId,
       moduleType: dto.moduleType || 'food',
-      zoneId: dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID') : toObjectId(restaurant.zoneId, 'Restaurant Zone ID'),
+      zoneId: dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID') : (restaurant.zoneId ? toObjectId(restaurant.zoneId, 'Restaurant Zone ID') : null),
       items: (dto.items || []).map(item => ({
         ...item,
         itemId: toObjectId(item.itemId, 'Item ID')

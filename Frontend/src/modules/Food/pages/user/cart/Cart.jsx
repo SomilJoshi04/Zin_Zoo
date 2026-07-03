@@ -730,20 +730,26 @@ export default function Cart() {
           debugLog("?? Fetched", restaurants.length, "restaurants for name search")
 
           // Try exact match first
-          let matchingRestaurant = restaurants.find(r =>
-            r.name?.toLowerCase().trim() === cart[0].restaurant?.toLowerCase().trim()
-          )
+          let matchingRestaurant = restaurants.find(r => {
+            const rName = (r.name || r.restaurantName || '').toLowerCase().trim();
+            return rName === cart[0].restaurant?.toLowerCase().trim();
+          })
 
           // If no exact match, try partial match
           if (!matchingRestaurant) {
             debugLog("?? No exact match, trying partial match...")
-            matchingRestaurant = restaurants.find(r =>
-              r.name?.toLowerCase().includes(cart[0].restaurant?.toLowerCase().trim()) ||
-              cart[0].restaurant?.toLowerCase().trim().includes(r.name?.toLowerCase())
-            )
+            matchingRestaurant = restaurants.find(r => {
+              const rName = (r.name || r.restaurantName || '').toLowerCase().trim();
+              const cartName = (cart[0].restaurant || '').toLowerCase().trim();
+              return rName.includes(cartName) || cartName.includes(rName);
+            })
           }
 
           if (matchingRestaurant) {
+            // Ensure .name is set for downstream checks
+            if (!matchingRestaurant.name) {
+              matchingRestaurant.name = matchingRestaurant.restaurantName;
+            }
             // CRITICAL: Validate that the found restaurant matches cart items
             const cartRestaurantName = cart[0]?.restaurant?.toLowerCase().trim();
             const foundRestaurantName = matchingRestaurant.name?.toLowerCase().trim();
@@ -1651,22 +1657,7 @@ export default function Cart() {
       }
 
       // FINAL VALIDATION: Double-check restaurantId before sending to backend
-      const cartRestaurantId = cart[0]?.restaurantId;
-      if (activeCartTab === 'food' && cartRestaurantId && cartRestaurantId !== finalRestaurantId &&
-        cartRestaurantId !== restaurantData?._id?.toString() &&
-        cartRestaurantId !== restaurantData?.restaurantId) {
-        debugError('? CRITICAL: Final validation failed - restaurantId mismatch!', {
-          cartRestaurantId: cartRestaurantId,
-          finalRestaurantId: finalRestaurantId,
-          restaurantDataId: restaurantData?._id?.toString(),
-          restaurantDataRestaurantId: restaurantData?.restaurantId,
-          cartRestaurantName: cart[0]?.restaurant,
-          finalRestaurantName: finalRestaurantName
-        });
-        alert('Error: Restaurant information mismatch detected. Please refresh the page and try again.');
-        setIsPlacingOrder(false);
-        return;
-      }
+      // Bypassed for food items because restaurant-free food ordering automatically maps all foods/orders to the default restaurant on the backend.
 
       const orderPayload = {
         items: orderItems,
@@ -1905,7 +1896,7 @@ export default function Cart() {
       // Handle other axios errors
       else if (error.response) {
         // Server responded with error status
-        errorMessage = error.response.data?.message || `Server error: ${error.response.status}`
+        errorMessage = error.response.data?.error || error.response.data?.message || `Server error: ${error.response.status}`
       }
       // Handle other errors
       else if (error.message) {

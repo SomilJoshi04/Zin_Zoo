@@ -665,40 +665,7 @@ export default function UserOrderDetails() {
         </button>
       </div>
 
-      {/* Restaurant Complaint Button - Below Order Details */}
-      {order && (!order.moduleType || order.moduleType === 'food') && (
-        <div className="p-4 pb-24">
-          <button
-            type="button"
-            onClick={() => {
-              // Use MongoDB _id (ObjectId) for the API call - backend complaint controller expects ObjectId
-              // Priority: order._id (MongoDB ObjectId) > orderId from route params
-              const orderMongoId = order._id || orderId
 
-              if (!orderMongoId) {
-                debugError("Order ID not available:", {
-                  order: order ? { _id: order._id, orderId: order.orderId } : null,
-                  routeOrderId: orderId
-                })
-                toast.error("Order ID not available. Please refresh the page.")
-                return
-              }
-
-              // Convert to string if it's an ObjectId object
-              const orderIdString = typeof orderMongoId === 'object' && orderMongoId.toString
-                ? orderMongoId.toString()
-                : String(orderMongoId)
-
-              debugLog("Navigating to complaint page with orderId:", orderIdString)
-              navigate(`/user/complaints/submit/${encodeURIComponent(orderIdString)}`)
-            }}
-            className="w-full bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/30 text-orange-700 dark:text-orange-400 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-orange-100 dark:hover:bg-orange-900/40 transition-colors"
-          >
-            <FileText className="w-4 h-4" />
-            Restaurant Complaint
-          </button>
-        </div>
-      )}
     </div>
   )
 }

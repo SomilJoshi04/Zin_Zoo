@@ -82,6 +82,7 @@ export function validateCreateOrderDto(body) {
     });
     const result = schema.safeParse(body);
     if (!result.success) {
+        console.error("Zod Order Validation Failed:", JSON.stringify(result.error.format(), null, 2));
         const msg = result.error.errors?.[0]?.message || 'Validation failed';
         throw new ValidationError(msg);
     }

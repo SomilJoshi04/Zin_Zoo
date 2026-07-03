@@ -787,6 +787,11 @@ export const adminAPI = {
       params: params ?? {},
       ...config,
     }),
+  getPublicFoods: (params = {}, config = {}) =>
+    apiClient.get("/food/search/foods", {
+      params: params ?? {},
+      ...config,
+    }),
 
   /** Offers & Coupons (admin) */
   getAllOffers: (params = {}) =>
@@ -901,45 +906,45 @@ export const adminAPI = {
     }),
 
   /** Restaurant Commission (admin) */
-  getRestaurantCommissionBootstrap: () =>
-    apiClient.get("/food/admin/restaurant-commissions/bootstrap", {
-      contextModule: "admin",
-    }),
-  getRestaurantCommissions: (params = {}) =>
-    apiClient.get("/food/admin/restaurant-commissions", {
-      params,
-      contextModule: "admin",
-    }),
-  getRestaurantCommissionById: (id) =>
-    apiClient.get(`/food/admin/restaurant-commissions/${String(id)}`, {
-      contextModule: "admin",
-    }),
-  createRestaurantCommission: (body) =>
-    apiClient.post("/food/admin/restaurant-commissions", body ?? {}, {
-      contextModule: "admin",
-    }),
-  updateRestaurantCommission: (id, body) =>
-    apiClient.patch(
-      `/food/admin/restaurant-commissions/${String(id)}`,
-      body ?? {},
-      { contextModule: "admin" },
-    ),
-  deleteRestaurantCommission: (id) =>
-    apiClient.delete(`/food/admin/restaurant-commissions/${String(id)}`, {
-      contextModule: "admin",
-    }),
-  toggleRestaurantCommissionStatus: (id) =>
-    apiClient.patch(
-      `/food/admin/restaurant-commissions/${String(id)}/toggle`,
-      {},
-      { contextModule: "admin" },
-    ),
-  /** Backward-compatible alias used in UI */
-  getApprovedRestaurants: (params = {}) =>
-    apiClient.get("/food/admin/restaurants", {
-      params: { status: "approved", limit: 1000, ...params },
-      contextModule: "admin",
-    }),
+  // getRestaurantCommissionBootstrap: () =>
+  //   apiClient.get("/food/admin/restaurant-commissions/bootstrap", {
+  //     contextModule: "admin",
+  //   }),
+  // getRestaurantCommissions: (params = {}) =>
+  //   apiClient.get("/food/admin/restaurant-commissions", {
+  //     params,
+  //     contextModule: "admin",
+  //   }),
+  // getRestaurantCommissionById: (id) =>
+  //   apiClient.get(`/food/admin/restaurant-commissions/${String(id)}`, {
+  //     contextModule: "admin",
+  //   }),
+  // createRestaurantCommission: (body) =>
+  //   apiClient.post("/food/admin/restaurant-commissions", body ?? {}, {
+  //     contextModule: "admin",
+  //   }),
+  // updateRestaurantCommission: (id, body) =>
+  //   apiClient.patch(
+  //     `/food/admin/restaurant-commissions/${String(id)}`,
+  //     body ?? {},
+  //     { contextModule: "admin" },
+  //   ),
+  // deleteRestaurantCommission: (id) =>
+  //   apiClient.delete(`/food/admin/restaurant-commissions/${String(id)}`, {
+  //     contextModule: "admin",
+  //   }),
+  // toggleRestaurantCommissionStatus: (id) =>
+  //   apiClient.patch(
+  //     `/food/admin/restaurant-commissions/${String(id)}/toggle`,
+  //     {},
+  //     { contextModule: "admin" },
+  //   ),
+  // /** Backward-compatible alias used in UI */
+  // getApprovedRestaurants: (params = {}) =>
+  //   apiClient.get("/food/admin/restaurants", {
+  //     params: { status: "approved", limit: 1000, ...params },
+  //     contextModule: "admin",
+  //   }),
 
   /** Delivery Boy Commission Rules (admin) */
   getCommissionRules: () =>

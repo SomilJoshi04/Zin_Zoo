@@ -190,35 +190,10 @@ export function CartProvider({ children }) {
     const safeCart = normalizeCartData(cart)
     const isFood = (item?.moduleType || 'food') === 'food';
     
-    // Only check restaurant info if it's food
+    // Auto-fill default restaurant info for food if missing
     if (isFood) {
-      const foodCart = safeCart.filter(i => (i.moduleType || 'food') === 'food');
-      if (foodCart.length > 0) {
-        const firstItemRestaurantId = foodCart[0]?.restaurantId
-        const firstItemRestaurantName = foodCart[0]?.restaurant
-        const newItemRestaurantId = item?.restaurantId
-        const newItemRestaurantName = item?.restaurant
-        const normalizeName = (name) => (name ? String(name).trim().toLowerCase() : '')
-
-        const firstRestaurantNameNormalized = normalizeName(firstItemRestaurantName)
-        const newRestaurantNameNormalized = normalizeName(newItemRestaurantName)
-        const hasNameMismatch =
-          firstRestaurantNameNormalized &&
-          newRestaurantNameNormalized &&
-          firstRestaurantNameNormalized !== newRestaurantNameNormalized
-
-        const hasIdMismatch =
-          !firstRestaurantNameNormalized &&
-          !newRestaurantNameNormalized &&
-          firstItemRestaurantId &&
-          newItemRestaurantId &&
-          String(firstItemRestaurantId) !== String(newItemRestaurantId)
-
-        if (hasNameMismatch || hasIdMismatch) {
-          const message = `Cart already contains items from "${firstItemRestaurantName || 'another restaurant'}". Please clear cart or complete order first.`
-          return { ok: false, error: message, code: 'RESTAURANT_MISMATCH' }
-        }
-      }
+      if (!item.restaurant) item.restaurant = 'Zin Zoo Kitchen';
+      if (!item.restaurantId) item.restaurantId = 'zin_zoo_kitchen';
     }
 
     if (isFood && !item?.restaurantId && !item?.restaurant) {
@@ -231,42 +206,6 @@ export function CartProvider({ children }) {
 
     setCart((prev) => {
       const safePrev = normalizeCartData(prev)
-      
-      if (isFood) {
-        const foodCart = safePrev.filter(i => (i.moduleType || 'food') === 'food');
-        if (foodCart.length > 0) {
-          const firstItemRestaurantId = foodCart[0]?.restaurantId;
-          const firstItemRestaurantName = foodCart[0]?.restaurant;
-          const newItemRestaurantId = item?.restaurantId;
-          const newItemRestaurantName = item?.restaurant;
-          
-          const normalizeName = (name) => name ? name.trim().toLowerCase() : '';
-          const firstRestaurantNameNormalized = normalizeName(firstItemRestaurantName);
-          const newRestaurantNameNormalized = normalizeName(newItemRestaurantName);
-          
-          if (firstRestaurantNameNormalized && newRestaurantNameNormalized) {
-            if (firstRestaurantNameNormalized !== newRestaurantNameNormalized) {
-              debugError('❌ Cannot add item: Restaurant name mismatch!', {
-                cartRestaurantId: firstItemRestaurantId,
-                cartRestaurantName: firstItemRestaurantName,
-                newItemRestaurantId: newItemRestaurantId,
-                newItemRestaurantName: newItemRestaurantName
-              });
-              return safePrev;
-            }
-          } else if (firstItemRestaurantId && newItemRestaurantId) {
-            if (firstItemRestaurantId !== newItemRestaurantId) {
-              debugError('❌ Cannot add item: Cart contains items from different restaurant!', {
-                cartRestaurantId: firstItemRestaurantId,
-                cartRestaurantName: firstItemRestaurantName,
-                newItemRestaurantId: newItemRestaurantId,
-                newItemRestaurantName: newItemRestaurantName
-              });
-              return safePrev;
-            }
-          }
-        }
-      }
       
       const existing = safePrev.find((i) => i.id === item.id)
       if (existing) {
@@ -288,12 +227,6 @@ export function CartProvider({ children }) {
           i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
         )
       }
-      
-      if (isFood && !item.restaurantId && !item.restaurant) {
-        debugError('❌ Cannot add item: Missing restaurant information!', item);
-        return safePrev;
-      }
-      
       const newItem = { ...item, quantity: 1 }
       
       // Set last add event for animation if sourcePosition is provided

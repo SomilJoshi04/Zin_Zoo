@@ -198,8 +198,6 @@ export default function UserLayout() {
     normalizedPath === "/user/accessories" ||
     normalizedPath === "/services" ||
     normalizedPath === "/user/services" ||
-    normalizedPath === "/car-booking" ||
-    normalizedPath === "/user/car-booking" ||
     normalizedPath === "/categories" ||
     normalizedPath === "/user/categories" ||
     isProfileRoot ||

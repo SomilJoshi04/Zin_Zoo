@@ -1,5 +1,5 @@
 import express from 'express';
-import { searchController, listAdminCategoriesController } from '../controllers/search.controller.js';
+import { searchController, listAdminCategoriesController, listPublicFoodsController } from '../controllers/search.controller.js';
 
 const router = express.Router();
 
@@ -8,6 +8,7 @@ const router = express.Router();
  * GET /api/v1/food/search/unified
  */
 router.get('/unified', searchController);
+router.get('/foods', listPublicFoodsController);
 
 /**
  * Admin Categories Only Endpoint (to avoid restaurant-created ones as requested)

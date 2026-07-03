@@ -35,9 +35,11 @@ import {
   AlertCircle,
   Loader2,
   Plus,
+  Minus,
   Check,
   Share2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import Footer from "@food/components/user/Footer";
 import AddToCartButton from "@food/components/user/AddToCartButton";
@@ -459,6 +461,9 @@ export default function Home() {
   const [menuCategories, setMenuCategories] = useState([]);
   const [loadingMenuCategories, setLoadingMenuCategories] = useState(false);
   const [, setRestaurantDietMeta] = useState({});
+  const [foodsData, setFoodsData] = useState([]);
+  const [loadingFoods, setLoadingFoods] = useState(true);
+  const [activeCategory, setActiveCategory] = useState(null);
   const [showAllCategoriesModal, setShowAllCategoriesModal] = useState(false);
   const [availabilityTick, setAvailabilityTick] = useState(Date.now());
   const RESTAURANTS_BATCH_SIZE = 9;
@@ -855,11 +860,50 @@ export default function Home() {
   }, [showVegModePopup]);
 
 
-  // Old backend endpoint removed: keep UI stable with empty categories.
+  const fetchFoodsList = useCallback(async (catId = null) => {
+    try {
+      setLoadingFoods(true);
+      const params = {};
+      if (catId) params.categoryId = catId;
+      const res = await adminAPI.getPublicFoods(params);
+      if (res?.data?.success) {
+        setFoodsData(res.data.data?.foods || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch public foods:", e);
+    } finally {
+      setLoadingFoods(false);
+    }
+  }, []);
+
   useEffect(() => {
+    fetchFoodsList(activeCategory);
+  }, [activeCategory, fetchFoodsList]);
+
+  // Load public categories dynamically
+  useEffect(() => {
+    let cancelled = false;
     setLoadingRealCategories(true);
-    setRealCategories([]);
-    setLoadingRealCategories(false);
+    adminAPI.getPublicCategories()
+      .then((res) => {
+        if (cancelled) return;
+        const list = res?.data?.data?.categories || res?.data?.categories || [];
+        setRealCategories(list.map(c => ({
+          id: c._id || c.id,
+          name: c.name,
+          slug: c.slug || c.name.toLowerCase().replace(/\s+/g, '-'),
+          image: c.image || "https://via.placeholder.com/150"
+        })));
+      })
+      .catch((err) => {
+        console.error("Failed to load real categories:", err);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingRealCategories(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Fetch explore icons and landing settings from public APIs
@@ -1089,7 +1133,13 @@ export default function Home() {
     getFavorites,
     getDefaultAddress,
   } = profileContext;
-  const { addToCart, cart } = useCart();
+  const { addToCart, cart, updateQuantity } = useCart();
+  const getCartQty = (foodId) => {
+    if (!Array.isArray(cart)) return 0;
+    // Map both standard id and lineItemId matching
+    const item = cart.find(i => String(i.productId || i.itemId || i.id) === String(foodId) || String(i.lineItemId).includes(String(foodId)));
+    return item ? item.quantity : 0;
+  };
   const { location, loading, requestLocation } = useLocation();
   const {
     zoneId,
@@ -2653,12 +2703,16 @@ export default function Home() {
                   {/* Categories Horizontal Slider */}
                   <div className="flex overflow-x-auto gap-2.5 pb-1.5 scrollbar-hide -mx-4 px-4 mask-edge-fade">
                     {displayCategories.map((category, index) => (
-                      <Link
+                      <div
                         key={category.id || index}
-                        to={`/food/user/category/${category.slug}`}
-                        className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px]"
+                        onClick={() => {
+                          const newCat = activeCategory === category.id ? null : category.id;
+                          setActiveCategory(newCat);
+                          fetchFoodsList(newCat);
+                        }}
+                        className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px] cursor-pointer"
                       >
-                        <div className="relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 border-gray-150 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] group-active:scale-95 transition-all duration-300">
+                        <div className={`relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 ${activeCategory === category.id ? 'border-[#FFC107] scale-105' : 'border-gray-150 dark:border-gray-800'} bg-white dark:bg-[#1a1a1a] group-active:scale-95 transition-all duration-300`}>
                           {/* Shining Glint Effect */}
                           <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
                             <motion.div
@@ -2681,10 +2735,10 @@ export default function Home() {
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           />
                         </div>
-                        <span className="text-[10px] xs:text-[11px] sm:text-xs font-bold text-gray-550 dark:text-gray-400 group-hover:text-[#FFC107] text-center leading-tight line-clamp-2 w-full px-0.5">
+                        <span className={`text-[10px] xs:text-[11px] sm:text-xs font-bold ${activeCategory === category.id ? 'text-[#FFC107]' : 'text-gray-550 dark:text-gray-400'} group-hover:text-[#FFC107] text-center leading-tight line-clamp-2 w-full px-0.5`}>
                           {category.name}
                         </span>
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -2742,12 +2796,16 @@ export default function Home() {
                       {/* Categories Slider (Sticky Mode) */}
                       <div className="flex overflow-x-auto gap-2.5 py-1.5 px-4 scrollbar-hide mask-edge-fade border-b border-gray-100 dark:border-gray-800">
                         {displayCategories.map((category, index) => (
-                          <Link
+                          <div
                             key={`sticky-${category.id || index}`}
-                            to={`/food/user/category/${category.slug}`}
-                            className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px]"
+                            onClick={() => {
+                              const newCat = activeCategory === category.id ? null : category.id;
+                              setActiveCategory(newCat);
+                              fetchFoodsList(newCat);
+                            }}
+                            className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px] cursor-pointer"
                           >
-                            <div className="relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 border-gray-150 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] group-active:scale-95 transition-all duration-300">
+                            <div className={`relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 ${activeCategory === category.id ? 'border-[#FFC107] scale-105' : 'border-gray-150 dark:border-gray-800'} bg-white dark:bg-[#1a1a1a] group-active:scale-95 transition-all duration-300`}>
                               {/* Shining Glint Effect */}
                               <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
                                 <motion.div
@@ -2770,10 +2828,10 @@ export default function Home() {
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                               />
                             </div>
-                            <span className="text-[10px] xs:text-[11px] sm:text-xs font-bold text-gray-555 dark:text-gray-400 group-hover:text-[#FFC107] text-center leading-tight line-clamp-2 w-full px-0.5">
+                            <span className={`text-[10px] xs:text-[11px] sm:text-xs font-bold ${activeCategory === category.id ? 'text-[#FFC107]' : 'text-gray-555 dark:text-gray-400'} group-hover:text-[#FFC107] text-center leading-tight line-clamp-2 w-full px-0.5`}>
                               {category.name}
                             </span>
-                          </Link>
+                          </div>
                         ))}
                       </div>
 
@@ -2932,349 +2990,134 @@ export default function Home() {
           className="content-auto space-y-0 pt-3 sm:pt-4 lg:pt-6 pb-8 md:pb-10"
           initial={false}
           animate={{ opacity: 1 }}>
-          {!shouldShowOutOfZoneHome && (
-            <div className="px-4 mb-3 lg:mb-4">
-              <div className="flex flex-col gap-0.5 lg:gap-1">
-                <h2 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-400 tracking-widest uppercase">
-                  {filteredRestaurants.length} Restaurants Delivering to You
-                </h2>
-                <span className="text-base sm:text-lg lg:text-2xl text-gray-500 font-normal">
-                  Featured
-                </span>
+          <div className="px-4 mb-5 flex flex-col gap-0.5 lg:gap-1">
+            <h2 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-400 tracking-widest uppercase">
+              Delicious Foods For You
+            </h2>
+            <span className="text-base sm:text-lg lg:text-2xl text-gray-500 font-normal">
+              Fresh & Hot
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-4">
+            {loadingFoods ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-20 bg-white dark:bg-[#111111] rounded-2xl border border-gray-100 dark:border-gray-800">
+                <Loader2 className="w-8 h-8 animate-spin text-[#FFC107] mb-2" />
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">Loading delicious foods...</p>
               </div>
-            </div>
-          )}
-          {shouldShowOutOfZoneHome ? (
-            <div className="flex flex-col items-center justify-center py-16 px-4 text-center min-h-[480px] overflow-visible">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="flex flex-col items-center max-w-sm mx-auto relative"
-              >
-                <div className="relative mb-14">
-                  {/* Multi-layered Glow System */}
+            ) : foodsData.length === 0 ? (
+              <div className="col-span-full flex flex-col items-center justify-center py-20 text-center px-4 bg-white dark:bg-[#111111] rounded-2xl border border-gray-100 dark:border-gray-800">
+                <UtensilsCrossed className="w-12 h-12 text-gray-300 dark:text-gray-705 mb-3" />
+                <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">No Foods Available</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">We couldn't find any foods right now. Try selecting another category.</p>
+              </div>
+            ) : (
+              foodsData.map((food, index) => {
+                const cartQty = getCartQty(food.id);
+                return (
                   <motion.div
-                    animate={{
-                      scale: [1, 1.4, 1],
-                      opacity: [0.15, 0.35, 0.15],
-                    }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute inset-0 bg-[#FFC107] rounded-full blur-[70px]"
-                  />
-                  <motion.div
-                    animate={{
-                      scale: [1.3, 1, 1.3],
-                      opacity: [0.1, 0.25, 0.1],
-                    }}
-                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    className="absolute inset-0 bg-rose-400 rounded-full blur-[50px]"
-                  />
-
-                  {/* Floating Decorative Icons */}
-                  <motion.div
-                    animate={{ y: [0, -15, 0], rotate: [0, 15, 0], scale: [1, 1.1, 1] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute -top-10 -left-10 text-orange-400/40"
+                    key={food.id}
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
+                    className="bg-white dark:bg-[#151515] rounded-[20px] overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 group hover:shadow-[0_12px_30px_-6px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col h-full relative"
                   >
-                    <Pizza className="w-12 h-12" strokeWidth={1} />
-                  </motion.div>
-                  <motion.div
-                    animate={{ y: [0, 15, 0], rotate: [0, -20, 0], scale: [1, 1.05, 1] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    className="absolute -bottom-6 -right-12 text-rose-400/40"
-                  >
-                    <UtensilsCrossed className="w-10 h-10" strokeWidth={1} />
-                  </motion.div>
-                  <motion.div
-                    animate={{ x: [0, 12, 0], y: [0, -10, 0] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                    className="absolute top-4 -right-14 text-amber-400/30"
-                  >
-                    <Flame className="w-8 h-8" strokeWidth={1} />
-                  </motion.div>
+                    {/* Food Image */}
+                    <div className="relative aspect-video w-full overflow-hidden bg-gray-50 dark:bg-gray-900">
+                      <OptimizedImage
+                        src={food.image || "https://picsum.photos/seed/food/600/400"}
+                        alt={food.name}
+                        className="w-full h-full object-cover transform scale-100 group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {/* Food Type Indicator (Veg/Non-Veg dot) */}
+                      <div className="absolute top-2 left-2 bg-white/90 dark:bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 border border-white/20">
+                        <span className={`w-1.5 h-1.5 rounded-full ${food.foodType === 'Veg' ? 'bg-green-500' : 'bg-red-500'}`} />
+                        <span className="text-[8px] font-black uppercase tracking-tight text-gray-800 dark:text-gray-200">{food.foodType}</span>
+                      </div>
+                      
+                      {food.preparationTime && (
+                        <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded text-[8px] font-black text-white flex items-center gap-0.5">
+                          <Clock className="w-3 h-3 text-white" />
+                          <span>{food.preparationTime}</span>
+                        </div>
+                      )}
+                    </div>
 
-                  <motion.div
-                    animate={{ y: [0, -25, 0] }}
-                    transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="relative z-10 w-44 h-44 bg-white/80 dark:bg-[#1a1a1a]/80 backdrop-blur-sm rounded-[3rem] shadow-[0_20px_50px_rgba(126,56,102,0.3)] flex items-center justify-center border border-white/50 dark:border-white/10 overflow-hidden"
-                  >
-                    <img
-                      src={chefMascot}
-                      alt="Chef Mascot"
-                      className="w-full h-full object-contain p-2 transform scale-115 drop-shadow-2xl"
-                    />
-                  </motion.div>
+                    {/* Details */}
+                    <div className="p-3.5 flex flex-col flex-grow">
+                      <h3 className="text-xs sm:text-sm font-extrabold text-gray-900 dark:text-white mb-0.5 tracking-tight line-clamp-1">
+                        {food.name}
+                      </h3>
+                      {food.description && (
+                        <p className="text-[10px] text-gray-400 dark:text-gray-500 mb-3 line-clamp-2 leading-relaxed">
+                          {food.description}
+                        </p>
+                      )}
 
-                  {/* Animated Particles with varied colors */}
-                  {[...Array(5)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      animate={{
-                        y: [0, -120],
-                        x: [0, (i - 2) * 40],
-                        opacity: [0, 0.6, 0],
-                        scale: [0, 1, 0]
-                      }}
-                      transition={{
-                        duration: 3 + i * 0.2,
-                        repeat: Infinity,
-                        delay: i * 0.6,
-                        ease: "easeOut"
-                      }}
-                      className={`absolute top-1/2 left-1/2 w-${2 + (i % 2)} h-${2 + (i % 2)} ${i % 2 === 0 ? 'bg-[#FFC107]/40' : 'bg-rose-400/40'} rounded-full`}
-                    />
-                  ))}
-                </div>
+                      <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-bold">Price</span>
+                          <span className="text-sm sm:text-base font-black text-gray-950 dark:text-white flex items-center">
+                            <IndianRupee className="w-3.5 h-3.5 shrink-0" />
+                            {food.price}
+                          </span>
+                        </div>
 
-                <h3 className="text-3xl sm:text-4xl font-black mb-4 tracking-tight leading-tight bg-gradient-to-r from-[#FFC107] via-rose-500 to-[#FFC107] bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient-shift">
-                  Coming Soon!
-                </h3>
-                <p className="text-base sm:text-lg font-medium text-gray-500 dark:text-gray-400 leading-relaxed px-4 max-w-xs">
-                  Currently we are not operating on this area. We are coming soon to your location!
-                </p>
-
-                <div className="mt-12 flex items-center gap-3">
-                  <motion.div
-                    animate={{ width: [8, 40, 8], opacity: [0.2, 0.5, 0.2] }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="h-1.5 bg-[#FFC107] rounded-full"
-                  />
-                  <motion.div
-                    animate={{ width: [40, 8, 40], opacity: [0.5, 1, 0.5] }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                    className="h-1.5 bg-[#FFC107] rounded-full"
-                  />
-                  <motion.div
-                    animate={{ width: [8, 40, 8], opacity: [0.2, 0.5, 0.2] }}
-                    transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                    className="h-1.5 bg-[#FFC107] rounded-full"
-                  />
-                </div>
-              </motion.div>
-            </div>
-          ) : (
-            <>
-              <div
-                className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-4 lg:gap-5 xl:gap-6 px-4 pt-1 sm:pt-1.5 lg:pt-2 items-stretch ${isLoadingFilterResults || loadingRestaurants ? "opacity-50" : "opacity-100"} transition-opacity duration-300`}>
-                {visibleRestaurants.map((restaurant, index) => {
-                  const nameStr =
-                    typeof restaurant?.name === "string"
-                      ? restaurant.name.trim()
-                      : "";
-                  const fallbackSlugSource =
-                    nameStr ||
-                    (typeof restaurant?.restaurantName === "string"
-                      ? restaurant.restaurantName.trim()
-                      : "") ||
-                    String(
-                      restaurant?.slug ||
-                      restaurant?.id ||
-                      restaurant?._id ||
-                      `restaurant-${index}`,
-                    );
-
-                  const restaurantSlug =
-                    typeof restaurant?.slug === "string" &&
-                      restaurant.slug.trim()
-                      ? restaurant.slug.trim()
-                      : fallbackSlugSource.toLowerCase().replace(/\s+/g, "-");
-                  const availability = getRestaurantAvailabilityStatus(
-                    restaurant,
-                    new Date(availabilityTick),
-                  );
-                  // Direct favorite check - isFavorite is already memoized in context
-                  const favorite = isFavorite(restaurantSlug);
-
-                  const handleToggleFavorite = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (favorite) {
-                      // Already bookmarked — directly remove without showing modal
-                      removeFavorite(restaurantSlug);
-                    } else {
-                      // Add to favorites and show toast
-                      addFavorite({
-                        slug: restaurantSlug,
-                        name: restaurant.name,
-                        cuisine: restaurant.cuisine,
-                        rating: restaurant.rating,
-                        deliveryTime: restaurant.deliveryTime,
-                        distance: restaurant.distance,
-                        priceRange: restaurant.priceRange,
-                        image: restaurant.image,
-                      });
-                      setShowToast(true);
-                      setTimeout(() => {
-                        setShowToast(false);
-                      }, 3000);
-                    }
-                  };
-
-                  return (
-                    <div
-                      key={
-                        restaurant?.id ||
-                        restaurant?._id ||
-                        restaurantSlug ||
-                        index
-                      }
-                      className="h-full transform transition-all duration-300 hover:-translate-y-3 hover:scale-[1.02]"
-                      style={{
-                        perspective: 1000,
-                        animation:
-                          index < 10
-                            ? `fade-in-up 0.5s ease-out ${index * 0.05}s backwards`
-                            : "none",
-                      }}>
-                      <div className="h-full group">
-                        <Link
-                          to={`/user/restaurants/${restaurantSlug}`}
-                          className="h-full flex">
-                          <Card
-                            className={`overflow-hidden gap-0 cursor-pointer border-0 dark:border-gray-800 group bg-white dark:bg-[#1a1a1a] border-background transition-all duration-500 py-0 rounded-[20px] flex flex-col h-full w-full relative shadow-sm hover:shadow-xl ${isOutOfService || !availability.isOpen
-                              ? "grayscale opacity-75"
-                              : ""
-                              }`}>
-                            {/* Image Section with Carousel */}
-                            <div className="relative">
-                              <RestaurantImageCarousel
-                                restaurant={restaurant}
-                                priority={index < 3}
-                                backendOrigin={BACKEND_ORIGIN}
-                                className="h-36 xs:h-40 sm:h-56 md:h-60 lg:h-64 xl:h-72"
-                              />
-
-                              {/* Featured Dish Badge - Top Left */}
-                              <div className="absolute top-3 left-3 flex items-center z-10 transform transition-transform duration-300 group-hover:scale-105">
-                                <div className="bg-black/75 backdrop-blur-lg text-white px-3 py-1 rounded-full text-[9px] xs:text-[10px] font-semibold tracking-tight flex items-center shadow-md border border-white/10">
-                                  {restaurant.featuredDish} • ₹
-                                  {restaurant.featuredPrice}
-                                </div>
-                              </div>
-
-                              {/* Bookmark Icon - Top Right */}
-                              <div className="absolute top-3 right-3 z-10 transform transition-transform duration-300 group-hover:scale-110">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={handleToggleFavorite}
-                                  aria-label={
-                                    favorite
-                                      ? "Remove from favorites"
-                                      : "Add to favorites"
-                                  }
-                                  className={`h-9 w-9 rounded-xl shadow-lg flex items-center justify-center transition-all duration-300 ${favorite
-                                    ? "bg-red-500 text-white hover:bg-red-600"
-                                    : "bg-white/90 backdrop-blur-sm text-gray-800 hover:bg-gray-100 hover:text-gray-900"
-                                    }`}>
-                                  <Bookmark
-                                    className={`h-4 w-4 transition-all duration-300 ${favorite ? "fill-white" : "text-gray-800"
-                                      }`}
-                                  />
-                                </Button>
-                              </div>
+                        {/* Add to Cart button */}
+                        <div className="relative">
+                          {cartQty > 0 ? (
+                            <div className="flex items-center bg-[#FFC107] text-black font-extrabold rounded-lg shadow-sm border border-[#FFC107] overflow-hidden">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateQuantity(food.id, cartQty - 1);
+                                }}
+                                className="px-2 py-1 hover:bg-black/5 active:scale-95 transition-all"
+                              >
+                                <Minus className="w-3 h-3" strokeWidth={3} />
+                              </button>
+                              <span className="px-1.5 text-xs">{cartQty}</span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  updateQuantity(food.id, cartQty + 1);
+                                }}
+                                className="px-2 py-1 hover:bg-black/5 active:scale-95 transition-all"
+                              >
+                                <Plus className="w-3 h-3" strokeWidth={3} />
+                              </button>
                             </div>
-
-                            {/* Content Section */}
-                            <div className="transform transition-transform duration-300 group-hover:-translate-y-1">
-                              <CardContent className="p-2.5 sm:p-4 pt-2.5 sm:pt-4 flex flex-col flex-grow">
-                                {/* Restaurant Name & Rating */}
-                                <div className="flex items-start justify-between gap-2 mb-1.5">
-                                  <div className="flex-1 min-w-0">
-                                    <h3 className="text-sm xs:text-base font-extrabold sm:text-lg md:text-xl lg:text-2xl text-gray-950 dark:text-white line-clamp-1 leading-tight tracking-tight transition-colors duration-300 group-hover:text-[#FFC107]">
-                                      {restaurant.name}
-                                    </h3>
-                                    <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                                      <span
-                                        className={`inline-flex rounded-full px-2 py-0.5 text-[8px] xs:text-[9px] font-black uppercase tracking-widest shadow-sm ${availability.isOpen ? "bg-[#FFC107] text-slate-950" : "bg-gray-400 text-white"}`}>
-                                        {availability.isOpen
-                                          ? "Open now"
-                                          : "Offline"}
-                                      </span>
-                                      {availability.isOpen &&
-                                        availability.closingCountdownLabel &&
-                                        availability.openingTime &&
-                                        availability.closingTime &&
-                                        availability.minutesUntilClose !== null &&
-                                        availability.minutesUntilClose <= 120 && (
-                                          <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FFC107]/10 text-[#FFC107] border border-[#FFC107]/20 text-[8px] xs:text-[9px] font-black uppercase tracking-widest">
-                                            <Timer
-                                              className="h-2.5 w-2.5 flex-shrink-0"
-                                              strokeWidth={3}
-                                            />
-                                            <span>
-                                              {availability.closingCountdownLabel}
-                                            </span>
-                                          </div>
-                                        )}
-                                    </div>
-                                  </div>
-                                  <div className={`flex-shrink-0 ${Number(restaurant.rating) > 0 ? "bg-[#FFC107] text-slate-950" : "bg-gray-500 text-white"} px-1.5 py-0.5 rounded-lg flex items-center gap-0.5 shadow-md transform transition-transform duration-300 group-hover:scale-105`}>
-                                    <span className="text-[10px] xs:text-xs font-black tracking-tight">
-                                      {Number(restaurant.rating) > 0 ? Number(restaurant.rating).toFixed(1) : "NEW"}
-                                    </span>
-                                    {Number(restaurant.rating) > 0 && <Star className="h-2.5 w-2.5 xs:h-3 xs:w-3 fill-current text-current" strokeWidth={0} />}
-                                  </div>
-                                </div>
-
-                                {/* Delivery Time & Distance */}
-                                <div className="flex items-center gap-1 text-[11px] xs:text-xs sm:text-sm lg:text-base text-gray-500 mb-1.5 transition-opacity duration-300 opacity-70 group-hover:opacity-100">
-                                  <Clock
-                                    className="h-3.5 w-3.5 lg:h-5 lg:w-5 text-gray-500 dark:text-gray-400"
-                                    strokeWidth={1.5}
-                                  />
-                                  <span className="font-medium dark:text-gray-300 text-gray-700">
-                                    {restaurant.deliveryTime}
-                                  </span>
-                                  <span className="mx-1">|</span>
-                                  <span className="font-medium dark:text-gray-300 text-gray-700">
-                                    {restaurant.distance}
-                                  </span>
-                                </div>
-
-                                {/* Offer Badge */}
-                                {restaurant.offer && (
-                                  <div className="flex items-center gap-1.5 text-xs lg:text-base mt-auto transform transition-transform duration-300 group-hover:translate-x-1">
-                                    <BadgePercent
-                                      className="h-3.5 w-3.5 lg:h-5 lg:w-5 text-[#FFC107]"
-                                      strokeWidth={3}
-                                    />
-                                    <span className="text-[#FFC107] dark:text-[#a05485] font-black uppercase text-[9px] xs:text-[10px] tracking-wider">
-                                      {restaurant.offer}
-                                    </span>
-                                  </div>
-                                )}
-                              </CardContent>
-                            </div>
-
-                            {/* Border Glow Effect */}
-                            <div className="absolute inset-0 rounded-[20px] pointer-events-none z-0 transition-all duration-300 border border-transparent group-hover:border-[#FFC107]/30 group-hover:shadow-[inset_0_0_0_1px_rgba(235,89,14,0.2)]" />
-                          </Card>
-                        </Link>
+                          ) : (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const btnRect = e.currentTarget.getBoundingClientRect();
+                                const sourcePosition = { x: btnRect.left, y: btnRect.top };
+                                addToCart({
+                                  id: food.id,
+                                  name: food.name,
+                                  price: food.price,
+                                  image: food.image,
+                                  moduleType: 'food',
+                                  restaurant: 'Zin Zoo Kitchen',
+                                  restaurantId: 'zin_zoo_kitchen'
+                                }, sourcePosition);
+                                toast.success(`${food.name} added to cart!`);
+                              }}
+                              className="bg-[#FFC107] hover:bg-[#FFB300] text-black font-extrabold px-3 py-1.5 rounded-lg shadow-sm hover:shadow-md transition-all active:scale-95 flex items-center gap-0.5 text-[10px] uppercase tracking-wider h-auto"
+                            >
+                              <Plus className="w-3 h-3" strokeWidth={3} />
+                              Add
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-
-              <div className="flex flex-col items-center pt-2 sm:pt-3 gap-2 px-4">
-                {hasMoreRestaurants && (
-                  <Button
-                    variant="outline"
-                    onClick={loadMoreRestaurants}
-                    className="text-sm font-medium border-gray-300 hover:border-gray-400">
-                    Load more restaurants
-                  </Button>
-                )}
-                <div
-                  ref={restaurantLoadMoreRef}
-                  className="h-1 w-full"
-                  aria-hidden="true"
-                />
-              </div>
-            </>
-          )}
+                  </motion.div>
+                );
+              })
+            )}
+          </div>
         </motion.section>
       </div>
 
