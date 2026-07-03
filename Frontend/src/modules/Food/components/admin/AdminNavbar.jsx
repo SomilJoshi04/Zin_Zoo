@@ -280,27 +280,14 @@ export default function AdminNavbar({ onMenuClick }) {
             </button>
             {/* Logo */}
             <div className="flex items-center gap-2">
-              <div className="w-24 h-12 rounded-lg bg-white flex items-center justify-center ring-neutral-200">
-                {businessSettings?.logo?.url ? (
-                  <img
-                    src={businessSettings.logo.url}
-                    alt={businessSettings.companyName || "Company"}
-                    className="w-24 h-10 object-contain"
-                    loading="lazy"
-                    onError={(e) => {
-                      // Fallback to default logo if company logo fails to load
-                      e.target.src = quickSpicyLogo;
-                    }}
-                  />
-                ) : (
-                  businessSettings?.companyName ? (
-                    <span className="text-sm font-semibold text-neutral-700 px-2 truncate">
-                      {businessSettings.companyName}
-                    </span>
-                  ) : (
-                    <img src={quickSpicyLogo} alt={businessSettings?.companyName || "Company"} className="w-24 h-10 object-contain" loading="lazy" />
-                  )
-                )}
+              <div className="w-32 h-12 flex items-center justify-center overflow-hidden">
+                <img
+                  src="/zinzoo-logo.png"
+                  alt={businessSettings?.companyName || "Company"}
+                  className="w-[200px] h-[200px] max-w-none object-contain"
+                  style={{ mixBlendMode: "multiply" }}
+                  loading="lazy"
+                />
               </div>
             </div>
           </div>

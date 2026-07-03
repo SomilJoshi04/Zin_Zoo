@@ -12,7 +12,7 @@ export default function TermsAndCondition() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [viewMode, setViewMode] = useState("edit") // "edit" | "preview"
-  const [selectedModule, setSelectedModule] = useState("USER")
+  const [selectedModule, setSelectedModule] = useState("ALL")
   const [termsData, setTermsData] = useState({
     title: 'Terms and Conditions',
     content: ''
@@ -89,7 +89,7 @@ export default function TermsAndCondition() {
     return (
       <div className="h-full overflow-y-auto bg-slate-50 p-4 lg:p-6 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F84E04] mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading...</p>
         </div>
       </div>
@@ -102,23 +102,8 @@ export default function TermsAndCondition() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Terms And Condition</h1>
-            <p className="text-sm text-slate-600 mt-1">Manage module-specific Terms and Conditions content</p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <label htmlFor="module-selector" className="text-sm font-medium text-slate-700">Module:</label>
-            <select
-              id="module-selector"
-              value={selectedModule}
-              onChange={(e) => setSelectedModule(e.target.value)}
-              className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 outline-none"
-            >
-              <option value="USER">User App</option>
-              <option value="RESTAURANT">Restaurant App</option>
-              <option value="DELIVERY">Delivery App</option>
-              <option value="ALL">All Modules (Default)</option>
-            </select>
+            <h1 className="text-2xl font-bold text-slate-900">Terms & Conditions</h1>
+            <p className="text-sm text-slate-600 mt-1">Establish legal agreements, rules, and guidelines for your users</p>
           </div>
         </div>
 
@@ -126,20 +111,20 @@ export default function TermsAndCondition() {
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="text-sm text-slate-600">
-              Editing Terms for <span className="font-semibold text-blue-600">{selectedModule}</span>
+              Write the terms of service agreement for the platform
             </div>
             <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
               <button
                 type="button"
                 onClick={() => setViewMode("edit")}
-                className={`px-3 py-1.5 text-sm font-medium ${viewMode === "edit" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                className={`px-3 py-1.5 text-sm font-medium ${viewMode === "edit" ? "bg-[#F84E04] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode("preview")}
-                className={`px-3 py-1.5 text-sm font-medium ${viewMode === "preview" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                className={`px-3 py-1.5 text-sm font-medium ${viewMode === "preview" ? "bg-[#F84E04] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
               >
                 Preview
               </button>
@@ -150,7 +135,7 @@ export default function TermsAndCondition() {
             <Textarea
               value={termsData.content}
               onChange={(e) => setTermsData(prev => ({ ...prev, content: e.target.value }))}
-              placeholder={`Enter terms and conditions content for ${selectedModule}...`}
+              placeholder="Enter terms and conditions content here..."
               className="min-h-[600px] w-full text-sm text-slate-700 leading-relaxed resize-y"
               dir="ltr"
               style={{
@@ -161,6 +146,11 @@ export default function TermsAndCondition() {
                 maxWidth: '100%'
               }}
             />
+          ) : !termsData.content || !termsData.content.trim() ? (
+            <div className="min-h-[600px] w-full rounded-md border border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center p-8 text-center">
+              <p className="text-slate-500 font-medium text-base mb-1">No Policy Content Found</p>
+              <p className="text-slate-400 text-sm">Please switch to "Edit" mode to add or paste your policies.</p>
+            </div>
           ) : (
             <div className="min-h-[600px] w-full rounded-md border border-slate-200 bg-white p-4">
               <div
@@ -183,9 +173,9 @@ export default function TermsAndCondition() {
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 bg-[#F84E04] text-white rounded-lg hover:bg-[#D94203] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? 'Saving...' : `Save ${selectedModule} Terms`}
+            {saving ? 'Saving...' : 'Save Terms & Conditions'}
           </button>
         </div>
       </div>

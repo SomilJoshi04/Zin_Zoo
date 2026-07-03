@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { adminAPI } from "@food/api"
-import { Heart, Users, Shield, Clock, Star, Award, Plus, X, GripVertical } from "lucide-react"
+import { adminAPI, uploadAPI } from "@food/api"
+import { Heart, Users, Shield, Clock, Star, Award, Plus, X, GripVertical, Upload } from "lucide-react"
 import { Button } from "@food/components/ui/button"
 import { Input } from "@food/components/ui/input"
 import { Textarea } from "@food/components/ui/textarea"
@@ -53,6 +53,8 @@ export default function AboutUs() {
     logo: '',
     features: []
   })
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => {
     fetchAboutData()
@@ -83,7 +85,23 @@ export default function AboutUs() {
   const handleSave = async () => {
     try {
       setSaving(true)
-      const response = await adminAPI.updatePageContent('about', aboutData)
+      let logoUrl = aboutData.logo
+
+      if (selectedFile) {
+        setUploadingImage(true)
+        const uploadResponse = await uploadAPI.uploadMedia(selectedFile, {
+          folder: "about",
+        })
+        logoUrl = uploadResponse?.data?.data?.url || uploadResponse?.data?.url || logoUrl
+        setUploadingImage(false)
+      }
+
+      const payload = {
+        ...aboutData,
+        logo: logoUrl
+      }
+
+      const response = await adminAPI.updatePageContent('about', payload)
       if (response.data.success) {
         toast.success('About page updated successfully')
         const data = response.data.data
@@ -93,6 +111,7 @@ export default function AboutUs() {
             ...data,
             features: Array.isArray(data.features) ? data.features : [],
           }))
+          setSelectedFile(null)
         }
       }
     } catch (error) {
@@ -100,6 +119,7 @@ export default function AboutUs() {
       toast.error(error.response?.data?.message || 'Failed to save about page')
     } finally {
       setSaving(false)
+      setUploadingImage(false)
     }
   }
 
@@ -174,7 +194,7 @@ export default function AboutUs() {
     return (
       <div className="h-full overflow-y-auto bg-slate-50 p-4 lg:p-6 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F84E04] mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading...</p>
         </div>
       </div>
@@ -226,15 +246,44 @@ export default function AboutUs() {
                 className="mt-1 w-full"
               />
             </div>
-            <div>
-              <Label htmlFor="logo">Logo URL</Label>
-              <Input
-                id="logo"
-                value={aboutData.logo}
-                onChange={(e) => setAboutData(prev => ({ ...prev, logo: e.target.value }))}
-                placeholder="https://example.com/switcheats-logo.png"
-                className="mt-1"
-              />
+            <div className="space-y-2">
+              <Label htmlFor="logo-upload" className="flex items-center gap-1">
+                Logo Image {uploadingImage && <span className="text-xs text-orange-500 animate-pulse">(Uploading...)</span>}
+              </Label>
+              <div className="flex items-center gap-4 mt-1">
+                {aboutData.logo ? (
+                  <div className="w-20 h-20 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 flex items-center justify-center">
+                    <img
+                      src={aboutData.logo}
+                      alt="About Logo"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-lg border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-slate-400 text-xs">
+                    No Logo
+                  </div>
+                )}
+                <div className="flex flex-col gap-2">
+                  <Input
+                    id="logo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setSelectedFile(file)
+                      if (file) {
+                        setAboutData((prev) => ({
+                          ...prev,
+                          logo: URL.createObjectURL(file),
+                        }))
+                      }
+                    }}
+                    className="w-full max-w-xs text-sm"
+                  />
+                  <p className="text-xs text-slate-500">Supported formats: JPG, PNG, WEBP</p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -243,7 +292,7 @@ export default function AboutUs() {
         <Card className="mb-6">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Features</CardTitle>
-            <Button onClick={addFeature} size="sm" variant="outline">
+            <Button onClick={addFeature} size="sm" variant="outline" className="border-[#F84E04] text-[#F84E04] hover:bg-orange-50 hover:text-[#D94203]">
               <Plus className="h-4 w-4 mr-2" />
               Add Feature
             </Button>
@@ -337,7 +386,7 @@ export default function AboutUs() {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={saving} size="lg">
+          <Button onClick={handleSave} disabled={saving} size="lg" className="bg-[#F84E04] hover:bg-[#D94203] text-white transition-colors">
             {saving ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>

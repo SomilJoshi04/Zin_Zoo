@@ -3,7 +3,6 @@ import { toast } from "sonner"
 import { adminAPI } from "@food/api"
 import { Textarea } from "@food/components/ui/textarea"
 import { legalHtmlToPlainText, plainTextToLegalHtml } from "@food/utils/legalContentFormat"
-const debugError = (...args) => {}
 const SUPPORT_EMAIL_REGEX = /^(?!.*\.\.)([A-Za-z0-9]+[._%+-]?)*[A-Za-z0-9]+@[A-Za-z0-9-]+\.[A-Za-z]{2,}$/
 const INDIAN_MOBILE_REGEX = /^[6-9]\d{9}$/
 
@@ -21,7 +20,7 @@ export default function SupportCMS() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [viewMode, setViewMode] = useState("edit") // "edit" | "preview"
-  const [selectedModule, setSelectedModule] = useState("USER")
+  const [selectedModule, setSelectedModule] = useState("ALL")
   const [supportData, setSupportData] = useState({
     title: 'Help & Support',
     content: '',
@@ -54,7 +53,7 @@ export default function SupportCMS() {
         })
       }
     } catch (error) {
-      debugError('Error fetching support data:', error)
+      console.error('Error fetching support data:', error)
       if (error.response?.status === 404) {
         setSupportData({
           title: 'Help & Support',
@@ -63,7 +62,7 @@ export default function SupportCMS() {
           mobile: ''
         })
       } else {
-        toast.error('Failed to load support content')
+        toast.error('Failed to load support data')
       }
     } finally {
       setLoading(false)
@@ -72,16 +71,30 @@ export default function SupportCMS() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const email = String(supportData.email || "").trim().toLowerCase()
-    const mobile = String(supportData.mobile || "").trim()
-    if (email && (!SUPPORT_EMAIL_REGEX.test(email) || hasSuspiciousEmailTld(email))) {
-      toast.error("Please enter a valid support email address")
+    
+    // Validations
+    if (!supportData.email) {
+      toast.error("Support Email is required")
       return
     }
-    if (mobile && !INDIAN_MOBILE_REGEX.test(mobile)) {
-      toast.error("Please enter a valid 10-digit Indian mobile number")
+    if (!SUPPORT_EMAIL_REGEX.test(supportData.email)) {
+      toast.error("Please enter a valid email address (e.g. support@example.com)")
       return
     }
+    if (hasSuspiciousEmailTld(supportData.email)) {
+      toast.error("The email address domain contains an invalid or suspicious top-level domain (TLD)")
+      return
+    }
+
+    if (!supportData.mobile) {
+      toast.error("Support Mobile is required")
+      return
+    }
+    if (!INDIAN_MOBILE_REGEX.test(supportData.mobile)) {
+      toast.error("Please enter a valid 10-digit mobile number starting with 6-9")
+      return
+    }
+
     try {
       setSaving(true)
       // Convert plain text/markdown to HTML for storage + user rendering
@@ -89,13 +102,13 @@ export default function SupportCMS() {
       
       const response = await adminAPI.updatePageContent('support', { 
         title: supportData.title, 
+        content: htmlContent,
         email: supportData.email,
         mobile: supportData.mobile,
-        content: htmlContent,
         module: selectedModule
       })
       if (response?.data?.success) {
-        toast.success('Support content updated successfully')
+        toast.success('Help and support updated successfully')
         // Convert HTML to plain text for display in textarea
         const content = response.data.data.content || ''
         const textContent = legalHtmlToPlainText(content)
@@ -105,7 +118,7 @@ export default function SupportCMS() {
         })
       }
     } catch (error) {
-      debugError('Error saving support:', error)
+      console.error('Error saving support:', error)
       toast.error(error.response?.data?.message || 'Failed to save support content')
     } finally {
       setSaving(false)
@@ -116,7 +129,7 @@ export default function SupportCMS() {
     return (
       <div className="h-full overflow-y-auto bg-slate-50 p-4 lg:p-6 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#F84E04] mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading...</p>
         </div>
       </div>
@@ -130,22 +143,7 @@ export default function SupportCMS() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Help & Support</h1>
-            <p className="text-sm text-slate-600 mt-1">Manage module-specific Help & Support content</p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <label htmlFor="module-selector" className="text-sm font-medium text-slate-700">Module:</label>
-            <select
-              id="module-selector"
-              value={selectedModule}
-              onChange={(e) => setSelectedModule(e.target.value)}
-              className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 outline-none"
-            >
-              <option value="USER">User App</option>
-              <option value="RESTAURANT">Restaurant App</option>
-              <option value="DELIVERY">Delivery App</option>
-              <option value="ALL">All Modules (Default)</option>
-            </select>
+            <p className="text-sm text-slate-600 mt-1">Configure customer assistance channels and user documentation resources</p>
           </div>
         </div>
         {/* Contact Info Inputs */}
@@ -160,7 +158,7 @@ export default function SupportCMS() {
                 value={supportData.email || ""}
                 onChange={(e) => setSupportData(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="support@example.com"
-                className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 outline-none"
+                className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-[#F84E04] focus:border-[#F84E04] block w-full p-2.5 outline-none"
               />
             </div>
             <div className="space-y-2">
@@ -177,7 +175,7 @@ export default function SupportCMS() {
                 }
                 maxLength={10}
                 placeholder="+91 00000 00000"
-                className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 outline-none"
+                className="bg-white border border-slate-300 text-slate-900 text-sm rounded-lg focus:ring-[#F84E04] focus:border-[#F84E04] block w-full p-2.5 outline-none"
               />
             </div>
           </div>
@@ -187,20 +185,20 @@ export default function SupportCMS() {
         <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
           <div className="flex items-center justify-between gap-3 mb-3">
             <div className="text-sm text-slate-600">
-              Editing Support Content for <span className="font-semibold text-blue-600">{selectedModule}</span>
+              Customer Care & Support CMS
             </div>
             <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
               <button
                 type="button"
                 onClick={() => setViewMode("edit")}
-                className={`px-3 py-1.5 text-sm font-medium ${viewMode === "edit" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                className={`px-3 py-1.5 text-sm font-medium ${viewMode === "edit" ? "bg-[#F84E04] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
               >
                 Edit
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode("preview")}
-                className={`px-3 py-1.5 text-sm font-medium ${viewMode === "preview" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
+                className={`px-3 py-1.5 text-sm font-medium ${viewMode === "preview" ? "bg-[#F84E04] text-white" : "bg-white text-slate-700 hover:bg-slate-50"}`}
               >
                 Preview
               </button>
@@ -211,7 +209,7 @@ export default function SupportCMS() {
             <Textarea
               value={supportData.content}
               onChange={(e) => setSupportData(prev => ({ ...prev, content: e.target.value }))}
-              placeholder={`Enter help & support content for ${selectedModule}...`}
+              placeholder="Enter help & support content here..."
               className="min-h-[600px] w-full text-sm text-slate-700 leading-relaxed resize-y"
               dir="ltr"
               style={{
@@ -222,6 +220,11 @@ export default function SupportCMS() {
                 maxWidth: '100%'
               }}
             />
+          ) : !supportData.content || !supportData.content.trim() ? (
+            <div className="min-h-[600px] w-full rounded-md border border-dashed border-slate-300 bg-slate-50 flex flex-col items-center justify-center p-8 text-center">
+              <p className="text-slate-500 font-medium text-base mb-1">No Policy Content Found</p>
+              <p className="text-slate-400 text-sm">Please switch to "Edit" mode to add or paste your policies.</p>
+            </div>
           ) : (
             <div className="min-h-[600px] w-full rounded-md border border-slate-200 bg-white p-4">
               <div
@@ -244,9 +247,9 @@ export default function SupportCMS() {
             type="button"
             onClick={handleSubmit}
             disabled={saving}
-            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 bg-[#F84E04] text-white rounded-lg hover:bg-[#D94203] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {saving ? 'Saving...' : `Save ${selectedModule} Support Content`}
+            {saving ? 'Saving...' : 'Save Support Content'}
           </button>
         </div>
       </div>

@@ -391,7 +391,7 @@ export default function AdminProfile() {
               <Button
                 type="button"
                 onClick={handleStartEditing}
-                className="bg-black text-white hover:bg-neutral-900"
+                className="bg-[#F84E04] text-white hover:bg-[#D94203] font-semibold"
               >
                 <Pencil className="w-4 h-4 mr-2" />
                 Edit
@@ -411,7 +411,7 @@ export default function AdminProfile() {
                   type="submit"
                   form="admin-profile-form"
                   disabled={saving || uploading}
-                  className="bg-black text-white hover:bg-neutral-900 h-10 px-6"
+                  className="bg-[#F84E04] text-white hover:bg-[#D94203] h-10 px-6 font-semibold"
                 >
                   {uploading ? (
                     <>

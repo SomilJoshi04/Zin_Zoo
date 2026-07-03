@@ -1089,6 +1089,15 @@ export const adminAPI = {
       contextModule: "admin",
     });
   },
+  getPageContent: (key, params = {}) =>
+    apiClient.get(`/food/admin/pages-social-media/${key}`, {
+      params,
+      contextModule: "admin",
+    }),
+  updatePageContent: (key, body = {}) =>
+    apiClient.put(`/food/admin/pages-social-media/${key}`, body, {
+      contextModule: "admin",
+    }),
 };
 
 /** Restaurant API - OTP login via new backend; no email/password. */

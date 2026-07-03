@@ -82,6 +82,19 @@
   --color-primary-orange: #F84E04;
   --font-poppins: var(--font-poppins);
   --font-outfit: var(--font-outfit);
+
+  /* Override blue to primary theme color #F84E04 */
+  --color-blue-50: #fff7ed;
+  --color-blue-100: #ffedd5;
+  --color-blue-200: #fed7aa;
+  --color-blue-300: #fdba74;
+  --color-blue-400: #fb923c;
+  --color-blue-500: #f97316;
+  --color-blue-600: #F84E04;
+  --color-blue-700: #D94203;
+  --color-blue-800: #9a3412;
+  --color-blue-900: #7c2d12;
+  --color-blue-950: #431407;
 }
 
 .dark {

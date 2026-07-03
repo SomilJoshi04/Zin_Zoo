@@ -136,18 +136,13 @@ export default function AdminLogin() {
         <Card className="w-full max-w-lg bg-white/90 backdrop-blur border-neutral-200 shadow-2xl">
           <CardHeader className="pb-4">
             <div className="flex w-full items-center gap-4 sm:gap-5">
-              <div className="flex h-14 w-28 shrink-0 items-center justify-center rounded-xl bg-gray-900/5 ring-1 ring-neutral-200">
+              <div className="flex h-12 w-32 shrink-0 items-center justify-center overflow-hidden">
                 <img
-                  src={logoUrl}
+                  src="/zinzoo-logo.png"
                   alt="Logo"
-                  className="h-10 w-24 object-contain"
+                  className="w-[200px] h-[200px] max-w-none object-contain"
+                  style={{ mixBlendMode: "multiply" }}
                   loading="lazy"
-                  onError={(e) => {
-                    // Fallback to default logo if business logo fails to load
-                    if (e.target.src !== quickSpicyLogo) {
-                      e.target.src = quickSpicyLogo
-                    }
-                  }}
                 />
               </div>
               <div className="flex flex-col gap-1">
@@ -230,7 +225,7 @@ export default function AdminLogin() {
 
               <Button
                 type="submit"
-                className="h-12 w-full bg-black text-white transition-colors hover:bg-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-900 focus-visible:ring-offset-2"
+                className="h-12 w-full bg-[#F84E04] text-white transition-colors hover:bg-[#D94203] focus-visible:ring-2 focus-visible:ring-[#F84E04] focus-visible:ring-offset-2 font-bold"
                 disabled={isLoading}
               >
                 {isLoading ? "Logging in..." : "Login"}

@@ -223,15 +223,10 @@ export default function AdminForgotPassword() {
             <div className="flex w-full items-center gap-4 sm:gap-5">
               <div className="flex h-14 w-28 shrink-0 items-center justify-center rounded-xl bg-gray-900/5 ring-1 ring-neutral-200">
                 <img
-                  src={logoUrl || quickSpicyLogo}
-                  alt={companyName}
+                  src="/zinzoo-logo.png"
+                  alt="Logo"
                   className="h-10 w-24 object-contain"
                   loading="lazy"
-                  onError={(e) => {
-                    if (e.target.src !== quickSpicyLogo) {
-                      e.target.src = quickSpicyLogo
-                    }
-                  }}
                 />
               </div>
               <div className="flex flex-col gap-1">
