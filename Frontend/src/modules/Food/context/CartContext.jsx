@@ -176,15 +176,31 @@ export function CartProvider({ children }) {
   // Persist to localStorage whenever cart changes
   useEffect(() => {
     try {
-      // Only save if we have items or user is authenticated to avoid cluttering localStorage for every guest visitor
-      const isAuthenticated = localStorage.getItem("user_authenticated") === "true" || !!localStorage.getItem("user_accessToken");
-      if (cart.length > 0 || isAuthenticated) {
+      if (cart.length === 0) {
+        localStorage.removeItem("cart")
+      } else {
         localStorage.setItem("cart", JSON.stringify(normalizeCartData(cart)))
       }
     } catch {
       // ignore storage errors (private mode, quota, etc.)
     }
   }, [cart])
+
+  // Sync cart across multiple tabs
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === "cart") {
+        try {
+          const parsed = e.newValue ? JSON.parse(e.newValue) : [];
+          setCart(normalizeCartData(parsed));
+        } catch {
+          setCart([]);
+        }
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, []);
 
   const addToCart = (item, sourcePosition = null) => {
     const safeCart = normalizeCartData(cart)

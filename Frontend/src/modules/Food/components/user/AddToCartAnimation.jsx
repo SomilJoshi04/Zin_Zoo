@@ -463,7 +463,7 @@ export default function AddToCartAnimation({
               }}
               className={`text-white rounded-full shadow-[0_8px_18px_rgba(0,0,0,0.16)] px-3.5 py-2 flex items-center gap-2.5 transition-all duration-300 pointer-events-auto border border-white/20 cursor-pointer hover:shadow-[0_10px_22px_rgba(0,0,0,0.2)] ${pillClassName}`}
               style={{
-                background: 'linear-gradient(135deg, rgba(var(--module-theme-rgb,250,2,114),0.94), rgba(var(--module-theme-rgb,250,2,114),0.78))',
+                background: 'linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.94), rgba(var(--module-theme-rgb,248,78,4),0.78))',
               }}
             >
               {/* Left: Product thumbnails */}

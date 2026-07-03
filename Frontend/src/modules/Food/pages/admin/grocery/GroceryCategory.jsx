@@ -370,7 +370,7 @@ export default function GroceryCategory() {
         type: String(formData.type || "").trim(),
         status: Boolean(formData.status),
         image: imageUrl || undefined,
-        zoneId: formData.zoneId || "global",
+        zoneId: (!formData.zoneId || formData.zoneId === "global") ? null : formData.zoneId,
         foodTypeScope: formData.foodTypeScope,
       }
 

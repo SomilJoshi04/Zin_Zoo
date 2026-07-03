@@ -483,14 +483,14 @@ export default function OrderTracking() {
               angle: 60,
               spread: 60,
               origin: { x: 0, y: 0.8 },
-              colors: ['#FBBF24', '#F59E0B', '#D97706', '#EB590E']
+              colors: ['#F84E04', '#F59E0B', '#D97706', '#F84E04']
             });
             confetti({
               particleCount: 4,
               angle: 120,
               spread: 60,
               origin: { x: 1, y: 0.8 },
-              colors: ['#FBBF24', '#F59E0B', '#D97706', '#EB590E']
+              colors: ['#F84E04', '#F59E0B', '#D97706', '#F84E04']
             });
 
             if (Date.now() < end) {
@@ -1252,7 +1252,7 @@ export default function OrderTracking() {
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold mb-4 dark:text-white">Order Not Found</h1>
           <p className="text-gray-600 dark:text-gray-400 mb-6">{error || 'The order you\'re looking for doesn\'t exist.'}</p>
           <Link to="/user/orders">
-            <Button className="text-white border-0" style={{ backgroundColor: "var(--module-theme-color, #EB590E)" }}>Back to Orders</Button>
+            <Button className="text-white border-0" style={{ backgroundColor: "var(--module-theme-color, #F84E04)" }}>Back to Orders</Button>
           </Link>
         </div>
       </AnimatedPage>
@@ -1349,7 +1349,7 @@ export default function OrderTracking() {
   const complaintOrderId = encodeURIComponent(
     String(order?.orderId || order?.id || orderId || "")
   )
-  const themeColor = "var(--module-theme-color, #EB590E)"
+  const themeColor = "var(--module-theme-color, #F84E04)"
   const themeRgb = "var(--module-theme-rgb, 235,89,14)"
 
   return (
@@ -1403,28 +1403,25 @@ export default function OrderTracking() {
         )}
       </AnimatePresence>
 
-      {/* Green Header */}
+      {/* Theme Header */}
       <motion.div
-        className="text-white sticky top-0 z-40"
-        style={{ backgroundColor: isCancelledOrder ? "#F97316" : themeColor }}
+        className="bg-[var(--module-theme-color,#F84E04)] text-white sticky top-0 z-50 shadow-md"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
       >
-      {/* Header */}
-      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md p-4 flex items-center justify-between sticky top-0 z-50 border-b border-gray-100 dark:border-zinc-800">
-        <div className="flex items-center gap-3">
-          <Link to="/user/orders">
-            <button className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-800 transition-colors">
-              <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-200" />
-            </button>
-          </Link>
-          <div>
-            <h1 className="text-lg font-bold text-gray-800 dark:text-white">Track Order</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Order #{orderId?.slice(-6).toUpperCase()}</p>
+        <div className="p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link to="/user/orders">
+              <button className="p-2 -ml-2 rounded-full hover:bg-white/20 transition-colors">
+                <ArrowLeft className="w-6 h-6 text-white" />
+              </button>
+            </Link>
+            <div>
+              <h1 className="text-lg font-bold text-white">Track Order</h1>
+              <p className="text-xs text-white/80">Order #{orderId?.slice(-6).toUpperCase()}</p>
+            </div>
           </div>
         </div>
-        <div className="w-10" /> {/* Spacer to keep title centered if needed, or just empty */}
-      </div>
       </motion.div>
 
 
@@ -1579,9 +1576,9 @@ export default function OrderTracking() {
               <div key={i} className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-2 min-w-0">
                   <div
-                    className={`w-3.5 h-3.5 mt-0.5 border flex items-center justify-center p-[1px] shrink-0 ${resolvedIsVeg ? "border-[#16a34a] bg-green-50/40 dark:bg-green-900/25" : "border-[#F97316] bg-red-50/40 dark:bg-red-900/25"}`}
+                    className={`w-3.5 h-3.5 mt-0.5 border flex items-center justify-center p-[1px] shrink-0 ${resolvedIsVeg ? "border-[#16a34a] bg-green-50/40 dark:bg-green-900/25" : "border-[#F84E04] bg-red-50/40 dark:bg-red-900/25"}`}
                   >
-                    <div className={`w-full h-full rounded-full ${resolvedIsVeg ? "bg-[#16a34a]" : "bg-[#F97316]"}`} />
+                    <div className={`w-full h-full rounded-full ${resolvedIsVeg ? "bg-[#16a34a]" : "bg-[#F84E04]"}`} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm text-gray-700 dark:text-gray-300 font-medium truncate">

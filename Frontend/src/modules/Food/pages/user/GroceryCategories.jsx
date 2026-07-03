@@ -27,7 +27,7 @@ export default function GroceryCategories() {
     const trimmed = imageUrl.trim();
     if (!trimmed) return "";
     if (/^data:/i.test(trimmed) || /^blob:/i.test(trimmed)) return trimmed;
-    
+
     const normalizedInput = trimmed
       .replace(/\\/g, "/")
       .replace(/^(https?):\/(?!\/)/i, "$1://")
@@ -89,13 +89,13 @@ export default function GroceryCategories() {
       {/* Search Bar */}
       <div className="px-4 py-6">
         <div className="relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400 dark:text-neutral-500 group-focus-within:text-[#EB590E] transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-neutral-400 dark:text-neutral-500 group-focus-within:text-[#F84E04] transition-colors" />
           <input
             type="text"
             placeholder="Search Grocery categories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 bg-neutral-50 dark:bg-[#1a1a1a] border border-neutral-100 dark:border-neutral-800 rounded-2xl text-sm font-medium text-neutral-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-[#EB590E]/5 focus:border-[#EB590E] transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
+            className="w-full pl-12 pr-4 py-4 bg-neutral-50 dark:bg-[#1a1a1a] border border-neutral-100 dark:border-neutral-800 rounded-2xl text-sm font-medium text-neutral-900 dark:text-white focus:outline-none focus:ring-4 focus:ring-[#F84E04]/5 focus:border-[#F84E04] transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
           />
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function GroceryCategories() {
             </div>
             <h3 className="text-lg font-bold text-neutral-900 dark:text-white">No results found</h3>
             <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-2 max-w-[240px]">We couldn't find any categories matching your search. Try another keyword!</p>
-            <button 
+            <button
               onClick={() => setSearchQuery("")}
               className="mt-8 px-8 py-3 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 rounded-2xl text-sm font-bold active:scale-95 transition-all shadow-lg"
             >

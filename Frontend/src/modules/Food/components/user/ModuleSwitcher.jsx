@@ -33,7 +33,7 @@ export default function ModuleSwitcher({ variant = "light" }) {
                 key={module.id}
                 to={module.path}
                 onClick={() => setIsOpen(false)}
-                className="px-3 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[var(--module-theme-color,#FA0272)] rounded-md transition-colors flex items-center"
+                className="px-3 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-[var(--module-theme-color,#F84E04)] rounded-md transition-colors flex items-center"
               >
                 {module.label}
               </Link>

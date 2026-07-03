@@ -26,8 +26,8 @@ function App() {
         alignItems: 'center'
       }}>
         <img 
-          src="/ZIN_ZOO_X_Design.png" 
-          alt="Zin Zoo" 
+          src={`/Zin_ZOO_X_Design.png?v=${Date.now()}`} 
+          alt="Zin Zoo X" 
           style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
         />
       </div>

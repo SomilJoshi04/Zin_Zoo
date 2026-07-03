@@ -523,14 +523,14 @@ export default function EditProfile() {
         {/* Avatar Section */}
         <div className="flex justify-center">
           <div className="relative">
-            <Avatar className="h-24 w-24 bg-[#EB590E] border-0">
+            <Avatar className="h-24 w-24 bg-[#F84E04] border-0">
               {imagePreview && (
                 <AvatarImage
                   src={imagePreview}
                   alt={formData.name || 'User'}
                 />
               )}
-              <AvatarFallback className="bg-[#EB590E] text-white text-3xl font-semibold">
+              <AvatarFallback className="bg-[#F84E04] text-white text-3xl font-semibold">
                 <User className="h-10 w-10 text-white" />
               </AvatarFallback>
             </Avatar>
@@ -538,7 +538,7 @@ export default function EditProfile() {
             <button
               onClick={handleProfileImageAction}
               disabled={isUploadingImage}
-              className="absolute bottom-0 right-0 w-8 h-8 bg-[#EB590E] rounded-full flex items-center justify-center shadow-lg border-2 border-white hover:bg-[#D94F0C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute bottom-0 right-0 w-8 h-8 bg-[#F84E04] rounded-full flex items-center justify-center shadow-lg border-2 border-white hover:bg-[#D94F0C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isUploadingImage ? (
                 <Loader2 className="h-4 w-4 text-white animate-spin" />
@@ -580,7 +580,7 @@ export default function EditProfile() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => handleChange('name', e.target.value)}
-                  className="pr-10 h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#EB590E] focus:ring-1 focus:ring-[#EB590E] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
+                  className="pr-10 h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
                   placeholder="Name"
                 />
                 {formData.name && (
@@ -609,7 +609,7 @@ export default function EditProfile() {
                   type="tel"
                   value={formData.mobile}
                   onChange={(e) => handleChange('mobile', e.target.value)}
-                  className="flex-1 h-12 text-base  border border-gray-300 dark:border-gray-700 focus:border-[#EB590E] focus:ring-1 focus:ring-[#EB590E] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
+                  className="flex-1 h-12 text-base  border border-gray-300 dark:border-gray-700 focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
                   placeholder="Mobile"
                 />
               </div>
@@ -629,7 +629,7 @@ export default function EditProfile() {
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleChange('email', e.target.value)}
-                  className="flex-1 h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#EB590E] focus:ring-1 focus:ring-[#EB590E] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
+                  className="flex-1 h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
                   placeholder="Email"
                 />
               </div>
@@ -650,7 +650,7 @@ export default function EditProfile() {
                   value={formData.dateOfBirth}
                   onChange={(e) => handleChange('dateOfBirth', e.target.value)}
                   max={dayjs().format('YYYY-MM-DD')}
-                  className="flex-1 h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#EB590E] focus:ring-1 focus:ring-[#EB590E] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white [&::-webkit-calendar-picker-indicator]:dark:invert"
+                  className="flex-1 h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white [&::-webkit-calendar-picker-indicator]:dark:invert"
                 />
               </div>
               {fieldErrors.dateOfBirth && (
@@ -670,7 +670,7 @@ export default function EditProfile() {
                   value={formData.anniversary}
                   onChange={(e) => handleChange('anniversary', e.target.value)}
                   max={dayjs().format('YYYY-MM-DD')}
-                  className="flex-1 h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#EB590E] focus:ring-1 focus:ring-[#EB590E] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white [&::-webkit-calendar-picker-indicator]:dark:invert"
+                  className="flex-1 h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white [&::-webkit-calendar-picker-indicator]:dark:invert"
                 />
               </div>
             </div>
@@ -684,7 +684,7 @@ export default function EditProfile() {
                 value={formData.gender || ""}
                 onValueChange={(value) => handleChange('gender', value)}
               >
-                <SelectTrigger className="h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#EB590E] focus:ring-1 focus:ring-[#EB590E] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white">
+                <SelectTrigger className="h-12 text-base border border-gray-300 dark:border-gray-700 focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white">
                   <SelectValue placeholder="Gender" />
                 </SelectTrigger>
                 <SelectContent>
@@ -704,7 +704,7 @@ export default function EditProfile() {
           onClick={handleUpdate}
           disabled={!hasChanges || isSaving || isUploadingImage || hasValidationErrors}
           className={`w-full h-14 rounded-xl font-semibold text-base transition-all mb-2 ${hasChanges && !isSaving && !isUploadingImage && !hasValidationErrors
-              ? 'bg-[#EB590E] hover:bg-[#D94F0C] text-white'
+              ? 'bg-[#F84E04] hover:bg-[#D94F0C] text-white'
               : 'bg-gray-200 text-gray-400 cursor-not-allowed'
             }`}
         >

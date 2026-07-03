@@ -208,20 +208,20 @@ export default function AccessoriesPage() {
     <AnimatedPage>
       <div className="min-h-screen bg-gray-50 dark:bg-[#121212] pb-24 font-outfit">
         {/* Header */}
-        <div className="sticky top-0 z-40 bg-white dark:bg-[#1a1a1a] shadow-sm border-b dark:border-gray-800">
+        <div className="sticky top-0 z-40 bg-[var(--module-theme-color,#F84E04)] shadow-md">
           <div className="flex items-center gap-3 p-4">
-            <button onClick={() => navigate("/food")} className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800">
-              <ChevronLeft className="w-6 h-6" />
+            <button onClick={() => navigate("/food")} className="p-2 -ml-2 rounded-full hover:bg-white/20">
+              <ChevronLeft className="w-6 h-6 text-white" />
             </button>
             <div>
-              <h1 className="text-xl font-bold font-poppins text-gray-900 dark:text-white">Zin_Zoo Accessories</h1>
-              <p className="text-xs text-gray-500 font-medium">Premium Accessories</p>
+              <h1 className="text-xl font-bold font-poppins text-white">Zin Zoo X</h1>
+              <p className="text-xs text-white/80 font-medium">Premium Accessories</p>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <div ref={cartIconRef} className="bg-green-50 text-green-700 p-2 rounded-lg flex items-center gap-2 relative cursor-pointer" onClick={() => navigate("/food/user/cart?module=accessories")}>
+              <div ref={cartIconRef} className="bg-white/10 text-white p-2 rounded-lg flex items-center gap-2 relative cursor-pointer hover:bg-white/20 transition-colors" onClick={() => navigate("/food/user/cart?module=accessories")}>
                 <ShoppingCart className="w-5 h-5" />
                 {cart.filter(i => i.moduleType === 'accessories').reduce((a, b) => a + (b.quantity || 1), 0) > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 bg-[var(--module-theme-color)] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                  <span className="absolute -top-1.5 -right-1.5 bg-white text-[var(--module-theme-color,#F84E04)] text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                      {cart.filter(i => i.moduleType === 'accessories').reduce((a, b) => a + (b.quantity || 1), 0)}
                   </span>
                 )}
@@ -231,10 +231,10 @@ export default function AccessoriesPage() {
 
           <div className="px-4 pb-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
               <Input
                 placeholder="Search for 'Watches', 'Bags'..."
-                className="pl-10 h-12 bg-gray-100 dark:bg-gray-800 border-none rounded-xl font-medium focus-visible:ring-1 focus-visible:ring-[var(--module-theme-color)]"
+                className="pl-10 h-12 bg-white/10 border-white/20 text-white placeholder:text-white/70 rounded-xl font-medium focus-visible:ring-1 focus-visible:ring-white/40 focus:bg-white/20 shadow-inner"
                 value={searchQuery}
                 onChange={handleSearch}
               />
@@ -385,7 +385,7 @@ export default function AccessoriesPage() {
                         {qty === 0 ? (
                           <button 
                             onClick={(e) => handleAdd(e, product)}
-                            className="bg-white dark:bg-gray-800 text-[var(--module-theme-color)] border border-[var(--module-theme-color)] hover:bg-[var(--module-theme-color)] hover:text-white transition-colors h-8 px-4 rounded-lg font-bold text-xs shadow-sm hover:shadow-md"
+                            className="bg-[#F84E04] hover:bg-[#D94203] text-white transition-colors h-8 px-4 rounded-lg font-extrabold text-[10px] uppercase tracking-wider shadow-sm hover:shadow-md flex items-center justify-center"
                           >
                             ADD
                           </button>

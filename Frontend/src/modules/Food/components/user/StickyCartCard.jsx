@@ -130,8 +130,8 @@ export default function StickyCartCard() {
                   to="/food/user/cart"
                   className="flex-shrink-0 text-white px-4 py-2.5 md:px-5 md:py-3 rounded-lg font-semibold transition-colors"
                   style={{
-                    background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,250,2,114),0.92), var(--module-theme-color,#FA0272))",
-                    boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,250,2,114),0.28)",
+                    background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.92), var(--module-theme-color,#F84E04))",
+                    boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,248,78,4),0.28)",
                   }}
                 >
                   <div className="text-center">

@@ -35,9 +35,9 @@ export default function BottomNavigation() {
   const activeOrders = pathname.includes("/user/orders");
   const activeProfile = pathname.includes("/user/profile");
 
-  const activeColor = "var(--module-theme-color, #FA0272)"
-  const activeBg = "rgba(var(--module-theme-rgb, 250,2,114), 0.12)"
-  const activeFill = "rgba(var(--module-theme-rgb, 250,2,114), 0.2)"
+  const activeColor = "var(--module-theme-color, #F84E04)"
+  const activeBg = "rgba(var(--module-theme-rgb, 248,78,4), 0.12)"
+  const activeFill = "rgba(var(--module-theme-rgb, 248,78,4), 0.2)"
 
   return (
     <div className="md:hidden fixed bottom-6 left-5 right-5 z-50 pointer-events-none">

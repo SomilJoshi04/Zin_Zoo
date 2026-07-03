@@ -7,11 +7,15 @@ import apiClient from "@food/api/axios";
 import { API_ENDPOINTS } from "@food/api/config";
 import { publicGetOnce } from "@food/api";
 
-const SETTINGS_KEY = 'food_business_settings';
+// Cache keys and constants
+const SETTINGS_KEY = "business_settings_cache_v5"; // INCREMENTED to force refresh
+const TIMESTAMP_KEY = "business_settings_timestamp";
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+
 const DEFAULT_MODULE_POWER_SCANNING = {
-  user: { themeColor: "#EB590E", fontFamily: "Poppins" },
-  restaurant: { themeColor: "#2563EB", fontFamily: "Poppins" },
-  delivery: { themeColor: "#00B761", fontFamily: "Poppins" },
+  user: { themeColor: "#F84E04", fontFamily: "Poppins" },
+  restaurant: { themeColor: "#F84E04", fontFamily: "Poppins" },
+  delivery: { themeColor: "#F84E04", fontFamily: "Poppins" },
 };
 
 const FONT_STACKS = {
@@ -33,11 +37,11 @@ const FONT_STACKS = {
 };
 
 const LEGACY_BRAND_HEXES = [
-  "#FA0272",
+  "#F84E04",
   "#00B761",
   "#2563EB",
   "#DC2626",
-  "#EB590E",
+  "#F84E04",
   "#D94F0C",
   "#C44409",
   "#FF8100",
@@ -51,7 +55,7 @@ const LEGACY_BRAND_TAILWIND_COLORS = [
 const hexToRgbTuple = (hex) => {
   const raw = String(hex || "").trim();
   const normalized = raw.startsWith("#") ? raw.slice(1) : raw;
-  if (!/^[0-9A-Fa-f]{6}$/.test(normalized)) return "250,2,114";
+  if (!/^[0-9A-Fa-f]{6}$/.test(normalized)) return "248,78,4";
   const r = parseInt(normalized.slice(0, 2), 16);
   const g = parseInt(normalized.slice(2, 4), 16);
   const b = parseInt(normalized.slice(4, 6), 16);

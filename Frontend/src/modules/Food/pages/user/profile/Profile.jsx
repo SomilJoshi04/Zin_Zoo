@@ -434,15 +434,19 @@ export default function Profile() {
 
   return (
     <AnimatedPage className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0a]">
-      <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 py-4 sm:py-6 md:py-8 lg:py-10 pb-20 sm:pb-24">
-        {/* Header: Back Arrow */}
-        <div className="flex items-center mb-4">
-          <Link to="/user">
-            <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-              <ArrowLeft className="h-5 w-5 text-black dark:text-white" />
-            </Button>
-          </Link>
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-[var(--module-theme-color,#F84E04)] text-white shadow-md">
+        <div className="px-4 h-[60px] flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link to="/user" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors -ml-2">
+              <ArrowLeft className="w-6 h-6" />
+            </Link>
+            <h1 className="text-lg font-bold">My Profile</h1>
+          </div>
         </div>
+      </div>
+
+      <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 py-4 sm:py-6 md:py-8 lg:py-10 pb-20 sm:pb-24">
 
         {/* Profile Info Card */}
         <Card className="bg-white dark:bg-[#1a1a1a] rounded-2xl py-0 pt-1 shadow-sm mb-0 border-0 dark:border-gray-800 overflow-hidden">
@@ -621,7 +625,7 @@ export default function Profile() {
                       e.stopPropagation();
                       handleShareReferral();
                     }}
-                    className="inline-flex items-center gap-1 text-xs text-[#EB590E] font-medium ml-2 px-2 py-1 rounded-md"
+                    className="inline-flex items-center gap-1 text-xs text-[#F84E04] font-medium ml-2 px-2 py-1 rounded-md"
                     disabled={!referralLink}>
                     <Share2 className="h-3.5 w-3.5" />
                     Refer
@@ -808,7 +812,7 @@ export default function Profile() {
         {/* Collections Section */}
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 px-1">
-            <div className="w-1 h-4 bg-[#EB590E] rounded"></div>
+            <div className="w-1 h-4 bg-[#F84E04] rounded"></div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
               Collections
             </h3>
@@ -844,7 +848,7 @@ export default function Profile() {
         {/* Food Orders Section */}
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 px-1">
-            <div className="w-1 h-4 bg-[#EB590E] rounded"></div>
+            <div className="w-1 h-4 bg-[#F84E04] rounded"></div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
               Orders
             </h3>
@@ -882,7 +886,7 @@ export default function Profile() {
         {/* Home Services Section */}
         <div className="mb-3">
           <div className="flex items-center gap-2 mb-2 px-1">
-            <div className="w-1 h-4 bg-[#EB590E] rounded"></div>
+            <div className="w-1 h-4 bg-[#F84E04] rounded"></div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
               Home Services
             </h3>
@@ -920,7 +924,7 @@ export default function Profile() {
         {/* More Section */}
         <div className="mb-8 pb-8">
           <div className="flex items-center gap-2 mb-2 px-1">
-            <div className="w-1 h-4 bg-[#EB590E] rounded"></div>
+            <div className="w-1 h-4 bg-[#F84E04] rounded"></div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">
               More
             </h3>
@@ -1157,7 +1161,7 @@ export default function Profile() {
               </Button>
               <Button
                 type="button"
-                className="flex-1 rounded-xl bg-[#FA0272] hover:bg-[#D6005E] text-white"
+                className="flex-1 rounded-xl bg-[#F84E04] hover:bg-[#D6005E] text-white"
                 onClick={() => {
                   setLogoutConfirmOpen(false);
                   handleLogout();

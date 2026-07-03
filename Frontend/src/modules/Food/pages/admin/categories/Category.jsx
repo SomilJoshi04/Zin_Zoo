@@ -365,12 +365,13 @@ export default function Category() {
         type: String(formData.type || "").trim(),
         status: Boolean(formData.status),
         image: imageUrl || undefined,
-        zoneId: formData.zoneId || "global",
+        zoneId: (!formData.zoneId || formData.zoneId === "global") ? null : formData.zoneId,
         foodTypeScope: formData.foodTypeScope,
       }
 
       if (editingCategory) {
-        const response = await adminAPI.updateCategory(editingCategory.id, payload)
+        const editId = editingCategory.id || editingCategory._id;
+        const response = await adminAPI.updateCategory(editId, payload)
         if (response?.data?.success) toast.success("Category updated successfully")
       } else {
         const response = await adminAPI.createCategory(payload)

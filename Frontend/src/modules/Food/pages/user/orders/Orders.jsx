@@ -704,14 +704,14 @@ Order again from this restaurant in the ${companyName} app.`
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] pb-10">
-        <div className="bg-white dark:bg-zinc-900 p-4 flex items-center shadow-sm sticky top-0 z-10 border-b border-gray-100 dark:border-zinc-800">
-          <Link to="/user">
-            <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-200 cursor-pointer" />
+        <div className="bg-[var(--module-theme-color,#F84E04)] p-4 flex items-center shadow-sm sticky top-0 z-10">
+          <Link to="/user" className="hover:bg-white/20 p-2 -ml-2 rounded-full transition-colors">
+            <ArrowLeft className="w-6 h-6 text-white cursor-pointer" />
           </Link>
-          <h1 className="ml-4 text-xl font-semibold text-gray-800 dark:text-white">Your Orders</h1>
+          <h1 className="ml-2 text-xl font-bold text-white">Your Orders</h1>
         </div>
         <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-[#EB590E] animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#F84E04] animate-spin" />
         </div>
       </div>
     )
@@ -720,16 +720,16 @@ Order again from this restaurant in the ${companyName} app.`
   if (orders.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] pb-10">
-        <div className="bg-white dark:bg-zinc-900 p-4 flex items-center shadow-sm sticky top-0 z-10 border-b border-gray-100 dark:border-zinc-800">
-          <Link to="/user">
-            <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-200 cursor-pointer" />
+        <div className="bg-[var(--module-theme-color,#F84E04)] p-4 flex items-center shadow-sm sticky top-0 z-10">
+          <Link to="/user" className="hover:bg-white/20 p-2 -ml-2 rounded-full transition-colors">
+            <ArrowLeft className="w-6 h-6 text-white cursor-pointer" />
           </Link>
-          <h1 className="ml-4 text-xl font-semibold text-gray-800 dark:text-white">Your Orders</h1>
+          <h1 className="ml-2 text-xl font-bold text-white">Your Orders</h1>
         </div>
         <div className="px-4 py-8 text-center">
           <p className="text-gray-600 dark:text-gray-400">You haven't placed any orders yet</p>
           <Link to="/user">
-            <button className="mt-4 text-[#EB590E] font-medium">Start Ordering</button>
+            <button className="mt-4 text-[#F84E04] font-medium">Start Ordering</button>
           </Link>
         </div>
       </div>
@@ -739,17 +739,17 @@ Order again from this restaurant in the ${companyName} app.`
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-10 font-sans">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 p-4 flex items-center shadow-sm sticky top-0 z-10 border-b border-gray-100 dark:border-slate-800">
-        <Link to="/user">
-          <ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-200 cursor-pointer" />
+      <div className="bg-[var(--module-theme-color,#F84E04)] p-4 flex items-center shadow-sm sticky top-0 z-10">
+        <Link to="/user" className="hover:bg-white/20 p-2 -ml-2 rounded-full transition-colors">
+          <ArrowLeft className="w-6 h-6 text-white cursor-pointer" />
         </Link>
-        <h1 className="ml-4 text-xl font-semibold text-gray-800 dark:text-white">Your Orders</h1>
+        <h1 className="ml-2 text-xl font-bold text-white">Your Orders</h1>
       </div>
 
       {/* Search Bar */}
         <div className="p-4 bg-white dark:bg-slate-900 mt-1">
           <div className="flex items-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg px-3 py-2 shadow-sm mb-4">
-            <Search className="w-5 h-5 text-[#EB590E]" />
+            <Search className="w-5 h-5 text-[#F84E04]" />
             <input
               type="text"
               placeholder="Search by restaurant or dish"
@@ -767,7 +767,7 @@ Order again from this restaurant in the ${companyName} app.`
                 onClick={() => setActiveFilter(filterType)}
                 className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${
                   activeFilter === filterType
-                    ? 'bg-[#EB590E] text-white shadow-md'
+                    ? 'bg-[#F84E04] text-white shadow-md'
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
               >
@@ -848,7 +848,7 @@ Order again from this restaurant in the ${companyName} app.`
                           to={`/user/restaurants/${order.restaurantId}`}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <button className="text-xs text-[#EB590E] font-medium flex items-center mt-1 hover:text-[#D94F0C]">
+                          <button className="text-xs text-[#F84E04] font-medium flex items-center mt-1 hover:text-[#D94F0C]">
                             View menu <span className="ml-0.5">&gt;</span>
                           </button>
                         </Link>
@@ -893,7 +893,7 @@ Order again from this restaurant in the ${companyName} app.`
                   <span className={`text-xs font-medium ${
                     order.status === 'delivered' ? 'text-green-600' :
                     (order.isRestaurantCancelled || order.status === 'restaurant_cancelled' || order.status === 'cancelled' || order.isUserCancelled) ? 'text-red-500' :
-                    'text-[#EB590E]'
+                    'text-[#F84E04]'
                   }`}>
                     {order.status === 'delivered' ? 'Delivered' :
                      (order.isRestaurantCancelled || order.status === 'restaurant_cancelled') ? 'Restaurant Cancelled' :
@@ -920,7 +920,7 @@ Order again from this restaurant in the ${companyName} app.`
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4 animate-in fade-in duration-200">
           <div className="w-full max-w-md rounded-3xl bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
             {/* Header with gradient */}
-            <div className="bg-gradient-to-r from-[#EB590E] to-[#D94F0C] px-6 py-5">
+            <div className="bg-gradient-to-r from-[#F84E04] to-[#D94F0C] px-6 py-5">
               <div className="flex items-center justify-between mb-2">
                 <h2 className="text-xl font-bold text-white flex items-center gap-2">
                   <Star className="w-5 h-5 fill-white" />
@@ -966,7 +966,7 @@ Order again from this restaurant in the ${companyName} app.`
                   rows={2}
                   value={restaurantFeedbackText}
                   onChange={(e) => setRestaurantFeedbackText(e.target.value)}
-                  className="w-full rounded-xl border-2 border-gray-200 dark:border-zinc-800 bg-transparent px-4 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#EB590E] focus:border-[#EB590E] resize-none transition-all"
+                  className="w-full rounded-xl border-2 border-gray-200 dark:border-zinc-800 bg-transparent px-4 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F84E04] focus:border-[#F84E04] resize-none transition-all"
                   placeholder="Restaurant feedback (optional)"
                 />
               </div>
@@ -1000,7 +1000,7 @@ Order again from this restaurant in the ${companyName} app.`
                     rows={2}
                     value={deliveryFeedbackText}
                     onChange={(e) => setDeliveryFeedbackText(e.target.value)}
-                    className="w-full rounded-xl border-2 border-gray-200 dark:border-zinc-800 bg-transparent px-4 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#EB590E] focus:border-[#EB590E] resize-none transition-all"
+                    className="w-full rounded-xl border-2 border-gray-200 dark:border-zinc-800 bg-transparent px-4 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#F84E04] focus:border-[#F84E04] resize-none transition-all"
                     placeholder="Delivery partner feedback (optional)"
                   />
                 </div>
@@ -1014,9 +1014,9 @@ Order again from this restaurant in the ${companyName} app.`
                 className="w-full rounded-xl text-white text-base font-bold py-3.5 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
                 style={{
                   background:
-                    "linear-gradient(135deg, rgba(var(--module-theme-rgb,250,2,114),0.94), var(--module-theme-color,#FA0272))",
+                    "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.94), var(--module-theme-color,#F84E04))",
                   boxShadow:
-                    "0 12px 24px rgba(var(--module-theme-rgb,250,2,114),0.30)",
+                    "0 12px 24px rgba(var(--module-theme-rgb,248,78,4),0.30)",
                 }}
               >
                 {submittingRating ? (
@@ -1069,7 +1069,7 @@ Order again from this restaurant in the ${companyName} app.`
                 <button
                   type="button"
                   onClick={handleSystemShareFromModal}
-                  className="w-full rounded-2xl bg-[#EB590E] px-4 py-3 text-sm font-semibold text-white flex items-center justify-center gap-2 hover:bg-[#D94F0C] transition-colors"
+                  className="w-full rounded-2xl bg-[#F84E04] px-4 py-3 text-sm font-semibold text-white flex items-center justify-center gap-2 hover:bg-[#D94F0C] transition-colors"
                 >
                   <Share2 className="w-4 h-4" />
                   Share via apps

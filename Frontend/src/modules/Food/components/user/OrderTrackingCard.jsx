@@ -367,7 +367,7 @@ function OrderTrackingCardInner({ hasBottomNav = true }) {
     return "Preparing your order";
   })();
 
-  const themeColor = "var(--module-theme-color, #EB590E)";
+  const themeColor = "var(--module-theme-color, #F84E04)";
   const themeRgb = "var(--module-theme-rgb, 235,89,14)";
   const cardShadow = "0 8px 30px rgba(var(--module-theme-rgb, 235,89,14), 0.18)";
 
@@ -405,7 +405,7 @@ function OrderTrackingCardInner({ hasBottomNav = true }) {
              className="absolute top-2 right-2 p-1.5 rounded-full transition-colors z-20 shadow-sm"
              style={{
                backgroundColor: "rgba(var(--module-theme-rgb, 235,89,14), 0.20)",
-               color: "var(--module-theme-color, #EB590E)",
+               color: "var(--module-theme-color, #F84E04)",
                border: "1px solid rgba(var(--module-theme-rgb, 235,89,14), 0.32)",
              }}
           >

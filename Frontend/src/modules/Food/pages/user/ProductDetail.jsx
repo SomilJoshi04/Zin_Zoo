@@ -362,7 +362,7 @@ export default function ProductDetail() {
               <h2 className="text-xl font-bold">Order</h2>
               {inCart ? (
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2 border border-[#EB590E] rounded-lg">
+                  <div className="flex items-center gap-2 border border-[#F84E04] rounded-lg">
                     <Button
                       variant="ghost"
                       size="icon"
