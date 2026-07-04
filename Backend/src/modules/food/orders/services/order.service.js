@@ -25,7 +25,7 @@ import {
     isRazorpayConfigured,
     initiateRazorpayRefund
 } from '../helpers/razorpay.helper.js';
-import { getIO, rooms } from '../../../../config/socket.js';
+import { getIO, rooms, broadcastPublicUpdate } from '../../../../config/socket.js';
 import { addOrderJob } from '../../../../queues/producers/order.producer.js';
 import { fetchPolyline } from '../utils/googleMaps.js';
 import { getFirebaseDB } from '../../../../config/firebase.js';
@@ -694,6 +694,7 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
     }
 
     await order.save();
+    await deductStock(order.items, 'food');
 
     if (isWallet) {
       try {
@@ -1014,6 +1015,7 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
   }
 
   await order.save();
+  await deductStock(order.items, order.moduleType);
 
   if (isWallet) {
     try {
@@ -1861,7 +1863,7 @@ export async function listOrdersAdmin(query) {
         filter.orderStatus = { $in: ["accepted", "confirmed"] };
         break;
       case "processing":
-        filter.orderStatus = { $in: ["preparing", "processing"] };
+        filter.orderStatus = { $in: ["confirmed", "preparing", "processing"] };
         break;
       case "out-for-delivery":
       case "food-on-the-way":
@@ -2230,4 +2232,38 @@ export async function processRefundAdmin(orderId, amount, adminId) {
     }
 
     return { success: true, order: normalizeOrderForClient(order) };
+}
+
+async function deductStock(items, moduleType) {
+    try {
+        const db = mongoose.connection.db;
+        let collectionName = '';
+        if (moduleType === 'food') {
+            collectionName = 'food_items';
+        } else if (moduleType === 'grocery') {
+            collectionName = 'grocery_products';
+        } else if (moduleType === 'accessories') {
+            collectionName = 'accessories_products';
+        }
+
+        if (!collectionName) return;
+
+        for (const item of items) {
+            const itemId = item.itemId || item.id || item._id;
+            const qty = Number(item.quantity) || 0;
+            if (itemId && qty > 0) {
+                await db.collection(collectionName).updateOne(
+                    { _id: new mongoose.Types.ObjectId(String(itemId)) },
+                    { $inc: { quantity: -qty } }
+                );
+            }
+        }
+        try {
+            const { invalidateCache } = await import('../../../../middleware/cache.js');
+            void invalidateCache('restaurant_menu:*');
+        } catch (_) {}
+        broadcastPublicUpdate(`${moduleType}:product:update`, { action: 'update', quantityReduced: true });
+    } catch (err) {
+        logger.error(`Failed to deduct inventory for module ${moduleType}: ${err.message}`);
+    }
 }

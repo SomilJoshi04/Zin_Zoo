@@ -383,7 +383,11 @@ export default function GroceryPage() {
                           <span className="text-[10px] text-gray-400 line-through">&#8377;{Math.round(product.price * 1.2)}</span>
                         </div>
                         
-                        {qty === 0 ? (
+                        {product.quantity === 0 ? (
+                          <span className="text-[10px] text-red-500 font-extrabold uppercase bg-red-50 dark:bg-red-950/20 px-2.5 py-1.5 rounded-lg border border-red-200 dark:border-red-900/30 cursor-not-allowed">
+                            Out of stock
+                          </span>
+                        ) : qty === 0 ? (
                           <button 
                             onClick={(e) => handleAdd(e, product)}
                             className="bg-[#F84E04] hover:bg-[#D94203] text-white transition-colors h-8 px-4 rounded-lg font-extrabold text-[10px] uppercase tracking-wider shadow-sm hover:shadow-md flex items-center justify-center"
@@ -454,12 +458,23 @@ export default function GroceryPage() {
                     <span className="text-[10px] font-black text-white bg-green-500 px-2 py-0.5 rounded-sm ml-1 mb-1">20% OFF</span>
                   </div>
                 </div>
-                
-                <div className="mt-1">
+                               <div className="mt-1">
                   <h5 className="font-bold text-sm mb-1.5 text-gray-900 dark:text-white">Product Description</h5>
                   <SheetDescription className="text-[15px] text-gray-600 dark:text-gray-400 leading-relaxed">
                     {selectedProduct.description || "Farm fresh and carefully selected daily essentials. Delivered safely and securely to your doorstep in 10-15 minutes. Perfect for your everyday needs!"}
                   </SheetDescription>
+                </div>
+
+                <div className="mt-2 flex items-center gap-2 text-xs font-bold">
+                  {selectedProduct.quantity > 0 ? (
+                    <span className="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 px-2.5 py-1 rounded">
+                      In Stock ({selectedProduct.quantity} items left)
+                    </span>
+                  ) : (
+                    <span className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 px-2.5 py-1 rounded">
+                      Out of Stock
+                    </span>
+                  )}
                 </div>
                 
                 {/* Info Cards */}
@@ -479,7 +494,16 @@ export default function GroceryPage() {
               <div className="p-4 border-t dark:border-gray-800 bg-white dark:bg-[#1a1a1a] pb-6 md:pb-4 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
                 {(() => {
                   const qty = cart.find(i => i.id === selectedProduct._id)?.quantity || 0;
-                  if (qty === 0) {
+                  if (selectedProduct.quantity === 0) {
+                    return (
+                      <Button 
+                        disabled
+                        className="w-full h-14 bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 font-bold text-lg rounded-xl cursor-not-allowed border border-gray-300/40 dark:border-gray-700/40"
+                      >
+                        Out of Stock
+                      </Button>
+                    )
+                  } else if (qty === 0) {
                     return (
                       <Button 
                         className="w-full h-14 bg-[var(--module-theme-color)] hover:bg-[var(--module-theme-color)]/90 text-white font-bold text-lg rounded-xl shadow-lg shadow-[var(--module-theme-color)]/30 transition-all hover:scale-[1.02] hover:shadow-[var(--module-theme-color)]/40 active:scale-95"

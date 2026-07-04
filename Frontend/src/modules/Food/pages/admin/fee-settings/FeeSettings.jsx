@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
-import { Save, Loader2, DollarSign, Plus, Trash2, Edit, Check, X } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Save, Loader2, DollarSign, Plus, Trash2, Edit, Check, X, ArrowLeft } from "lucide-react"
 import { Button } from "@food/components/ui/button"
 import { adminAPI } from "@food/api"
 import { toast } from "sonner"
@@ -10,6 +11,7 @@ const debugError = (...args) => {}
 
 // Fee Settings Component - Range-based delivery fee configuration
 export default function FeeSettings() {
+  const navigate = useNavigate()
   const [feeSettings, setFeeSettings] = useState({
     deliveryFee: "",
     deliveryFeeRanges: [],
@@ -308,16 +310,25 @@ export default function FeeSettings() {
   return (
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
       {/* Header Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
-            <DollarSign className="w-6 h-6 text-white" />
+      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6 flex items-start gap-4">
+        <button
+          onClick={() => navigate('/admin/food')}
+          className="p-2.5 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-900 flex items-center justify-center shrink-0 border border-slate-200 mt-1"
+          title="Back to Dashboard"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shrink-0">
+              <DollarSign className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900">Delivery & Platform Fee</h1>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Delivery & Platform Fee</h1>
+          <p className="text-sm text-slate-600">
+            Configure delivery fee, platform fee, and GST settings for orders
+          </p>
         </div>
-        <p className="text-sm text-slate-600">
-          Configure delivery fee, platform fee, and GST settings for orders
-        </p>
       </div>
 
       {/* Fee Settings Panel */}

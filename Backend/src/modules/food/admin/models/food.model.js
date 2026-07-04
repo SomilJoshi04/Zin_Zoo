@@ -24,7 +24,7 @@ const foodSchema = new mongoose.Schema(
         isAvailable: { type: Boolean, default: true, index: true },
         isRecommended: { type: Boolean, default: false, index: true },
         preparationTime: { type: String, trim: true, default: '' },
-       
+        quantity: { type: Number, default: 0 }
     },
     {
         collection: 'food_items',

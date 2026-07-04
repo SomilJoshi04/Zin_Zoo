@@ -226,6 +226,15 @@
     background-color: #1a1a1a !important;
   }
   
+  /* Badges text contrast fix in dark mode */
+  span.bg-slate-100,
+  span.bg-slate-200,
+  span.bg-gray-100,
+  span.bg-neutral-100 {
+    background-color: #262626 !important;
+    color: #ffffff !important;
+  }
+  
   .bg-gray-50, 
   .bg-neutral-50, 
   .bg-slate-50, 

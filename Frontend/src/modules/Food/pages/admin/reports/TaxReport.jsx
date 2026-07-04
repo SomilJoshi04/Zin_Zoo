@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
-import { Download, ChevronDown, FileText, DollarSign, Settings, FileSpreadsheet, Code, Loader2 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { Download, ChevronDown, FileText, DollarSign, Settings, FileSpreadsheet, Code, Loader2, ArrowLeft } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@food/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog"
 import { exportReportsToCSV, exportReportsToExcel, exportReportsToPDF, exportReportsToJSON } from "@food/components/admin/reports/reportsExportUtils"
@@ -12,6 +13,7 @@ const debugError = (...args) => {}
 
 
 export default function TaxReport() {
+  const navigate = useNavigate()
   const [filters, setFilters] = useState({
     dateRangeType: "All Time",
     calculateTax: "Percentage",
@@ -174,7 +176,14 @@ export default function TaxReport() {
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen overflow-x-hidden">
       <div className="w-full max-w-full">
         {/* Page Header */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6 flex items-center gap-4">
+          <button
+            onClick={() => navigate('/admin/food')}
+            className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-900 flex items-center justify-center shrink-0 border border-slate-200"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <h1 className="text-2xl font-bold text-slate-900">Generate Tax Report</h1>
         </div>
 

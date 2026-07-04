@@ -1,4 +1,5 @@
-import { Search, Filter, Download, ChevronDown, Settings } from "lucide-react"
+import { Search, Filter, Download, ChevronDown, Settings, ArrowLeft } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,10 +20,18 @@ export default function OrdersTopbar({
   onExport,
   onSettingsClick,
 }) {
+  const navigate = useNavigate()
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/admin/food')}
+            className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-900 flex items-center justify-center shrink-0 border border-slate-200"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
             {title}
             <span className="px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 text-slate-700">

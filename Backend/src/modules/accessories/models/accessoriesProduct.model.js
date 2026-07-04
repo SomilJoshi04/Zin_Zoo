@@ -13,6 +13,7 @@ const accessoriesProductSchema = new mongoose.Schema(
         isActive: { type: Boolean, default: true, index: true },
         isRecommended: { type: Boolean, default: false, index: true },
         zoneId: { type: mongoose.Schema.Types.ObjectId, ref: 'FoodZone', index: true, default: undefined },
+        quantity: { type: Number, default: 0 }
     },
     {
         collection: 'accessories_products',

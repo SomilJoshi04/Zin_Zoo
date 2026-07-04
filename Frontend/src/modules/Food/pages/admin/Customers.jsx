@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react"
-import { useSearchParams } from "react-router-dom"
-import { Search, Download, ChevronDown, Calendar, Eye, FileDown, FileSpreadsheet, FileText, X, Mail, Phone, MapPin, Package, IndianRupee, Calendar as CalendarIcon, User, CheckCircle, XCircle } from "lucide-react"
+import { useSearchParams, useNavigate } from "react-router-dom"
+import { Search, Download, ChevronDown, Calendar, Eye, FileDown, FileSpreadsheet, FileText, X, Mail, Phone, MapPin, Package, IndianRupee, Calendar as CalendarIcon, User, CheckCircle, XCircle, ArrowLeft } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@food/components/ui/dropdown-menu"
 import { exportCustomersToCSV, exportCustomersToExcel, exportCustomersToPDF } from "@food/components/admin/customers/customersExportUtils"
 import { adminAPI } from "@food/api"
@@ -12,6 +12,7 @@ const debugError = (...args) => {}
 
 
 export default function Customers() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [customers, setCustomers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -261,6 +262,21 @@ export default function Customers() {
   return (
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
       <div className="max-w-7xl mx-auto">
+        {/* Page Header */}
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6 flex items-center gap-4">
+          <button
+            onClick={() => navigate('/admin/food')}
+            className="p-2.5 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-900 flex items-center justify-center shrink-0 border border-slate-200"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Customer Management</h1>
+            <p className="text-sm text-slate-500 mt-1">View list of registered users and their details</p>
+          </div>
+        </div>
+
         {/* Filters Section */}
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

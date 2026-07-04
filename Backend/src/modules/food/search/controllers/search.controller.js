@@ -81,6 +81,7 @@ export const listPublicFoodsController = async (req, res, next) => {
             foodType: f.foodType || 'Non-Veg',
             isAvailable: f.isAvailable,
             preparationTime: f.preparationTime || '',
+            quantity: f.quantity || 0,
             variants: f.variants || []
         }));
         

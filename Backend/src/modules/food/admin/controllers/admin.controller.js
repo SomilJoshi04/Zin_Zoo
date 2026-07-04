@@ -11,6 +11,7 @@ import { validateDeliveryEmergencyHelpUpsertDto } from '../validators/deliveryEm
 import { validateReferralSettingsUpsertDto } from '../validators/referralSettings.validator.js';
 import { ADMIN_ACTIONS, ADMIN_PERMISSION_SECTIONS, sanitizeAdminPermissions } from '../../../../constants/permissions.js';
 // Decoupled delivery emergency service imports
+import { broadcastPublicUpdate } from '../../../../config/socket.js';
 
 // ----- Customers / Users -----
 export async function getCustomers(req, res, next) {
@@ -519,6 +520,7 @@ export async function getFoods(req, res, next) {
 export async function createFood(req, res, next) {
     try {
         const created = await adminService.createFood(req.body || {});
+        broadcastPublicUpdate('food:product:update', { action: 'create', data: created });
         res.status(201).json({ success: true, message: 'Food created successfully', data: { food: created } });
     } catch (error) {
         next(error);
@@ -535,6 +537,7 @@ export async function updateFood(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Food not found' });
         }
+        broadcastPublicUpdate('food:product:update', { action: 'update', data: updated });
         res.status(200).json({ success: true, message: 'Food updated successfully', data: { food: updated } });
     } catch (error) {
         next(error);
@@ -551,6 +554,7 @@ export async function deleteFood(req, res, next) {
         if (!result) {
             return res.status(404).json({ success: false, message: 'Food not found' });
         }
+        broadcastPublicUpdate('food:product:update', { action: 'delete', data: { _id: id } });
         res.status(200).json({ success: true, message: 'Food deleted successfully', data: result });
     } catch (error) {
         next(error);

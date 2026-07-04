@@ -107,26 +107,6 @@ export default function FeatureSettings() {
 
             <Card className="border-slate-200">
                 <CardHeader>
-                    <CardTitle className="text-lg">Restaurant Subscription</CardTitle>
-                    <CardDescription>
-                        Controls post-approval onboarding payment, due checks, withdrawal restrictions, and subscription settings visibility.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center justify-between gap-4">
-                    <div className="text-sm text-gray-700">
-                        {restaurantSubscription?.isEnabled
-                            ? 'Enabled: subscription flows are active'
-                            : 'Disabled: subscription flows are hidden and checks are bypassed'}
-                    </div>
-                    <Switch
-                        checked={Boolean(restaurantSubscription?.isEnabled)}
-                        onCheckedChange={(checked) => setToggle(FEATURE_KEYS.RESTAURANT_SUBSCRIPTION, checked)}
-                    />
-                </CardContent>
-            </Card>
-
-            <Card className="border-slate-200">
-                <CardHeader>
                     <CardTitle className="text-lg">Cash On Delivery (COD)</CardTitle>
                     <CardDescription>
                         Controls COD visibility on user checkout and delivery cash-limit related sections in delivery/admin panels.

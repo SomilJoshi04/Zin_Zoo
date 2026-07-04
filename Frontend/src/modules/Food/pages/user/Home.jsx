@@ -91,6 +91,7 @@ import {
 } from "@food/components/ui/dropdown-menu";
 import { useLocation } from "@food/hooks/useLocation";
 import { useZone } from "@food/hooks/useZone";
+import { usePublicSocket } from "@food/hooks/usePublicSocket";
 import quickSpicyLogo from "@food/assets/quicky-spicy-logo.png";
 import offerImage from "@food/assets/offerimage.png";
 import api, { publicGetOnce, restaurantAPI, adminAPI } from "@food/api";
@@ -881,6 +882,14 @@ export default function Home() {
   useEffect(() => {
     fetchFoodsList(activeCategory);
   }, [activeCategory, fetchFoodsList]);
+
+  const socketListeners = useMemo(() => ({
+    'food:product:update': () => {
+      console.log('[Home] Food updated via socket, refreshing list...');
+      fetchFoodsList(activeCategory);
+    }
+  }), [fetchFoodsList, activeCategory]);
+  usePublicSocket(socketListeners);
 
   // Load public categories dynamically
   useEffect(() => {
@@ -3069,7 +3078,14 @@ export default function Home() {
 
                         {/* Add to Cart button */}
                         <div className="relative">
-                          {cartQty > 0 ? (
+                          {food.quantity === 0 ? (
+                            <button
+                              disabled
+                              className="bg-gray-100 dark:bg-gray-800/80 text-gray-400 dark:text-gray-500 font-extrabold px-2.5 py-1.5 rounded-lg text-[10px] uppercase tracking-wider h-auto cursor-not-allowed border border-gray-200 dark:border-gray-700/50"
+                            >
+                              Out of Stock
+                            </button>
+                          ) : cartQty > 0 ? (
                             <div className="flex items-center bg-[#F84E04] text-white font-extrabold rounded-lg shadow-sm border border-[#F84E04] overflow-hidden">
                               <button
                                 onClick={(e) => {
@@ -4026,11 +4042,23 @@ export default function Home() {
                   </div>
                 </div>
                 
-                <div className="mt-1">
+                 <div className="mt-1">
                   <h5 className="font-bold text-sm mb-1.5 text-gray-900 dark:text-white">Description</h5>
                   <SheetDescription className="text-[15px] text-gray-600 dark:text-gray-400 leading-relaxed">
                     {selectedFood.description || "Fresh and deliciously prepared food from our top kitchen. Delivered hot directly to you."}
                   </SheetDescription>
+                </div>
+
+                <div className="mt-2 flex items-center gap-2 text-xs font-bold">
+                  {selectedFood.quantity > 0 ? (
+                    <span className="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 px-2.5 py-1 rounded">
+                      In Stock ({selectedFood.quantity} items left)
+                    </span>
+                  ) : (
+                    <span className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 px-2.5 py-1 rounded">
+                      Out of Stock
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -4045,7 +4073,14 @@ export default function Home() {
                         <span className="font-black text-xl font-poppins">&#8377;{qty > 0 ? selectedFood.price * qty : selectedFood.price}</span>
                       </div>
                       
-                      {qty === 0 ? (
+                      {selectedFood.quantity === 0 ? (
+                        <button 
+                          disabled
+                          className="flex-1 max-w-[200px] bg-gray-200 dark:bg-gray-800 text-gray-450 dark:text-gray-500 transition-colors h-12 rounded-xl font-extrabold text-sm uppercase tracking-wider flex items-center justify-center gap-2 cursor-not-allowed border border-gray-300/40 dark:border-gray-700/40"
+                        >
+                          OUT OF STOCK
+                        </button>
+                      ) : qty === 0 ? (
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();

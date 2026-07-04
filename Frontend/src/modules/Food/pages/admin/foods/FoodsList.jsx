@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
-import { useSearchParams } from "react-router-dom"
-import { Search, Trash2, Loader2, Eye, Pencil, Plus, Save, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react"
+import { useSearchParams, useNavigate } from "react-router-dom"
+import { Search, Trash2, Loader2, Eye, Pencil, Plus, Save, ChevronDown, ChevronLeft, ChevronRight, ArrowLeft } from "lucide-react"
 import { adminAPI, uploadAPI } from "@food/api"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog"
+import { usePublicSocket } from "@food/hooks/usePublicSocket"
 import { Popover, PopoverContent, PopoverTrigger } from "@food/components/ui/popover"
 import { getFoodDisplayPrice, getFoodVariants } from "@food/utils/foodVariants"
 import { canCurrentAdminAction } from "@food/utils/adminRbac"
@@ -38,6 +39,7 @@ const createFoodForm = () => ({
   isAvailable: true,
   preparationTime: "",
   zoneId: "global",
+  quantity: "",
 })
 
 const createVariantDraft = (variant = {}) => ({
@@ -57,6 +59,7 @@ const FOOD_FALLBACK_IMAGE =
   )
 
 export default function FoodsList() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedRestaurant, setSelectedRestaurant] = useState("all")
   const [foods, setFoods] = useState([])
@@ -164,6 +167,7 @@ export default function FoodsList() {
             description: f.description || "",
             preparationTime: f.preparationTime || "",
             isAvailable: f.isAvailable !== false,
+            quantity: f.quantity || 0,
             createdAt: f.createdAt,
             updatedAt: f.updatedAt,
           }))
@@ -197,6 +201,14 @@ export default function FoodsList() {
   useEffect(() => {
     fetchAllFoods()
   }, [fetchAllFoods])
+
+  const socketListeners = useMemo(() => ({
+    'food:product:update': () => {
+      console.log('[FoodsList] Foods updated via socket, refetching...');
+      fetchAllFoods();
+    }
+  }), [fetchAllFoods]);
+  usePublicSocket(socketListeners);
 
   const [searchParams] = useSearchParams()
   const productIdFromUrl = searchParams.get("productId")
@@ -294,6 +306,7 @@ export default function FoodsList() {
       foodType: String(food.foodType || "Non-Veg"),
       isAvailable: food.isAvailable !== false,
       preparationTime: String(food.preparationTime || ""),
+      quantity: String(food.quantity || 0),
     })
     setSelectedImageFile(null)
     setImagePreviewUrl(String(food.image || ""))
@@ -443,6 +456,7 @@ export default function FoodsList() {
         foodType: foodForm.foodType === "Veg" ? "Veg" : "Non-Veg",
         isAvailable: foodForm.isAvailable !== false,
         preparationTime: String(foodForm.preparationTime || "").trim(),
+        quantity: foodForm.quantity !== "" ? Number(foodForm.quantity) : 0,
       }
 
       if (foodFormMode === "edit") {
@@ -497,6 +511,13 @@ export default function FoodsList() {
       {/* Header Section */}
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
         <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => navigate('/admin/food')}
+            className="p-1.5 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-900 flex items-center justify-center shrink-0 border border-slate-200"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center">
             <div className="grid grid-cols-2 gap-0.5">
               <div className="w-2 h-2 bg-white rounded-sm"></div>
@@ -561,6 +582,9 @@ export default function FoodsList() {
                 {/* <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Restaurant
                 </th> */}
+                <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  Quantity
+                </th>
                 <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Action
                 </th>
@@ -617,6 +641,12 @@ export default function FoodsList() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-800">{food.categoryName || "-"}</span>
+                      </div>
+                    </td>
+
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-slate-800">{food.quantity || 0}</span>
                       </div>
                     </td>
                     {/* <td className="px-6 py-4 whitespace-nowrap">
@@ -712,9 +742,9 @@ export default function FoodsList() {
       </div>
 
       <Dialog open={showDetailModal} onOpenChange={setShowDetailModal}>
-        <DialogContent className="max-w-xl p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-            <DialogTitle className="text-lg font-semibold text-slate-900">Food Details</DialogTitle>
+        <DialogContent className="max-w-xl p-0 overflow-hidden dark:bg-slate-900 dark:border-slate-800">
+          <DialogHeader className="px-6 py-4 border-b border-slate-200 bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800">
+            <DialogTitle className="text-lg font-semibold text-slate-900 dark:text-white">Food Details</DialogTitle>
           </DialogHeader>
           {selectedFood && (
             <div className="p-6 space-y-5">
@@ -722,38 +752,37 @@ export default function FoodsList() {
                 <img
                           src={withImageVersion(selectedFood.image)}
                           alt={selectedFood.name}
-                          className="w-20 h-20 rounded-xl object-cover border border-slate-200"
+                          className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-slate-800"
                   onError={(e) => {
                     e.target.src = FOOD_FALLBACK_IMAGE
                   }}
                 />
                 <div>
-                  <p className="text-lg font-semibold text-slate-900">{selectedFood.name}</p>
-                  <p className="text-sm text-slate-500 mt-0.5">ID #{formatFoodId(selectedFood.id)}</p>
+                  <p className="text-lg font-semibold text-slate-900 dark:text-white">{selectedFood.name}</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">ID #{formatFoodId(selectedFood.id)}</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 border border-slate-200 rounded-lg p-4">
-
-                <p><span className="font-semibold text-slate-700">Price:</span> <span className="text-slate-900">{selectedFood.variants?.length ? `Starting from \u20B9${selectedFood.price}` : `\u20B9${selectedFood.price}`}</span></p>
-                <p><span className="font-semibold text-slate-700">Category:</span> <span className="text-slate-900">{selectedFood.categoryName || "-"}</span></p>
-                <p><span className="font-semibold text-slate-700">Food Type:</span> <span className="text-slate-900">{selectedFood.foodType || "-"}</span></p>
+              <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 border border-slate-200 rounded-lg p-4 dark:bg-slate-800 dark:border-slate-700">
+                <p><span className="font-semibold text-slate-700 dark:text-slate-300">Price:</span> <span className="text-slate-900 dark:text-white">{selectedFood.variants?.length ? `Starting from \u20B9${selectedFood.price}` : `\u20B9${selectedFood.price}`}</span></p>
+                <p><span className="font-semibold text-slate-700 dark:text-slate-300">Category:</span> <span className="text-slate-900 dark:text-white">{selectedFood.categoryName || "-"}</span></p>
+                <p><span className="font-semibold text-slate-700 dark:text-slate-300">Food Type:</span> <span className="text-slate-900 dark:text-white">{selectedFood.foodType || "-"}</span></p>
               </div>
               {selectedFood.variants?.length ? (
-                <div className="rounded-lg border border-slate-200 bg-white p-4">
-                  <p className="text-sm font-semibold text-slate-800 mb-2">Variants</p>
+                <div className="rounded-lg border border-slate-200 bg-white p-4 dark:bg-slate-800 dark:border-slate-700">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-white mb-2">Variants</p>
                   <div className="space-y-2">
                     {selectedFood.variants.map((variant) => (
-                      <div key={variant.id || variant._id} className="flex items-center justify-between text-sm text-slate-700">
+                      <div key={variant.id || variant._id} className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-300">
                         <span>{variant.name}</span>
-                        <span className="font-semibold text-slate-900">{"\u20B9"}{variant.price}</span>
+                        <span className="font-semibold text-slate-900 dark:text-white">{"\u20B9"}{variant.price}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : null}
               {selectedFood.description && (
-                <p className="text-sm text-slate-700 leading-relaxed">
-                  <span className="font-semibold text-slate-800">Description:</span> {selectedFood.description}
+                <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                  <span className="font-semibold text-slate-800 dark:text-white">Description:</span> {selectedFood.description}
                 </p>
               )}
             </div>
@@ -776,9 +805,9 @@ export default function FoodsList() {
           }
         }}
       >
-        <DialogContent className="max-w-2xl p-0 overflow-hidden">
-          <DialogHeader className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-            <DialogTitle className="text-lg font-semibold text-slate-900">
+        <DialogContent className="max-w-2xl p-0 overflow-hidden dark:bg-slate-900 dark:border-slate-800">
+          <DialogHeader className="px-6 py-4 border-b border-slate-200 bg-slate-50 dark:bg-slate-900/50 dark:border-slate-800">
+            <DialogTitle className="text-lg font-semibold text-slate-900 dark:text-white">
               {foodFormMode === "edit" ? "Edit Food" : "Add Food"}
             </DialogTitle>
           </DialogHeader>
@@ -801,25 +830,25 @@ export default function FoodsList() {
                 </select>
               </div> */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
                 <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white text-left flex items-center justify-between"
+                      className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white text-left flex items-center justify-between dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                     >
-                      <span className={foodForm.categoryName ? "text-slate-900" : "text-slate-400"}>
+                      <span className={foodForm.categoryName ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}>
                         {foodForm.categoryName || "Select category"}
                       </span>
                       <ChevronDown className="w-4 h-4 text-slate-500" />
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-2" align="start">
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-2 dark:bg-slate-900 dark:border-slate-800" align="start">
                     <input
                       type="text"
                       value={categorySearch}
                       onChange={(e) => setCategorySearch(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm bg-white mb-2"
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-sm bg-white mb-2 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                       placeholder="Search category..."
                       autoFocus
                     />
@@ -838,26 +867,26 @@ export default function FoodsList() {
                               setFoodForm((prev) => ({ ...prev, categoryId: c.id, categoryName: c.name }))
                               setCategoryPopoverOpen(false)
                             }}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-slate-100 ${
-                              String(foodForm.categoryName || "") === String(c.name) ? "bg-slate-100 font-medium" : ""
+                            className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-white ${
+                              String(foodForm.categoryName || "") === String(c.name) ? "bg-slate-100 dark:bg-slate-800 font-medium" : ""
                             }`}
                           >
                             {c.name}
                           </button>
                         ))}
                       {categoryOptions.length === 0 && (
-                        <div className="px-3 py-2 text-sm text-slate-500">No categories found</div>
+                        <div className="px-3 py-2 text-sm text-slate-500 dark:text-slate-400">No categories found</div>
                       )}
                     </div>
                   </PopoverContent>
                 </Popover>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Zone</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Zone</label>
                 <select
                   value={foodForm.zoneId}
                   onChange={(e) => setFoodForm((prev) => ({ ...prev, zoneId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-900"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 >
                   <option value="global">Global (all zones)</option>
                   {zonesLoading && <option value="" disabled>Loading zones...</option>}
@@ -869,16 +898,16 @@ export default function FoodsList() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Food Name</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Food Name</label>
                 <input
                   type="text"
                   value={foodForm.name}
                   onChange={(e) => setFoodForm((prev) => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Base Price</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Base Price</label>
                 <input
                   type="number"
                   min="0"
@@ -886,25 +915,25 @@ export default function FoodsList() {
                   value={foodForm.price}
                   onChange={(e) => setFoodForm((prev) => ({ ...prev, price: e.target.value }))}
                   disabled={(foodForm.variants || []).length > 0}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white disabled:bg-slate-100 disabled:text-slate-400"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white disabled:bg-slate-100 disabled:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
                 />
                 {(foodForm.variants || []).length > 0 ? (
-                  <p className="mt-1 text-xs text-slate-500">Variants are active, so customers will see the lowest variant price as the starting price.</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Variants are active, so customers will see the lowest variant price as the starting price.</p>
                 ) : null}
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Food Type</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Food Type</label>
                 <select
                   value={foodForm.foodType}
                   onChange={(e) => setFoodForm((prev) => ({ ...prev, foodType: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 >
                   <option value="Veg">Veg</option>
                   <option value="Non-Veg">Non-Veg</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Upload Image</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Upload Image</label>
                 <input
                   type="file"
                   accept="image/*"
@@ -917,16 +946,16 @@ export default function FoodsList() {
                       setImagePreviewUrl(foodForm.image.trim())
                     }
                   }}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:file:bg-slate-700 dark:file:text-white"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Timing</label>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Timing</label>
                 <div className="relative">
                   <select
                   value={foodForm.preparationTime}
                   onChange={(e) => setFoodForm((prev) => ({ ...prev, preparationTime: e.target.value }))}
-                    className="w-full px-3 py-2.5 pr-10 border border-slate-300 rounded-lg text-sm bg-white appearance-none"
+                    className="w-full px-3 py-2.5 pr-10 border border-slate-300 rounded-lg text-sm bg-white appearance-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   >
                     <option value="">Select timing</option>
                     <option value="10-20 mins">10-20 mins</option>
@@ -937,10 +966,21 @@ export default function FoodsList() {
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
                 </div>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Quantity</label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Ex: 100"
+                  value={foodForm.quantity}
+                  onChange={(e) => setFoodForm((prev) => ({ ...prev, quantity: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                />
+              </div>
               {imagePreviewUrl ? (
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Image Preview</label>
-                  <div className="w-28 h-28 rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Image Preview</label>
+                  <div className="w-28 h-28 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50">
                     <img
                       src={imagePreviewUrl}
                       alt="Food preview"
@@ -950,7 +990,7 @@ export default function FoodsList() {
                 </div>
               ) : null}
               <div className="flex items-center gap-6 pt-7">
-                <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                   <input
                     type="checkbox"
                     checked={foodForm.isAvailable}
@@ -961,24 +1001,24 @@ export default function FoodsList() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
               <textarea
                 rows={4}
                 value={foodForm.description}
                 onChange={(e) => setFoodForm((prev) => ({ ...prev, description: e.target.value }))}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white resize-none"
+                className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white resize-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
               />
             </div>
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3 dark:bg-slate-900/50 dark:border-slate-800">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Variants</p>
-                  <p className="text-xs text-slate-500">Optional. Add multiple names and prices such as Half, Full, Small, or Large.</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-white">Variants</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Optional. Add multiple names and prices such as Half, Full, Small, or Large.</p>
                 </div>
                 <button
                   type="button"
                   onClick={handleAddVariant}
-                  className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-50"
+                  className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 hover:bg-sky-50 dark:bg-slate-800 dark:border-slate-700 dark:text-sky-400 dark:hover:bg-slate-700"
                 >
                   <Plus className="w-3.5 h-3.5" />
                   Add variant
@@ -987,34 +1027,34 @@ export default function FoodsList() {
               {(foodForm.variants || []).length ? (
                 <div className="space-y-3">
                   {(foodForm.variants || []).map((variant, index) => (
-                    <div key={variant.id} className="grid grid-cols-[1fr_auto] gap-3 rounded-lg border border-slate-200 bg-white p-3">
+                    <div key={variant.id} className="grid grid-cols-[1fr_auto] gap-3 rounded-lg border border-slate-200 bg-white p-3 dark:bg-slate-800 dark:border-slate-700">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Variant name</label>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Variant name</label>
                           <input
                             type="text"
                             value={variant.name}
                             onChange={(e) => handleVariantChange(variant.id, "name", e.target.value)}
                             placeholder={index === 0 ? "Full" : "Half"}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-900 dark:border-slate-800 dark:text-white"
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-medium text-slate-600 mb-1">Variant price</label>
+                          <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1">Variant price</label>
                           <input
                             type="number"
                             min="0"
                             step="0.01"
                             value={variant.price}
                             onChange={(e) => handleVariantChange(variant.id, "price", e.target.value)}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-900 dark:border-slate-800 dark:text-white"
                           />
                         </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveVariant(variant.id)}
-                        className="self-start rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-rose-500"
+                        className="self-start rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-rose-500 dark:hover:bg-slate-700"
                         aria-label="Remove variant"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1023,7 +1063,7 @@ export default function FoodsList() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500">No variants added. This food will use the single base price.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">No variants added. This food will use the single base price.</p>
               )}
             </div>
             <div className="flex justify-end">

@@ -64,6 +64,7 @@ const buildMenuFromFoods = async (foods = []) => {
             approvedAt: food.approvedAt,
             rejectedAt: food.rejectedAt,
             preparationTime: food.preparationTime || '',
+            quantity: food.quantity || 0,
             createdAt: food.createdAt,
             updatedAt: food.updatedAt
         });

@@ -7,6 +7,7 @@ import { API_BASE_URL } from "@food/api/config"
 import { toast } from "sonner"
 import { useLocation } from "@food/hooks/useLocation"
 import { useZone } from "@food/hooks/useZone"
+import { usePublicSocket } from "@food/hooks/usePublicSocket"
 import {
   ArrowLeft,
   Search,
@@ -193,8 +194,18 @@ function RestaurantDetailsContent() {
   const [restaurant, setRestaurant] = useState(null)
   const [loadingRestaurant, setLoadingRestaurant] = useState(true)
   const [restaurantError, setRestaurantError] = useState(null)
+  const [refetchTrigger, setRefetchTrigger] = useState(0)
   const fetchedRestaurantRef = useRef(false) // Track if restaurant has been fetched for current slug
   const fetchedSlugRef = useRef(null)
+
+  const socketListeners = useMemo(() => ({
+    'food:product:update': () => {
+      console.log('[FoodDetails] Food items updated via socket, refetching...');
+      fetchedRestaurantRef.current = false;
+      setRefetchTrigger(prev => prev + 1);
+    }
+  }), []);
+  usePublicSocket(socketListeners);
 
   useEffect(() => {
     const tickAvailability = () => {
@@ -1036,7 +1047,7 @@ function RestaurantDetailsContent() {
     }
 
     fetchRestaurant()
-  }, [slug, zoneId, restaurant])
+  }, [slug, zoneId, restaurant, refetchTrigger])
 
   // Track previous values to prevent unnecessary recalculations
   const prevCoordsRef = useRef({ userLat: null, userLng: null, restaurantLat: null, restaurantLng: null })
@@ -2602,6 +2613,10 @@ function RestaurantDetailsContent() {
                                     <Plus size={14} className="stroke-[3px]" />
                                   </button>
                                 </motion.div>
+                              ) : item.quantity === 0 ? (
+                                <span className={`${item.image ? "absolute -bottom-2 left-1/2 -translate-x-1/2" : "relative"} bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 border border-gray-200 dark:border-gray-700/50 font-bold px-4 py-1.5 rounded-lg text-[10px] uppercase tracking-wider whitespace-nowrap cursor-not-allowed shadow-sm`}>
+                                  Out of Stock
+                                </span>
                               ) : (
                                 <motion.button
                                   layoutId={`add-button-${item.id}`}
@@ -3503,6 +3518,18 @@ function RestaurantDetailsContent() {
                       {selectedItem.description}
                     </p>
 
+                    <div className="mt-2 mb-4 flex items-center gap-2 text-xs font-bold">
+                      {selectedItem.quantity > 0 ? (
+                        <span className="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 px-2.5 py-1 rounded">
+                          In Stock ({selectedItem.quantity} items left)
+                        </span>
+                      ) : (
+                        <span className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 px-2.5 py-1 rounded">
+                          Out of Stock
+                        </span>
+                      )}
+                    </div>
+
                     {/* Highly Reordered Progress Bar */}
                     {isRecommendedItem(selectedItem) && (
                       <div className="flex items-center gap-2 mb-4">
@@ -3600,38 +3627,47 @@ function RestaurantDetailsContent() {
                       </div>
 
                       {/* Add Item Button */}
-                      <Button
-                        className={`flex-1 h-[44px] rounded-lg font-semibold flex items-center justify-center gap-2 ${shouldShowGrayscale
-                          ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-600 cursor-not-allowed opacity-50'
-                          : 'bg-red-500 hover:bg-red-600 text-white'
-                          }`}
-                        onClick={(e) => {
-                          if (!shouldShowGrayscale) {
-                            updateItemQuantity(
-                              selectedItem,
-                              getDishQuantity(selectedItem, selectedVariantId) + 1,
-                              e,
-                              getVariantForDish(selectedItem, selectedVariantId),
-                            )
-                            setShowItemDetail(false)
-                          }
-                        }}
-                        disabled={shouldShowGrayscale}
-                      >
-                        <span>Add item</span>
-                        <div className="flex items-center gap-1">
-                          {selectedItem.originalPrice && selectedItem.originalPrice > selectedItem.price && (
-                            <span className="text-sm line-through text-red-200">
-                              {RUPEE_SYMBOL}{Math.round(selectedItem.originalPrice)}
+                      {selectedItem.quantity === 0 ? (
+                        <Button
+                          disabled
+                          className="flex-1 h-[44px] rounded-lg font-semibold flex items-center justify-center bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-300/40 dark:border-gray-700/40"
+                        >
+                          Out of Stock
+                        </Button>
+                      ) : (
+                        <Button
+                          className={`flex-1 h-[44px] rounded-lg font-semibold flex items-center justify-center gap-2 ${shouldShowGrayscale
+                            ? 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-600 cursor-not-allowed opacity-50'
+                            : 'bg-red-500 hover:bg-red-600 text-white'
+                            }`}
+                          onClick={(e) => {
+                            if (!shouldShowGrayscale) {
+                              updateItemQuantity(
+                                selectedItem,
+                                getDishQuantity(selectedItem, selectedVariantId) + 1,
+                                e,
+                                getVariantForDish(selectedItem, selectedVariantId),
+                              )
+                              setShowItemDetail(false)
+                            }
+                          }}
+                          disabled={shouldShowGrayscale}
+                        >
+                          <span>Add item</span>
+                          <div className="flex items-center gap-1">
+                            {selectedItem.originalPrice && selectedItem.originalPrice > selectedItem.price && (
+                              <span className="text-sm line-through text-red-200">
+                                {RUPEE_SYMBOL}{Math.round(selectedItem.originalPrice)}
+                              </span>
+                            )}
+                            <span className="text-base font-bold">
+                              {hasFoodVariants(selectedItem)
+                                ? `${getVariantForDish(selectedItem, selectedVariantId)?.name || "Default"} · ${RUPEE_SYMBOL}${Math.round(getVariantForDish(selectedItem, selectedVariantId)?.price || selectedItem.price)}`
+                                : `${RUPEE_SYMBOL}${Math.round(selectedItem.price)}`}
                             </span>
-                          )}
-                          <span className="text-base font-bold">
-                            {hasFoodVariants(selectedItem)
-                              ? `${getVariantForDish(selectedItem, selectedVariantId)?.name || "Default"} · ${RUPEE_SYMBOL}${Math.round(getVariantForDish(selectedItem, selectedVariantId)?.price || selectedItem.price)}`
-                              : `${RUPEE_SYMBOL}${Math.round(selectedItem.price)}`}
-                          </span>
-                        </div>
-                      </Button>
+                          </div>
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </motion.div>

@@ -758,8 +758,8 @@ export async function getDashboardStats(query = {}) {
         addons: { total: Number(addonsTotal || 0) },
         customers: { total: Number(customersTotal || 0) },
         orderStats: {
-            pending: Number(totals.pending || 0) + Number(groceryPending || 0),
-            completed: Number(totals.delivered || 0) + Number(groceryCompleted || 0)
+            pending: Number(totals.pending || 0),
+            completed: Number(totals.delivered || 0)
         },
         monthlyData,
         liveSignals: finalLiveSignals
@@ -3220,6 +3220,7 @@ export async function getFoods(query) {
         isAvailable: f.isAvailable !== false,
         preparationTime: f.preparationTime || '',
         approvalStatus: f.approvalStatus || 'approved',
+        quantity: f.quantity || 0,
         createdAt: f.createdAt,
         updatedAt: f.updatedAt
     }));
@@ -3403,6 +3404,7 @@ export async function createFood(body) {
         foodType,
         isAvailable: body.isAvailable !== false,
         preparationTime: typeof body.preparationTime === 'string' ? body.preparationTime.trim() : '',
+        quantity: body.quantity !== undefined ? Number(body.quantity) : 0,
         approvalStatus: 'approved'
     });
     await doc.save();
@@ -3434,6 +3436,7 @@ export async function updateFood(id, body) {
     if (body.foodType !== undefined) doc.foodType = targetFoodType;
     if (body.isAvailable !== undefined) doc.isAvailable = body.isAvailable !== false;
     if (body.preparationTime !== undefined) doc.preparationTime = String(body.preparationTime || '').trim();
+    if (body.quantity !== undefined) doc.quantity = Number(body.quantity);
     if (body.categoryId !== undefined || body.categoryName !== undefined || body.category !== undefined || body.foodType !== undefined) {
         const nextCategoryName = body.categoryName !== undefined
             ? String(body.categoryName || '').trim()

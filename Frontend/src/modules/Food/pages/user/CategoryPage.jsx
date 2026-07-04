@@ -21,6 +21,7 @@ import { useProfile } from "@food/context/ProfileContext"
 import { useLocation } from "@food/hooks/useLocation"
 import { useZone } from "@food/hooks/useZone"
 import { useDelayedLoading } from "@food/hooks/useDelayedLoading"
+import { usePublicSocket } from "@food/hooks/usePublicSocket"
 import { getMenuFromResponse } from "@food/utils/menuItems"
 import { getRestaurantAvailabilityStatus } from "@food/utils/restaurantAvailability"
 
@@ -70,6 +71,7 @@ export default function CategoryPage() {
   const [loadingRestaurants, setLoadingRestaurants] = useState(true)
   const [isEnrichingMenus, setIsEnrichingMenus] = useState(false)
   const [approvedFoodsData, setApprovedFoodsData] = useState([])
+  const [foodRefreshKey, setFoodRefreshKey] = useState(0)
   const [categoryKeywords, setCategoryKeywords] = useState({})
   const [availabilityTick, setAvailabilityTick] = useState(Date.now())
 
@@ -159,7 +161,10 @@ export default function CategoryPage() {
     }
   }
 
-  const fetchApprovedFoods = async () => {
+  const fetchApprovedFoods = async (force = false) => {
+    if (force) {
+      approvedFoodsCacheRef.current = null
+    }
     if (Array.isArray(approvedFoodsCacheRef.current)) {
       return approvedFoodsCacheRef.current
     }
@@ -196,7 +201,7 @@ export default function CategoryPage() {
     let cancelled = false
 
     void (async () => {
-      const foods = await fetchApprovedFoods()
+      const foods = await fetchApprovedFoods(foodRefreshKey > 0)
       if (!cancelled) {
         setApprovedFoodsData(Array.isArray(foods) ? foods : [])
       }
@@ -205,7 +210,15 @@ export default function CategoryPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [foodRefreshKey])
+
+  const socketListeners = useMemo(() => ({
+    'food:product:update': () => {
+      console.log('[CategoryPage] Food updated via socket, refreshing...');
+      setFoodRefreshKey(prev => prev + 1)
+    }
+  }), [])
+  usePublicSocket(socketListeners)
 
   const buildFallbackMenuFromFoods = (foods, restaurant) => {
     const restaurantIds = new Set(

@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react"
-import { BarChart3, ChevronDown, Info, Settings, FileText, FileSpreadsheet, Code, Loader2 } from "lucide-react"
+import { useNavigate } from "react-router-dom"
+import { BarChart3, ChevronDown, Info, Settings, FileText, FileSpreadsheet, Code, Loader2, ArrowLeft } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@food/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog"
 import { exportTransactionReportToCSV, exportTransactionReportToExcel, exportTransactionReportToPDF, exportTransactionReportToJSON } from "@food/components/admin/reports/reportsExportUtils"
@@ -22,6 +23,7 @@ const debugError = (...args) => {}
 
 
 export default function TransactionReport() {
+  const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -200,7 +202,14 @@ export default function TransactionReport() {
     <div className="p-2 lg:p-3 bg-slate-50 min-h-screen">
       <div className="w-full mx-auto">
         {/* Page Header */}
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 mb-3">
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-3 mb-3 flex items-center gap-3">
+          <button
+            onClick={() => navigate('/admin/food')}
+            className="p-1.5 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-900"
+            title="Back to Dashboard"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
               <BarChart3 className="w-3.5 h-3.5 text-white" />
@@ -226,19 +235,6 @@ export default function TransactionReport() {
               <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 pointer-events-none" />
             </div>
 
-            <div className="relative flex-1 min-w-0">
-              <select
-                value={filters.restaurant}
-                onChange={(e) => setFilters(prev => ({ ...prev, restaurant: e.target.value }))}
-                className="w-full px-2.5 py-1.5 pr-5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none cursor-pointer"
-              >
-                <option value="All restaurants">All restaurants</option>
-                {restaurants.map(restaurant => (
-                  <option key={restaurant._id} value={restaurant._id}>{restaurant.restaurantName || restaurant.name}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 pointer-events-none" />
-            </div>
 
             <div className="relative flex-1 min-w-0">
               <select
@@ -281,9 +277,9 @@ export default function TransactionReport() {
           {/* Left Column - Large Cards */}
           <div className="space-y-3">
             {/* Completed Transaction - Green */}
-            <div className="rounded-lg shadow-sm border border-slate-200 p-4" style={{ backgroundColor: '#f1f5f9' }}>
+            <div className="rounded-lg shadow-sm border border-slate-200 p-4 bg-slate-100 dark:bg-[#1a1a1a]">
               <div className="relative mb-3 flex justify-center">
-                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-emerald-950/40 flex items-center justify-center">
                   <img src={completedIcon} alt="Completed" className="w-12 h-12" />
                 </div>
                 <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
@@ -297,9 +293,9 @@ export default function TransactionReport() {
             </div>
 
             {/* Refunded Transaction - Red */}
-            <div className="rounded-lg shadow-sm border border-slate-200 p-4" style={{ backgroundColor: '#f1f5f9' }}>
+            <div className="rounded-lg shadow-sm border border-slate-200 p-4 bg-slate-100 dark:bg-[#1a1a1a]">
               <div className="relative mb-3 flex justify-center">
-                <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-rose-950/40 flex items-center justify-center">
                   <img src={refundedIcon} alt="Refunded" className="w-12 h-12" />
                 </div>
                 <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
@@ -316,10 +312,10 @@ export default function TransactionReport() {
           {/* Right Column - Small Cards */}
           <div className="space-y-3">
             {/* Admin Earning */}
-            <div className="rounded-lg shadow-sm border border-slate-200 p-3" style={{ backgroundColor: '#f1f5f9' }}>
+            <div className="rounded-lg shadow-sm border border-slate-200 p-3 bg-slate-100 dark:bg-[#1a1a1a]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-emerald-950/40 flex items-center justify-center">
                     <img src={adminEarningIcon} alt="Admin Earning" className="w-6 h-6" />
                   </div>
                   <div className="flex items-center gap-2">
@@ -333,29 +329,12 @@ export default function TransactionReport() {
               </div>
             </div>
 
-            {/* Restaurant Earning */}
-            <div className="rounded-lg shadow-sm border border-slate-200 p-3" style={{ backgroundColor: '#f1f5f9' }}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <img src={restaurantEarningIcon} alt="Restaurant Earning" className="w-6 h-6" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-900">Restaurant Earning</p>
-                    <div className="w-5 h-5 rounded-full bg-blue-500 flex items-center justify-center">
-                      <Info className="w-3 h-3 text-white" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-base font-bold text-green-600">{formatCurrency(summary.restaurantEarning)}</p>
-              </div>
-            </div>
 
             {/* Deliveryman Earning */}
-            <div className="rounded-lg shadow-sm border border-slate-200 p-3" style={{ backgroundColor: '#f1f5f9' }}>
+            <div className="rounded-lg shadow-sm border border-slate-200 p-3 bg-slate-100 dark:bg-[#1a1a1a]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-emerald-950/40 flex items-center justify-center">
                     <img src={deliverymanEarningIcon} alt="Deliveryman Earning" className="w-6 h-6" />
                   </div>
                   <div className="flex items-center gap-2">

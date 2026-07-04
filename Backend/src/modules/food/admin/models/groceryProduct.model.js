@@ -18,6 +18,7 @@ const groceryProductSchema = new mongoose.Schema(
          * - When null/undefined: product is global (visible for all zones).
          */
         zoneId: { type: mongoose.Schema.Types.ObjectId, ref: 'FoodZone', index: true, default: undefined },
+        quantity: { type: Number, default: 0 }
     },
     {
         collection: 'grocery_products',
