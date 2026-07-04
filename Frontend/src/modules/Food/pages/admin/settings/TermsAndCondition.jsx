@@ -3,9 +3,9 @@ import { toast } from "sonner"
 import { adminAPI } from "@food/api"
 import { Textarea } from "@food/components/ui/textarea"
 import { legalHtmlToPlainText, plainTextToLegalHtml } from "@food/utils/legalContentFormat"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 
 export default function TermsAndCondition() {
@@ -61,9 +61,9 @@ export default function TermsAndCondition() {
       setSaving(true)
       // Convert plain text/markdown to HTML for storage + user rendering
       const htmlContent = plainTextToLegalHtml(termsData.content)
-      
-      const response = await adminAPI.updatePageContent('terms', { 
-        title: termsData.title, 
+
+      const response = await adminAPI.updatePageContent('terms', {
+        title: termsData.title,
         content: htmlContent,
         module: selectedModule
       })

@@ -217,3 +217,117 @@
 .dark [data-close-button]:hover {
   background-color: #27272a !important;
 }
+
+/* ─── Admin Panel Dark Mode Overrides ─────────────────────────────────────── */
+.dark .admin-panel,
+.dark.admin-panel {
+  /* Cards, containers, backgrounds */
+  .bg-white {
+    background-color: #1a1a1a !important;
+  }
+  
+  .bg-gray-50, 
+  .bg-neutral-50, 
+  .bg-slate-50, 
+  .bg-neutral-100, 
+  .bg-gray-100 {
+    background-color: #121212 !important;
+  }
+  
+  /* Disable gradient background blocks to prevent white-out areas */
+  .bg-linear-to-br,
+  .bg-linear-to-r,
+  .bg-gradient-to-br,
+  .bg-gradient-to-r {
+    background-image: none !important;
+    background-color: #1a1a1a !important;
+  }
+
+  /* Table headers and specific sections */
+  .bg-gray-50\/50,
+  .bg-slate-50\/50 {
+    background-color: #1e1e1e !important;
+  }
+  
+  /* Borders */
+  .border-gray-200, 
+  .border-neutral-200, 
+  .border-slate-200, 
+  .border-gray-100, 
+  .border-neutral-100,
+  .border-slate-100 {
+    border-color: #262626 !important;
+  }
+  
+  /* Text colors */
+  .text-gray-900, 
+  .text-neutral-900, 
+  .text-slate-900, 
+  .text-black, 
+  .text-gray-800, 
+  .text-neutral-800,
+  .text-slate-800 {
+    color: #f3f4f6 !important;
+  }
+  
+  .text-gray-700, 
+  .text-neutral-700, 
+  .text-slate-700 {
+    color: #e5e7eb !important;
+  }
+  
+  .text-gray-600, 
+  .text-neutral-600, 
+  .text-slate-600, 
+  .text-gray-500, 
+  .text-neutral-500,
+  .text-slate-500 {
+    color: #a3a3a3 !important;
+  }
+  
+  /* Icons & Actions hover states + Table row hover overrides to prevent white-out */
+  tr:hover,
+  .hover\:bg-neutral-50:hover, 
+  .hover\:bg-gray-50:hover, 
+  .hover\:bg-gray-100:hover,
+  .hover\:bg-slate-50:hover,
+  .hover\:bg-slate-100:hover {
+    background-color: #262626 !important;
+  }
+
+  /* Form Elements: inputs, select, textareas */
+  input, 
+  select, 
+  textarea {
+    background-color: #262626 !important;
+    color: #ffffff !important;
+    border-color: #404040 !important;
+  }
+
+  /* Card specific elements */
+  .bg-white\/90 {
+    background-color: #262626 !important;
+  }
+  
+  .bg-white\/70 {
+    background-color: rgba(26, 26, 26, 0.7) !important;
+  }
+
+  /* Make metric cards background uniform for a cleaner one-theme look */
+  .absolute.inset-0.opacity-40 {
+    display: none !important;
+  }
+
+  /* Sidebar dark theme overrides */
+  .admin-sidebar {
+    background-color: #111111 !important;
+    border-right-color: #222222 !important;
+  }
+
+  /* Invert black logo text on dark navbar backgrounds */
+  img[src*="logo"],
+  img[alt="Company"] {
+    filter: invert(1) brightness(2) !important;
+    mix-blend-mode: normal !important;
+  }
+}

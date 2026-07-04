@@ -877,7 +877,7 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
       `}</style>
       <div
         className={cn(
-          "bg-[#F84E04] border-r border-white/10 h-screen fixed left-0 top-0 z-50 flex flex-col overflow-hidden",
+          "bg-[#F84E04] admin-sidebar border-r border-white/10 h-screen fixed left-0 top-0 z-50 flex flex-col overflow-hidden",
           "transform transition-all duration-300 ease-in-out",
           "lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full",

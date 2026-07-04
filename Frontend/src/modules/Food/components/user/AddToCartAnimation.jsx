@@ -294,38 +294,24 @@ export default function AddToCartAnimation({
 
           // Step 1: Pop out from button (scale up slightly)
           tl.to(thumbnail, {
-            scale: 1.3,
-            duration: 0.15,
+            scale: 1.4,
+            duration: 0.25,
             ease: 'power2.out',
           })
-            // Step 2: Fly towards cart with rotation (no Y overshoot to prevent going below)
-            .to(thumbnail, {
-              x: deltaX * 0.98, // Slight X overshoot for bounce
-              y: deltaY, // No overshoot on Y to prevent going below pill
-              rotation: 360,
-              scale: 1.1,
-              duration: 0.4,
-              ease: 'power2.inOut',
-            })
-            // Step 3: Bounce back slightly on X only (overshoot correction)
+            // Step 2: Fly towards cart with rotation, shrinking as it goes
             .to(thumbnail, {
               x: deltaX,
-              y: deltaY, // Keep Y at exact target
-              scale: 0.9,
-              duration: 0.15,
+              y: deltaY,
+              rotation: 720,
+              scale: 0.5,
+              duration: 0.8,
               ease: 'power2.out',
             })
-            // Step 4: Final bounce into position
+            // Step 3: Fade out and disappear into the pill
             .to(thumbnail, {
-              scale: 0.85,
-              duration: 0.1,
-              ease: 'power2.in',
-            })
-            // Step 5: Fade out smoothly
-            .to(thumbnail, {
-              scale: 0.7,
+              scale: 0.2,
               opacity: 0,
-              duration: 0.15,
+              duration: 0.2,
               ease: 'power2.in',
             });
         }

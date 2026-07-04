@@ -172,6 +172,21 @@ export default function UserLayout() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }, [location.pathname, location.search, location.hash])
 
+  useEffect(() => {
+    const p = location.pathname
+    // Do not track cart, checkout, address selector, select-address, or auth paths
+    if (
+      !p.includes("/cart") &&
+      !p.includes("/auth") &&
+      p !== "/food/user/cart" &&
+      p !== "/food/user/cart/address-selector" &&
+      p !== "/food/user/cart/checkout" &&
+      p !== "/food/user/cart/select-address"
+    ) {
+      sessionStorage.setItem("food_last_browsed_page", p + location.search)
+    }
+  }, [location.pathname, location.search])
+
   useUserNotifications()
 
   // Note: Authentication checks and redirects are handled by ProtectedRoute components

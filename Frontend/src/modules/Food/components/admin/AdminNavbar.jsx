@@ -19,6 +19,8 @@ import {
   PlusCircle,
   Bell,
   BellOff,
+  Sun,
+  Moon,
 } from "lucide-react";
 import {
   Dialog,
@@ -54,6 +56,25 @@ export default function AdminNavbar({ onMenuClick }) {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem("adminTheme") || "light";
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+    localStorage.setItem("adminTheme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
@@ -267,7 +288,7 @@ export default function AdminNavbar({ onMenuClick }) {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white border-b border-neutral-200 shadow-sm">
+      <header className="sticky top-0 z-50 bg-white dark:bg-[#1a1a1a] border-b border-neutral-200 dark:border-neutral-800 shadow-sm">
         <div className="flex items-center justify-between px-6 py-3">
           {/* Left: Logo and Mobile Menu */}
           <div className="flex items-center gap-3">
@@ -296,11 +317,11 @@ export default function AdminNavbar({ onMenuClick }) {
           <div className="flex-1 flex justify-center max-w-md mx-8">
             <button
               onClick={() => setSearchOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-100 text-neutral-600 cursor-pointer hover:bg-neutral-200 transition-colors w-full border border-neutral-200"
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-neutral-100 dark:bg-[#262626] text-neutral-600 dark:text-neutral-400 cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors w-full border border-neutral-200 dark:border-neutral-800"
             >
-              <Search className="w-4 h-4 text-neutral-700" />
-              <span className="text-sm flex-1 text-left text-neutral-700">Search</span>
-              <span className="text-xs px-2 py-0.5 rounded bg-white text-neutral-600 border border-neutral-200">
+              <Search className="w-4 h-4 text-neutral-700 dark:text-neutral-300" />
+              <span className="text-sm flex-1 text-left text-neutral-700 dark:text-neutral-300">Search</span>
+              <span className="text-xs px-2 py-0.5 rounded bg-white dark:bg-[#1a1a1a] text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800">
                 Ctrl+K
               </span>
             </button>
@@ -308,11 +329,21 @@ export default function AdminNavbar({ onMenuClick }) {
 
           {/* Right: User Profile */}
           <div className="flex items-center gap-3">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              type="button"
+              className="h-11 w-11 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-[#262626] text-neutral-700 dark:text-neutral-300 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+              aria-label="Toggle theme"
+            >
+              {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+
             <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="relative h-11 w-11 rounded-full border border-neutral-200 bg-neutral-50 text-neutral-700 flex items-center justify-center hover:bg-neutral-100 transition-colors"
+                  className="relative h-11 w-11 rounded-full border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-[#262626] text-neutral-700 dark:text-neutral-300 flex items-center justify-center hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                   aria-label="Notifications"
                 >
                   <Bell className="w-5 h-5" />
@@ -323,12 +354,12 @@ export default function AdminNavbar({ onMenuClick }) {
                   )}
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-96 p-0 mt-2 border border-neutral-200 shadow-2xl rounded-2xl overflow-hidden" align="end">
-                <div className="bg-white">
-                  <div className="px-4 py-3 border-b border-neutral-200 flex items-center justify-between">
+              <PopoverContent className="w-96 p-0 mt-2 border border-neutral-200 dark:border-neutral-800 shadow-2xl rounded-2xl overflow-hidden" align="end">
+                <div className="bg-white dark:bg-[#1a1a1a]">
+                  <div className="px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-neutral-900">Notifications</p>
-                      <p className="text-xs text-neutral-500">Approval and support alerts</p>
+                      <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">Notifications</p>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Approval and support alerts</p>
                     </div>
                     <button
                       type="button"
@@ -342,8 +373,8 @@ export default function AdminNavbar({ onMenuClick }) {
                   <div className="max-h-96 overflow-y-auto">
                     {adminNotifications.length === 0 ? (
                       <div className="px-6 py-10 text-center flex flex-col items-center gap-2">
-                        <BellOff className="w-9 h-9 text-neutral-300" />
-                        <p className="text-sm text-neutral-500">No notifications yet</p>
+                        <BellOff className="w-9 h-9 text-neutral-300 dark:text-neutral-700" />
+                        <p className="text-sm text-neutral-500 dark:text-neutral-400">No notifications yet</p>
                       </div>
                     ) : (
                       adminNotifications.slice(0, 8).map((item) => (
@@ -351,21 +382,21 @@ export default function AdminNavbar({ onMenuClick }) {
                           key={item?.id}
                           type="button"
                           onClick={openNotificationsPage}
-                          className="w-full text-left px-4 py-4 border-b border-neutral-100 last:border-b-0 hover:bg-neutral-50 transition-colors"
+                          className="w-full text-left px-4 py-4 border-b border-neutral-100 dark:border-neutral-800 last:border-b-0 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <p className="text-sm font-semibold text-neutral-900 truncate">
+                              <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                                 {item?.title || "Notification"}
                               </p>
-                              <p className="text-xs text-neutral-600 mt-1 line-clamp-2">
+                              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1 line-clamp-2">
                                 {item?.message || "-"}
                               </p>
-                              <p className="text-[11px] text-neutral-400 mt-2">
+                              <p className="text-[11px] text-neutral-400 dark:text-neutral-500 mt-2">
                                 {item?.metaLabel || item?.category || "Admin alert"}
                               </p>
                             </div>
-                            <span className="shrink-0 text-[10px] text-neutral-400">
+                            <span className="shrink-0 text-[10px] text-neutral-400 dark:text-neutral-500">
                               {item?.timeLabel || "Now"}
                             </span>
                           </div>
@@ -380,13 +411,13 @@ export default function AdminNavbar({ onMenuClick }) {
             {/* User Profile */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-2 pl-3 border-l border-neutral-200 cursor-pointer hover:bg-neutral-100 rounded-md px-2 py-1 transition-colors">
+                <div className="flex items-center gap-2 pl-3 border-l border-neutral-200 dark:border-neutral-800 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md px-2 py-1 transition-colors">
 
                   <div className="hidden md:block">
-                    <p className="text-sm font-medium text-neutral-900">
+                    <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
                       {adminData?.name || "Admin User"}
                     </p>
-                    <p className="text-xs text-neutral-500">
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400">
                       {adminData?.email
                         ? (() => {
                           const [local, domain] = adminData.email.split("@");
@@ -400,14 +431,14 @@ export default function AdminNavbar({ onMenuClick }) {
                         : "admin@example.com"}
                     </p>
                   </div>
-                  <ChevronDown className="w-4 h-4 text-neutral-700 hidden md:block" />
+                  <ChevronDown className="w-4 h-4 text-neutral-700 dark:text-neutral-300 hidden md:block" />
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="end"
-                className="w-64 bg-white border border-neutral-200 rounded-lg shadow-lg z-50 text-neutral-900 animate-in fade-in-0 zoom-in-95 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
+                className="w-64 bg-white dark:bg-[#1a1a1a] border border-neutral-200 dark:border-neutral-800 rounded-lg shadow-lg z-50 text-neutral-900 dark:text-neutral-100 animate-in fade-in-0 zoom-in-95 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95"
               >
-                <div className="p-4 border-b border-neutral-200">
+                <div className="p-4 border-b border-neutral-200 dark:border-neutral-800">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-neutral-100 flex items-center justify-center overflow-hidden border border-neutral-300">
                       {adminData?.profileImage ? (
@@ -430,10 +461,10 @@ export default function AdminNavbar({ onMenuClick }) {
                       )}
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-neutral-900">
+                      <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
                         {adminData?.name || "Admin User"}
                       </p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">
                         {adminData?.email
                           ? (() => {
                             const [local, domain] = adminData.email.split("@");
@@ -451,23 +482,23 @@ export default function AdminNavbar({ onMenuClick }) {
                 </div>
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    className="cursor-pointer hover:bg-neutral-100 focus:bg-neutral-100"
+                    className="cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:bg-neutral-100 dark:focus:bg-neutral-800"
                     onClick={() => navigate("/admin/food/profile")}
                   >
                     <User className="mr-2 w-4 h-4" />
                     <span>Profile</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    className="cursor-pointer hover:bg-neutral-100 focus:bg-neutral-100"
+                    className="cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800 focus:bg-neutral-100 dark:focus:bg-neutral-800"
                     onClick={() => navigate("/admin/food/settings")}
                   >
                     <Settings className="mr-2 w-4 h-4" />
                     <span>Settings</span>
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator className="dark:bg-neutral-800" />
                 <DropdownMenuItem
-                  className="cursor-pointer text-red-600 hover:bg-red-50 focus:bg-red-50"
+                  className="cursor-pointer text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 focus:bg-red-50 dark:focus:bg-red-950/20"
                   onClick={handleLogout}
                 >
                   <LogOut className="mr-2 w-4 h-4" />

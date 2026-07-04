@@ -176,13 +176,20 @@ function UnregisteredRestaurantsRouteGuard() {
 }
 
 export default function AdminRouter() {
-  // Safely enforce light mode for the Admin app to prevent User dark mode bleeding
+  // Read admin theme on mount, restore user app theme on unmount
   useEffect(() => {
-    document.documentElement.classList.remove("dark");
+    const savedAdminTheme = localStorage.getItem('adminTheme') || 'light';
+    if (savedAdminTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     return () => {
-      const savedTheme = localStorage.getItem("appTheme") || "light";
-      if (savedTheme === "dark") {
-        document.documentElement.classList.add("dark");
+      const savedTheme = localStorage.getItem('appTheme') || 'light';
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
       }
     };
   }, []);

@@ -13,6 +13,7 @@ import { Skeleton } from "@food/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@food/components/ui/sheet";
 import { usePublicSocket } from "@food/hooks/usePublicSocket";
 import ModuleNavbar from "@food/components/user/ModuleNavbar";
+import StickyCartCard from "@food/components/user/StickyCartCard";
 
 export default function GroceryPage() {
   const navigate = useNavigate();
@@ -510,6 +511,7 @@ export default function GroceryPage() {
         </SheetContent>
       </Sheet>
 
+      <StickyCartCard />
     </AnimatedPage>
   );
 }

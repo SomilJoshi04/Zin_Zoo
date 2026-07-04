@@ -94,6 +94,56 @@ const haversineKm = (lat1, lon1, lat2, lon2) => {
   return R * c
 }
 
+function CartItemQuantitySelector({ item, updateQuantity }) {
+  const [localVal, setLocalVal] = useState(item.quantity)
+
+  useEffect(() => {
+    setLocalVal(item.quantity)
+  }, [item.quantity])
+
+  const handleBlur = () => {
+    const parsed = parseInt(localVal, 10)
+    if (isNaN(parsed) || parsed <= 0) {
+      updateQuantity(item.id, 0)
+    } else {
+      updateQuantity(item.id, Math.min(parsed, 99))
+    }
+  }
+
+  const handleChange = (e) => {
+    const val = e.target.value
+    if (val === "" || /^[0-9]+$/.test(val)) {
+      const parsed = parseInt(val, 10)
+      if (!isNaN(parsed)) {
+        if (parsed > 99) {
+          setLocalVal("99")
+          updateQuantity(item.id, 99)
+          toast.error("Maximum quantity limit is 99")
+        } else {
+          setLocalVal(val)
+          if (parsed > 0) {
+            updateQuantity(item.id, parsed)
+          }
+        }
+      } else {
+        setLocalVal(val)
+      }
+    }
+  }
+
+  return (
+    <input
+      type="text"
+      pattern="[0-9]*"
+      inputMode="numeric"
+      value={localVal}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      className="w-8 md:w-10 text-center text-sm md:text-base font-semibold text-[#F84E04] dark:text-[#F84E04] bg-transparent focus:outline-none border-none p-0 focus:ring-0"
+    />
+  )
+}
+
 export default function Cart() {
   const companyName = useCompanyName()
   const navigate = useNavigate()
@@ -1175,6 +1225,11 @@ export default function Cart() {
     : null
   const platformFee = pricing?.platformFee || feeSettings.platformFee
   const gstCharges = pricing?.tax || Math.round(subtotal * (feeSettings.gstRate / 100))
+  const gstLabel = activeCartTab === 'grocery' || activeCartTab === 'accessories'
+    ? 'GST and Store Charges'
+    : (activeCartTab === 'all' && cart.some(i => i.moduleType === 'grocery' || i.moduleType === 'accessories') && !cart.some(i => (i.moduleType || 'food') === 'food')
+      ? 'GST and Store Charges'
+      : 'GST and Kitchen Charges')
   const discount = pricing?.discount || (appliedCoupon ? Math.min(appliedCoupon.discount, subtotal * 0.5) : 0)
   const totalBeforeDiscount = subtotal + (deliveryFee === 0 ? (feeSettings.deliveryFee ?? 25) : deliveryFee) + platformFee + gstCharges
   const total = subtotal + deliveryFee + platformFee + gstCharges - (pricing?.discount || discount)
@@ -1299,10 +1354,11 @@ export default function Cart() {
   }
 
   const handleBack = () => {
-    if (globalCart.length === 0) {
-      navigate('/food')
+    const lastPage = sessionStorage.getItem("food_last_browsed_page")
+    if (lastPage) {
+      navigate(lastPage)
     } else {
-      navigate(-1)
+      navigate('/food/user')
     }
   }
 
@@ -2136,12 +2192,19 @@ export default function Cart() {
                           >
                             <Minus className="h-3 w-3 md:h-4 md:w-4" />
                           </button>
-                          <span className="px-2 md:px-3 text-sm md:text-base font-semibold text-[#F84E04] dark:text-[#F84E04] min-w-[20px] md:min-w-[24px] text-center">
-                            {item.quantity}
-                          </span>
+                          <CartItemQuantitySelector
+                            item={item}
+                            updateQuantity={updateQuantity}
+                          />
                           <button
                             className="px-2 md:px-3 py-1 text-[#F84E04] dark:text-[#F84E04] hover:bg-orange-50 dark:hover:bg-[#F84E04]/10"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={() => {
+                              if (item.quantity < 99) {
+                                updateQuantity(item.id, item.quantity + 1)
+                              } else {
+                                toast.error("Maximum quantity limit is 99")
+                              }
+                            }}
                           >
                             <Plus className="h-3 w-3 md:h-4 md:w-4" />
                           </button>
@@ -2416,19 +2479,6 @@ export default function Cart() {
                 )}
               </div>
 
-              {/* Delivery Time */}
-              <div className="bg-white dark:bg-[#1a1a1a] px-4 md:px-6 py-5 rounded-2xl shadow-sm border border-slate-100 dark:border-gray-800">
-                <div className="flex items-start gap-3 md:gap-4">
-                  <div className="mt-0.5">
-                    <Zap className="h-5 w-5 text-green-600 fill-green-600/20" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-base text-gray-800 dark:text-gray-200">
-                      Delivery in <span className="text-green-600 font-bold">{restaurantData?.estimatedDeliveryTime || "15-20 mins"}</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
 
               {/* Delivery Address */}
               <div className="bg-white dark:bg-[#1a1a1a] px-4 md:px-6 py-5 rounded-2xl shadow-sm border border-slate-100 dark:border-gray-800">
@@ -2645,7 +2695,7 @@ export default function Cart() {
                       <span className="text-gray-800 dark:text-gray-200 font-medium">{RUPEE_SYMBOL}{platformFee.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600 dark:text-gray-400">GST and Restaurant Charges</span>
+                      <span className="text-gray-600 dark:text-gray-400">{gstLabel}</span>
                       <span className="text-gray-800 dark:text-gray-200 font-medium">{RUPEE_SYMBOL}{gstCharges.toFixed(2)}</span>
                     </div>
                     {discount > 0 && (

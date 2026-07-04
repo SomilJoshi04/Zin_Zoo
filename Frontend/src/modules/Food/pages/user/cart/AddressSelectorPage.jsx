@@ -95,7 +95,11 @@ export default function AddressSelectorPage() {
   const getAddressId = (address) => address?.id || address?._id || null
 
   const handleBack = () => {
-    goBack()
+    if (routerLocation.state?.backTo || routerLocation.state?.from) {
+      navigate(-1)
+    } else {
+      goBack()
+    }
   }
 
   const addressAutocompleteSuggestions = useMemo(() => {

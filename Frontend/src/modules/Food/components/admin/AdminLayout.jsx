@@ -14,13 +14,20 @@ export default function AdminLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const mainContentRef = useRef(null);
 
-  // Safely enforce light mode for the Admin panel to prevent User dark mode bleeding
+  // Read admin theme on mount, restore user app theme on unmount
   useEffect(() => {
-    document.documentElement.classList.remove('dark');
+    const savedAdminTheme = localStorage.getItem('adminTheme') || 'light';
+    if (savedAdminTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
     return () => {
       const savedTheme = localStorage.getItem('appTheme') || 'light';
       if (savedTheme === 'dark') {
         document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
       }
     };
   }, []);
@@ -55,11 +62,11 @@ export default function AdminLayout() {
   }, [location.pathname]);
 
   return (
-    <div className="h-screen bg-neutral-200 flex overflow-hidden">
+    <div className="h-screen bg-neutral-200 dark:bg-[#0a0a0a] flex overflow-hidden admin-panel">
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-gray-900/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-gray-900/50 dark:bg-gray-900/70 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -89,7 +96,7 @@ export default function AdminLayout() {
         {/* Page Content */}
         <main
           ref={mainContentRef}
-          className="flex-1 min-h-0 w-full max-w-full overflow-x-hidden overflow-y-auto bg-neutral-100"
+          className="flex-1 min-h-0 w-full max-w-full overflow-x-hidden overflow-y-auto bg-neutral-100 dark:bg-[#121212]"
         >
           <Outlet />
         </main>
