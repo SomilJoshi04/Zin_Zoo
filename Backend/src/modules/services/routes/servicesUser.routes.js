@@ -8,5 +8,6 @@ const router = express.Router();
 router.post('/bookings', servicesUserController.createBooking);
 router.get('/bookings', servicesUserController.getUserBookings);
 router.put('/bookings/:id/cancel', servicesUserController.cancelBooking);
+router.put('/bookings/:id/verify-payment', servicesUserController.verifyBookingPayment);
 
 export default router;

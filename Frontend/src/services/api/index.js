@@ -25,7 +25,7 @@ export const searchAPI = {
 
 /** Services Public API */
 export const servicesPublicAPI = {
-  getCategories: () => apiClient.get("/services/public/categories"),
+  getCategories: (params = {}) => apiClient.get("/services/public/categories", { params }),
   getServices: (params = {}) => apiClient.get("/services/public/list", { params }),
 };
 
@@ -181,6 +181,10 @@ export const servicesUserAPI = {
     }),
   cancelBooking: (id) =>
     apiClient.put(`/services/user/bookings/${id}/cancel`, {}, {
+      contextModule: "user",
+    }),
+  verifyBookingPayment: (id, body) =>
+    apiClient.put(`/services/user/bookings/${id}/verify-payment`, body, {
       contextModule: "user",
     }),
 };

@@ -169,6 +169,7 @@ export default function GroceryProductsList() {
             description: f.description || "",
             preparationTime: f.preparationTime || "",
             quantity: f.quantity || 0,
+            zoneId: f.zoneId || null,
             createdAt: f.createdAt,
             updatedAt: f.updatedAt,
           }))
@@ -190,6 +191,23 @@ export default function GroceryProductsList() {
   useEffect(() => {
     fetchAllFoods()
   }, [fetchAllFoods])
+
+  useEffect(() => {
+    const fetchZonesOnMount = async () => {
+      try {
+        setZonesLoading(true)
+        const res = await adminAPI.getZones({ limit: 1000 })
+        const list = res?.data?.data?.zones || res?.data?.data?.data?.zones || res?.data?.data || []
+        setZones(Array.isArray(list) ? list : [])
+      } catch (err) {
+        console.error("Error loading zones on mount:", err)
+        setZones([])
+      } finally {
+        setZonesLoading(false)
+      }
+    }
+    fetchZonesOnMount()
+  }, [])
 
   const socketListeners = useMemo(() => ({
     'grocery:product:update': () => {
@@ -326,17 +344,6 @@ export default function GroceryProductsList() {
         if (!cancelled) {
           setCategoryOptions([])
         }
-      }
-
-      try {
-        setZonesLoading(true)
-        const zonesRes = await adminAPI.getZones({ limit: 1000 })
-        const zonesList = zonesRes?.data?.data?.zones || zonesRes?.data?.data?.data?.zones || zonesRes?.data?.data || []
-        if (!cancelled) setZones(Array.isArray(zonesList) ? zonesList : [])
-      } catch (error) {
-        if (!cancelled) setZones([])
-      } finally {
-        if (!cancelled) setZonesLoading(false)
       }
     }
 
@@ -566,6 +573,9 @@ export default function GroceryProductsList() {
                   Category
                 </th>
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  Zone
+                </th>
+                <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Quantity
                 </th>
                 <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-wider">
@@ -576,7 +586,7 @@ export default function GroceryProductsList() {
             <tbody className="bg-white divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center">
+                  <td colSpan={7} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
                       <p className="text-sm text-slate-500">Loading foods...</p>
@@ -585,7 +595,7 @@ export default function GroceryProductsList() {
                 </tr>
               ) : foods.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center">
+                  <td colSpan={7} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <p className="text-lg font-semibold text-slate-700 mb-1">No Data Found</p>
                       <p className="text-sm text-slate-500">No products match your search or restaurant filter</p>
@@ -624,6 +634,13 @@ export default function GroceryProductsList() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-800">{food.categoryName || "-"}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
+                          {zones.find(z => String(z._id || z.id) === String(food.zoneId))?.name || "Global"}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">

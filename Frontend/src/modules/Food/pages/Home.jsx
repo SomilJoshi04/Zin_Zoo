@@ -62,7 +62,7 @@ export default function Home() {
           </div>
           <CardTitle className="text-3xl font-bold text-center">{companyName || "SwitchEats Food"}</CardTitle>
           <CardDescription className="text-lg">
-            Welcome to the Food Delivery Platform
+            Welcome to the Service Platform
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

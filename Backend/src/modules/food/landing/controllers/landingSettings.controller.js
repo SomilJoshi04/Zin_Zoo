@@ -1,4 +1,9 @@
-import { getLandingSettings, updateLandingSettings } from '../services/landingSettings.service.js';
+import { 
+    getLandingSettings, 
+    updateLandingSettings, 
+    uploadLandingVideoFile, 
+    deleteLandingVideoFile 
+} from '../services/landingSettings.service.js';
 import { sendResponse } from '../../../../utils/response.js';
 import { ValidationError } from '../../../../core/auth/errors.js';
 
@@ -19,6 +24,24 @@ export const updateAdminLandingSettingsController = async (req, res, next) => {
         }
         const updated = await updateLandingSettings(payload);
         return sendResponse(res, 200, 'Landing settings updated successfully', updated);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const uploadLandingSettingsVideoController = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            throw new ValidationError('No file uploaded');
+        }
+
+        const { oldPublicId } = req.body;
+        if (oldPublicId) {
+            await deleteLandingVideoFile(oldPublicId);
+        }
+
+        const result = await uploadLandingVideoFile(req.file);
+        return sendResponse(res, 200, 'Landing video uploaded successfully', result);
     } catch (error) {
         next(error);
     }

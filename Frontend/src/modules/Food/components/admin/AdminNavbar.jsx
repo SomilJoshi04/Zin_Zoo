@@ -512,9 +512,9 @@ export default function AdminNavbar({ onMenuClick }) {
 
       {/* Search Modal */}
       <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <DialogContent className="max-w-2xl p-0 bg-white opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 ease-in-out data-[state=open]:scale-100 data-[state=closed]:scale-100 border border-neutral-200">
-          <DialogHeader className="p-6 pb-4 border-b border-neutral-200">
-            <DialogTitle className="text-xl font-semibold text-neutral-900">
+        <DialogContent className="max-w-2xl p-0 bg-white dark:bg-neutral-900 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 ease-in-out data-[state=open]:scale-100 data-[state=closed]:scale-100 border border-neutral-200 dark:border-neutral-800">
+          <DialogHeader className="p-6 pb-4 border-b border-neutral-200 dark:border-neutral-800">
+            <DialogTitle className="text-xl font-semibold text-neutral-900 dark:text-white">
               Universal Search
             </DialogTitle>
           </DialogHeader>
@@ -527,13 +527,13 @@ export default function AdminNavbar({ onMenuClick }) {
                 placeholder="Search orders, users, products, reports..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-3 text-base border-neutral-300 bg-white text-neutral-900 placeholder:text-neutral-500 focus:border-black focus:ring-black"
+                className="pl-10 pr-4 py-3 text-base border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white placeholder:text-neutral-500 focus:border-black dark:focus:border-white focus:ring-black dark:focus:ring-white"
               />
             </div>
 
             {searchQuery.trim() === "" ? (
               <div className="space-y-4">
-                <div className="text-sm text-neutral-500 mb-4">Quick Actions</div>
+                <div className="text-sm text-neutral-500 dark:text-neutral-400 mb-4">Quick Actions</div>
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     { icon: Package, label: "Orders", path: "/admin/food/orders/all" },
@@ -547,27 +547,27 @@ export default function AdminNavbar({ onMenuClick }) {
                         setSearchOpen(false);
                         navigate(action.path);
                       }}
-                      className="flex items-center gap-3 p-4 rounded-lg border border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50 transition-all"
+                      className="flex items-center gap-3 p-4 rounded-lg border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-neutral-300 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all"
                     >
-                      <div className="p-2 rounded-md bg-black text-white">
+                      <div className="p-2 rounded-md bg-black dark:bg-white text-white dark:text-black">
                         <action.icon className="w-5 h-5" />
                       </div>
-                      <span className="text-sm font-medium text-neutral-900">{action.label}</span>
+                      <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{action.label}</span>
                     </button>
                   ))}
                 </div>
                 {recentSearches.length > 0 && (
-                  <div className="mt-6 pt-4 border-t border-neutral-200">
+                  <div className="mt-6 pt-4 border-t border-neutral-200 dark:border-neutral-800">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-xs text-neutral-500">Recent Searches</p>
-                      <button onClick={clearRecent} className="text-[10px] text-red-500 hover:underline">Clear All</button>
+                      <p className="text-xs text-neutral-500 dark:text-neutral-400">Recent Searches</p>
+                      <button onClick={clearRecent} className="text-[10px] text-red-500 dark:text-red-400 hover:underline">Clear All</button>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {recentSearches.map((term, idx) => (
                         <button
                           key={idx}
                           onClick={() => handleRecentClick(term)}
-                          className="px-3 py-1 text-xs bg-neutral-100 hover:bg-neutral-200 rounded-full text-neutral-700 transition-colors"
+                          className="px-3 py-1 text-xs bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded-full text-neutral-700 dark:text-neutral-300 transition-colors"
                         >
                           {term}
                         </button>
@@ -580,35 +580,35 @@ export default function AdminNavbar({ onMenuClick }) {
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {isSearching ? (
                   <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto mb-3"></div>
-                    <p className="text-sm text-neutral-500">Searching...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black dark:border-white mx-auto mb-3"></div>
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">Searching...</p>
                   </div>
                 ) : searchResults.length === 0 ? (
                   <div className="text-center py-12">
-                    <AlertCircle className="w-12 h-12 text-neutral-300 mx-auto mb-3" />
-                    <p className="text-sm text-neutral-500">No results found for "{searchQuery}"</p>
+                    <AlertCircle className="w-12 h-12 text-neutral-300 dark:text-neutral-700 mx-auto mb-3" />
+                    <p className="text-sm text-neutral-500 dark:text-neutral-400">No results found for "{searchQuery}"</p>
                   </div>
                 ) : (
                   <>
-                    <div className="text-sm text-neutral-600 mb-3 ml-1">
+                    <div className="text-sm text-neutral-600 dark:text-neutral-400 mb-3 ml-1">
                       {searchResults.length} result{searchResults.length !== 1 ? "s" : ""} found
                     </div>
                     {Object.entries(groupedResults).map(([type, results]) => (
                       <div key={type} className="mb-4">
                         <div className="flex items-center gap-2 mb-2 px-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 dark:text-neutral-500">
                             {type}s
                           </span>
-                          <div className="h-px flex-1 bg-neutral-100"></div>
+                          <div className="h-px flex-1 bg-neutral-100 dark:bg-neutral-800"></div>
                         </div>
                         <div className="space-y-2">
                           {results.map((result, idx) => (
                             <button
                               key={`${type}-${idx}`}
                               onClick={() => handleResultClick(result)}
-                              className="w-full flex items-center gap-3 p-3 rounded-xl border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50 transition-all text-left group"
+                              className="w-full flex items-center gap-3 p-3 rounded-xl border border-neutral-100 dark:border-neutral-800 hover:border-neutral-200 dark:hover:border-neutral-700 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-all text-left group"
                             >
-                              <div className="w-10 h-10 rounded-lg bg-neutral-100 flex items-center justify-center text-neutral-500 group-hover:bg-white group-hover:text-black transition-colors">
+                              <div className="w-10 h-10 rounded-lg bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-500 dark:text-neutral-400 group-hover:bg-white dark:group-hover:bg-neutral-700 group-hover:text-black dark:group-hover:text-white transition-colors">
                                 {result.type === 'Order' && <Package className="w-5 h-5" />}
                                 {result.type === 'User' && <User className="w-5 h-5" />}
                                 {result.type === 'Restaurant' && <Building2 className="w-5 h-5" />}
@@ -617,14 +617,14 @@ export default function AdminNavbar({ onMenuClick }) {
                                 {result.type === 'Addon' && <PlusCircle className="w-5 h-5" />}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-neutral-900 truncate">
+                                <p className="text-sm font-semibold text-neutral-900 dark:text-neutral-100 truncate">
                                   {result.title}
                                 </p>
-                                <p className="text-xs text-neutral-500 truncate mt-0.5">
+                                <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate mt-0.5">
                                   {result.description}
                                 </p>
                               </div>
-                              <ArrowRight className="w-4 h-4 text-neutral-300 group-hover:text-black group-hover:translate-x-0.5 transition-all" />
+                              <ArrowRight className="w-4 h-4 text-neutral-300 dark:text-neutral-600 group-hover:text-black dark:group-hover:text-white group-hover:translate-x-0.5 transition-all" />
                             </button>
                           ))}
                         </div>

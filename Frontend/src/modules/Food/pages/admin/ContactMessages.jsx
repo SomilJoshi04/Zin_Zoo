@@ -1,102 +1,102 @@
-import { useState, useEffect, useMemo } from "react"
-import { Search, ArrowUpDown, Settings, Folder, ChevronDown, Eye, Loader2, Star } from "lucide-react"
-import { toast } from "sonner"
-import { adminAPI } from "@food/api"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@food/components/ui/dialog"
-import { Button } from "@food/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@food/components/ui/dropdown-menu"
+  import { useState, useEffect, useMemo } from "react"
+  import { Search, ArrowUpDown, Settings, Folder, ChevronDown, Eye, Loader2, Star } from "lucide-react"
+  import { toast } from "sonner"
+  import { adminAPI } from "@food/api"
+  import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+  } from "@food/components/ui/dialog"
+  import { Button } from "@food/components/ui/button"
+  import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+  } from "@food/components/ui/dropdown-menu"
 
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+  const debugLog = (...args) => {}
+  const debugWarn = (...args) => {}
+  const debugError = (...args) => {}
 
-export default function ContactMessages() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [feedbacks, setFeedbacks] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [selectedFeedback, setSelectedFeedback] = useState(null)
-  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
-  const [ratingFilter, setRatingFilter] = useState("all")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  export default function ContactMessages() {
+    const [searchQuery, setSearchQuery] = useState("")
+    const [feedbacks, setFeedbacks] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [selectedFeedback, setSelectedFeedback] = useState(null)
+    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+    const [ratingFilter, setRatingFilter] = useState("all")
+    const [currentPage, setCurrentPage] = useState(1)
+    const [totalPages, setTotalPages] = useState(1)
 
-  useEffect(() => {
-    fetchFeedbacks()
-  }, [ratingFilter, currentPage, searchQuery])
+    useEffect(() => {
+      fetchFeedbacks()
+    }, [ratingFilter, currentPage, searchQuery])
 
-  const fetchFeedbacks = async () => {
-    try {
-      setLoading(true)
-      const params = {
-        page: currentPage,
-        limit: 10,
-        rating: ratingFilter !== 'all' ? ratingFilter : undefined,
-        search: searchQuery.trim() || undefined
-      }
-      
-      const response = await adminAPI.getContactMessages(params)
-      
-      if (response.data && response.data.success) {
-        setFeedbacks(response.data.data?.reviews || [])
-        setTotalPages(response.data.data?.pagination?.totalPages || 1)
-      } else {
+    const fetchFeedbacks = async () => {
+      try {
+        setLoading(true)
+        const params = {
+          page: currentPage,
+          limit: 10,
+          rating: ratingFilter !== 'all' ? ratingFilter : undefined,
+          search: searchQuery.trim() || undefined
+        }
+        
+        const response = await adminAPI.getContactMessages(params)
+        
+        if (response.data && response.data.success) {
+          setFeedbacks(response.data.data?.reviews || [])
+          setTotalPages(response.data.data?.pagination?.totalPages || 1)
+        } else {
+          setFeedbacks([])
+          setTotalPages(1)
+        }
+      } catch (error) {
+        debugError('Error fetching reviews:', error)
         setFeedbacks([])
         setTotalPages(1)
+        const errorMessage = error.response?.data?.message || 
+                            error.message || 
+                            'Failed to load reviews.'
+        toast.error(errorMessage)
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      debugError('Error fetching reviews:', error)
-      setFeedbacks([])
-      setTotalPages(1)
-      const errorMessage = error.response?.data?.message || 
-                          error.message || 
-                          'Failed to load reviews.'
-      toast.error(errorMessage)
-    } finally {
-      setLoading(false)
     }
-  }
 
-  const handleViewFeedback = (feedback) => {
-    setSelectedFeedback(feedback)
-    setIsViewDialogOpen(true)
-  }
+    const handleViewFeedback = (feedback) => {
+      setSelectedFeedback(feedback)
+      setIsViewDialogOpen(true)
+    }
 
-  const normalizeRatingToFive = (value) => {
-    const n = Number(value || 0)
-    if (!Number.isFinite(n) || n <= 0) return 0
-    if (n > 5) return Math.max(0, Math.min(5, Math.round(n / 2)))
-    return Math.max(0, Math.min(5, Math.round(n)))
-  }
+    const normalizeRatingToFive = (value) => {
+      const n = Number(value || 0)
+      if (!Number.isFinite(n) || n <= 0) return 0
+      if (n > 5) return Math.max(0, Math.min(5, Math.round(n / 2)))
+      return Math.max(0, Math.min(5, Math.round(n)))
+    }
 
-  const normalizeFeedbackScaleText = (value) => {
-    const text = String(value || "")
-    if (!text) return "No comment provided"
-    return text.replace(/(\d+(?:\.\d+)?)\s*\/\s*10\b/g, (_, raw) => {
-      const n = Number(raw)
-      if (!Number.isFinite(n)) return `${raw}/10`
-      const outOfFive = Math.max(0, Math.min(5, n / 2))
-      const formatted = Number.isInteger(outOfFive) ? String(outOfFive) : outOfFive.toFixed(1).replace(/\.0$/, "")
-      return `${formatted}/5`
-    })
-  }
+    const normalizeFeedbackScaleText = (value) => {
+      const text = String(value || "")
+      if (!text) return "No comment provided"
+      return text.replace(/(\d+(?:\.\d+)?)\s*\/\s*10\b/g, (_, raw) => {
+        const n = Number(raw)
+        if (!Number.isFinite(n)) return `${raw}/10`
+        const outOfFive = Math.max(0, Math.min(5, n / 2))
+        const formatted = Number.isInteger(outOfFive) ? String(outOfFive) : outOfFive.toFixed(1).replace(/\.0$/, "")
+        return `${formatted}/5`
+      })
+    }
 
-  const renderStars = (rating) => {
-    const stars = []
-    const count = Math.floor(rating || 0)
-    
-    for (let i = 0; i < count; i++) {
-      stars.push(<Star key={i} className="w-5 h-5 fill-amber-500 text-amber-500" />)
+    const renderStars = (rating) => {
+      const stars = []
+      const count = Math.floor(rating || 0)
+      
+      for (let i = 0; i < count; i++) {
+        stars.push(<Star key={i} className="w-5 h-5 fill-amber-500 text-amber-500" />)
     }
     return stars
   }

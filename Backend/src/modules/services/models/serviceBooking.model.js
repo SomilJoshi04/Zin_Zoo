@@ -58,6 +58,25 @@ const serviceBookingSchema = new mongoose.Schema(
             type: String,
             enum: ['pay_upfront', 'pay_after_service'],
             default: 'pay_after_service'
+        },
+        paymentStatus: {
+            type: String,
+            enum: ['pending', 'paid', 'refunded'],
+            default: 'pending'
+        },
+        paymentDetails: {
+            razorpayOrderId: {
+                type: String,
+                default: null
+            },
+            razorpayPaymentId: {
+                type: String,
+                default: null
+            },
+            razorpaySignature: {
+                type: String,
+                default: null
+            }
         }
     },
     {

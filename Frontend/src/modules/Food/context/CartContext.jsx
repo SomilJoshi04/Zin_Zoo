@@ -209,7 +209,7 @@ export function CartProvider({ children }) {
     // Auto-fill default restaurant info for food if missing
     if (isFood) {
       if (!item.restaurant) item.restaurant = 'Zin Zoo Kitchen';
-      if (!item.restaurantId) item.restaurantId = 'zin_zoo_kitchen';
+      if (!item.restaurantId) item.restaurantId = '6a47438661bc505016a5ad33';
     }
 
     if (isFood && !item?.restaurantId && !item?.restaurant) {

@@ -95,6 +95,24 @@ export const initRazorpayPayment = async (options) => {
       }
     };
 
+    const originalBodyPointerEvents = document.body.style.pointerEvents;
+    const originalHtmlPointerEvents = document.documentElement?.style.pointerEvents || '';
+    
+    const restorePointerEvents = () => {
+      document.body.style.pointerEvents = originalBodyPointerEvents;
+      if (document.documentElement) {
+        document.documentElement.style.pointerEvents = originalHtmlPointerEvents;
+      }
+    };
+    
+    // Force pointer events to allow clicks inside the iframe modal
+    document.body.style.pointerEvents = 'auto';
+    if (document.documentElement) {
+      document.documentElement.style.pointerEvents = 'auto';
+    }
+
+    const userOndismiss = options.modal?.ondismiss || options.onClose;
+
     const razorpayOptions = {
       key: options.key,
       amount: options.amount,
@@ -110,20 +128,22 @@ export const initRazorpayPayment = async (options) => {
       },
       handler: function(response) {
         restoreIfNeeded();
+        restorePointerEvents();
         if (options.handler) {
           options.handler(response);
         }
       },
       modal: {
-        ondismiss: function() {
-          restoreIfNeeded();
-          if (options.onClose) {
-            options.onClose();
-          }
-        },
         escape: true,
         animation: true,
-        ...options.modal
+        ...options.modal,
+        ondismiss: function() {
+          restoreIfNeeded();
+          restorePointerEvents();
+          if (userOndismiss) {
+            userOndismiss();
+          }
+        }
       },
       retry: {
         enabled: true,

@@ -52,7 +52,7 @@ const resolveSectionFromRequest = (path = '', method = '') => {
     if (path === '/zones' && String(method).toUpperCase() === 'GET') return null;
     if (/^\/zones\/[^/]+$/.test(path) && String(method).toUpperCase() === 'GET') return null;
     if (path === '/orders' && String(method).toUpperCase() === 'GET') return null;
-    if (path.startsWith('/zones')) return 'restaurant_management'; // keeping permission key for Zones
+    if (path.startsWith('/zones')) return 'zone_management'; // keeping permission key for Zones
     if (path.startsWith('/categories') || path.startsWith('/foods')) return 'food_management';
     if (path.startsWith('/offers')) return 'promotions_management';
     if (path.startsWith('/orders')) return 'order_management';
@@ -212,6 +212,7 @@ router.delete('/offers/:id', adminController.deleteAdminOffer);
 
 // ----- Feedback Experience (Admin) -----
 router.get('/feedback-experiences', feedbackExperienceController.getFeedbackExperiences);
+router.get('/contact-messages', feedbackExperienceController.getFeedbackExperiences);
 router.delete('/feedback-experiences/:id', feedbackExperienceController.deleteFeedbackExperience);
 
 // ----- Fee Settings -----
@@ -243,6 +244,7 @@ router.get(
     '/zones',
     requireAnyAdminPermission([
         { section: 'dashboard', action: 'view' },
+        { section: 'zone_management', action: 'view' },
         { section: 'restaurant_management', action: 'view' },
         { section: 'point_of_sale', action: 'view' },
         { section: 'food_management', action: 'view' },
@@ -255,6 +257,7 @@ router.get(
     '/zones/:id',
     requireAnyAdminPermission([
         { section: 'dashboard', action: 'view' },
+        { section: 'zone_management', action: 'view' },
         { section: 'restaurant_management', action: 'view' },
         { section: 'point_of_sale', action: 'view' },
         { section: 'food_management', action: 'view' },

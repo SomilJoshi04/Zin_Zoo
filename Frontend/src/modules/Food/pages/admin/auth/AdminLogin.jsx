@@ -178,7 +178,7 @@ export default function AdminLogin() {
                   disabled={isLoading}
                   autoComplete="off"
                   required
-                  className="h-12 text-base"
+                  className="h-12 text-base bg-white !text-black placeholder:text-slate-450 border-slate-300 focus:!text-black"
                 />
               </div>
 
@@ -194,7 +194,7 @@ export default function AdminLogin() {
                     disabled={isLoading}
                     autoComplete="new-password"
                     required
-                    className="h-12 pr-12 text-base [&::-ms-reveal]:hidden [&::-webkit-password-reveal-button]:hidden"
+                    className="h-12 pr-12 text-base bg-white !text-black placeholder:text-slate-450 border-slate-300 focus:!text-black [&::-ms-reveal]:hidden [&::-webkit-password-reveal-button]:hidden"
                   />
                   <button
                     type="button"

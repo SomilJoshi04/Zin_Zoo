@@ -211,7 +211,7 @@ export default function OrderInvoice() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
                   <div>
                     <p className="text-xs sm:text-sm text-muted-foreground">{companyName}</p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">Food Delivery Platform</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Service Platform</p>
                   </div>
                   <Badge className="bg-[#F84E04] text-white text-sm sm:text-base md:text-lg px-3 sm:px-4 py-1.5 sm:py-2 w-fit">
                     {order.status.toUpperCase()}
@@ -290,7 +290,7 @@ export default function OrderInvoice() {
                   <span>${order.subtotal.toFixed(2)}</span>
                 </div>
                 <div className="total-row flex justify-between text-xs sm:text-sm sm:text-base py-1 sm:py-2">
-                  <span>Delivery Fee:</span>
+                  <span>Service Fee:</span>
                   <span>${order.deliveryFee.toFixed(2)}</span>
                 </div>
                 <div className="total-row flex justify-between text-xs sm:text-sm sm:text-base py-1 sm:py-2">

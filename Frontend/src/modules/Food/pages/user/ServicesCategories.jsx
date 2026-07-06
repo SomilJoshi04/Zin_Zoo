@@ -44,7 +44,7 @@ export default function ServicesCategories() {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await servicesPublicAPI.getCategories();
+        const response = await servicesPublicAPI.getCategories({ zoneId });
         const list =
           response?.data?.data?.categories ||
           response?.data?.categories ||

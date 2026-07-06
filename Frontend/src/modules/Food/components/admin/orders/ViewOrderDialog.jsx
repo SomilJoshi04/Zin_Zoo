@@ -100,22 +100,22 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] bg-white p-0 overflow-y-auto">
-        <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200 sticky top-0 bg-white z-10">
+      <DialogContent className="max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 border dark:border-slate-800/80 p-0 overflow-y-auto">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
           <div className="flex items-start justify-between">
             <div>
-              <DialogTitle className="flex items-center gap-2 text-lg">
+              <DialogTitle className="flex items-center gap-2 text-lg text-slate-900 dark:text-white">
 
                 <Eye className="w-5 h-5 text-orange-600" />
                 Order Details
               </DialogTitle>
-              <DialogDescription className="mt-1 ml-10">
+              <DialogDescription className="mt-1 ml-10 text-slate-500 dark:text-slate-400">
                 View complete information about this order
               </DialogDescription>
             </div>
             <button
               onClick={() => onOpenChange(false)}
-              className="p-1.5 rounded-full hover:bg-slate-100 transition-colors text-slate-400 hover:text-slate-700"
+              className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
               title="Close"
             >
               <X className="w-5 h-5" />
@@ -127,18 +127,18 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   <Package className="w-4 h-4" />
                   Order ID
                 </p>
-                <p className="text-sm font-medium text-slate-900">{order.orderId || order.id || order.subscriptionId}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{order.orderId || order.id || order.subscriptionId}</p>
               </div>
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Order Date
                 </p>
-                <p className="text-sm font-medium text-slate-900">{order.date}{order.time ? `, ${order.time}` : ""}</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{order.date}{order.time ? `, ${order.time}` : ""}</p>
               </div>
               {order.orderOtp && (
                 <div className="space-y-1">
@@ -146,25 +146,25 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
                     <CheckCircle2 className="w-4 h-4" />
                     Handover Code (OTP)
                   </p>
-                  <p className="text-lg font-bold text-slate-950 tracking-[0.2em]">{order.orderOtp}</p>
+                  <p className="text-lg font-bold text-slate-950 dark:text-white tracking-[0.2em]">{order.orderOtp}</p>
                 </div>
               )}
               {order.estimatedDeliveryTime && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     Estimated Delivery Time
                   </p>
-                  <p className="text-sm font-medium text-slate-900">{order.estimatedDeliveryTime} minutes</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{order.estimatedDeliveryTime} minutes</p>
                 </div>
               )}
               {order.deliveredAt && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <Clock className="w-4 h-4" />
                     Delivered At
                   </p>
-                  <p className="text-sm font-medium text-slate-900">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">
                     {new Date(order.deliveredAt).toLocaleString('en-GB', {
                       day: '2-digit',
                       month: 'short',
@@ -180,12 +180,12 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
             <div className="space-y-4">
               {order.orderStatus && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Order Status</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Order Status</p>
                   <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
                     {order.orderStatus}
                   </span>
                   {order.cancellationReason && (
-                    <p className="text-xs text-red-600 mt-1">
+                    <p className="text-xs text-red-600 dark:text-red-450 mt-1">
                       <span className="font-medium">
                         {order.cancelledBy === 'user' ? 'Cancelled by User - ' :
                           order.cancelledBy === 'restaurant' ? 'Cancelled by Restaurant - ' :
@@ -194,7 +194,7 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
                     </p>
                   )}
                   {order.cancelledAt && (
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Cancelled: {new Date(order.cancelledAt).toLocaleString('en-GB', {
                         day: '2-digit',
                         month: 'short',
@@ -208,7 +208,7 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
               )}
               {(order.paymentStatus || order.paymentCollectionStatus != null) && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
                     Payment Status
                   </p>
@@ -225,43 +225,43 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
               )}
               {order.deliveryType && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <Truck className="w-4 h-4" />
                     Delivery Type
                   </p>
-                  <p className="text-sm font-medium text-slate-900">{order.deliveryType}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{order.deliveryType}</p>
                 </div>
               )}
             </div>
           </div>
 
           {/* Customer Information */}
-          <div className="border-t border-slate-200 pt-4">
-            <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">
               <User className="w-4 h-4" />
               Customer Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Customer Name</p>
-                <p className="text-sm font-medium text-slate-900">{order.customerName || "N/A"}</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer Name</p>
+                <p className="text-sm font-medium text-slate-900 dark:text-white">{order.customerName || "N/A"}</p>
               </div>
               {order.customerPhone && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <Phone className="w-4 h-4" />
                     Phone
                   </p>
-                  <p className="text-sm font-medium text-slate-900">{order.customerPhone}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{order.customerPhone}</p>
                 </div>
               )}
               {order.customerEmail && (
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                     <Mail className="w-4 h-4" />
                     Email
                   </p>
-                  <p className="text-sm font-medium text-slate-900">{order.customerEmail}</p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white">{order.customerEmail}</p>
                 </div>
               )}
             </div>
@@ -271,45 +271,45 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
 
           {/* Order Items */}
           {order.items && Array.isArray(order.items) && order.items.length > 0 && (
-            <div className="border-t border-slate-200 pt-4">
-              <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-350 mb-4 flex items-center gap-2">
                 <Package className="w-4 h-4" />
                 Order Items ({order.items.length})
               </h3>
               <div className="space-y-3">
                 {order.items.map((item, index) => (
-                  <div key={index} className="flex items-start justify-between p-3 bg-slate-50 rounded-lg">
+                  <div key={index} className="flex items-start justify-between p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg">
                     <div className="flex items-start gap-3 flex-1">
                       {item.image ? (
                         <img
                           src={item.image}
                           alt={item.name || "Item"}
-                          className="w-12 h-12 rounded-lg object-cover border border-slate-200 flex-shrink-0"
+                          className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-800 flex-shrink-0"
                           onError={(e) => { e.target.style.display = 'none' }}
                         />
                       ) : (
-                        <div className="w-12 h-12 rounded-lg bg-slate-200 flex items-center justify-center flex-shrink-0">
-                          <Package className="w-5 h-5 text-slate-400" />
+                        <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                          <Package className="w-5 h-5 text-slate-400 dark:text-slate-500" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-700 bg-white px-2 py-1 rounded">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-1 rounded">
                             {item.quantity || 1}x
                           </span>
-                          <p className="text-sm font-medium text-slate-900 truncate">{item.name || "Unknown Item"}</p>
+                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{item.name || "Unknown Item"}</p>
                           {item.isVeg !== undefined && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 ${item.isVeg ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 ${item.isVeg ? 'bg-green-100 text-green-700 dark:bg-green-950/55 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-950/55 dark:text-red-400'}`}>
                               {item.isVeg ? 'Veg' : 'Non-Veg'}
                             </span>
                           )}
                         </div>
                         {item.description && (
-                          <p className="text-xs text-slate-500 mt-1">{item.description}</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.description}</p>
                         )}
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-slate-900 flex-shrink-0 ml-3">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white flex-shrink-0 ml-3">
                       ₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
                     </p>
                   </div>
@@ -320,13 +320,13 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
 
           {/* Bill Image (Captured by Delivery Boy) */}
           {(order.billImageUrl || order.billImage || order.deliveryState?.billImageUrl) && (
-            <div className="border-t border-slate-200 pt-4">
-              <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-350 mb-4 flex items-center gap-2">
                 <Receipt className="w-4 h-4 text-orange-600" />
                 Bill Image (Captured by Delivery Boy)
               </h3>
               <div className="space-y-3">
-                <div className="relative w-full max-w-2xl border-2 border-slate-300 rounded-xl overflow-hidden bg-white shadow-sm">
+                <div className="relative w-full max-w-2xl border-2 border-slate-300 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-sm">
                   <img
                     src={order.billImageUrl || order.billImage || order.deliveryState?.billImageUrl}
                     alt="Order Bill"
@@ -342,8 +342,8 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
                       debugLog('? Bill image loaded successfully')
                     }}
                   />
-                  <div className="error-message hidden p-6 text-center text-slate-500 text-sm bg-slate-50">
-                    <Receipt className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                  <div className="error-message hidden p-6 text-center text-slate-500 text-sm bg-slate-50 dark:bg-slate-800">
+                    <Receipt className="w-8 h-8 mx-auto mb-2 text-slate-400 dark:text-slate-500" />
                     Failed to load bill image
                   </div>
                 </div>
@@ -360,7 +360,7 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
                   <a
                     href={order.billImageUrl || order.billImage || order.deliveryState?.billImageUrl}
                     download
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors border dark:border-slate-700"
                   >
                     <Package className="w-4 h-4" />
                     Download
@@ -372,20 +372,20 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
 
           {/* Delivery Address */}
           {order.address && (
-            <div className="border-t border-slate-200 pt-4">
-              <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-350 mb-4 flex items-center gap-2">
                 <MapPin className="w-4 h-4" />
                 Delivery Address
               </h3>
-              <div className="space-y-2 p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm text-slate-900">{formatAddress(order.address)}</p>
+              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg">
+                <p className="text-sm text-slate-900 dark:text-white">{formatAddress(order.address)}</p>
                 {getCoordinates(order.address) && (
-                  <p className="text-xs text-slate-500 mt-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
                     <span className="font-medium">Coordinates:</span> {getCoordinates(order.address)}
                   </p>
                 )}
                 {order.address.label && (
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     <span className="font-medium">Label:</span> {order.address.label}
                   </p>
                 )}
@@ -395,22 +395,22 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
 
           {/* Delivery Partner Information */}
           {(order.deliveryPartnerName || order.deliveryPartnerPhone) && (
-            <div className="border-t border-slate-200 pt-4">
-              <h3 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-350 mb-4 flex items-center gap-2">
                 <Truck className="w-4 h-4" />
                 Delivery Partner
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {order.deliveryPartnerName && (
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Name</p>
-                    <p className="text-sm font-medium text-slate-900">{order.deliveryPartnerName}</p>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Name</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{order.deliveryPartnerName}</p>
                   </div>
                 )}
                 {order.deliveryPartnerPhone && (
                   <div className="space-y-1">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Phone</p>
-                    <p className="text-sm font-medium text-slate-900">{order.deliveryPartnerPhone}</p>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phone</p>
+                    <p className="text-sm font-medium text-slate-900 dark:text-white">{order.deliveryPartnerPhone}</p>
                   </div>
                 )}
               </div>
@@ -418,38 +418,38 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
           )}
 
           {/* Pricing Breakdown */}
-          <div className="border-t border-slate-200 pt-4">
-            <h3 className="text-sm font-semibold text-slate-700 mb-4">Pricing Breakdown</h3>
+          <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-350 mb-4">Pricing Breakdown</h3>
             <div className="space-y-2">
               {order.totalItemAmount !== undefined && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Subtotal</span>
-                  <span className="font-medium text-slate-900">₹{order.totalItemAmount.toFixed(2)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Subtotal</span>
+                  <span className="font-medium text-slate-900 dark:text-white">₹{order.totalItemAmount.toFixed(2)}</span>
                 </div>
               )}
               {order.itemDiscount !== undefined && order.itemDiscount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Discount</span>
-                  <span className="font-medium text-emerald-600">-₹{order.itemDiscount.toFixed(2)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Discount</span>
+                  <span className="font-medium text-emerald-600 dark:text-emerald-400">-₹{order.itemDiscount.toFixed(2)}</span>
                 </div>
               )}
               {order.couponDiscount !== undefined && order.couponDiscount > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Coupon Discount</span>
-                  <span className="font-medium text-emerald-600">-₹{order.couponDiscount.toFixed(2)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Coupon Discount</span>
+                  <span className="font-medium text-emerald-600 dark:text-emerald-400">-₹{order.couponDiscount.toFixed(2)}</span>
                 </div>
               )}
               {order.deliveryCharge !== undefined && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Delivery Charge</span>
-                  <span className="font-medium text-slate-900">
-                    {order.deliveryCharge > 0 ? `₹${order.deliveryCharge.toFixed(2)}` : <span className="text-emerald-600">Free delivery</span>}
+                  <span className="text-slate-600 dark:text-slate-400">Delivery Charge</span>
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {order.deliveryCharge > 0 ? `₹${order.deliveryCharge.toFixed(2)}` : <span className="text-emerald-600 dark:text-emerald-400">Free delivery</span>}
                   </span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
-                <span className="text-slate-600">Platform Fee</span>
-                <span className="font-medium text-slate-900">
+                <span className="text-slate-600 dark:text-slate-400">Platform Fee</span>
+                <span className="font-medium text-slate-900 dark:text-white">
                   {order.platformFee !== undefined && order.platformFee > 0
                     ? `₹${order.platformFee.toFixed(2)}`
                     : <span className="text-slate-400">₹0.00</span>}
@@ -457,14 +457,14 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
               </div>
               {order.vatTax !== undefined && order.vatTax > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">Tax (GST)</span>
-                  <span className="font-medium text-slate-900">₹{order.vatTax.toFixed(2)}</span>
+                  <span className="text-slate-600 dark:text-slate-400">Tax (GST)</span>
+                  <span className="font-medium text-slate-900 dark:text-white">₹{order.vatTax.toFixed(2)}</span>
                 </div>
               )}
-              <div className="pt-2 border-t border-slate-200">
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
                 <div className="flex justify-between items-center">
-                  <span className="text-base font-semibold text-slate-700">Total Amount</span>
-                  <span className="text-xl font-bold text-emerald-600">
+                  <span className="text-base font-semibold text-slate-700 dark:text-slate-350">Total Amount</span>
+                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
                     ₹{(order.totalAmount || order.total || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
                 </div>
@@ -474,7 +474,5 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-
-

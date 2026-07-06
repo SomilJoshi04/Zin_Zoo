@@ -2,6 +2,7 @@
 import { getLandingSettings } from '../services/landingSettings.service.js';
 import { FoodHeroBanner } from '../models/heroBanner.model.js';
 import { FoodUnder250Banner } from '../models/under250Banner.model.js';
+import { FoodAccessoriesBanner } from '../models/accessoriesBanner.model.js';
 // dining banner model import removed
 import { FoodExploreIcon } from '../models/exploreIcon.model.js';
 import { HomePromotionBanner } from '../models/homePromotionBanner.model.js';
@@ -43,6 +44,15 @@ export const getPublicUnder250BannersController = async (req, res, next) => {
     try {
         const docs = await FoodUnder250Banner.find({ isActive: true }).sort({ sortOrder: 1, createdAt: -1 }).lean();
         return sendResponse(res, 200, 'Under 250 banners fetched', { banners: docs });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getPublicAccessoriesBannersController = async (req, res, next) => {
+    try {
+        const docs = await FoodAccessoriesBanner.find({ isActive: true }).sort({ sortOrder: 1, createdAt: -1 }).lean();
+        return sendResponse(res, 200, 'Accessories banners fetched', { banners: docs });
     } catch (error) {
         next(error);
     }

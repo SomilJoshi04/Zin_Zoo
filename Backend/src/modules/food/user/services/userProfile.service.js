@@ -93,3 +93,20 @@ export const deleteCurrentUserAccount = async (userId) => {
     return { success: true };
 };
 
+import { FeedbackExperience } from '../../admin/models/feedbackExperience.model.js';
+
+export const submitAppFeedback = async (userId, rating, comment) => {
+    if (!rating || rating < 1 || rating > 5) {
+        throw new ValidationError('Rating must be between 1 and 5');
+    }
+    const feedback = await FeedbackExperience.create({
+        userId,
+        userModel: 'FoodUser',
+        rating,
+        comment: comment || '',
+        module: 'app',
+        restaurantId: null
+    });
+    return feedback;
+};
+

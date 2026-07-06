@@ -1135,6 +1135,9 @@ export default function Home() {
       isFavorite: () => false,
       getFavorites: () => [],
       getDefaultAddress: () => null,
+      addDishFavorite: () => debugWarn("ProfileProvider not available"),
+      removeDishFavorite: () => debugWarn("ProfileProvider not available"),
+      isDishFavorite: () => false,
     };
   }
 
@@ -1144,6 +1147,9 @@ export default function Home() {
     isFavorite,
     getFavorites,
     getDefaultAddress,
+    addDishFavorite,
+    removeDishFavorite,
+    isDishFavorite,
   } = profileContext;
   const { addToCart, cart, updateQuantity } = useCart();
   const getCartQty = (foodId) => {
@@ -3042,6 +3048,30 @@ export default function Home() {
                         alt={food.name}
                         className="w-full h-full object-cover transform scale-100 group-hover:scale-105 transition-transform duration-500"
                       />
+                      {/* Wishlist Heart Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          const isFav = isDishFavorite(food.id, null, "food");
+                          if (isFav) {
+                            removeDishFavorite(food.id, null, "food");
+                            toast.success("Removed from wishlist");
+                          } else {
+                            addDishFavorite({ ...food, type: "food" });
+                            toast.success("Added to wishlist");
+                          }
+                        }}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-md transition-all hover:scale-110 z-10"
+                      >
+                        <Heart
+                          className={`w-3.5 h-3.5 ${
+                            isDishFavorite(food.id, null, "food")
+                              ? "fill-red-500 text-red-500"
+                              : "text-gray-600 dark:text-gray-300"
+                          }`}
+                        />
+                      </button>
                       {/* Food Type Indicator (Veg/Non-Veg dot) */}
                       <div className="absolute top-2 left-2 bg-white/90 dark:bg-black/80 backdrop-blur-md px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1 border border-white/20">
                         <span className={`w-1.5 h-1.5 rounded-full ${food.foodType === 'Veg' ? 'bg-green-500' : 'bg-red-500'}`} />
@@ -3120,7 +3150,7 @@ export default function Home() {
                                   image: food.image,
                                   moduleType: 'food',
                                   restaurant: 'Zin Zoo Kitchen',
-                                  restaurantId: 'zin_zoo_kitchen'
+                                  restaurantId: '6a47438661bc505016a5ad33'
                                 }, sourcePosition);
                                 toast.success(`${food.name} added to cart!`);
                               }}
@@ -4093,7 +4123,7 @@ export default function Home() {
                               image: selectedFood.image,
                               moduleType: 'food',
                               restaurant: 'Zin Zoo Kitchen',
-                              restaurantId: 'zin_zoo_kitchen'
+                              restaurantId: '6a47438661bc505016a5ad33'
                             }, sourcePosition);
                           }}
                           className="flex-1 max-w-[200px] bg-[#F84E04] hover:bg-[#D94203] text-white transition-colors h-12 rounded-xl font-extrabold text-sm uppercase tracking-wider shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2"

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { ArrowLeft, Clock, MapPin, IndianRupee, Wrench } from "lucide-react"
 import { Button } from "@food/components/ui/button"
-import { servicesUserAPI } from "@food/api"
+import { servicesUserAPI, servicesPublicAPI } from "@food/api"
 import { toast } from "sonner"
 
 export default function MyServices() {
@@ -11,6 +11,18 @@ export default function MyServices() {
   const [activeTab, setActiveTab] = useState("upcoming")
   const [bookings, setBookings] = useState({ upcoming: [], past: [] })
   const [loading, setLoading] = useState(true)
+  const [categories, setCategories] = useState([])
+
+  const fetchCategories = async () => {
+    try {
+      const res = await servicesPublicAPI.getCategories()
+      if (res.data?.success) {
+        setCategories(res.data.data.categories || [])
+      }
+    } catch (err) {
+      console.error("Failed to fetch categories in MyServices:", err)
+    }
+  }
 
   const fetchBookings = async () => {
     try {
@@ -32,7 +44,26 @@ export default function MyServices() {
 
   useEffect(() => {
     fetchBookings()
+    fetchCategories()
   }, [])
+
+  const handleBookAgain = (booking) => {
+    if (!booking.category) {
+      navigate('/food/user/services')
+      return
+    }
+
+    const matchedCategory = categories.find(
+      cat => cat.name.toLowerCase().trim() === booking.category.toLowerCase().trim()
+    )
+
+    if (matchedCategory) {
+      const slug = matchedCategory.name.toLowerCase().replace(/\s+/g, '-')
+      navigate(`/food/user/services/${slug}?categoryId=${matchedCategory._id}&serviceName=${encodeURIComponent(booking.serviceName)}`)
+    } else {
+      navigate('/food/user/services')
+    }
+  }
 
   const handleCancel = async (id) => {
     try {
@@ -158,7 +189,7 @@ export default function MyServices() {
                   {(booking.status === 'completed' || booking.status === 'cancelled') && (
                     <Button 
                       className="flex-1 rounded-xl h-11 bg-orange-600 hover:bg-orange-700 text-white"
-                      onClick={() => navigate('/services')}
+                      onClick={() => handleBookAgain(booking)}
                     >
                       Book Again
                     </Button>

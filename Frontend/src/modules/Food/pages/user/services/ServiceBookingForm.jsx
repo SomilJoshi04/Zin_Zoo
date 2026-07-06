@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { useNavigate } from "react-router-dom"
 import { servicesUserAPI } from "@food/api"
 import { toast } from "sonner"
+import { initRazorpayPayment } from "@food/utils/razorpay"
 
 export default function ServiceBookingForm({ isOpen, onClose, service, categoryTitle }) {
   const navigate = useNavigate()
@@ -17,7 +18,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
     name: "",
     phone: "",
     address: "",
-    paymentMode: "pay_after_service"
+    paymentMode: ""
   })
 
   if (!service) return null
@@ -43,8 +44,13 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
   }
 
   const handleBooking = async () => {
+    if (!formData.paymentMode) {
+      toast.error("Please select a payment option before confirming your booking.")
+      return
+    }
     try {
-      await servicesUserAPI.createBooking({
+      const price = Number(service.price || service.basePrice || 0)
+      const res = await servicesUserAPI.createBooking({
         serviceName: service.name,
         category: categoryTitle,
         customerName: formData.name,
@@ -52,10 +58,52 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
         serviceAddress: formData.address,
         bookingDate: formData.date,
         timeSlot: formData.timeSlot,
-        totalAmount: service.price,
+        totalAmount: price,
         paymentMode: formData.paymentMode
       })
-      setStep(3)
+
+      const booking = res.data?.data?.booking
+      const razorpay = res.data?.data?.razorpay
+
+      if (formData.paymentMode === 'pay_upfront' && razorpay) {
+        try {
+          await initRazorpayPayment({
+            key: razorpay.key,
+            amount: razorpay.amount,
+            currency: razorpay.currency || 'INR',
+            order_id: razorpay.orderId,
+            name: "Zin Zoo",
+            description: `Booking for ${service.name}`,
+            prefill: {
+              name: formData.name,
+              contact: formData.phone
+            },
+            handler: async (paymentResponse) => {
+              try {
+                await servicesUserAPI.verifyBookingPayment(booking._id, {
+                  razorpayPaymentId: paymentResponse.razorpay_payment_id,
+                  razorpayOrderId: paymentResponse.razorpay_order_id,
+                  razorpaySignature: paymentResponse.razorpay_signature
+                })
+                setStep(3)
+              } catch (verifyErr) {
+                console.error("Payment verification failed:", verifyErr)
+                toast.error(verifyErr.response?.data?.message || "Payment verification failed.")
+              }
+            },
+            modal: {
+              ondismiss: () => {
+                toast.error("Payment cancelled. Please try again.")
+              }
+            }
+          })
+        } catch (paymentErr) {
+          console.error("Razorpay error:", paymentErr)
+          toast.error(paymentErr.message || "Failed to initialize payment.")
+        }
+      } else {
+        setStep(3)
+      }
     } catch (error) {
       console.error(error)
       toast.error(error.response?.data?.message || "Failed to book service")
@@ -72,7 +120,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
         name: "",
         phone: "",
         address: "",
-        paymentMode: "pay_after_service"
+        paymentMode: ""
       })
     }, 500)
   }
@@ -122,7 +170,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
                     Book {service.name}
                   </SheetTitle>
                   <SheetDescription>
-                    {categoryTitle} • <IndianRupee className="inline h-3 w-3 -mt-0.5" />{service.price}
+                    {categoryTitle} • <IndianRupee className="inline h-3 w-3 -mt-0.5" />{service.price || service.basePrice}
                   </SheetDescription>
                 </div>
               </SheetHeader>
@@ -218,7 +266,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
                   <div className="bg-gray-50 dark:bg-[#1a1a1a] p-4 rounded-xl space-y-3">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Service Cost</span>
-                      <span className="font-medium">₹{service.price}</span>
+                      <span className="font-medium">₹{service.price || service.basePrice}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Visiting Charge</span>
@@ -226,7 +274,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
                     </div>
                     <div className="flex justify-between font-bold text-lg pt-3 border-t border-gray-200 dark:border-gray-700">
                       <span>Total Amount</span>
-                      <span>₹{service.price}</span>
+                      <span>₹{service.price || service.basePrice}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -237,7 +285,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
             <div className="p-4 md:p-6 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-[#121212] sticky bottom-0">
               {step === 1 ? (
                 <Button 
-                  className="w-full h-14 rounded-xl text-lg font-bold bg-gray-900 hover:bg-gray-800 dark:bg-white dark:text-black"
+                  className="w-full h-14 rounded-xl text-lg font-bold bg-orange-600 hover:bg-orange-700 text-white"
                   onClick={handleProceedToPayment}
                 >
                   Proceed to Payment
@@ -248,7 +296,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
                     Back
                   </Button>
                   <Button 
-                    className="flex-1 h-14 rounded-xl text-lg font-bold bg-orange-600 hover:bg-orange-700"
+                    className="flex-1 h-14 rounded-xl text-lg font-bold bg-orange-600 hover:bg-orange-700 text-white"
                     onClick={handleBooking}
                   >
                     Confirm Booking

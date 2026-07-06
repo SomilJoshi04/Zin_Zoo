@@ -4,7 +4,8 @@ import {
     getCurrentUserProfile,
     updateCurrentUserProfile,
     uploadCurrentUserProfileImage,
-    deleteCurrentUserAccount
+    deleteCurrentUserAccount,
+    submitAppFeedback
 } from '../services/userProfile.service.js';
 
 export const getCurrentUserProfileController = async (req, res, next) => {
@@ -23,6 +24,17 @@ export const updateCurrentUserProfileController = async (req, res, next) => {
         const body = validateUserProfileUpdateDto(req.body);
         const result = await updateCurrentUserProfile(userId, body);
         return sendResponse(res, 200, 'Profile updated successfully', result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const submitAppFeedbackController = async (req, res, next) => {
+    try {
+        const userId = req.user?.userId;
+        const { rating, comment } = req.body;
+        const result = await submitAppFeedback(userId, rating, comment);
+        return sendResponse(res, 201, 'Feedback submitted successfully', result);
     } catch (error) {
         next(error);
     }
@@ -47,4 +59,5 @@ export const deleteCurrentUserAccountController = async (req, res, next) => {
         next(error);
     }
 };
+
 

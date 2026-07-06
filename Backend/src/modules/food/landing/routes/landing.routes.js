@@ -21,6 +21,13 @@ import {
     updateUnder250BannerOrderController,
     toggleUnder250BannerStatusController
 } from '../controllers/under250Banner.controller.js';
+import {
+    listAccessoriesBannersController,
+    uploadAccessoriesBannersController,
+    deleteAccessoriesBannerController,
+    updateAccessoriesBannerOrderController,
+    toggleAccessoriesBannerStatusController
+} from '../controllers/accessoriesBanner.controller.js';
 // Dining banner imports removed (module deleted)
 import {
     listHomePromotionBannersController,
@@ -32,7 +39,8 @@ import {
 } from '../controllers/homePromotionBanner.controller.js';
 import {
     getAdminLandingSettingsController,
-    updateAdminLandingSettingsController
+    updateAdminLandingSettingsController,
+    uploadLandingSettingsVideoController
 } from '../controllers/landingSettings.controller.js';
 import {
     listExploreMoreController,
@@ -45,6 +53,7 @@ import {
 import {
     getPublicHeroBannersController,
     getPublicUnder250BannersController,
+    getPublicAccessoriesBannersController,
     getPublicDiningBannersController,
     getPublicExploreIconsController,
     getPublicHomePromotionBannersController,
@@ -97,6 +106,17 @@ router.delete('/hero-banners/under-250/:id', deleteUnder250BannerController);
 router.patch('/hero-banners/under-250/:id/order', updateUnder250BannerOrderController);
 router.patch('/hero-banners/under-250/:id/status', toggleUnder250BannerStatusController);
 
+// Admin accessories banners
+router.get('/hero-banners/accessories', listAccessoriesBannersController);
+router.post(
+    '/hero-banners/accessories/multiple',
+    upload.array('files'),
+    uploadAccessoriesBannersController
+);
+router.delete('/hero-banners/accessories/:id', deleteAccessoriesBannerController);
+router.patch('/hero-banners/accessories/:id/order', updateAccessoriesBannerOrderController);
+router.patch('/hero-banners/accessories/:id/status', toggleAccessoriesBannerStatusController);
+
 // Admin dining banners routes removed (module deleted)
 
 // Admin Home Promotion banners
@@ -133,6 +153,7 @@ router.patch(
 router.get('/hero-banners/public', getPublicHeroBannersController);
 router.get('/top-banners/public', getPublicTopBannersController);
 router.get('/hero-banners/under-250/public', getPublicUnder250BannersController);
+router.get('/hero-banners/accessories/public', getPublicAccessoriesBannersController);
 router.get('/hero-banners/dining/public', getPublicDiningBannersController);
 router.get('/explore-icons/public', getPublicExploreIconsController);
 router.get('/hero-banners/home-promotion/public', getPublicHomePromotionBannersController);
@@ -144,5 +165,6 @@ router.get('/zones/public', listZonesPublicController);
 // Admin landing settings
 router.get('/hero-banners/landing/settings', getAdminLandingSettingsController);
 router.patch('/hero-banners/landing/settings', updateAdminLandingSettingsController);
+router.post('/hero-banners/landing/settings/video', upload.single('videoFile'), uploadLandingSettingsVideoController);
 
 export default router;

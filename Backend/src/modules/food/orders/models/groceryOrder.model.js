@@ -82,10 +82,10 @@ const paymentSchema = new mongoose.Schema(
             expiresAt: { type: Date }
         },
         refund: {
-            status: { 
-                type: String, 
-                enum: ['none', 'pending', 'processed', 'failed'], 
-                default: 'none' 
+            status: {
+                type: String,
+                enum: ['none', 'pending', 'processed', 'failed'],
+                default: 'none'
             },
             amount: { type: Number, default: 0 },
             refundId: { type: String, default: '' },

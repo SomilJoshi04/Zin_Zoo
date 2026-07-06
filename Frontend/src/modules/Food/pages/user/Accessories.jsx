@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { Search, ChevronLeft, Minus, Plus, ShoppingCart, X } from "lucide-react";
+import { Search, ChevronLeft, Minus, Plus, ShoppingCart, X, Heart } from "lucide-react";
 import AnimatedPage from "@food/components/user/AnimatedPage";
 import { Card } from "@food/components/ui/card";
 import { Button } from "@food/components/ui/button";
 import { Input } from "@food/components/ui/input";
 import PageNavbar from "@food/components/user/PageNavbar";
-import { accessoriesPublicAPI } from "@food/api";
+import { accessoriesPublicAPI, publicGetOnce } from "@food/api";
 import { useCart } from "@food/context/CartContext";
+import { useProfile } from "@food/context/ProfileContext";
 import { toast } from "sonner";
 import { Skeleton } from "@food/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@food/components/ui/sheet";
@@ -19,6 +20,7 @@ export default function AccessoriesPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { cart, addToCart, removeFromCart, updateQuantity } = useCart();
+  const { addDishFavorite, removeDishFavorite, isDishFavorite } = useProfile();
   
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
@@ -31,30 +33,32 @@ export default function AccessoriesPage() {
   const [currentBanner, setCurrentBanner] = useState(0);
   const cartIconRef = useRef(null);
 
-  const banners = [
-    {
-      id: 1,
-      title: "STYLE UPGRADE",
-      subtitle: "Upto 50% OFF on premium accessories",
-      gradient: "linear-gradient(to right, var(--module-theme-color, #ea580c), #fb923c)"
-    },
-    {
-      id: 2,
-      title: "NEW ARRIVALS",
-      subtitle: "Discover the latest trends in fashion",
-      gradient: "linear-gradient(to right, #22c55e, #10b981)"
-    },
-    {
-      id: 3,
-      title: "LUXURY PICKS",
-      subtitle: "Flat ₹500 cashback on orders above ₹2999",
-      gradient: "linear-gradient(to right, #2563eb, #4f46e5)"
+  const [dynamicBanners, setDynamicBanners] = useState([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
+
+  const fetchBanners = async () => {
+    try {
+      setBannersLoading(true);
+      const res = await publicGetOnce("/food/hero-banners/accessories/public");
+      if (res?.data?.success && Array.isArray(res.data.data?.banners)) {
+        setDynamicBanners(res.data.data.banners);
+      } else {
+        setDynamicBanners([]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch accessories banners", err);
+      setDynamicBanners([]);
+    } finally {
+      setBannersLoading(false);
     }
-  ];
+  };
 
   useEffect(() => {
     fetchCategories();
-    
+    fetchBanners();
+  }, []);
+
+  useEffect(() => {
     const catId = searchParams.get("category");
     if (catId) {
       setActiveCategory(catId);
@@ -62,12 +66,15 @@ export default function AccessoriesPage() {
     } else {
       fetchProducts();
     }
-    
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (dynamicBanners.length <= 1) return;
     const interval = setInterval(() => {
-      setCurrentBanner((prev) => (prev + 1) % banners.length);
+      setCurrentBanner((prev) => (prev + 1) % dynamicBanners.length);
     }, 3500);
     return () => clearInterval(interval);
-  }, [searchParams]);
+  }, [dynamicBanners]);
 
   // Real-time updates from admin panel
   const socketListeners = useMemo(() => ({
@@ -81,8 +88,8 @@ export default function AccessoriesPage() {
     },
     'banner:update': (data) => {
       if (data?.section === 'accessories') {
-        console.log('[accessories] Banner updated via socket');
-        // Banners are currently hardcoded, will be dynamic in Phase 4
+        console.log('[accessories] Banner updated via socket, refetching...');
+        fetchBanners();
       }
     },
   }), [activeCategory, searchQuery]);
@@ -248,38 +255,44 @@ export default function AccessoriesPage() {
         </div>
 
         {/* Promotional Banner Carousel */}
-        <div className="px-4 py-4 relative">
-          <div className="w-full h-32 md:h-48 rounded-2xl overflow-hidden relative shadow-[0_8px_20px_-4px_rgba(0,0,0,0.1)] bg-gray-100">
-            {banners.map((banner, index) => (
-              <div 
-                key={banner.id} 
-                className={`absolute inset-0 p-4 flex items-center transition-opacity duration-1000 ease-in-out ${index === currentBanner ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
-                style={{ background: banner.gradient }}
-              >
-                <div className="relative z-20 text-white pl-2">
-                  <h2 className="text-2xl md:text-3xl font-black font-poppins italic tracking-tight drop-shadow-md">{banner.title}</h2>
-                  <p className="text-sm md:text-base font-medium opacity-90 mt-1 max-w-[200px] md:max-w-xs">{banner.subtitle}</p>
-                  <Button className="mt-3 bg-white text-black hover:bg-gray-100 rounded-full h-8 text-xs px-5 font-bold transition-transform hover:scale-105 shadow-md">
-                    Shop Now
-                  </Button>
-                </div>
-                {/* Decorative circles */}
-                <div className="absolute right-[-10%] top-[-30%] w-64 h-64 bg-white/20 rounded-full blur-3xl z-10 pointer-events-none"></div>
-                <div className="absolute right-[10%] bottom-[-40%] w-40 h-40 bg-black/10 rounded-full blur-2xl z-10 pointer-events-none"></div>
-              </div>
-            ))}
-            
-            {/* Carousel Indicators */}
-            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
-              {banners.map((_, index) => (
+        {dynamicBanners.length > 0 && (
+          <div className="px-4 py-4 relative">
+            <div className="w-full h-32 md:h-48 rounded-2xl overflow-hidden relative shadow-[0_8px_20px_-4px_rgba(0,0,0,0.1)] bg-gray-100">
+              {dynamicBanners.map((banner, index) => (
                 <div 
-                  key={index} 
-                  className={`h-1.5 rounded-full transition-all duration-300 ${index === currentBanner ? 'bg-white w-4' : 'bg-white/50 w-1.5'}`}
-                />
+                  key={banner._id} 
+                  className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${index === currentBanner ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}
+                >
+                  <img src={banner.imageUrl} alt={banner.title || `Banner ${index + 1}`} className="w-full h-full object-cover" />
+                  {(banner.title || banner.ctaText) && (
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent flex items-center p-6 z-20">
+                      <div className="text-white pl-2">
+                        {banner.title && <h2 className="text-2xl md:text-3xl font-black font-poppins italic tracking-tight drop-shadow-md">{banner.title}</h2>}
+                        {banner.ctaText && (
+                          <Button className="mt-3 bg-white text-black hover:bg-gray-100 rounded-full h-8 text-xs px-5 font-bold transition-transform hover:scale-105 shadow-md">
+                            {banner.ctaText}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               ))}
+              
+              {/* Carousel Indicators */}
+              {dynamicBanners.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-30">
+                  {dynamicBanners.map((_, index) => (
+                    <div 
+                      key={index} 
+                      className={`h-1.5 rounded-full transition-all duration-300 ${index === currentBanner ? 'bg-white w-4' : 'bg-white/50 w-1.5'}`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
-        </div>
+        )}
 
         {/* Categories Section */}
         <div className="px-4 mb-6">
@@ -363,6 +376,31 @@ export default function AccessoriesPage() {
                           </div>
                         )}
                       </div>
+                      {/* Wishlist Heart Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          const pId = product.id || product._id;
+                          const isFav = isDishFavorite(pId, null, "accessories");
+                          if (isFav) {
+                            removeDishFavorite(pId, null, "accessories");
+                            toast.success("Removed from wishlist");
+                          } else {
+                            addDishFavorite({ ...product, type: "accessories" });
+                            toast.success("Added to wishlist");
+                          }
+                        }}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-white/80 dark:bg-black/60 backdrop-blur-md transition-all hover:scale-110 z-20"
+                      >
+                        <Heart
+                          className={`w-3.5 h-3.5 ${
+                            isDishFavorite(product.id || product._id, null, "accessories")
+                              ? "fill-red-500 text-red-500"
+                              : "text-gray-600 dark:text-gray-300"
+                          }`}
+                        />
+                      </button>
                     </div>
                     
                     <div className="p-3 flex flex-col flex-grow">

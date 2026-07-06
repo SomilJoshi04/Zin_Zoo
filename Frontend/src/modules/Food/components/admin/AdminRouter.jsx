@@ -41,7 +41,6 @@ const FoodCampaign = lazy(() => import("@food/pages/admin/campaigns/FoodCampaign
 const Coupons = lazy(() => import("@food/pages/admin/Coupons"));
 const Cashback = lazy(() => import("@food/pages/admin/Cashback"));
 const Banners = lazy(() => import("@food/pages/admin/Banners"));
-const PromotionalBanner = lazy(() => import("@food/pages/admin/PromotionalBanner"));
 const NewAdvertisement = lazy(() => import("@food/pages/admin/advertisement/NewAdvertisement"));
 const AdRequests = lazy(() => import("@food/pages/admin/advertisement/AdRequests"));
 const AdsList = lazy(() => import("@food/pages/admin/advertisement/AdsList"));
@@ -79,6 +78,7 @@ const EmployeeList = lazy(() => import("@food/pages/admin/employees/EmployeeList
 const BusinessSetup = lazy(() => import("@food/pages/admin/settings/BusinessSetup"));
 const FeatureSettings = lazy(() => import("@food/pages/admin/settings/FeatureSettings"));
 const PowerScanning = lazy(() => import("@food/pages/admin/settings/PowerScanning"));
+const ZoneSetup = lazy(() => import("@food/pages/admin/system/ZoneSetup"));
 const EmailTemplate = lazy(() => import("@food/pages/admin/settings/EmailTemplate"));
 const ThemeSettings = lazy(() => import("@food/pages/admin/settings/ThemeSettings"));
 const Gallery = lazy(() => import("@food/pages/admin/settings/Gallery"));
@@ -237,12 +237,8 @@ export default function AdminRouter() {
             <Route path="order-detect-delivery" element={<OrderDetectDelivery />} />
             <Route path="order-refunds/new" element={<NewRefundRequests />} />
 
-            {/* RESTAURANT MANAGEMENT */}
-            <Route path="zones" element={<AdminServicePlaceholder title="Zone Setup" />} />
-            <Route path="restaurants" element={<AdminServicePlaceholder title="Restaurants List" />} />
-            <Route path="restaurant-commission" element={<AdminServicePlaceholder title="Restaurant Commission" />} />
-            <Route path="restaurant-reviews" element={<AdminServicePlaceholder title="Restaurant Reviews" />} />
-            <Route path="restaurant-complaints" element={<AdminServicePlaceholder title="Restaurant Complaints" />} />
+            {/* ZONE MANAGEMENT */}
+            <Route path="zones" element={<ZoneSetup />} />
 
             {/* FOOD & CATEGORY MANAGEMENT */}
             <Route path="grocery-categories" element={<GroceryCategory />} />
@@ -285,7 +281,6 @@ export default function AdminRouter() {
             <Route path="coupons" element={<Coupons />} />
             <Route path="cashback" element={<Cashback />} />
             <Route path="banners" element={<Banners />} />
-            <Route path="promotional-banner" element={<PromotionalBanner />} />
             <Route path="advertisement" element={<AdsList />} />
             <Route path="advertisement/new" element={<NewAdvertisement />} />
             <Route path="advertisement/requests" element={<AdRequests />} />

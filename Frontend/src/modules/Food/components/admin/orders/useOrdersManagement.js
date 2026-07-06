@@ -404,8 +404,8 @@ export function useOrdersManagement(orders, statusKey, title) {
         const titleBarHeight = 8
         const contentStartY = y + 14
         const labelX = x + cardPaddingX
-        const valueX = x + 18
-        const valueWidth = width - 26
+        const valueX = x + 30
+        const valueWidth = width - 34
 
         let measuredHeight = contentStartY
         const measuredRows = rows.map((row) => {
@@ -442,23 +442,18 @@ export function useOrdersManagement(orders, statusKey, title) {
         return cardHeight
       }
 
-      const customerCardHeight = drawInfoCard("Customer", 14, 53, 58, [
+      const customerCardHeight = drawInfoCard("Customer Details", 14, 53, 88, [
         { label: "Name", value: customerName },
         { label: "Phone", value: customerPhone },
         { label: "Address", value: deliveryAddress },
       ])
-      const restaurantCardHeight = drawInfoCard("Restaurant", 76, 53, 58, [
-        { label: "Name", value: restaurantName },
-        { label: "Delivery", value: deliveryType },
-        { label: "Items", value: `${itemCount} item${itemCount === 1 ? "" : "s"}` },
-      ], [37, 99, 235])
-      const deliveryCardHeight = drawInfoCard("Delivery Partner", 138, 53, 58, [
-        { label: "Name", value: deliveryPartnerName },
-        { label: "Phone", value: deliveryPartnerPhone },
-        { label: "Payment", value: paymentType },
+      const orderCardHeight = drawInfoCard("Order Info", 108, 53, 88, [
+        { label: "Payment Method", value: paymentType },
+        { label: "Delivery Mode", value: deliveryType },
+        { label: "Total Items", value: `${itemCount} item${itemCount === 1 ? "" : "s"}` },
       ], [249, 115, 22])
 
-      const infoCardsBottomY = 53 + Math.max(customerCardHeight, restaurantCardHeight, deliveryCardHeight)
+      const infoCardsBottomY = 53 + Math.max(customerCardHeight, orderCardHeight)
 
       autoTable(doc, {
         startY: infoCardsBottomY + 8,

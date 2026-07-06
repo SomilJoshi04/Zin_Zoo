@@ -24,7 +24,7 @@ export async function getAllServices(req, res) {
 
 export async function createService(req, res) {
     try {
-        const { name, image, category, subCategory, basePrice, description, availableFrom, availableTo, provider, isActive } = req.body;
+        const { name, image, category, subCategory, basePrice, description, availableFrom, availableTo, provider, isActive, zoneId } = req.body;
         
         const newService = new VendorService({
             name,
@@ -36,6 +36,7 @@ export async function createService(req, res) {
             availableFrom,
             availableTo,
             provider: provider || 'Admin',
+            zoneId: zoneId || undefined,
             isActive: isActive !== undefined ? isActive : true
         });
         
@@ -122,12 +123,13 @@ export async function getAllCategories(req, res) {
 
 export async function createCategory(req, res) {
     try {
-        const { name, image, subCategories, isActive } = req.body;
+        const { name, image, subCategories, isActive, zoneId } = req.body;
         
         const newCategory = new ServiceCategory({
             name,
             image: image || '',
             subCategories: subCategories || [],
+            zoneId: zoneId || undefined,
             isActive: isActive !== undefined ? isActive : true
         });
         
@@ -227,20 +229,53 @@ export async function updateBookingStatus(req, res) {
         const { id } = req.params;
         const { status } = req.body;
         
-        const updatedBooking = await ServiceBooking.findByIdAndUpdate(
-            id,
-            { $set: { status } },
-            { new: true, runValidators: true }
-        ).populate('serviceId', 'name category');
-        
-        if (!updatedBooking) {
+        const booking = await ServiceBooking.findById(id);
+        if (!booking) {
             return res.status(404).json({ success: false, message: 'Booking not found' });
         }
+
+        let refundResult = null;
+        if (status === 'cancelled') {
+            // Process refund if online payment was made and is currently 'paid'
+            if (booking.paymentMode === 'pay_upfront' && booking.paymentDetails?.razorpayPaymentId && booking.paymentStatus === 'paid') {
+                const { initiateRazorpayRefund, isRazorpayConfigured } = await import('../../food/orders/helpers/razorpay.helper.js');
+                if (isRazorpayConfigured()) {
+                    try {
+                        refundResult = await initiateRazorpayRefund(
+                            booking.paymentDetails.razorpayPaymentId,
+                            booking.totalAmount
+                        );
+                        if (refundResult.success) {
+                            booking.paymentStatus = 'refunded';
+                        } else {
+                            console.error("Razorpay refund failed:", refundResult.error);
+                        }
+                    } catch (err) {
+                        console.error("Failed to process Razorpay refund:", err);
+                    }
+                } else {
+                    // Simulating successful refund for development mode if keys are not set
+                    booking.paymentStatus = 'refunded';
+                    refundResult = { success: true, simulated: true };
+                }
+            }
+        } else if (status === 'completed' && booking.paymentMode === 'pay_after_service') {
+            // For cash bookings, completion marks payment status as paid
+            booking.paymentStatus = 'paid';
+        }
+
+        booking.status = status;
+        await booking.save();
+
+        const updatedBooking = await ServiceBooking.findById(id).populate('serviceId', 'name category');
         
         res.status(200).json({
             success: true,
             message: 'Booking status updated successfully',
-            data: { booking: updatedBooking }
+            data: { 
+                booking: updatedBooking,
+                refund: refundResult
+            }
         });
     } catch (error) {
         console.error('Error updating booking status:', error);

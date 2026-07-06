@@ -60,18 +60,25 @@ export default function LandingPageManagement() {
   const [under250BannersDeleting, setUnder250BannersDeleting] = useState(null)
   const under250BannersFileInputRef = useRef(null)
 
-  // Dining Banners
-  const [diningBanners, setDiningBanners] = useState([])
-  const [diningBannersLoading, setDiningBannersLoading] = useState(true)
-  const [diningBannersUploading, setDiningBannersUploading] = useState(false)
-  const [diningBannersUploadProgress, setDiningBannersUploadProgress] = useState({ current: 0, total: 0 })
-  const [diningBannersDeleting, setDiningBannersDeleting] = useState(null)
-  const diningBannersFileInputRef = useRef(null)
+  // Dining Banners replaced by Accessories Banners
+  const [accessoriesBanners, setAccessoriesBanners] = useState([])
+  const [accessoriesBannersLoading, setAccessoriesBannersLoading] = useState(true)
+  const [accessoriesBannersUploading, setAccessoriesBannersUploading] = useState(false)
+  const [accessoriesBannersUploadProgress, setAccessoriesBannersUploadProgress] = useState({ current: 0, total: 0 })
+  const [accessoriesBannersDeleting, setAccessoriesBannersDeleting] = useState(null)
+  const accessoriesBannersFileInputRef = useRef(null)
 
   // Settings
-  const [settings, setSettings] = useState({ exploreMoreHeading: "Explore More", recommendedRestaurantIds: [] })
+  const [settings, setSettings] = useState({ 
+    exploreMoreHeading: "Explore More", 
+    recommendedRestaurantIds: [],
+    festBannerVideoUrl: "",
+    festBannerVideoPublicId: ""
+  })
   const [settingsLoading, setSettingsLoading] = useState(true)
   const [settingsSaving, setSettingsSaving] = useState(false)
+  const [videoUploading, setVideoUploading] = useState(false)
+  const videoFileInputRef = useRef(null)
   const [recommendedSearchQuery, setRecommendedSearchQuery] = useState("")
 
   const [allRestaurants, setAllRestaurants] = useState([])
@@ -151,7 +158,7 @@ export default function LandingPageManagement() {
     fetchTopBanners()
     fetchBanners()
     fetchUnder250Banners()
-    fetchDiningBanners()
+    fetchAccessoriesBanners()
     fetchSettings()
   }, [])
 
@@ -1055,42 +1062,42 @@ export default function LandingPageManagement() {
     }
   }
 
-  // ==================== DINING BANNERS ====================
-  const fetchDiningBanners = async () => {
+  // ==================== ACCESSORIES BANNERS ====================
+  const fetchAccessoriesBanners = async () => {
     try {
-      setDiningBannersLoading(true)
+      setAccessoriesBannersLoading(true)
       setError(null)
-      const response = await api.get('/food/hero-banners/dining', getAuthConfig())
+      const response = await api.get('/food/hero-banners/accessories', getAuthConfig())
       if (response.data.success) {
-        setDiningBanners(response.data.data.banners || [])
+        setAccessoriesBanners(response.data.data.banners || [])
       }
     } catch (err) {
       if (err.response?.status === 401) {
-        setDiningBanners([])
+        setAccessoriesBanners([])
         setError(null)
       } else if (err.response?.status === 404) {
-        setDiningBanners([])
+        setAccessoriesBanners([])
         setError(null)
       } else {
-        const errorMessage = err.response?.data?.message || 'Failed to load dining banners'
+        const errorMessage = err.response?.data?.message || 'Failed to load accessories banners'
         setErrorSafely(errorMessage)
       }
     } finally {
-      setDiningBannersLoading(false)
+      setAccessoriesBannersLoading(false)
     }
   }
 
-  const handleDiningBannerFileSelect = (e) => {
+  const handleAccessoriesBannerFileSelect = (e) => {
     const files = Array.from(e.target?.files || e.files || [])
     if (files.length === 0) return
     if (files.length > 5) {
       setError('You can upload a maximum of 5 images at once')
       return
     }
-    uploadDiningBanners(files)
+    uploadAccessoriesBanners(files)
   }
 
-  const uploadDiningBanners = async (files) => {
+  const uploadAccessoriesBanners = async (files) => {
     try {
       const adminToken = getModuleToken('admin')
       if (!adminToken || adminToken.trim() === '' || adminToken === 'null' || adminToken === 'undefined') {
@@ -1098,61 +1105,61 @@ export default function LandingPageManagement() {
         return
       }
 
-      setDiningBannersUploading(true)
+      setAccessoriesBannersUploading(true)
       setError(null)
       setSuccess(null)
-      setDiningBannersUploadProgress({ current: 0, total: files.length })
+      setAccessoriesBannersUploadProgress({ current: 0, total: files.length })
 
       const formData = new FormData()
       files.forEach((file) => {
-        formData.append('images', file)
+        formData.append('files', file)
       })
 
-      const response = await api.post('/food/hero-banners/dining/multiple', formData, getAuthConfig({
+      const response = await api.post('/food/hero-banners/accessories/multiple', formData, getAuthConfig({
         headers: { 'Content-Type': 'multipart/form-data' },
       }))
 
       if (response.data.success) {
-        setSuccess(`${response.data.data.banners?.length || files.length} dining banner(s) uploaded successfully!`)
-        await fetchDiningBanners()
+        setSuccess(`${response.data.data.banners?.length || files.length} accessories banner(s) uploaded successfully!`)
+        await fetchAccessoriesBanners()
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to upload dining banners'
+      const errorMessage = err.response?.data?.message || 'Failed to upload accessories banners'
       setErrorSafely(errorMessage)
-      setDiningBannersUploadProgress({ current: 0, total: 0 })
+      setAccessoriesBannersUploadProgress({ current: 0, total: 0 })
     } finally {
-      setDiningBannersUploading(false)
+      setAccessoriesBannersUploading(false)
     }
   }
 
-  const handleDeleteDiningBanner = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this dining banner?')) return
+  const handleDeleteAccessoriesBanner = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this accessories banner?')) return
     try {
-      setDiningBannersDeleting(id)
+      setAccessoriesBannersDeleting(id)
       setError(null)
       setSuccess(null)
-      const response = await api.delete(`/food/hero-banners/dining/${id}`, getAuthConfig())
+      const response = await api.delete(`/food/hero-banners/accessories/${id}`, getAuthConfig())
       if (response.data.success) {
-        setSuccess('Dining banner deleted successfully!')
-        await fetchDiningBanners()
+        setSuccess('Accessories banner deleted successfully!')
+        await fetchAccessoriesBanners()
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
       setErrorSafely(err.response?.data?.message || 'Failed to delete banner.')
     } finally {
-      setDiningBannersDeleting(null)
+      setAccessoriesBannersDeleting(null)
     }
   }
 
-  const handleToggleDiningBannerStatus = async (id, currentStatus) => {
+  const handleToggleAccessoriesBannerStatus = async (id, currentStatus) => {
     try {
       setError(null)
       setSuccess(null)
-      const response = await api.patch(`/food/hero-banners/dining/${id}/status`, {}, getAuthConfig())
+      const response = await api.patch(`/food/hero-banners/accessories/${id}/status`, {}, getAuthConfig())
       if (response.data.success) {
         setSuccess(`Banner ${currentStatus ? 'deactivated' : 'activated'} successfully!`)
-        await fetchDiningBanners()
+        await fetchAccessoriesBanners()
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
@@ -1160,19 +1167,19 @@ export default function LandingPageManagement() {
     }
   }
 
-  const handleDiningBannerOrderChange = async (id, direction) => {
-    const banner = diningBanners.find(b => b._id === id)
+  const handleAccessoriesBannerOrderChange = async (id, direction) => {
+    const banner = accessoriesBanners.find(b => b._id === id)
     if (!banner) return
-    const newOrder = direction === 'up' ? banner.order - 1 : banner.order + 1
-    const otherBanner = diningBanners.find(b => b.order === newOrder && b._id !== id)
+    const newOrder = direction === 'up' ? (banner.sortOrder || 0) - 1 : (banner.sortOrder || 0) + 1
+    const otherBanner = accessoriesBanners.find(b => (b.sortOrder || 0) === newOrder && b._id !== id)
     if (!otherBanner && newOrder < 0) return
     try {
       setError(null)
-      await api.patch(`/food/hero-banners/dining/${id}/order`, { order: newOrder }, getAuthConfig())
+      await api.patch(`/food/hero-banners/accessories/${id}/order`, { order: newOrder }, getAuthConfig())
       if (otherBanner) {
-        await api.patch(`/food/hero-banners/dining/${otherBanner._id}/order`, { order: banner.order }, getAuthConfig())
+        await api.patch(`/food/hero-banners/accessories/${otherBanner._id}/order`, { order: banner.sortOrder || 0 }, getAuthConfig())
       }
-      await fetchDiningBanners()
+      await fetchAccessoriesBanners()
     } catch (err) {
       setErrorSafely('Failed to update banner order.')
     }
@@ -1188,13 +1195,20 @@ export default function LandingPageManagement() {
         const nextSettings = response.data.data.settings || {}
         setSettings({
           exploreMoreHeading: nextSettings.exploreMoreHeading || "Explore More",
-          recommendedRestaurantIds: Array.isArray(nextSettings.recommendedRestaurantIds) ? nextSettings.recommendedRestaurantIds : []
+          recommendedRestaurantIds: Array.isArray(nextSettings.recommendedRestaurantIds) ? nextSettings.recommendedRestaurantIds : [],
+          festBannerVideoUrl: nextSettings.festBannerVideoUrl || "",
+          festBannerVideoPublicId: nextSettings.festBannerVideoPublicId || ""
         })
       }
     } catch (err) {
       // Silently handle 401/404 errors - endpoints may not exist yet, use default settings
       if (err.response?.status === 401 || err.response?.status === 404) {
-        setSettings({ exploreMoreHeading: "Explore More", recommendedRestaurantIds: [] }) // Use default settings
+        setSettings({ 
+          exploreMoreHeading: "Explore More", 
+          recommendedRestaurantIds: [],
+          festBannerVideoUrl: "",
+          festBannerVideoPublicId: ""
+        }) // Use default settings
         setError(null) // Clear any previous error
       } else {
         // Filter out token-related errors
@@ -1213,7 +1227,9 @@ export default function LandingPageManagement() {
       setSuccess(null)
       const response = await api.patch('/food/hero-banners/landing/settings', {
         exploreMoreHeading: settings.exploreMoreHeading,
-        recommendedRestaurantIds: Array.isArray(settings.recommendedRestaurantIds) ? settings.recommendedRestaurantIds : []
+        recommendedRestaurantIds: Array.isArray(settings.recommendedRestaurantIds) ? settings.recommendedRestaurantIds : [],
+        festBannerVideoUrl: settings.festBannerVideoUrl,
+        festBannerVideoPublicId: settings.festBannerVideoPublicId
       }, getAuthConfig())
       if (response.data.success) {
         const savedSettings = response.data.data?.settings || {}
@@ -1222,7 +1238,9 @@ export default function LandingPageManagement() {
           exploreMoreHeading: savedSettings.exploreMoreHeading || prev.exploreMoreHeading,
           recommendedRestaurantIds: Array.isArray(savedSettings.recommendedRestaurantIds)
             ? savedSettings.recommendedRestaurantIds
-            : prev.recommendedRestaurantIds
+            : prev.recommendedRestaurantIds,
+          festBannerVideoUrl: savedSettings.festBannerVideoUrl || prev.festBannerVideoUrl,
+          festBannerVideoPublicId: savedSettings.festBannerVideoPublicId || prev.festBannerVideoPublicId
         }))
         setSuccess('Settings saved successfully!')
         setTimeout(() => setSuccess(null), 3000)
@@ -1231,6 +1249,45 @@ export default function LandingPageManagement() {
       setErrorSafely(err.response?.data?.message || 'Failed to save settings.')
     } finally {
       setSettingsSaving(false)
+    }
+  }
+
+  const handleVideoFileUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setVideoUploading(true)
+      setError(null)
+      setSuccess(null)
+
+      const formData = new FormData()
+      formData.append('videoFile', file)
+      if (settings.festBannerVideoPublicId) {
+        formData.append('oldPublicId', settings.festBannerVideoPublicId)
+      }
+
+      const response = await api.post('/food/hero-banners/landing/settings/video', formData, {
+        headers: {
+          ...getAuthConfig().headers,
+          'Content-Type': 'multipart/form-data'
+        }
+      })
+
+      if (response.data.success) {
+        const { videoUrl, publicId } = response.data.data
+        setSettings(prev => ({
+          ...prev,
+          festBannerVideoUrl: videoUrl,
+          festBannerVideoPublicId: publicId
+        }))
+        setSuccess('Video uploaded successfully! Make sure to click Save Settings to persist.')
+        setTimeout(() => setSuccess(null), 5000)
+      }
+    } catch (err) {
+      setErrorSafely(err.response?.data?.message || 'Failed to upload video file.')
+    } finally {
+      setVideoUploading(false)
     }
   }
 
@@ -1362,8 +1419,8 @@ export default function LandingPageManagement() {
   const tabs = [
     { id: 'top-banners', label: 'Top Banners', icon: ImageIcon },
     { id: 'banners', label: 'Hero Banners', icon: ImageIcon },
-    { id: 'under-250', label: 'Switch 99 Banner', icon: Tag },
-    // { id: 'dining', label: 'Dining', icon: UtensilsCrossed },
+    { id: 'under-250', label: 'Grocery Banner', icon: Tag },
+    { id: 'accessories', label: 'Accessories Banner', icon: Tag },
     { id: 'explore-more', label: 'Explore More', icon: Layout },
   ]
 
@@ -1571,8 +1628,222 @@ export default function LandingPageManagement() {
           </>
         )}
 
-        {/* Switch 99 Banner Tab */}
-        
+        {/* Grocery Banner Tab */}
+        {activeTab === 'under-250' && (
+          <>
+            {/* Upload Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Upload New Grocery Banner(s)</h2>
+              <div
+                className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50/30 cursor-pointer transition-colors hover:border-blue-400 hover:bg-blue-50/50"
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const files = Array.from(e.dataTransfer.files)
+                  if (files.length > 0) handleUnder250BannerFileSelect({ files })
+                }}
+                onClick={() => under250BannersFileInputRef.current?.click()}
+              >
+                <input
+                  ref={under250BannersFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleUnder250BannerFileSelect}
+                  className="hidden"
+                  disabled={under250BannersUploading}
+                />
+                {under250BannersUploading ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    <p className="text-blue-600 font-medium">
+                      Uploading image {under250BannersUploadProgress.current} of {under250BannersUploadProgress.total}...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <Upload className="w-8 h-8 text-blue-600" />
+                    <div>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); under250BannersFileInputRef.current?.click(); }}
+                        className="text-blue-600 font-medium hover:text-blue-700 underline"
+                      >
+                        Click to upload
+                      </button>
+                      <span className="text-slate-600"> or drag and drop</span>
+                    </div>
+                    <p className="text-xs text-slate-500">PNG, JPG, WEBP up to 5MB each (Max 5 images at once)</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Banners List */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Grocery Banner List ({under250Banners.length})</h2>
+              {under250BannersLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                </div>
+              ) : under250Banners.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <ImageIcon className="w-12 h-12 mx-auto mb-3 text-slate-400" />
+                  <p>No Grocery banners uploaded yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {under250Banners.map((banner, index) => (
+                    <div key={banner._id} className="border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="relative aspect-video bg-slate-100">
+                        <img src={banner.imageUrl} alt={`Grocery Banner ${index + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute top-2 right-2">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${banner.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            {banner.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                        <div className="absolute top-2 left-2">
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Order: {banner.sortOrder || 0}</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-white">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => handleUnder250BannerOrderChange(banner._id, 'up')} disabled={index === 0} className="p-1.5 rounded hover:bg-slate-100 disabled:opacity-50">
+                              <ArrowUp className="w-4 h-4 text-slate-600" />
+                            </button>
+                            <button onClick={() => handleUnder250BannerOrderChange(banner._id, 'down')} disabled={index === under250Banners.length - 1} className="p-1.5 rounded hover:bg-slate-100 disabled:opacity-50">
+                              <ArrowDown className="w-4 h-4 text-slate-600" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => handleToggleUnder250BannerStatus(banner._id, banner.isActive)} className={`px-3 py-1.5 rounded text-sm font-medium ${banner.isActive ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                              {banner.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button onClick={() => handleDeleteUnder250Banner(banner._id)} disabled={under250BannersDeleting === banner._id} className="p-1.5 rounded hover:bg-red-100 text-red-600 disabled:opacity-50">
+                              {under250BannersDeleting === banner._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Accessories Banner Tab */}
+        {activeTab === 'accessories' && (
+          <>
+            {/* Upload Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Upload New Accessories Banner(s)</h2>
+              <div
+                className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center bg-blue-50/30 cursor-pointer transition-colors hover:border-blue-400 hover:bg-blue-50/50"
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  const files = Array.from(e.dataTransfer.files)
+                  if (files.length > 0) handleAccessoriesBannerFileSelect({ files })
+                }}
+                onClick={() => accessoriesBannersFileInputRef.current?.click()}
+              >
+                <input
+                  ref={accessoriesBannersFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleAccessoriesBannerFileSelect}
+                  className="hidden"
+                  disabled={accessoriesBannersUploading}
+                />
+                {accessoriesBannersUploading ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    <p className="text-blue-600 font-medium">
+                      Uploading image {accessoriesBannersUploadProgress.current} of {accessoriesBannersUploadProgress.total}...
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3">
+                    <Upload className="w-8 h-8 text-blue-600" />
+                    <div>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); accessoriesBannersFileInputRef.current?.click(); }}
+                        className="text-blue-600 font-medium hover:text-blue-700 underline"
+                      >
+                        Click to upload
+                      </button>
+                      <span className="text-slate-600"> or drag and drop</span>
+                    </div>
+                    <p className="text-xs text-slate-500">PNG, JPG, WEBP up to 5MB each (Max 5 images at once)</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Banners List */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Accessories Banner List ({accessoriesBanners.length})</h2>
+              {accessoriesBannersLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                </div>
+              ) : accessoriesBanners.length === 0 ? (
+                <div className="text-center py-12 text-slate-500">
+                  <ImageIcon className="w-12 h-12 mx-auto mb-3 text-slate-400" />
+                  <p>No Accessories banners uploaded yet.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {accessoriesBanners.map((banner, index) => (
+                    <div key={banner._id} className="border border-slate-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow">
+                      <div className="relative aspect-video bg-slate-100">
+                        <img src={banner.imageUrl} alt={`Accessories Banner ${index + 1}`} className="w-full h-full object-cover" />
+                        <div className="absolute top-2 right-2">
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${banner.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                            {banner.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </div>
+                        <div className="absolute top-2 left-2">
+                          <span className="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800">Order: {banner.sortOrder || 0}</span>
+                        </div>
+                      </div>
+                      <div className="p-4 bg-white">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-1">
+                            <button onClick={() => handleAccessoriesBannerOrderChange(banner._id, 'up')} disabled={index === 0} className="p-1.5 rounded hover:bg-slate-100 disabled:opacity-50">
+                              <ArrowUp className="w-4 h-4 text-slate-600" />
+                            </button>
+                            <button onClick={() => handleAccessoriesBannerOrderChange(banner._id, 'down')} disabled={index === accessoriesBanners.length - 1} className="p-1.5 rounded hover:bg-slate-100 disabled:opacity-50">
+                              <ArrowDown className="w-4 h-4 text-slate-600" />
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => handleToggleAccessoriesBannerStatus(banner._id, banner.isActive)} className={`px-3 py-1.5 rounded text-sm font-medium ${banner.isActive ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                              {banner.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button onClick={() => handleDeleteAccessoriesBanner(banner._id)} disabled={accessoriesBannersDeleting === banner._id} className="p-1.5 rounded hover:bg-red-100 text-red-600 disabled:opacity-50">
+                              {accessoriesBannersDeleting === banner._id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
         {activeTab === 'banners' && (
           <>
             {/* Upload Section */}
@@ -1751,262 +2022,164 @@ export default function LandingPageManagement() {
                       placeholder="Explore More"
                     />
                   </div>
-
-                  <div>
-                    <Label htmlFor="recommended-search">Recommended For You Restaurants</Label>
-                    <p className="text-xs text-slate-500 mt-1 mb-2">
-                      Choose multiple restaurants to display below filters on the user home page.
-                    </p>
-
-                    <div className="relative mb-3">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <Input
-                        id="recommended-search"
-                        value={recommendedSearchQuery}
-                        onChange={(e) => setRecommendedSearchQuery(e.target.value)}
-                        placeholder="Search restaurants..."
-                        className="pl-9"
-                      />
-                    </div>
-
-                    {recommendedRestaurantsSelected.length > 0 && (
-                      <div className="mb-3 flex flex-wrap gap-2">
-                        {recommendedRestaurantsSelected.map((restaurant) => (
-                          <button
-                            key={restaurant._id}
-                            type="button"
-                            onClick={() => toggleRecommendedRestaurant(restaurant._id)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
-                          >
-                            <span>{restaurant.name}</span>
-                            <span className="text-blue-500">x</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="max-h-72 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
-                      {filteredRestaurantsForRecommended.length === 0 ? (
-                        <div className="p-4 text-sm text-slate-500 text-center">No restaurants found</div>
-                      ) : (
-                        filteredRestaurantsForRecommended.map((restaurant) => {
-                          const isChecked = (settings.recommendedRestaurantIds || []).includes(restaurant._id)
-                          return (
-                            <label
-                              key={restaurant._id}
-                              className="flex items-center justify-between gap-3 px-3 py-2 cursor-pointer hover:bg-slate-50"
-                            >
-                              <div className="min-w-0">
-                                <p className="text-sm font-medium text-slate-800 truncate">{restaurant.name}</p>
-                                 <p className="text-xs text-slate-500 truncate">{restaurant._id || "No ID"}</p>
-                              </div>
-                              <Checkbox
-                                checked={isChecked}
-                                onCheckedChange={() => toggleRecommendedRestaurant(restaurant._id)}
-                              />
-                            </label>
-                          )
-                        })
-                      )}
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
 
-            {/* Sub-tabs for Explore More */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-2 mb-6">
-              <div className="flex gap-2 overflow-x-auto">
-                {exploreMoreTabs.map((tab) => {
-                  const Icon = tab.icon
-                  const isActive = activeTab === 'explore-more' && (tab.id === 'gourmet' ? gourmetRestaurants.length > 0 : false)
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setExploreMoreSubTab(tab.id)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors whitespace-nowrap ${exploreMoreSubTab === tab.id
-                        ? 'bg-blue-500 text-white'
-                        : 'text-slate-600 hover:bg-slate-100'
-                        }`}
+            {/* Home Page Video Settings */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <h2 className="text-lg font-bold text-slate-900">Home Page Video Settings</h2>
+                <Button
+                  onClick={handleSaveSettings}
+                  disabled={settingsSaving || settingsLoading || videoUploading}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  {settingsSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                  Save Settings
+                </Button>
+              </div>
+
+              {settingsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* File Upload Zone */}
+                  <div>
+                    <Label className="block mb-2">Upload Video File</Label>
+                    <div
+                      className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center bg-blue-50/30 cursor-pointer transition-colors hover:border-blue-400 hover:bg-blue-50/50"
+                      onClick={() => videoFileInputRef.current?.click()}
                     >
-                      <Icon className="w-4 h-4" />
-                      {tab.label}
-                    </button>
+                      <input
+                        ref={videoFileInputRef}
+                        type="file"
+                        accept="video/*"
+                        onChange={handleVideoFileUpload}
+                        className="hidden"
+                        disabled={videoUploading}
+                      />
+                      {videoUploading ? (
+                        <div className="flex flex-col items-center gap-3">
+                          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                          <p className="text-blue-600 font-medium">Uploading video to Cloudinary...</p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-3">
+                          <Upload className="w-8 h-8 text-blue-600" />
+                          <div>
+                            <span className="text-blue-600 font-medium hover:text-blue-700 underline">Click to upload video</span>
+                            <span className="text-slate-600"> or drag and drop</span>
+                          </div>
+                          <p className="text-xs text-slate-500">MP4, WEBM up to 20MB</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="relative flex py-2 items-center">
+                    <div className="flex-grow border-t border-slate-200"></div>
+                    <span className="flex-shrink mx-4 text-slate-400 text-xs font-semibold uppercase tracking-wider">OR</span>
+                    <div className="flex-grow border-t border-slate-200"></div>
+                  </div>
+
+                  {/* Direct URL Input */}
+                  <div>
+                    <Label htmlFor="fest-video-url">Video Direct URL</Label>
+                    <Input
+                      id="fest-video-url"
+                      value={settings.festBannerVideoUrl || ""}
+                      onChange={(e) => setSettings((prev) => ({ ...prev, festBannerVideoUrl: e.target.value }))}
+                      className="mt-2"
+                      placeholder="e.g. https://example.com/video.mp4"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      You can paste a direct video URL (ending in .mp4, .webm, etc.) or upload a video file above.
+                    </p>
+                  </div>
+
+                  {/* Video Preview */}
+                  {settings.festBannerVideoUrl && (
+                    <div className="mt-4">
+                      <Label className="block mb-2">Video Preview</Label>
+                      <div className="relative aspect-video rounded-lg overflow-hidden border border-slate-200 bg-slate-100 max-w-md">
+                        <video
+                          src={settings.festBannerVideoUrl}
+                          className="w-full h-full object-cover"
+                          controls
+                          muted
+                          playsInline
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Icons Tab Content */}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-bold text-slate-900 mb-6">Manage Explore More Icons</h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[
+                  { id: 'offers', label: 'Offers', link: '/user/offers' },
+                  { id: 'collection', label: 'Collections', link: '/user/profile/favorites' }
+                ].map((item) => {
+                  // Find matching item from DB
+                  const dbItem = exploreMore.find(i => i.label?.toLowerCase() === item.label.toLowerCase())
+
+                  return (
+                    <div key={item.id} className="border border-slate-200 rounded-lg p-4 flex flex-col items-center relative">
+                      <span className="text-sm font-semibold text-slate-700 mb-3">{item.label}</span>
+
+                      <div className="w-24 h-24 mb-4 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden relative group">
+                        {dbItem?.imageUrl ? (
+                          <img
+                            src={dbItem.imageUrl}
+                            alt={item.label}
+                            className="w-full h-full object-contain p-2"
+                          />
+                        ) : (
+                          <ImageIcon className="w-8 h-8 text-slate-300" />
+                        )}
+
+                        {exploreIconsUploading[item.id] && (
+                          <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
+                            <Loader2 className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="w-full mt-auto">
+                        <input
+                          type="file"
+                          id={`file-${item.id}`}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) {
+                              handleIconUpdate(e.target.files[0], item.label, item.link, item.id)
+                            }
+                          }}
+                          disabled={exploreIconsUploading[item.id]}
+                        />
+                        <label
+                          htmlFor={`file-${item.id}`}
+                          className={`w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer ${exploreIconsUploading[item.id] ? 'opacity-50 pointer-events-none' : ''}`}
+                        >
+                          <Upload className="w-3 h-3" />
+                          {dbItem ? 'Change Icon' : 'Upload Icon'}
+                        </label>
+                      </div>
+                    </div>
                   )
                 })}
               </div>
             </div>
-
-
-
-            {/* Icons Tab Content */}
-            {exploreMoreSubTab === 'icons' && (
-              <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                <h2 className="text-lg font-bold text-slate-900 mb-6">Manage Explore More Icons</h2>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {[
-                    { id: 'offers', label: 'Offers', link: '/user/offers' },
-                    { id: 'gourmet', label: 'Gourmet', link: '/user/gourmet' },
-                    { id: 'collection', label: 'Collections', link: '/user/profile/favorites' }
-                  ].map((item) => {
-                    // Find matching item from DB
-                    const dbItem = exploreMore.find(i => i.label?.toLowerCase() === item.label.toLowerCase())
-
-                    return (
-                      <div key={item.id} className="border border-slate-200 rounded-lg p-4 flex flex-col items-center relative">
-                        <span className="text-sm font-semibold text-slate-700 mb-3">{item.label}</span>
-
-                        <div className="w-24 h-24 mb-4 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden relative group">
-                          {dbItem?.imageUrl ? (
-                            <img
-                              src={dbItem.imageUrl}
-                              alt={item.label}
-                              className="w-full h-full object-contain p-2"
-                            />
-                          ) : (
-                            <ImageIcon className="w-8 h-8 text-slate-300" />
-                          )}
-
-                          {exploreIconsUploading[item.id] && (
-                            <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
-                              <Loader2 className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="w-full mt-auto">
-                          <input
-                            type="file"
-                            id={`file-${item.id}`}
-                            className="hidden"
-                            accept="image/*"
-                            onChange={(e) => {
-                              if (e.target.files?.[0]) {
-                                handleIconUpdate(e.target.files[0], item.label, item.link, item.id)
-                              }
-                            }}
-                            disabled={exploreIconsUploading[item.id]}
-                          />
-                          <label
-                            htmlFor={`file-${item.id}`}
-                            className={`w-full flex items-center justify-center gap-2 px-4 py-2 text-xs font-medium rounded-lg border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors cursor-pointer ${exploreIconsUploading[item.id] ? 'opacity-50 pointer-events-none' : ''}`}
-                          >
-                            <Upload className="w-3 h-3" />
-                            {dbItem ? 'Change Icon' : 'Upload Icon'}
-                          </label>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Gourmet Tab Content */}
-            {exploreMoreSubTab === 'gourmet' && (
-              <>
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-                  <h2 className="text-lg font-bold text-slate-900 mb-4">Add Restaurant to Gourmet</h2>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="restaurant-gourmet">Select Restaurant</Label>
-                      <select
-                        id="restaurant-gourmet"
-                        value={selectedRestaurantGourmet}
-                        onChange={(e) => setSelectedRestaurantGourmet(e.target.value)}
-                        className="mt-1 w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        disabled={restaurantsLoading}
-                      >
-                        <option value="">Select a restaurant...</option>
-                        {allRestaurants
-                          .filter(r => !gourmetRestaurants.some(gr => gr.restaurant?._id === r._id))
-                          .map((restaurant) => (
-                            <option key={restaurant._id} value={restaurant._id}>
-                              {restaurant.name}
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-                    <Button
-                      onClick={handleAddGourmetRestaurant}
-                      disabled={!selectedRestaurantGourmet}
-                      className="bg-blue-500 hover:bg-blue-600 text-white"
-                    >
-                      Add to Gourmet
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                  <h2 className="text-lg font-bold text-slate-900 mb-4">Gourmet Restaurants ({gourmetRestaurants.length})</h2>
-                  {gourmetLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                    </div>
-                  ) : gourmetRestaurants.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500">
-                      <ChefHat className="w-12 h-12 mx-auto mb-3 text-slate-400" />
-                      <p>No restaurants added to Gourmet yet.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                      {gourmetRestaurants
-                        .sort((a, b) => a.order - b.order)
-                        .map((item, index) => {
-                          // Get restaurant cover image with priority: coverImages > menuImages > profileImage
-                          const coverImages = item.restaurant?.coverImages && item.restaurant.coverImages.length > 0
-                            ? item.restaurant.coverImages.map(img => img.url || img).filter(Boolean)
-                            : []
-
-                          const menuImages = item.restaurant?.menuImages && item.restaurant.menuImages.length > 0
-                            ? item.restaurant.menuImages.map(img => img.url || img).filter(Boolean)
-                            : []
-
-                          const restaurantImage = coverImages.length > 0
-                            ? coverImages[0]
-                            : (menuImages.length > 0
-                              ? menuImages[0]
-                              : (item.restaurant?.profileImage?.url || "https://via.placeholder.com/400"))
-
-                          return (
-                            <div key={item._id} className="border border-slate-200 rounded-lg overflow-hidden">
-                              <div className="relative h-32 bg-slate-100">
-                                <img src={restaurantImage} alt={item.restaurant?.name} className="w-full h-full object-cover" />
-                                <div className="absolute top-1 right-1">
-                                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${item.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                                    {item.isActive ? 'Active' : 'Inactive'}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="p-2">
-                                <h3 className="font-semibold text-slate-900 mb-0.5 text-sm line-clamp-1">{item.restaurant?.name || 'N/A'}</h3>
-                                <p className="text-[10px] text-slate-500 mb-2">Rating: {item.restaurant?.rating || 0}?</p>
-                                <div className="flex items-center justify-between gap-1">
-                                  <div className="flex items-center gap-0.5">
-                                    <button onClick={() => handleGourmetOrderChange(item._id, 'up')} disabled={index === 0} className="p-1 rounded hover:bg-slate-100 disabled:opacity-50">
-                                      <ArrowUp className="w-3 h-3 text-slate-600" />
-                                    </button>
-                                    <button onClick={() => handleGourmetOrderChange(item._id, 'down')} disabled={index === gourmetRestaurants.length - 1} className="p-1 rounded hover:bg-slate-100 disabled:opacity-50">
-                                      <ArrowDown className="w-3 h-3 text-slate-600" />
-                                    </button>
-                                  </div>
-                                  <button onClick={() => handleToggleGourmetStatus(item._id, item.isActive)} className={`px-2 py-1 rounded text-[10px] font-medium ${item.isActive ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
-                                    {item.isActive ? 'Deactivate' : 'Activate'}
-                                  </button>
-                                  <button onClick={() => handleDeleteGourmetRestaurant(item._id)} disabled={gourmetDeleting === item._id} className="p-1 rounded hover:bg-red-100 text-red-600 disabled:opacity-50">
-                                    {gourmetDeleting === item._id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        })}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
           </>
         )}
 

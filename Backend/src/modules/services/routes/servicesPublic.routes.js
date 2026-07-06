@@ -1,4 +1,5 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import { ServiceCategory } from '../models/serviceCategory.model.js';
 import { VendorService } from '../models/vendorService.model.js';
 
@@ -6,7 +7,15 @@ const router = express.Router();
 
 router.get('/categories', async (req, res) => {
     try {
-        const categories = await ServiceCategory.find({ isActive: true }).sort({ createdAt: -1 });
+        const query = { isActive: true };
+        if (req.query.zoneId && mongoose.Types.ObjectId.isValid(req.query.zoneId)) {
+            query.$or = [
+                { zoneId: new mongoose.Types.ObjectId(req.query.zoneId) },
+                { zoneId: { $exists: false } },
+                { zoneId: null }
+            ];
+        }
+        const categories = await ServiceCategory.find(query).sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: { categories } });
     } catch (error) {
         console.error('Error fetching public categories:', error);
@@ -22,6 +31,13 @@ router.get('/list', async (req, res) => {
         }
         if (req.query.subCategory) {
             query.subCategory = req.query.subCategory;
+        }
+        if (req.query.zoneId && mongoose.Types.ObjectId.isValid(req.query.zoneId)) {
+            query.$or = [
+                { zoneId: new mongoose.Types.ObjectId(req.query.zoneId) },
+                { zoneId: { $exists: false } },
+                { zoneId: null }
+            ];
         }
         const services = await VendorService.find(query).sort({ createdAt: -1 });
         res.status(200).json({ success: true, data: { services } });

@@ -134,11 +134,13 @@ export const getFeedbackExperiences = async (req, res) => {
 
         return sendResponse(res, 200, 'Feedbacks fetched successfully', {
             feedbacks: normalizedFeedbacks,
+            reviews: normalizedFeedbacks,
             pagination: {
                 total,
                 page: parseInt(page),
                 limit: parseInt(limit),
-                pages: Math.ceil(total / limit)
+                pages: Math.ceil(total / limit),
+                totalPages: Math.ceil(total / limit)
             },
             statistics
         });

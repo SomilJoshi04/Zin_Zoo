@@ -33,6 +33,14 @@ const foodLandingSettingsSchema = new mongoose.Schema(
         showGourmet: {
             type: Boolean,
             default: true
+        },
+        festBannerVideoUrl: {
+            type: String,
+            default: ''
+        },
+        festBannerVideoPublicId: {
+            type: String,
+            default: ''
         }
     },
     {

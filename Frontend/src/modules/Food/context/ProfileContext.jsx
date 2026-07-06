@@ -369,21 +369,23 @@ export function ProfileProvider({ children }) {
   // Dish favorites functions - memoized with useCallback
   const addDishFavorite = useCallback((dish) => {
     setDishFavorites((prev) => {
-      if (!prev.find(fav => fav.id === dish.id && fav.restaurantId === dish.restaurantId)) {
-        return [...prev, dish]
+      const type = dish.type || "food";
+      const idKey = dish.id || dish._id;
+      if (!prev.find(fav => fav.id === idKey && (fav.type || "food") === type)) {
+        return [...prev, { ...dish, id: idKey, type }]
       }
       return prev
     })
   }, [])
 
-  const removeDishFavorite = useCallback((dishId, restaurantId) => {
+  const removeDishFavorite = useCallback((dishId, restaurantId, type = "food") => {
     setDishFavorites((prev) => 
-      prev.filter(fav => !(fav.id === dishId && fav.restaurantId === restaurantId))
+      prev.filter(fav => !(fav.id === dishId && (fav.type || "food") === type))
     )
   }, [])
 
-  const isDishFavorite = useCallback((dishId, restaurantId) => {
-    return dishFavorites.some(fav => fav.id === dishId && fav.restaurantId === restaurantId)
+  const isDishFavorite = useCallback((dishId, restaurantId, type = "food") => {
+    return dishFavorites.some(fav => fav.id === dishId && (fav.type || "food") === type)
   }, [dishFavorites])
 
   const getDishFavorites = useCallback(() => {

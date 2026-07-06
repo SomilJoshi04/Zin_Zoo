@@ -19,6 +19,7 @@ export const ADMIN_PERMISSION_SECTIONS = [
   "transaction_management",
   "banner_management",
   "pages_social_media",
+  "zone_management",
 ];
 
 const PATH_PREFIX_TO_SECTION = [
@@ -35,7 +36,7 @@ const PATH_PREFIX_TO_SECTION = [
   { prefix: "/admin/food/foods", section: "food_management" },
   { prefix: "/admin/food/addons", section: "food_management" },
   { prefix: "/admin/food/categories", section: "food_management" },
-  { prefix: "/admin/food/zone-setup", section: "restaurant_management" },
+  { prefix: "/admin/food/zones", section: "zone_management" },
   { prefix: "/admin/food/restaurants", section: "restaurant_management" },
   { prefix: "/admin/food/orders", section: "order_management" },
   { prefix: "/admin/food/order-detect-delivery", section: "order_management" },
@@ -58,9 +59,7 @@ const PATH_PREFIX_TO_SECTION = [
   { prefix: "/admin/food/tax-report", section: "report_management" },
   { prefix: "/admin/food/restaurant-report", section: "report_management" },
   { prefix: "/admin/food/customer-report", section: "report_management" },
-  { prefix: "/admin/food/restaurant-withdraws", section: "transaction_management" },
   { prefix: "/admin/food/hero-banner-management", section: "banner_management" },
-  { prefix: "/admin/food/promotional-banner", section: "banner_management" },
   { prefix: "/admin/food/feature-settings", section: "system_settings" },
   { prefix: "/admin/food/power-scanning", section: "system_settings" },
   { prefix: "/admin/food/business-setup", section: "system_settings" },

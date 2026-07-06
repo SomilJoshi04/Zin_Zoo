@@ -101,18 +101,6 @@ export async function cancelOrderController(req, res, next) {
     }
 }
 
-export async function submitOrderRatingsController(req, res, next) {
-    try {
-        const userId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const dto = validateOrderRatingsDto(req.body);
-        const order = await orderService.submitOrderRatings(orderId, userId, dto);
-        return sendResponse(res, 200, 'Ratings submitted successfully', { order });
-    } catch (err) {
-        next(err);
-    }
-}
-
 export async function updateOrderInstructionsController(req, res, next) {
     try {
         const userId = req.user?.userId;

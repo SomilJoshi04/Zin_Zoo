@@ -7,7 +7,6 @@ import {
     getOrderPaymentsUserController,
     getOrderByIdUserController,
     cancelOrderController,
-    submitOrderRatingsController,
     getOrderDropOtpUserController,
     updateOrderInstructionsController
 } from '../controllers/order.controller.js';
@@ -22,7 +21,6 @@ router.get('/:orderId/payments', getOrderPaymentsUserController);
 router.get('/:orderId/drop-otp', getOrderDropOtpUserController);
 router.get('/:orderId', getOrderByIdUserController);
 router.patch('/:orderId/cancel', cancelOrderController);
-router.patch('/:orderId/ratings', submitOrderRatingsController);
 router.patch('/:orderId/instructions', updateOrderInstructionsController);
 
 export default router;

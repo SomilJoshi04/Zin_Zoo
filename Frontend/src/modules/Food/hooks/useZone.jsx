@@ -112,11 +112,11 @@ export function useZone(location) {
           } else {
             data = {
               status: 'IN_SERVICE',
-              zoneId: '65bf2e2d83f4b52b2bc53284',
+              zoneId: '69b85a63fb04545984776cdb',
               zone: {
-                _id: '65bf2e2d83f4b52b2bc53284',
-                name: 'Default Zone',
-                zoneName: 'Default Zone',
+                _id: '69b85a63fb04545984776cdb',
+                name: 'Indore',
+                zoneName: 'Indore',
                 isActive: true,
                 serviceLocation: { type: 'Point', coordinates: [lng, lat] }
               }
@@ -125,11 +125,11 @@ export function useZone(location) {
         } catch (fallbackErr) {
           data = {
             status: 'IN_SERVICE',
-            zoneId: '65bf2e2d83f4b52b2bc53284',
+            zoneId: '69b85a63fb04545984776cdb',
             zone: {
-              _id: '65bf2e2d83f4b52b2bc53284',
-              name: 'Default Zone',
-              zoneName: 'Default Zone',
+              _id: '69b85a63fb04545984776cdb',
+              name: 'Indore',
+              zoneName: 'Indore',
               isActive: true,
               serviceLocation: { type: 'Point', coordinates: [lng, lat] }
             }
@@ -166,9 +166,9 @@ export function useZone(location) {
             localStorage.setItem("userZone", JSON.stringify(fbZone))
           } else {
             const mockZone = {
-              _id: '65bf2e2d83f4b52b2bc53284',
-              name: 'Default Zone',
-              zoneName: 'Default Zone',
+              _id: '69b85a63fb04545984776cdb',
+              name: 'Indore',
+              zoneName: 'Indore',
               isActive: true,
               serviceLocation: { type: 'Point', coordinates: [lng, lat] }
             }
@@ -180,9 +180,9 @@ export function useZone(location) {
           }
         } catch (fallbackErr) {
           const mockZone = {
-            _id: '65bf2e2d83f4b52b2bc53284',
-            name: 'Default Zone',
-            zoneName: 'Default Zone',
+            _id: '69b85a63fb04545984776cdb',
+            name: 'Indore',
+            zoneName: 'Indore',
             isActive: true,
             serviceLocation: { type: 'Point', coordinates: [lng, lat] }
           }

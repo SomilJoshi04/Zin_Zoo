@@ -26,10 +26,31 @@ export default function ServiceCategoryDetails() {
     setIsBookingOpen(true)
   }
 
+  const handleCloseBooking = () => {
+    setIsBookingOpen(false)
+    setSelectedService(null)
+    const newParams = new URLSearchParams(searchParams)
+    newParams.delete('serviceName')
+    navigate({ search: newParams.toString() }, { replace: true })
+  }
+
+  useEffect(() => {
+    const serviceNameToOpen = searchParams.get('serviceName')
+    if (serviceNameToOpen && data.services.length > 0 && !selectedService) {
+      const matched = data.services.find(
+        svc => svc.name.toLowerCase().trim() === serviceNameToOpen.toLowerCase().trim()
+      )
+      if (matched) {
+        handleOpenBooking(matched)
+      }
+    }
+  }, [searchParams, data.services, selectedService])
+
   const fetchDetails = useCallback(async () => {
     try {
       setLoading(true)
-      const catRes = await servicesPublicAPI.getCategories()
+      const zoneId = localStorage.getItem("userZoneId")
+      const catRes = await servicesPublicAPI.getCategories({ zoneId })
       let categoryName = serviceSlug.split('-').join(' ')
       let categoryColor = "from-blue-500 to-cyan-500"
       
@@ -43,7 +64,7 @@ export default function ServiceCategoryDetails() {
 
       let servicesList = []
       if (categoryName) {
-        const svcRes = await servicesPublicAPI.getServices({ category: categoryName })
+        const svcRes = await servicesPublicAPI.getServices({ category: categoryName, zoneId })
         if (svcRes.data?.success) {
           servicesList = svcRes.data.data.services || []
         }
@@ -195,7 +216,7 @@ export default function ServiceCategoryDetails() {
 
       <ServiceBookingForm 
         isOpen={isBookingOpen} 
-        onClose={() => setIsBookingOpen(false)} 
+        onClose={handleCloseBooking} 
         service={selectedService} 
         categoryTitle={data.title}
       />

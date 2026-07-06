@@ -11,7 +11,8 @@ import {
     getCurrentUserProfileController,
     updateCurrentUserProfileController,
     uploadCurrentUserProfileImageController,
-    deleteCurrentUserAccountController
+    deleteCurrentUserAccountController,
+    submitAppFeedbackController
 } from '../controllers/userProfile.controller.js';
 import {
     getUserWalletController,
@@ -36,8 +37,10 @@ import {
 } from '../controllers/coin.controller.js';
 import { uploadGenericImageController } from '../controllers/upload.controller.js';
 
+
 const router = express.Router();
 
+router.post('/profile/app-feedback', submitAppFeedbackController);
 router.get('/profile', getCurrentUserProfileController);
 router.patch('/profile', updateCurrentUserProfileController);
 router.post('/profile/profile-image', upload.single('file'), uploadCurrentUserProfileImageController);
