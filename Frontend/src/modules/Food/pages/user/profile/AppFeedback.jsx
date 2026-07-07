@@ -73,7 +73,11 @@ export default function AppFeedback() {
                   className="p-2 transition-transform hover:scale-110 active:scale-95 focus:outline-none"
                 >
                   <Star
-                    className={\w-10 h-10 transition-colors \\}
+                    className={`w-10 h-10 transition-colors ${
+                      star <= (hoverRating || rating)
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-300"
+                    }`}
                   />
                 </button>
               ))}
