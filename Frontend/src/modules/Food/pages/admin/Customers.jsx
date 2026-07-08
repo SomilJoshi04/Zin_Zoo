@@ -544,55 +544,55 @@ export default function Customers() {
 
       {/* User Details Modal */}
       <Dialog open={showUserDetails} onOpenChange={setShowUserDetails}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto mx-auto p-0 gap-0">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200">
-            <DialogTitle className="pr-12 text-xl font-bold text-slate-900">User Details</DialogTitle>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto mx-auto p-0 gap-0 bg-white dark:bg-[#1a1a1a] border dark:border-zinc-800">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-slate-200 dark:border-zinc-800">
+            <DialogTitle className="pr-12 text-xl font-bold text-slate-900 dark:text-white">User Details</DialogTitle>
           </DialogHeader>
 
           {loadingDetails ? (
             <div className="px-6 py-8 text-center">
-              <div className="text-sm text-slate-500">Loading user details...</div>
+              <div className="text-sm text-slate-500 dark:text-zinc-400">Loading user details...</div>
             </div>
           ) : userDetails ? (
             <div className="space-y-4 px-6 py-5">
               {/* Profile Section */}
-              <div className="bg-slate-50 rounded-xl p-4 sm:p-5">
+              <div className="bg-slate-50 dark:bg-zinc-800/40 rounded-xl p-4 sm:p-5">
                 <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
+                  <div className="w-16 h-16 rounded-full bg-slate-200 dark:bg-zinc-700 flex items-center justify-center flex-shrink-0">
                     {userDetails.profileImage ? (
                       <img src={userDetails.profileImage} alt={userDetails.name} className="w-full h-full rounded-full object-cover" />
                     ) : (
-                      <User className="w-8 h-8 text-slate-400" />
+                      <User className="w-8 h-8 text-slate-400 dark:text-zinc-500" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 mb-2">
-                      <h3 className="text-lg font-bold text-slate-900">{userDetails.name}</h3>
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white">{userDetails.name}</h3>
                       {userDetails.isActive ? (
-                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 flex items-center gap-1">
+                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 flex items-center gap-1">
                           <CheckCircle className="w-3 h-3" />
                           Active
                         </span>
                       ) : (
-                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 flex items-center gap-1">
+                        <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-300 flex items-center gap-1">
                           <XCircle className="w-3 h-3" />
                           Inactive
                         </span>
                       )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                      <div className="flex items-center gap-2 text-sm text-slate-600 min-w-0">
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400 min-w-0">
                         <Mail className="w-4 h-4" />
                         <span className="truncate">{userDetails.email}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-600 min-w-0">
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400 min-w-0">
                         <Phone className="w-4 h-4" />
                         <span>{userDetails.phone}</span>
                         {userDetails.phoneVerified && (
-                          <CheckCircle className="w-3 h-3 text-green-600" />
+                          <CheckCircle className="w-3 h-3 text-green-600 dark:text-green-400" />
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-zinc-400">
                         <CalendarIcon className="w-4 h-4" />
                         <span>Joined: {formatDateTime(userDetails.joiningDate)}</span>
                       </div>
@@ -603,50 +603,50 @@ export default function Customers() {
 
               {/* Statistics Section */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="bg-blue-50 rounded-lg p-3">
+                <div className="bg-blue-50 dark:bg-blue-900/10 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <Package className="w-4 h-4 text-blue-600" />
-                    <span className="text-xs font-semibold text-slate-700">Total Orders</span>
+                    <Package className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Total Orders</span>
                   </div>
-                  <p className="text-xl font-bold text-blue-600">{userDetails.totalOrders || 0}</p>
+                  <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{userDetails.totalOrders || 0}</p>
                 </div>
-                <div className="bg-green-50 rounded-lg p-3">
+                <div className="bg-green-50 dark:bg-green-900/10 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <IndianRupee className="w-4 h-4 text-green-600" />
-                    <span className="text-xs font-semibold text-slate-700">Total Spent</span>
+                    <IndianRupee className="w-4 h-4 text-green-600 dark:text-green-400" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Total Spent</span>
                   </div>
-                  <p className="text-xl font-bold text-green-600">
+                  <p className="text-xl font-bold text-green-600 dark:text-green-400">
                     Rs. {(userDetails.totalOrderAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
-                <div className="bg-purple-50 rounded-lg p-3">
+                <div className="bg-purple-50 dark:bg-purple-900/10 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
-                    <CalendarIcon className="w-4 h-4 text-purple-600" />
-                    <span className="text-xs font-semibold text-slate-700">Member Since</span>
+                    <CalendarIcon className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">Member Since</span>
                   </div>
-                  <p className="text-base font-bold text-purple-600">{formatDateTime(userDetails.joiningDate)}</p>
+                  <p className="text-base font-bold text-purple-600 dark:text-purple-400">{formatDateTime(userDetails.joiningDate)}</p>
                 </div>
               </div>
 
               {/* Addresses Section */}
               {userDetails.addresses && userDetails.addresses.length > 0 && (
                 <div>
-                  <h4 className="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
                     <MapPin className="w-4 h-4" />
                     Addresses
                   </h4>
                   <div className="space-y-2">
                     {userDetails.addresses.map((address, index) => (
-                      <div key={index} className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                      <div key={index} className="bg-slate-50 dark:bg-zinc-800/40 rounded-lg p-3 border border-slate-200 dark:border-zinc-700">
                         <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-semibold text-slate-700">{address.label || 'Address'}</span>
+                          <span className="text-sm font-semibold text-slate-700 dark:text-zinc-300">{address.label || 'Address'}</span>
                           {address.isDefault && (
-                            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                            <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300">
                               Default
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-slate-600 dark:text-zinc-400">
                           {address.street}
                           {address.additionalDetails && `, ${address.additionalDetails}`}
                           {address.city && `, ${address.city}`}
@@ -662,20 +662,20 @@ export default function Customers() {
               {/* Recent Orders Section */}
               {userDetails.orders && userDetails.orders.length > 0 && (
                 <div>
-                  <h4 className="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
                     <Package className="w-4 h-4" />
                     Recent Orders
                   </h4>
                   <div className="space-y-2">
                     {userDetails.orders.slice(0, 5).map((order, index) => (
-                      <div key={index} className="bg-slate-50 rounded-lg p-3 border border-slate-200 flex items-center justify-between">
+                      <div key={index} className="bg-slate-50 dark:bg-zinc-800/40 rounded-lg p-3 border border-slate-200 dark:border-zinc-700 flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-semibold text-slate-900">{order.orderId}</p>
-                          <p className="text-xs text-slate-600">{order.restaurantName}</p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">{order.orderId}</p>
+                          <p className="text-xs text-slate-600 dark:text-zinc-400">{order.restaurantName}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-semibold text-slate-900">Rs. {(order.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                          <p className="text-xs text-slate-600 capitalize">{order.status}</p>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white">Rs. {(order.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                          <p className="text-xs text-slate-600 dark:text-zinc-400 capitalize">{order.status}</p>
                         </div>
                       </div>
                     ))}
@@ -686,15 +686,15 @@ export default function Customers() {
               {/* Additional Info */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {userDetails.gender && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-slate-700 mb-1">Gender</p>
-                    <p className="text-sm text-slate-600 capitalize">{userDetails.gender}</p>
+                  <div className="bg-slate-50 dark:bg-zinc-800/40 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">Gender</p>
+                    <p className="text-sm text-slate-600 dark:text-zinc-400 capitalize">{userDetails.gender}</p>
                   </div>
                 )}
                 {userDetails.dateOfBirth && (
-                  <div className="bg-slate-50 rounded-lg p-3">
-                    <p className="text-xs font-semibold text-slate-700 mb-1">Date of Birth</p>
-                    <p className="text-sm text-slate-600">
+                  <div className="bg-slate-50 dark:bg-zinc-800/40 rounded-lg p-3">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">Date of Birth</p>
+                    <p className="text-sm text-slate-600 dark:text-zinc-400">
                       {new Date(userDetails.dateOfBirth).toLocaleDateString('en-GB', {
                         day: 'numeric',
                         month: 'short',
@@ -707,7 +707,7 @@ export default function Customers() {
             </div>
           ) : (
             <div className="py-8 text-center">
-              <div className="text-sm text-slate-500">No user details available</div>
+              <div className="text-sm text-slate-500 dark:text-zinc-400">No user details available</div>
             </div>
           )}
         </DialogContent>

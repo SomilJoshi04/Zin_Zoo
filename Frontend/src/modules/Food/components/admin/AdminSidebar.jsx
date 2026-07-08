@@ -447,6 +447,9 @@ export default function AdminSidebar({ isOpen = false, onClose, onCollapseChange
       if (saved) {
         return JSON.parse(saved)
       }
+      if (typeof window !== "undefined" && window.innerWidth < 1366) {
+        return { isCollapsed: true, expandedSections: {} }
+      }
     } catch (e) {
       debugError('Error loading sidebar state:', e)
     }

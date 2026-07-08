@@ -761,7 +761,6 @@ export default function AccessoriesProductsList() {
               <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 border border-slate-200 rounded-lg p-4 dark:bg-slate-800 dark:border-slate-700">
                 <p><span className="font-semibold text-slate-700 dark:text-slate-300">Price:</span> <span className="text-slate-900 dark:text-white">{selectedFood.variants?.length ? `Starting from \u20B9${selectedFood.price}` : `\u20B9${selectedFood.price}`}</span></p>
                 <p><span className="font-semibold text-slate-700 dark:text-slate-300">Category:</span> <span className="text-slate-900 dark:text-white">{selectedFood.categoryName || "-"}</span></p>
-                <p><span className="font-semibold text-slate-700 dark:text-slate-300">Accessories Type:</span> <span className="text-slate-900 dark:text-white">{selectedFood.foodType || "-"}</span></p>
               </div>
               {selectedFood.variants?.length ? (
                 <div className="rounded-lg border border-slate-200 bg-white p-4 dark:bg-slate-800 dark:border-slate-700">

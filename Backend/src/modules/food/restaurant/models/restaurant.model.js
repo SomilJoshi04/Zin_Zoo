@@ -83,6 +83,11 @@ const restaurantSchema = new mongoose.Schema(
       required: true,
       default: false,
     },
+    restaurantType: {
+      type: String,
+      enum: ["Veg", "Non-Veg", "Both"],
+      default: "Both",
+    },
     addressLine1: {
       type: String,
     },

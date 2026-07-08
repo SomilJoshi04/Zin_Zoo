@@ -47,6 +47,7 @@ router.use(async (req, _res, next) => {
 
 const resolveSectionFromRequest = (path = '', method = '') => {
     if (path.startsWith('/sub-admins')) return 'sub_admin_management';
+    if (path.startsWith('/restaurants') || path.startsWith('/restaurant-commissions') || path.startsWith('/restaurant-settings') || path.startsWith('/restaurant-subscription-settings') || path.startsWith('/restaurant-subscriptions')) return 'restaurant_management';
     if (path === '/customers' && String(method).toUpperCase() === 'GET') return null;
     if (path.startsWith('/customers') || path.startsWith('/support-tickets')) return 'customer_management';
     if (path === '/zones' && String(method).toUpperCase() === 'GET') return null;
@@ -312,6 +313,33 @@ router.post('/wallet/withdraw-methods', adminWalletController.createWithdrawMeth
 router.patch('/wallet/withdraw-methods/:id', adminWalletController.updateWithdrawMethod);
 router.delete('/wallet/withdraw-methods/:id', adminWalletController.deleteWithdrawMethod);
 router.patch('/wallet/withdraw-methods/:id/status', adminWalletController.toggleWithdrawMethodStatus);
+
+// ----- Restaurant Management (Admin) -----
+router.get('/restaurants/pending', adminController.getPendingRestaurants);
+router.get('/restaurants/unregistered', adminController.getUnregisteredRestaurants);
+router.delete('/restaurants/unregistered/:id', adminController.deleteUnregisteredRestaurant);
+router.get('/restaurants/complaints', adminController.getRestaurantComplaints);
+router.patch('/restaurants/complaints/:id', adminController.updateRestaurantComplaint);
+router.patch('/restaurants/:id/approve', adminController.approveRestaurant);
+router.patch('/restaurants/:id/reject', adminController.rejectRestaurant);
+router.get('/restaurant-subscription-settings', adminController.getRestaurantSubscriptionSettings);
+router.patch('/restaurant-subscription-settings', adminController.updateRestaurantSubscriptionSettings);
+router.get('/restaurant-subscriptions/history', adminController.getRestaurantSubscriptionHistory);
+router.get('/restaurants', adminController.getRestaurants);
+router.get('/restaurants/reviews', adminController.getRestaurantReviews);
+router.get('/restaurants/:id', adminController.getRestaurantById);
+router.patch('/restaurants/:id', adminController.updateRestaurantById);
+router.delete('/restaurants/:id', adminController.deleteRestaurant);
+
+// ----- Restaurant Commissions -----
+router.get('/restaurant-commissions', adminController.getRestaurantCommissions);
+router.get('/restaurant-commissions/bootstrap', adminController.getRestaurantCommissionBootstrap);
+router.get('/restaurant-commissions/:id', adminController.getRestaurantCommissionById);
+router.post('/restaurant-commissions', adminController.createRestaurantCommission);
+router.patch('/restaurant-commissions/:id', adminController.updateRestaurantCommission);
+router.delete('/restaurant-commissions/:id', adminController.deleteRestaurantCommission);
+router.patch('/restaurant-commissions/:id/status', adminController.toggleRestaurantCommissionStatus);
+router.patch('/restaurant-commissions/:id/toggle', adminController.toggleRestaurantCommissionStatus);
 
 router.get('/sidebar-badges', adminController.getSidebarBadges);
 

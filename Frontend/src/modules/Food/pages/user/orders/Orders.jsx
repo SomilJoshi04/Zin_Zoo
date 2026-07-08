@@ -469,22 +469,13 @@ export default function Orders() {
     }
   }
 
-  const handleShareRestaurant = async (order) => {
+  const handleShareApp = async () => {
     const companyName = await getCompanyNameAsync()
-    const location =
-      order.restaurantLocation ||
-      `${order.address?.city || ""}, ${order.address?.state || ""}`.trim()
-    const restaurantPath = order.restaurantSlug || order.restaurantId
-    const shareUrl = restaurantPath
-      ? `${window.location.origin}/food/user/restaurants/${restaurantPath}`
-      : `${window.location.origin}/food/user/orders/${order.id}`
-
-    const shareText = `Check out ${order.restaurant} on ${companyName}.
-Location: ${location || "Location not available"}
-Order again from this restaurant in the ${companyName} app.`
+    const shareUrl = "https://zin-zoo.vercel.app"
+    const shareText = `Check out ${companyName} to order food, grocery, services, and accessories!`
 
     const payload = {
-      title: order.restaurant,
+      title: companyName,
       text: shareText,
       url: shareUrl,
     }
@@ -492,15 +483,15 @@ Order again from this restaurant in the ${companyName} app.`
     try {
       const shared = await tryNativeShare(payload)
       if (shared) {
-        toast.success("Restaurant shared successfully")
+        toast.success("App shared successfully")
         return
       }
 
       openShareModal(payload)
     } catch (error) {
       if (error?.name !== "AbortError") {
-        debugError("Error sharing restaurant:", error)
-        toast.error("Failed to share restaurant")
+        debugError("Error sharing app:", error)
+        toast.error("Failed to share app")
       }
     } finally {
       setActiveMenuOrderId(null)
@@ -686,10 +677,10 @@ Order again from this restaurant in the ${companyName} app.`
                   <div className="absolute right-3 top-10 z-20 w-40 rounded-xl bg-white shadow-lg border border-gray-100 py-1 text-xs">
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); handleShareRestaurant(order); }}
+                      onClick={(e) => { e.stopPropagation(); handleShareApp(); }}
                       className="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-800"
                     >
-                      Share restaurant
+                      Share app
                     </button>
                     <button
                       type="button"
@@ -741,7 +732,7 @@ Order again from this restaurant in the ${companyName} app.`
           >
             <div className="flex items-center justify-between border-b border-gray-100 dark:border-zinc-800 px-5 py-4">
               <div>
-                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Share restaurant</h3>
+                <h3 className="text-base font-semibold text-gray-900 dark:text-white">Share App</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Native share available ho to sab supported apps wahan dikhenge</p>
               </div>
               <button

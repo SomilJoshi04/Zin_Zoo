@@ -1212,44 +1212,19 @@ export default function CategoryPage() {
 
     // Filter by category - Dynamic filtering based on menu items
     if (selectedCategory && selectedCategory !== 'all') {
-      const expandedDishes = []
-
-      filtered.forEach(r => {
+      filtered = filtered.filter(r => {
         if (r.menu) {
           const hasCategoryItem = checkCategoryInMenu(r.menu, selectedCategory)
           if (hasCategoryItem) {
-            // Get ALL matching dishes for this category
-            const categoryDishes = getAllCategoryDishesFromMenu(r.menu, selectedCategory)
-
-            if (categoryDishes.length > 0) {
-              const validDishes = vegMode
-                ? categoryDishes.filter((dish) => dish.foodType === "Veg")
-                : categoryDishes;
-
-              validDishes.forEach((dishForCard) => {
-                expandedDishes.push({
-                  ...r,
-                  id: `${r.id || r.restaurantId}-${dishForCard.itemId}`,
-                  dishId: dishForCard.itemId || `${r.id}-dish`,
-                  categoryDish: dishForCard,
-                  categoryDishName: dishForCard.name,
-                  categoryDishPrice: dishForCard.price,
-                  categoryDishImage: dishForCard.image,
-                })
-              })
+            if (vegMode) {
+              const categoryDishes = getAllCategoryDishesFromMenu(r.menu, selectedCategory)
+              return categoryDishes.some(d => d.foodType === "Veg")
             }
+            return true
           }
         }
+        return false
       })
-
-      filtered = expandedDishes
-
-      if (filtered.length === 0) {
-        const fallbackDishes = getCategoryFallbackDishesFromApprovedFoods(selectedCategory, sourceData)
-        filtered = vegMode
-          ? fallbackDishes.filter((dish) => dish.categoryDishFoodType === "Veg")
-          : fallbackDishes
-      }
     }
 
     // Strict zone filter: double check that restaurant belongs to current zone
@@ -1275,46 +1250,20 @@ export default function CategoryPage() {
     let filtered = [...sourceData]
 
     // Filter by category - Dynamic filtering based on menu items
-    // If category is selected, expand restaurants into dish cards (one card per matching dish)
     if (selectedCategory && selectedCategory !== 'all') {
-      const expandedDishes = []
-
-      filtered.forEach(r => {
+      filtered = filtered.filter(r => {
         if (r.menu) {
           const hasCategoryItem = checkCategoryInMenu(r.menu, selectedCategory)
           if (hasCategoryItem) {
-            // Get ALL matching dishes for this category
-            const categoryDishes = getAllCategoryDishesFromMenu(r.menu, selectedCategory)
-
-            if (categoryDishes.length > 0) {
-              const validDishes = vegMode
-                ? categoryDishes.filter((dish) => dish.foodType === "Veg")
-                : categoryDishes;
-
-              validDishes.forEach((dishForCard) => {
-                expandedDishes.push({
-                  ...r,
-                  id: `${r.id || r.restaurantId}-${dishForCard.itemId}`,
-                  dishId: dishForCard.itemId || `${r.id}-dish`,
-                  categoryDish: dishForCard,
-                  categoryDishName: dishForCard.name,
-                  categoryDishPrice: dishForCard.price,
-                  categoryDishImage: dishForCard.image,
-                })
-              })
+            if (vegMode) {
+              const categoryDishes = getAllCategoryDishesFromMenu(r.menu, selectedCategory)
+              return categoryDishes.some(d => d.foodType === "Veg")
             }
+            return true
           }
         }
+        return false
       })
-
-      filtered = expandedDishes
-
-      if (filtered.length === 0) {
-        const fallbackDishes = getCategoryFallbackDishesFromApprovedFoods(selectedCategory, sourceData)
-        filtered = vegMode
-          ? fallbackDishes.filter((dish) => dish.categoryDishFoodType === "Veg")
-          : fallbackDishes
-      }
     }
 
     // Strict zone filter: double check that restaurant belongs to current zone
@@ -1364,7 +1313,7 @@ export default function CategoryPage() {
 
   // Check if should show grayscale (user out of service)
   const shouldShowGrayscale = isOutOfService
-  const isCategoryView = selectedCategory && selectedCategory !== 'all'
+  const isCategoryView = false
 
   return (
     <div className={`min-h-screen bg-white dark:bg-[#0a0a0a] ${shouldShowGrayscale ? 'grayscale opacity-75' : ''}`}>
@@ -1568,22 +1517,22 @@ export default function CategoryPage() {
             </section>
           )}
           {/* Empty State for specific category with no items */}
-          {selectedCategory !== 'all' && filteredRecommended.length === 0 && !showRestaurantSkeleton && !isSwitchingCategory && !loadingRestaurants && !isLoadingFilterResults && (
+          {selectedCategory !== 'all' && filteredAllRestaurants.length === 0 && !showRestaurantSkeleton && !isSwitchingCategory && !loadingRestaurants && !isLoadingFilterResults && (
             <div className="flex flex-col items-center justify-center py-16 text-center px-4 bg-gray-50/50 dark:bg-gray-900/10 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
               <div className="w-14 h-14 rounded-full bg-[#FFF2EB] dark:bg-[#F84E04]/10 flex items-center justify-center mb-4">
                 <UtensilsCrossed className="h-6 w-6 text-[#F84E04]" />
               </div>
               <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1.5">
-                No Food Items Found
+                No Restaurants Found
               </h3>
               <p className="text-xs md:text-sm text-gray-550 dark:text-gray-400 max-w-sm leading-relaxed">
-                Currently, there are no food items listed under this category. Please try exploring other categories!
+                Currently, there are no restaurants available under this category. Please try exploring other categories!
               </p>
             </div>
           )}
 
           {/* ALL RESTAURANTS Section */}
-          {selectedCategory === 'all' && (
+          {true && (
             <section className="relative">
               <h2 className="text-xs sm:text-sm md:text-base font-semibold text-gray-400 dark:text-gray-500 tracking-widest uppercase mb-4 md:mb-6">
                 ALL RESTAURANTS

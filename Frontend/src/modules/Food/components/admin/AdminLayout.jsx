@@ -32,7 +32,7 @@ export default function AdminLayout() {
     };
   }, []);
 
-  // Get initial collapsed state from localStorage to set initial margin
+  // Get initial collapsed state from localStorage or screen width to set initial margin
   useEffect(() => {
     try {
       const saved = localStorage.getItem('admin_sidebar_state')
@@ -40,7 +40,11 @@ export default function AdminLayout() {
         const state = JSON.parse(saved)
         if (state && typeof state.isCollapsed !== 'undefined') {
           setIsSidebarCollapsed(state.isCollapsed)
+          return
         }
+      }
+      if (typeof window !== "undefined" && window.innerWidth < 1366) {
+        setIsSidebarCollapsed(true)
       }
     } catch (e) {
       debugError('Error loading sidebar collapsed state:', e)

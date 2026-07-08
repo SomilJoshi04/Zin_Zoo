@@ -75,7 +75,7 @@ const uploadFields = upload.fields([
     { name: 'menuPdf', maxCount: 1 }
 ]);
 
-router.post('/register', uploadFields, registerRestaurantController);
+// router.post('/register', uploadFields, registerRestaurantController);
 
 
 // Public: approved restaurants list (for user app)

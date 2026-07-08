@@ -1015,6 +1015,7 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
   }
 
   await order.save();
+  await foodTransactionService.createInitialTransaction(order);
   await deductStock(order.items, order.moduleType);
 
   if (isWallet) {
@@ -1763,133 +1764,187 @@ export async function switchToCash(orderId, deliveryPartnerId) {
 // ----- Admin -----
 export async function listOrdersAdmin(query) {
   const { page, limit, skip } = buildPaginationOptions(query);
-  const filter = {
+  const moduleType = query.moduleType || 'all';
+
+  // Base payment filter
+  const paymentFilter = {
     $or: [
-      { "payment.method": { $in: ["cash", "wallet"] } },
-      { "payment.status": { $in: ["paid", "authorized", "captured", "settled", "refunded"] } },
+      { "payment.method": { $in: ["cash", "wallet", "razorpay", "razorpay_qr"] } },
+      { "payment.status": { $in: ["paid", "authorized", "captured", "settled", "refunded", "cod_pending"] } },
     ],
   };
 
-  const rawStatus =
-    typeof query.status === "string" ? query.status.trim().toLowerCase() : "";
-  const cancelledBy =
-    typeof query.cancelledBy === "string"
-      ? query.cancelledBy.trim().toLowerCase()
-      : "";
-  const restaurantIdRaw =
-    typeof query.restaurantId === "string" ? query.restaurantId.trim() : "";
-  const zoneIdRaw =
-    typeof query.zoneId === "string" ? query.zoneId.trim() : "";
-  const startDateRaw =
-    typeof query.startDate === "string" ? query.startDate.trim() : "";
-  const endDateRaw =
-    typeof query.endDate === "string" ? query.endDate.trim() : "";
+  const buildCollectionFilter = () => {
+    const filter = { ...paymentFilter };
+    const rawStatus = typeof query.status === "string" ? query.status.trim().toLowerCase() : "";
+    const cancelledBy = typeof query.cancelledBy === "string" ? query.cancelledBy.trim().toLowerCase() : "";
+    const zoneIdRaw = typeof query.zoneId === "string" ? query.zoneId.trim() : "";
+    const startDateRaw = typeof query.startDate === "string" ? query.startDate.trim() : "";
+    const endDateRaw = typeof query.endDate === "string" ? query.endDate.trim() : "";
 
-  if (rawStatus && rawStatus !== "all") {
-    switch (rawStatus) {
-      case "pending":
-        filter.orderStatus = { $in: ["created", "confirmed", "pending_payment", "pending"] };
-        break;
-      case "accepted":
-        filter.orderStatus = { $in: ["accepted", "confirmed"] };
-        break;
-      case "processing":
-        filter.orderStatus = { $in: ["confirmed", "preparing", "processing"] };
-        break;
-      case "out-for-delivery":
-      case "food-on-the-way":
-        filter.orderStatus = { $in: ["picked_up", "out_for_delivery"] };
-        break;
-      case "delivered":
-        filter.orderStatus = "delivered";
-        break;
-      case "canceled":
-      case "cancelled":
-        filter.orderStatus = {
-          $in: [
-            "cancelled",
-            "canceled",
-            "cancelled_by_user",
-            "cancelled_by_restaurant",
-            "cancelled_by_admin",
-          ],
-        };
-        break;
-      case "restaurant-cancelled":
+    if (rawStatus && rawStatus !== "all") {
+      switch (rawStatus) {
+        case "pending":
+          filter.orderStatus = { $in: ["created", "confirmed", "pending_payment", "pending"] };
+          break;
+        case "accepted":
+          filter.orderStatus = { $in: ["accepted", "confirmed"] };
+          break;
+        case "processing":
+          filter.orderStatus = { $in: ["confirmed", "preparing", "processing"] };
+          break;
+        case "out-for-delivery":
+        case "food-on-the-way":
+          filter.orderStatus = { $in: ["picked_up", "out_for_delivery"] };
+          break;
+        case "delivered":
+          filter.orderStatus = "delivered";
+          break;
+        case "canceled":
+        case "cancelled":
+          filter.orderStatus = {
+            $in: [
+              "cancelled",
+              "canceled",
+              "cancelled_by_user",
+              "cancelled_by_restaurant",
+              "cancelled_by_admin",
+            ],
+          };
+          break;
+        case "restaurant-cancelled":
+          filter.orderStatus = "cancelled_by_restaurant";
+          break;
+        case "payment-failed":
+          filter["payment.status"] = "failed";
+          break;
+        case "refunded":
+          filter["payment.status"] = "refunded";
+          break;
+        case "offline-payments":
+          filter["payment.method"] = "cash";
+          filter.orderStatus = { $in: ["created", "confirmed", "delivered"] };
+          break;
+        case "scheduled":
+          filter.scheduledAt = { $ne: null };
+          break;
+      }
+    }
+
+    if (cancelledBy) {
+      if (cancelledBy === "restaurant") {
         filter.orderStatus = "cancelled_by_restaurant";
-        break;
-      case "payment-failed":
-        filter["payment.status"] = "failed";
-        break;
-      case "refunded":
-        filter["payment.status"] = "refunded";
-        break;
-      case "offline-payments":
-        filter["payment.method"] = "cash";
-        filter.orderStatus = { $in: ["created", "confirmed", "delivered"] };
-        break;
-      case "scheduled":
-        filter.scheduledAt = { $ne: null };
-        break;
-      default:
-        break;
+      } else if (cancelledBy === "user" || cancelledBy === "customer") {
+        filter.orderStatus = "cancelled_by_user";
+      }
     }
+
+    if (zoneIdRaw && mongoose.Types.ObjectId.isValid(zoneIdRaw)) {
+      filter.zoneId = new mongoose.Types.ObjectId(zoneIdRaw);
+    }
+
+    if (startDateRaw || endDateRaw) {
+      const createdAt = {};
+      const start = startDateRaw ? new Date(startDateRaw) : null;
+      const end = endDateRaw ? new Date(endDateRaw) : null;
+      if (start && !Number.isNaN(start.getTime())) {
+        createdAt.$gte = start;
+      }
+      if (end && !Number.isNaN(end.getTime())) {
+        createdAt.$lte = end;
+      }
+      if (Object.keys(createdAt).length > 0) {
+        filter.createdAt = createdAt;
+      }
+    }
+    return filter;
+  };
+
+  const filter = buildCollectionFilter();
+  let docs = [];
+  let total = 0;
+
+  if (moduleType === 'food') {
+    const foodFilter = { ...filter };
+    if (query.restaurantId && mongoose.Types.ObjectId.isValid(query.restaurantId)) {
+      foodFilter.restaurantId = new mongoose.Types.ObjectId(query.restaurantId);
+    }
+    if (query.zoneId && mongoose.Types.ObjectId.isValid(query.zoneId)) {
+      const zoneRestaurantIds = await FoodRestaurant.find({
+        zoneId: new mongoose.Types.ObjectId(query.zoneId),
+      }).distinct("_id");
+      if (foodFilter.restaurantId) {
+        foodFilter.restaurantId = {
+          $in: zoneRestaurantIds.filter(
+            (id) => String(id) === String(foodFilter.restaurantId)
+          )
+        };
+      } else {
+        foodFilter.restaurantId = { $in: zoneRestaurantIds };
+      }
+    }
+
+    [docs, total] = await Promise.all([
+      FoodOrder.find(foodFilter)
+        .select("+deliveryOtp")
+        .populate("userId", "name phone email")
+        .populate("restaurantId", "restaurantName area city ownerPhone zoneId")
+        .populate("dispatch.deliveryPartnerId", "name phone")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      FoodOrder.countDocuments(foodFilter),
+    ]);
+  } else if (moduleType === 'grocery' || moduleType === 'accessories') {
+    const groceryFilter = { ...filter };
+    groceryFilter.moduleType = moduleType;
+
+    [docs, total] = await Promise.all([
+      GroceryOrder.find(groceryFilter)
+        .select("+deliveryOtp")
+        .populate("userId", "name phone email")
+        .populate("dispatch.deliveryPartnerId", "name phone")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      GroceryOrder.countDocuments(groceryFilter),
+    ]);
+  } else {
+    // moduleType === 'all'
+    const foodFilter = { ...filter };
+    if (query.zoneId && mongoose.Types.ObjectId.isValid(query.zoneId)) {
+      const zoneRestaurantIds = await FoodRestaurant.find({
+        zoneId: new mongoose.Types.ObjectId(query.zoneId),
+      }).distinct("_id");
+      foodFilter.restaurantId = { $in: zoneRestaurantIds };
+    }
+
+    const groceryFilter = { ...filter };
+
+    const [foodDocs, groceryDocs] = await Promise.all([
+      FoodOrder.find(foodFilter)
+        .select("+deliveryOtp")
+        .populate("userId", "name phone email")
+        .populate("restaurantId", "restaurantName area city ownerPhone zoneId")
+        .populate("dispatch.deliveryPartnerId", "name phone")
+        .lean(),
+      GroceryOrder.find(groceryFilter)
+        .select("+deliveryOtp")
+        .populate("userId", "name phone email")
+        .populate("dispatch.deliveryPartnerId", "name phone")
+        .lean(),
+    ]);
+
+    const allDocs = [...foodDocs, ...groceryDocs].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    total = allDocs.length;
+    docs = allDocs.slice(skip, skip + limit);
   }
 
-  if (cancelledBy) {
-    if (cancelledBy === "restaurant") {
-      filter.orderStatus = "cancelled_by_restaurant";
-    } else if (cancelledBy === "user" || cancelledBy === "customer") {
-      filter.orderStatus = "cancelled_by_user";
-    }
-  }
-
-  if (restaurantIdRaw && mongoose.Types.ObjectId.isValid(restaurantIdRaw)) {
-    filter.restaurantId = new mongoose.Types.ObjectId(restaurantIdRaw);
-  }
-
-  if (zoneIdRaw && mongoose.Types.ObjectId.isValid(zoneIdRaw)) {
-    const zoneRestaurantIds = await FoodRestaurant.find({
-      zoneId: new mongoose.Types.ObjectId(zoneIdRaw),
-    }).distinct("_id");
-    if (filter.restaurantId instanceof mongoose.Types.ObjectId) {
-      filter.restaurantId = {
-        $in: zoneRestaurantIds.filter(
-          (id) => String(id) === String(filter.restaurantId),
-        ),
-      };
-    } else {
-      filter.restaurantId = { $in: zoneRestaurantIds };
-    }
-  }
-
-  if (startDateRaw || endDateRaw) {
-    const createdAt = {};
-    const start = startDateRaw ? new Date(startDateRaw) : null;
-    const end = endDateRaw ? new Date(endDateRaw) : null;
-    if (start && !Number.isNaN(start.getTime())) {
-      createdAt.$gte = start;
-    }
-    if (end && !Number.isNaN(end.getTime())) {
-      createdAt.$lte = end;
-    }
-    if (Object.keys(createdAt).length > 0) {
-      filter.createdAt = createdAt;
-    }
-  }
-
-  const [docs, total] = await Promise.all([
-    FoodOrder.find(filter)
-      .select("+deliveryOtp")
-      .populate("userId", "name phone email")
-      .populate("restaurantId", "restaurantName area city ownerPhone zoneId")
-      .populate("dispatch.deliveryPartnerId", "name phone")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(),
-    FoodOrder.countDocuments(filter),
-  ]);
   const paginated = buildPaginatedResult({ docs: docs.map(d => normalizeOrderForClient(d)), total, page, limit });
   return { ...paginated, orders: paginated.data };
 }

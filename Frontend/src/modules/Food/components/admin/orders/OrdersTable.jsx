@@ -393,7 +393,10 @@ export default function OrdersTable({
                         </button>
                       )}
 
-                      {onUpdateStatus && String(order.orderStatus || "").trim().toLowerCase() === "accepted" && (
+                      {onUpdateStatus && (
+                        String(order.orderStatus || "").trim().toLowerCase() === "accepted" ||
+                        String(order.orderStatus || "").trim().toLowerCase() === "confirmed"
+                      ) && (
                         <button
                           onClick={() => onUpdateStatus(order, 'preparing')}
                           disabled={actionLoadingOrderId === (order.id || order.orderId)}
@@ -408,7 +411,10 @@ export default function OrdersTable({
                         </button>
                       )}
 
-                      {onUpdateStatus && String(order.orderStatus || "").trim().toLowerCase() === "processing" && (
+                      {onUpdateStatus && (
+                        String(order.orderStatus || "").trim().toLowerCase() === "processing" ||
+                        String(order.orderStatus || "").trim().toLowerCase() === "preparing"
+                      ) && (
                         <button
                           onClick={() => onUpdateStatus(order, 'picked_up')}
                           disabled={actionLoadingOrderId === (order.id || order.orderId)}
@@ -423,7 +429,11 @@ export default function OrdersTable({
                         </button>
                       )}
 
-                      {onUpdateStatus && String(order.orderStatus || "").trim().toLowerCase() === "out for delivery" && (
+                      {onUpdateStatus && (
+                        String(order.orderStatus || "").trim().toLowerCase() === "out for delivery" ||
+                        String(order.orderStatus || "").trim().toLowerCase() === "out_for_delivery" ||
+                        String(order.orderStatus || "").trim().toLowerCase() === "picked_up"
+                      ) && (
                         <button
                           onClick={() => onUpdateStatus(order, 'delivered')}
                           disabled={actionLoadingOrderId === (order.id || order.orderId)}

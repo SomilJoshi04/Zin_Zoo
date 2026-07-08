@@ -393,10 +393,10 @@ export default function FoodsList() {
   const handleFoodFormSubmit = async () => {
     if (!ensureActionAccess(foodFormMode === "edit" ? "edit" : "create")) return
 
-    // if (!foodForm.restaurantId) {
-    //   toast.error("Restaurant is required")
-    //   return
-    // }
+    if (!foodForm.restaurantId) {
+      toast.error("Restaurant is required")
+      return
+    }
     if (!String(foodForm.categoryName || "").trim()) {
       toast.error("Please select or enter a category")
       return
@@ -828,13 +828,13 @@ export default function FoodsList() {
           </DialogHeader>
           <div className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Restaurant</label>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant *</label>
                 <select
                   value={foodForm.restaurantId}
                   onChange={(e) => setFoodForm((prev) => ({ ...prev, restaurantId: e.target.value, categoryId: "", categoryName: "" }))}
                   disabled={foodFormMode === "edit"}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white disabled:bg-slate-100"
+                  className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
                 >
                   <option value="">Select restaurant</option>
                   {restaurantOptions.map(({ id, name }) => (
@@ -843,7 +843,7 @@ export default function FoodsList() {
                     </option>
                   ))}
                 </select>
-              </div> */}
+              </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Category</label>
                 <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
@@ -896,22 +896,7 @@ export default function FoodsList() {
                   </PopoverContent>
                 </Popover>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Zone</label>
-                <select
-                  value={foodForm.zoneId}
-                  onChange={(e) => setFoodForm((prev) => ({ ...prev, zoneId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:border-slate-900 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                >
-                  <option value="global">Global (all zones)</option>
-                  {zonesLoading && <option value="" disabled>Loading zones...</option>}
-                  {zones.map((zone) => {
-                    const id = String(zone?._id || zone?.id || "")
-                    const label = zone?.name || zone?.zoneName || zone?.serviceLocation || id
-                    return <option key={id} value={id}>{label}</option>
-                  })}
-                </select>
-              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Food Name</label>
                 <input

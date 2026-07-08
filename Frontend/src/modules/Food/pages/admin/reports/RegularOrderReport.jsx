@@ -46,9 +46,13 @@ export default function RegularOrderReport() {
   
   const [filters, setFilters] = useState({
     zone: "All Zones",
-    restaurant: "All restaurants",
-    customer: "All customers",
     time: "All Time",
+    moduleType: "all",
+  })
+  const [tempFilters, setTempFilters] = useState({
+    zone: "All Zones",
+    time: "All Time",
+    moduleType: "all",
   })
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
@@ -69,12 +73,6 @@ export default function RegularOrderReport() {
         const restaurantsRes = await adminAPI.getRestaurants({ limit: 100 })
         if (restaurantsRes.data?.success) {
           setRestaurants(restaurantsRes.data.data.restaurants || [])
-        }
-
-        // Fetch customers (users) via existing customers API
-        const customersRes = await adminAPI.getCustomers({ limit: 100 })
-        if (customersRes.data?.success) {
-          setCustomers(customersRes.data.data.customers || [])
         }
       } catch (err) {
         debugError("Error fetching filter data:", err)
@@ -124,7 +122,7 @@ export default function RegularOrderReport() {
         page: 1,
         limit: 10000,
         ...(filters.zone !== "All Zones" && { zoneId: filters.zone }),
-        ...(filters.restaurant !== "All restaurants" && { restaurantId: filters.restaurant }),
+        ...(filters.moduleType !== "all" && { moduleType: filters.moduleType }),
         ...(fromDate && { startDate: fromDate.toISOString().split('T')[0] }),
         ...(toDate && { endDate: toDate.toISOString().split('T')[0] }),
       }
@@ -170,6 +168,8 @@ export default function RegularOrderReport() {
             order.restaurantId?.toString?.() ||
             ""
           const orderZoneId =
+            order.zoneId?._id?.toString?.() ||
+            order.zoneId?.toString?.() ||
             order.restaurantId?.zoneId?._id?.toString?.() ||
             order.restaurantId?.zoneId?.toString?.() ||
             ""
@@ -185,19 +185,38 @@ export default function RegularOrderReport() {
 
           const backendStatus = String(order.orderStatus || "").toLowerCase()
           let displayStatus = order.orderStatus
-          if (!backendStatus || backendStatus === "created" || backendStatus === "confirmed") {
+          if (
+            !backendStatus ||
+            backendStatus === "created" ||
+            backendStatus === "confirmed" ||
+            backendStatus === "pending" ||
+            backendStatus === "pending_payment"
+          ) {
             displayStatus = "Pending"
-          } else if (backendStatus === "preparing" || backendStatus === "ready_for_pickup") {
+          } else if (backendStatus === "preparing" || backendStatus === "ready_for_pickup" || backendStatus === "processing") {
             displayStatus = "Processing"
-          } else if (backendStatus === "picked_up") {
+          } else if (backendStatus === "picked_up" || backendStatus === "out_for_delivery") {
             displayStatus = "Food On The Way"
           } else if (backendStatus === "delivered") {
             displayStatus = "Delivered"
-          } else if (backendStatus === "cancelled_by_restaurant") {
+          } else if (
+            backendStatus === "cancelled_by_restaurant" ||
+            backendStatus === "cancelled_by_user" ||
+            backendStatus === "cancelled_by_admin" ||
+            backendStatus === "cancelled" ||
+            backendStatus === "canceled"
+          ) {
             displayStatus = "Canceled"
-          } else if (backendStatus === "cancelled_by_user" || backendStatus === "cancelled_by_admin") {
-            displayStatus = "Canceled"
+          } else if (backendStatus === "failed" || backendStatus === "payment_failed") {
+            displayStatus = "Payment Failed"
+          } else if (backendStatus === "refunded") {
+            displayStatus = "Refunded"
+          } else if (backendStatus === "accepted") {
+            displayStatus = "Accepted"
+          } else {
+            displayStatus = "Pending"
           }
+
 
           return {
             orderId: order.orderId,
@@ -213,6 +232,7 @@ export default function RegularOrderReport() {
             platformFee,
             totalAmount,
             orderStatus: displayStatus,
+            moduleType: order.moduleType || 'food',
           }
         })
         setOrders(transformedOrders)
@@ -246,9 +266,6 @@ export default function RegularOrderReport() {
     if (filters.zone !== "All Zones") {
       scoped = scoped.filter((o) => String(o.zoneId || "") === String(filters.zone))
     }
-    if (filters.customer !== "All customers") {
-      scoped = scoped.filter((o) => String(o.customerId || "") === String(filters.customer))
-    }
 
     if (!searchQuery.trim()) return scoped
     const q = searchQuery.toLowerCase().trim()
@@ -257,7 +274,7 @@ export default function RegularOrderReport() {
         .toLowerCase()
         .includes(q),
     )
-  }, [orders, searchQuery, filters.zone, filters.customer])
+  }, [orders, searchQuery, filters.zone])
 
   const handleExport = (format) => {
     if (filteredOrders.length === 0) {
@@ -266,7 +283,6 @@ export default function RegularOrderReport() {
     }
     const headers = [
       { key: "orderId", label: "Order ID" },
-      { key: "restaurant", label: "Restaurant" },
       { key: "customerName", label: "Customer Name" },
       { key: "totalItemAmount", label: "Total Item Amount" },
       { key: "couponDiscount", label: "Coupon Discount" },
@@ -285,19 +301,21 @@ export default function RegularOrderReport() {
   }
 
   const handleFilterApply = () => {
-    // Filters are already applied via useMemo
+    setFilters({ ...tempFilters })
+    setCurrentPage(1)
   }
 
   const handleResetFilters = () => {
-    setFilters({
+    const defaultFilters = {
       zone: "All Zones",
-      restaurant: "All restaurants",
-      customer: "All customers",
       time: "All Time",
-    })
+      moduleType: "all",
+    }
+    setTempFilters(defaultFilters)
+    setFilters(defaultFilters)
   }
 
-  const activeFiltersCount = (filters.zone !== "All Zones" ? 1 : 0) + (filters.restaurant !== "All restaurants" ? 1 : 0) + (filters.customer !== "All customers" ? 1 : 0) + (filters.time !== "All Time" ? 1 : 0)
+  const activeFiltersCount = (filters.zone !== "All Zones" ? 1 : 0) + (filters.time !== "All Time" ? 1 : 0) + (filters.moduleType !== "all" ? 1 : 0)
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE))
 
@@ -338,8 +356,7 @@ export default function RegularOrderReport() {
     })}`
 
   const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({ ...prev, [key]: value }))
-    setCurrentPage(1)
+    setTempFilters((prev) => ({ ...prev, [key]: value }))
   }
 
   const handlePageChange = (newPage) => {
@@ -411,7 +428,7 @@ export default function RegularOrderReport() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="relative flex-1 min-w-0">
               <select
-                value={filters.zone}
+                value={tempFilters.zone}
                 onChange={(e) => handleFilterChange("zone", e.target.value)}
                 className="w-full px-2.5 py-1.5 pr-5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none cursor-pointer"
               >
@@ -427,39 +444,23 @@ export default function RegularOrderReport() {
 
             <div className="relative flex-1 min-w-0">
               <select
-                value={filters.restaurant}
-                onChange={(e) => handleFilterChange("restaurant", e.target.value)}
+                value={tempFilters.moduleType}
+                onChange={(e) => handleFilterChange("moduleType", e.target.value)}
                 className="w-full px-2.5 py-1.5 pr-5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none cursor-pointer"
               >
-                <option value="All restaurants">All restaurants</option>
-                {restaurants.map((restaurant) => (
-                  <option key={restaurant._id} value={restaurant._id}>
-                    {restaurant.restaurantName || restaurant.name}
-                  </option>
-                ))}
+                <option value="all">All Modules</option>
+                <option value="food">Food</option>
+                <option value="grocery">Grocery</option>
+                <option value="accessories">Accessories</option>
               </select>
               <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 pointer-events-none" />
             </div>
 
-            <div className="relative flex-1 min-w-0">
-              <select
-                value={filters.customer}
-                onChange={(e) => handleFilterChange("customer", e.target.value)}
-                className="w-full px-2.5 py-1.5 pr-5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none cursor-pointer"
-              >
-                <option value="All customers">All customers</option>
-                {customers.map((customer) => (
-                  <option key={customer._id} value={customer._id}>
-                    {customer.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 pointer-events-none" />
-            </div>
+
 
             <div className="relative flex-1 min-w-0">
               <select
-                value={filters.time}
+                value={tempFilters.time}
                 onChange={(e) => handleFilterChange("time", e.target.value)}
                 className="w-full px-2.5 py-1.5 pr-5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none cursor-pointer"
               >
@@ -568,40 +569,40 @@ export default function RegularOrderReport() {
 
           {/* Table */}
           <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full" style={{ tableLayout: "fixed", width: "100%" }}>
+            <table className="w-full" style={{ tableLayout: "fixed", minWidth: "900px" }}>
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "3%" }}>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "4%" }}>
                     SI
                   </th>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "8%" }}>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "13%" }}>
                     Order Id
                   </th>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "12%" }}>
-                    Restaurant
-                  </th>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "12%" }}>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "13%" }}>
                     Customer Name
                   </th>
                   <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "8%" }}>
+                    Module
+                  </th>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "9%" }}>
                     Total Item Amount
                   </th>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "7%" }}>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "9%" }}>
                     Coupon Discount
                   </th>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "6%" }}>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "8%" }}>
                     Vat/Tax
                   </th>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "7%" }}>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "8%" }}>
                     Delivery Charge
                   </th>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "7%" }}>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "8%" }}>
                     Platform Fee
                   </th>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "8%" }}>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "10%" }}>
                     Order Amount
                   </th>
-                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "5%" }}>
+                  <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: "10%" }}>
                     Status
                   </th>
                 </tr>
@@ -628,10 +629,10 @@ export default function RegularOrderReport() {
                         <span className="text-[10px] text-blue-600 hover:underline cursor-pointer">{order.orderId}</span>
                       </td>
                       <td className="px-1.5 py-1">
-                        <span className="text-[10px] text-slate-700 truncate block">{order.restaurant}</span>
+                        <span className="text-[10px] text-slate-700 truncate block">{order.customerName}</span>
                       </td>
                       <td className="px-1.5 py-1">
-                        <span className="text-[10px] text-slate-700 truncate block">{order.customerName}</span>
+                        <span className="text-[10px] text-slate-700 capitalize">{order.moduleType}</span>
                       </td>
                       <td className="px-1.5 py-1">
                         <span className="text-[10px] text-slate-700">{formatAmount(order.totalAmount)}</span>

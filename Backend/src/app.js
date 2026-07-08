@@ -1,4 +1,5 @@
 import express from 'express';
+import './modules/food/restaurant/models/restaurant.model.js';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';

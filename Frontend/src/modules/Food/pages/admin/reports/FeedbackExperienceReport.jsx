@@ -319,9 +319,8 @@ export default function FeedbackExperienceReport() {
                     className="w-full px-4 py-2.5 pr-8 text-sm rounded-lg border border-slate-300 bg-white text-slate-700 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">All Modules</option>
-                    <option value="user">User</option>
-                    <option value="restaurant">Restaurant</option>
-                    <option value="delivery">Delivery</option>
+                    <option value="user">User Feedback</option>
+                    <option value="app">App Feedback</option>
                   </select>
                   <ChevronDown className="absolute right-2 bottom-2.5 w-4 h-4 text-slate-500 pointer-events-none" />
                 </div>

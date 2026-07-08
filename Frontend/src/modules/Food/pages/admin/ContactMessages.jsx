@@ -256,10 +256,10 @@
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-medium text-slate-900">{feedback.customer?.name || 'N/A'}</span>
+                      <span className="text-sm font-medium text-slate-900">{feedback.userName || feedback.userId?.name || feedback.customer?.name || 'N/A'}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm text-slate-700">{feedback.customer?.email || 'N/A'}</span>
+                      <span className="text-sm text-slate-700">{feedback.userEmail || feedback.userId?.email || feedback.customer?.email || 'N/A'}</span>
                     </td>
                     <td className="px-6 py-4 max-w-md">
                       <span className="text-sm text-slate-700 line-clamp-2">
@@ -339,16 +339,16 @@
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer Name</label>
-                    <p className="text-base font-semibold text-slate-900 dark:text-white">{selectedFeedback.customer?.name || 'N/A'}</p>
+                    <p className="text-base font-semibold text-slate-900 dark:text-white">{selectedFeedback.userName || selectedFeedback.userId?.name || selectedFeedback.customer?.name || 'N/A'}</p>
                   </div>
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Email Address</label>
-                    <p className="text-base font-semibold text-slate-900 dark:text-white break-all">{selectedFeedback.customer?.email || 'N/A'}</p>
+                    <p className="text-base font-semibold text-slate-900 dark:text-white break-all">{selectedFeedback.userEmail || selectedFeedback.userId?.email || selectedFeedback.customer?.email || 'N/A'}</p>
                   </div>
-                  {selectedFeedback.customer?.phone && (
+                  {(selectedFeedback.userPhone || selectedFeedback.userId?.phone || selectedFeedback.customer?.phone) && (
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Phone Number</label>
-                      <p className="text-base font-semibold text-slate-900 dark:text-white">{selectedFeedback.customer.phone}</p>
+                      <p className="text-base font-semibold text-slate-900 dark:text-white">{selectedFeedback.userPhone || selectedFeedback.userId?.phone || selectedFeedback.customer?.phone}</p>
                     </div>
                   )}
                 </div>
@@ -392,7 +392,7 @@
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-2">Submitted At</label>
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {selectedFeedback.submittedAt ? new Date(selectedFeedback.submittedAt).toLocaleString('en-US', {
+                    {selectedFeedback.createdAt ? new Date(selectedFeedback.createdAt).toLocaleString('en-US', {
                       year: 'numeric',
                       month: 'long',
                       day: 'numeric',

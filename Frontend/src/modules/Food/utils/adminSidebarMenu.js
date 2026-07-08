@@ -41,6 +41,24 @@ export const adminSidebarMenu = [
   },
   {
     type: "section",
+    label: "RESTAURANT MANAGEMENT",
+    items: [
+      {
+        type: "link",
+        label: "Restaurants List",
+        icon: "Building2",
+        path: "/admin/food/restaurants",
+      },
+      {
+        type: "link",
+        label: "Restaurant Commissions",
+        icon: "DollarSign",
+        path: "/admin/food/restaurant-commissions",
+      },
+    ],
+  },
+  {
+    type: "section",
     label: "GROCERY MANAGEMENT",
     items: [
       {

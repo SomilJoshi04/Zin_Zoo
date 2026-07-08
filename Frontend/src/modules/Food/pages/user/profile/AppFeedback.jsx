@@ -20,7 +20,7 @@ export default function AppFeedback() {
 
     try {
       setSubmitting(true)
-      const res = await userAPI.apiClient.post("/food/user/profile/app-feedback", {
+      const res = await userAPI.submitAppFeedback({
         rating,
         comment: comment.trim()
       })

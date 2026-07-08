@@ -39,6 +39,13 @@ export default function TransactionReport() {
     zone: "All Zones",
     restaurant: "All restaurants",
     time: "All Time",
+    moduleType: "all",
+  })
+  const [tempFilters, setTempFilters] = useState({
+    zone: "All Zones",
+    restaurant: "All restaurants",
+    time: "All Time",
+    moduleType: "all",
   })
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [zones, setZones] = useState([])
@@ -96,6 +103,7 @@ export default function TransactionReport() {
           restaurant: filters.restaurant !== "All restaurants" ? filters.restaurant : undefined,
           fromDate: fromDate ? fromDate.toISOString() : undefined,
           toDate: toDate ? toDate.toISOString() : undefined,
+          moduleType: filters.moduleType !== "all" ? filters.moduleType : undefined,
           limit: 1000
         }
 
@@ -147,18 +155,21 @@ export default function TransactionReport() {
   }
 
   const handleFilterApply = () => {
-    // Filters are already applied via useMemo
+    setFilters({ ...tempFilters })
   }
 
   const handleResetFilters = () => {
-    setFilters({
+    const defaultFilters = {
       zone: "All Zones",
       restaurant: "All restaurants",
       time: "All Time",
-    })
+      moduleType: "all",
+    }
+    setTempFilters(defaultFilters)
+    setFilters(defaultFilters)
   }
 
-  const activeFiltersCount = (filters.zone !== "All Zones" ? 1 : 0) + (filters.restaurant !== "All restaurants" ? 1 : 0) + (filters.time !== "All Time" ? 1 : 0)
+  const activeFiltersCount = (filters.zone !== "All Zones" ? 1 : 0) + (filters.restaurant !== "All restaurants" ? 1 : 0) + (filters.time !== "All Time" ? 1 : 0) + (filters.moduleType !== "all" ? 1 : 0)
 
   const formatCurrency = (amount) => {
     if (amount >= 1000) {
@@ -223,8 +234,8 @@ export default function TransactionReport() {
           <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="relative flex-1 min-w-0">
               <select
-                value={filters.zone}
-                onChange={(e) => setFilters(prev => ({ ...prev, zone: e.target.value }))}
+                value={tempFilters.zone}
+                onChange={(e) => setTempFilters(prev => ({ ...prev, zone: e.target.value }))}
                 className="w-full px-2.5 py-1.5 pr-5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none cursor-pointer"
               >
                 <option value="All Zones">All Zones</option>
@@ -235,11 +246,24 @@ export default function TransactionReport() {
               <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 pointer-events-none" />
             </div>
 
+            <div className="relative flex-1 min-w-0">
+              <select
+                value={tempFilters.moduleType}
+                onChange={(e) => setTempFilters(prev => ({ ...prev, moduleType: e.target.value }))}
+                className="w-full px-2.5 py-1.5 pr-5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none cursor-pointer"
+              >
+                <option value="all">All Modules</option>
+                <option value="food">Food</option>
+                <option value="grocery">Grocery</option>
+                <option value="accessories">Accessories</option>
+              </select>
+              <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-500 pointer-events-none" />
+            </div>
 
             <div className="relative flex-1 min-w-0">
               <select
-                value={filters.time}
-                onChange={(e) => setFilters(prev => ({ ...prev, time: e.target.value }))}
+                value={tempFilters.time}
+                onChange={(e) => setTempFilters(prev => ({ ...prev, time: e.target.value }))}
                 className="w-full px-2.5 py-1.5 pr-5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs appearance-none cursor-pointer"
               >
                 <option value="All Time">All Time</option>
@@ -273,79 +297,52 @@ export default function TransactionReport() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-          {/* Left Column - Large Cards */}
-          <div className="space-y-3">
-            {/* Completed Transaction - Green */}
-            <div className="rounded-lg shadow-sm border border-slate-200 p-4 bg-slate-100 dark:bg-[#1a1a1a]">
-              <div className="relative mb-3 flex justify-center">
-                <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-emerald-950/40 flex items-center justify-center">
-                  <img src={completedIcon} alt="Completed" className="w-12 h-12" />
-                </div>
-                <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                  <Info className="w-3 h-3 text-white" />
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+          {/* Completed Transaction - Green */}
+          <div className="rounded-lg shadow-sm border border-slate-200 p-4 bg-slate-100 dark:bg-[#1a1a1a]">
+            <div className="relative mb-3 flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-emerald-950/40 flex items-center justify-center">
+                <img src={completedIcon} alt="Completed" className="w-12 h-12" />
               </div>
-              <div className="text-center">
-                <p className="text-xl font-bold text-green-600 mb-1">{formatCurrency(summary.completedTransaction)}</p>
-                <p className="text-sm text-slate-600 leading-tight">Completed Transaction</p>
+              <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                <Info className="w-3 h-3 text-white" />
               </div>
             </div>
-
-            {/* Refunded Transaction - Red */}
-            <div className="rounded-lg shadow-sm border border-slate-200 p-4 bg-slate-100 dark:bg-[#1a1a1a]">
-              <div className="relative mb-3 flex justify-center">
-                <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-rose-950/40 flex items-center justify-center">
-                  <img src={refundedIcon} alt="Refunded" className="w-12 h-12" />
-                </div>
-                <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
-                  <Info className="w-3 h-3 text-white" />
-                </div>
-              </div>
-              <div className="text-center">
-                <p className="text-xl font-bold text-red-600 mb-1">{formatFullCurrency(summary.refundedTransaction)}</p>
-                <p className="text-sm text-slate-600 leading-tight">Refunded Transaction</p>
-              </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-green-600 mb-1">{formatCurrency(summary.completedTransaction)}</p>
+              <p className="text-sm text-slate-600 leading-tight">Completed Transaction</p>
             </div>
           </div>
 
-          {/* Right Column - Small Cards */}
-          <div className="space-y-3">
-            {/* Admin Earning */}
-            <div className="rounded-lg shadow-sm border border-slate-200 p-3 bg-slate-100 dark:bg-[#1a1a1a]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-emerald-950/40 flex items-center justify-center">
-                    <img src={adminEarningIcon} alt="Admin Earning" className="w-6 h-6" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-900">Admin Earning</p>
-                    <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
-                      <Info className="w-3 h-3 text-white" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-base font-bold text-slate-900">{formatCurrency(summary.adminEarning)}</p>
+          {/* Refunded Transaction - Red */}
+          <div className="rounded-lg shadow-sm border border-slate-200 p-4 bg-slate-100 dark:bg-[#1a1a1a]">
+            <div className="relative mb-3 flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-rose-950/40 flex items-center justify-center">
+                <img src={refundedIcon} alt="Refunded" className="w-12 h-12" />
+              </div>
+              <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
+                <Info className="w-3 h-3 text-white" />
               </div>
             </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-red-600 mb-1">{formatFullCurrency(summary.refundedTransaction)}</p>
+              <p className="text-sm text-slate-600 leading-tight">Refunded Transaction</p>
+            </div>
+          </div>
 
-
-            {/* Deliveryman Earning */}
-            <div className="rounded-lg shadow-sm border border-slate-200 p-3 bg-slate-100 dark:bg-[#1a1a1a]">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-emerald-950/40 flex items-center justify-center">
-                    <img src={deliverymanEarningIcon} alt="Deliveryman Earning" className="w-6 h-6" />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-900">Deliveryman Earning</p>
-                    <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
-                      <Info className="w-3 h-3 text-white" />
-                    </div>
-                  </div>
-                </div>
-                <p className="text-base font-bold text-orange-600">{formatCurrency(summary.deliverymanEarning)}</p>
+          {/* Admin Earning */}
+          <div className="rounded-lg shadow-sm border border-slate-200 p-4 bg-slate-100 dark:bg-[#1a1a1a]">
+            <div className="relative mb-3 flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-950/40 flex items-center justify-center">
+                <img src={adminEarningIcon} alt="Admin Earning" className="w-10 h-10" />
               </div>
+              <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center">
+                <Info className="w-3 h-3 text-white" />
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-1">{formatFullCurrency(summary.adminEarning)}</p>
+              <p className="text-sm text-slate-600 leading-tight">Admin Earning</p>
             </div>
           </div>
         </div>
@@ -410,7 +407,7 @@ export default function TransactionReport() {
 
           {/* Table */}
           <div className="overflow-x-auto scrollbar-hide">
-            <table className="w-full" style={{ tableLayout: 'fixed', width: '100%' }}>
+            <table className="w-full" style={{ tableLayout: 'fixed', minWidth: '900px' }}>
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   <th className="px-1.5 py-1 text-left text-[8px] font-bold text-slate-700 uppercase tracking-wider" style={{ width: '3%' }}>SI</th>
@@ -445,7 +442,18 @@ export default function TransactionReport() {
                         <span className="text-[10px] font-medium text-slate-700">{index + 1}</span>
                       </td>
                       <td className="px-1.5 py-1">
-                        <span className="text-[10px] text-slate-700">{transaction.orderId}</span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="text-[10px] text-slate-700">{transaction.orderId}</span>
+                          <span className={`w-fit px-1 py-0.2 rounded text-[7px] font-semibold uppercase ${
+                            transaction.moduleType === 'grocery' 
+                              ? 'bg-amber-100 text-amber-700' 
+                              : transaction.moduleType === 'accessories' 
+                                ? 'bg-purple-100 text-purple-700' 
+                                : 'bg-blue-100 text-blue-700'
+                          }`}>
+                            {transaction.moduleType || 'food'}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-1.5 py-1">
                         <span className={`text-[10px] truncate block ${
