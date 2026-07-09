@@ -768,11 +768,13 @@ export default function CategoryPage() {
     const matchingDishes = []
 
     for (const section of menu.sections) {
+      if (!section) continue
       const sectionNameLower = (section?.name || "").toLowerCase()
       const sectionMatches = matchesCategoryText(sectionNameLower, keywords)
 
       if (section.items && Array.isArray(section.items)) {
         for (const item of section.items) {
+          if (!item) continue
           const itemNameLower = (item.name || '').toLowerCase()
           const itemCategoryLower = (item.categoryName || item.category || '').toLowerCase()
 
@@ -1284,6 +1286,63 @@ export default function CategoryPage() {
     return applyFiltersAndSorting(filtered)
   }, [selectedCategory, activeFilters, deferredSearchQuery, restaurantsData, categoryKeywords, vegMode, approvedFoodsData, sortBy, availabilityTick, zoneId])
 
+  const categoryFoods = useMemo(() => {
+    if (!selectedCategory || selectedCategory === 'all') return []
+
+    const foods = []
+    restaurantsData.forEach((restaurant) => {
+      if (!restaurant) return
+
+      // Zone filter
+      const restaurantZoneId = restaurant.zoneId || null;
+      if (zoneId && restaurantZoneId && String(restaurantZoneId) !== String(zoneId)) {
+        return;
+      }
+
+      // Check operational status (open/active)
+      const availability = getRestaurantAvailabilityStatus(restaurant, new Date(availabilityTick));
+      if (!availability?.isOpen) return;
+
+      if (restaurant.menu) {
+        const dishes = getAllCategoryDishesFromMenu(restaurant.menu, selectedCategory)
+        dishes.forEach((dish) => {
+          if (!dish) return
+
+          // Veg mode filter
+          if (vegMode && dish.foodType !== "Veg") return;
+
+          foods.push({
+            ...dish,
+            restaurant: restaurant,
+            restaurantName: restaurant.name || "Restaurant",
+            restaurantSlug: restaurant.slug || (restaurant.name ? restaurant.name.toLowerCase().replace(/\s+/g, "-") : ""),
+          })
+        })
+      }
+    })
+
+    // Search query filter
+    let result = foods
+    if (deferredSearchQuery) {
+      const q = deferredSearchQuery.toLowerCase()
+      result = result.filter(f => 
+        (f.name || "").toLowerCase().includes(q) || 
+        (f.restaurantName || "").toLowerCase().includes(q)
+      )
+    }
+
+    // Apply Sorting if selected
+    if (sortBy === 'price-low') {
+      result = [...result].sort((a, b) => (a.price || 0) - (b.price || 0))
+    } else if (sortBy === 'price-high') {
+      result = [...result].sort((a, b) => (b.price || 0) - (a.price || 0))
+    } else if (sortBy === 'rating') {
+      result = [...result].sort((a, b) => Number(b.restaurant?.rating || 0) - Number(a.restaurant?.rating || 0))
+    }
+
+    return result
+  }, [selectedCategory, restaurantsData, zoneId, vegMode, availabilityTick, deferredSearchQuery, sortBy])
+
   const [isSwitchingCategory, setIsSwitchingCategory] = useState(false)
   const showRestaurantSkeleton = useDelayedLoading(
     isLoadingFilterResults || loadingRestaurants || isSwitchingCategory || (isEnrichingMenus && selectedCategory !== 'all' && filteredRecommended.length === 0),
@@ -1414,7 +1473,7 @@ export default function CategoryPage() {
       <div className="px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 py-4 sm:py-6 md:py-8 lg:py-10 space-y-6 md:space-y-8 lg:space-y-10">
         <div className="max-w-7xl mx-auto">
           {/* RECOMMENDED FOR YOU Section - Hide when "All" category is selected */}
-          {filteredRecommended.length > 0 && selectedCategory !== 'all' && (
+          {filteredRecommended.length > 0 && false && (
             <section>
               <h2 className="text-xs sm:text-sm md:text-base font-semibold text-gray-400 dark:text-gray-500 tracking-widest uppercase mb-4 md:mb-6">
                 RECOMMENDED FOR YOU
@@ -1517,7 +1576,7 @@ export default function CategoryPage() {
             </section>
           )}
           {/* Empty State for specific category with no items */}
-          {selectedCategory !== 'all' && filteredAllRestaurants.length === 0 && !showRestaurantSkeleton && !isSwitchingCategory && !loadingRestaurants && !isLoadingFilterResults && (
+          {selectedCategory === 'all' && filteredAllRestaurants.length === 0 && !showRestaurantSkeleton && !isSwitchingCategory && !loadingRestaurants && !isLoadingFilterResults && (
             <div className="flex flex-col items-center justify-center py-16 text-center px-4 bg-gray-50/50 dark:bg-gray-900/10 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
               <div className="w-14 h-14 rounded-full bg-[#FFF2EB] dark:bg-[#F84E04]/10 flex items-center justify-center mb-4">
                 <UtensilsCrossed className="h-6 w-6 text-[#F84E04]" />
@@ -1531,8 +1590,132 @@ export default function CategoryPage() {
             </div>
           )}
 
+          {/* DEDICATED FOODS VIEW */}
+          {selectedCategory !== 'all' && (
+            <section className="relative">
+              <h2 className="text-xs sm:text-sm md:text-base font-semibold text-gray-400 dark:text-gray-500 tracking-widest uppercase mb-4 md:mb-6">
+                Foods in {categories.find(c => c.id === selectedCategory || c.slug === selectedCategory)?.name || selectedCategory}
+              </h2>
+
+              {/* Loading Overlay */}
+              {showRestaurantSkeleton && (
+                <div className="absolute inset-0 z-10 rounded-lg bg-white/92 backdrop-blur-sm dark:bg-[#1a1a1a]/92">
+                  <LoadingSkeletonRegion label="Loading foods" className="h-full p-1 sm:p-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="h-32 bg-slate-105 dark:bg-slate-800 rounded-2xl animate-pulse" />
+                      ))}
+                    </div>
+                  </LoadingSkeletonRegion>
+                </div>
+              )}
+
+              {categoryFoods.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center px-4 bg-gray-50/50 dark:bg-gray-900/10 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
+                  <div className="w-14 h-14 rounded-full bg-[#FFF2EB] dark:bg-[#F84E04]/10 flex items-center justify-center mb-4">
+                    <UtensilsCrossed className="h-6 w-6 text-[#F84E04]" />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1.5">
+                    No Foods Found
+                  </h3>
+                  <p className="text-xs md:text-sm text-gray-550 dark:text-gray-455 max-w-sm leading-relaxed">
+                    Currently, there are no foods available under this category. Please try exploring other categories!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  {categoryFoods.map((food) => {
+                    const isVeg = food.foodType === "Veg"
+                    return (
+                      <Link
+                        key={food.itemId}
+                        to={`/user/restaurants/${food.restaurantSlug}`}
+                        className="block bg-white dark:bg-[#151515] rounded-2xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-all duration-300"
+                      >
+                        <div className="flex justify-between items-start gap-4">
+                          {/* Left details */}
+                          <div className="flex-1 min-w-0">
+                            {/* Veg/Nonveg dot */}
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className={`inline-flex items-center justify-center w-4 h-4 border ${isVeg ? "border-green-600" : "border-red-600"} rounded-sm p-0.5 flex-shrink-0`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${isVeg ? "bg-green-600" : "bg-red-600"}`} />
+                              </span>
+                              {/* Restaurant Name Badge */}
+                              <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-650 dark:text-slate-400 font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                                {food.restaurantName}
+                                {Number(food.restaurant.rating) > 0 && (
+                                  <span className="inline-flex items-center gap-0.5 text-amber-500">
+                                    ★ {Number(food.restaurant.rating).toFixed(1)}
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+
+                            {/* Food Name */}
+                            <h3 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base mb-1 hover:text-[#F84E04] transition-colors line-clamp-1">
+                              {food.name}
+                            </h3>
+
+                            {/* Price & Delivery Time */}
+                            <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-gray-850 dark:text-gray-200 mb-1.5">
+                              <span>₹{food.price}</span>
+                              {food.originalPrice > food.price && (
+                                <span className="text-xs text-gray-400 line-through font-normal">₹{food.originalPrice}</span>
+                              )}
+                              <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
+                              {food.restaurant.deliveryTime && (
+                                <span className="text-xs text-gray-500 dark:text-gray-400 font-normal inline-flex items-center gap-1">
+                                  <Clock className="w-3.5 h-3.5" /> {food.restaurant.deliveryTime}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Description */}
+                            <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-3">
+                              {food.description || "Fresh and delicious preparation using quality ingredients."}
+                            </p>
+
+                            {/* Share and Bookmark icons */}
+                            <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
+                              <button type="button" className="p-1 hover:text-[#F84E04] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <Bookmark className="w-4 h-4" strokeWidth={2} />
+                              </button>
+                              <button type="button" className="p-1 hover:text-[#F84E04] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 10.742L12.02 12m0 0l3.336-1.258M12.02 12l-3.336 1.258M12.02 12v4.062M12 3a9 9 0 100 18 9 9 0 000-18z" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Right image + button */}
+                          <div className="relative flex-shrink-0 flex flex-col items-center">
+                            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800">
+                              <img
+                                src={food.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop"}
+                                alt={food.name}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop" }}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              className="absolute -bottom-2.5 px-6 py-1.5 text-xs font-bold text-[#F84E04] bg-white border border-[#F84E04] rounded-lg shadow-sm hover:bg-orange-50 active:scale-95 transition-all uppercase tracking-wider"
+                            >
+                              ADD
+                            </button>
+                          </div>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
           {/* ALL RESTAURANTS Section */}
-          {true && (
+          {selectedCategory === 'all' && (
             <section className="relative">
               <h2 className="text-xs sm:text-sm md:text-base font-semibold text-gray-400 dark:text-gray-500 tracking-widest uppercase mb-4 md:mb-6">
                 ALL RESTAURANTS

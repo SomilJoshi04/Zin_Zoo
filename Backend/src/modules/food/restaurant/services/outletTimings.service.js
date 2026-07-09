@@ -60,7 +60,9 @@ export async function getOutletTimingsForRestaurant(restaurantId) {
         if (rest) {
             const regOpening = rest.openingTime || '09:00';
             const regClosing = rest.closingTime || '22:00';
-            const regOpenDays = Array.isArray(rest.openDays) ? rest.openDays.map(d => normalizeDay(d)).filter(Boolean) : DAY_NAMES;
+            const regOpenDays = Array.isArray(rest.openDays) && rest.openDays.length > 0
+                ? rest.openDays.map(d => normalizeDay(d)).filter(Boolean)
+                : DAY_NAMES;
             
             const timings = DAY_NAMES.map((day) => {
                 const isOpen = regOpenDays.includes(day);

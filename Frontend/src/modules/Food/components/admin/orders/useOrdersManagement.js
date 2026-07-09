@@ -88,7 +88,9 @@ const imageUrlToDataUrl = async (url) => {
   }
 }
 
-export function useOrdersManagement(orders, statusKey, title) {
+export function useOrdersManagement(orders, statusKey, title, moduleType = "food") {
+  const isRestaurantModule = moduleType === "food";
+
   const [searchQuery, setSearchQuery] = useState("")
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -106,8 +108,8 @@ export function useOrdersManagement(orders, statusKey, title) {
     si: true,
     orderId: true,
     orderDate: true,
-    orderOtp: true,
     customer: true,
+    restaurant: isRestaurantModule,
     foodItems: true,
     totalAmount: true,
     paymentType: true,
@@ -585,8 +587,8 @@ export function useOrdersManagement(orders, statusKey, title) {
       si: true,
       orderId: true,
       orderDate: true,
-      orderOtp: true,
       customer: true,
+      restaurant: isRestaurantModule,
       foodItems: true,
       totalAmount: true,
       paymentType: true,

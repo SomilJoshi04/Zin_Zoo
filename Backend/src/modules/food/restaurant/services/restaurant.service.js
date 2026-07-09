@@ -1338,7 +1338,11 @@ export const listApprovedRestaurants = async (query = {}) => {
     // Optional zone polygon filter (when restaurant.zoneId is not set yet).
     const zoneIdRaw = String(query.zoneId || '').trim();
     if (zoneIdRaw && mongoose.Types.ObjectId.isValid(zoneIdRaw)) {
-        const zoneOr = [{ zoneId: new mongoose.Types.ObjectId(zoneIdRaw) }];
+        const zoneOr = [
+            { zoneId: new mongoose.Types.ObjectId(zoneIdRaw) },
+            { zoneId: null },
+            { zoneId: { $exists: false } }
+        ];
         const zoneDoc = await FoodZone.findOne({ _id: zoneIdRaw, isActive: true }).lean();
         const polygon = zoneToPolygon(zoneDoc);
         if (polygon) {
@@ -1401,8 +1405,8 @@ export const listApprovedRestaurants = async (query = {}) => {
             if (sortBy === 'price-high') return { $sort: { featuredPrice: -1, distanceMeters: 1 } };
             if (sortBy === 'newest') return { $sort: { createdAt: -1 } };
             if (sortBy === 'deliveryTime') return { $sort: { estimatedDeliveryTimeMinutes: 1, distanceMeters: 1 } };
-            // nearest (default)
-            return { $sort: { distanceMeters: 1 } };
+            // newest/nearest (default)
+            return { $sort: { createdAt: -1, distanceMeters: 1 } };
         })();
 
         const basePipeline = [

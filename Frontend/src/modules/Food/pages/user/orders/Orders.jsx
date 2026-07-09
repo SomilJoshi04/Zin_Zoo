@@ -469,13 +469,18 @@ export default function Orders() {
     }
   }
 
-  const handleShareApp = async () => {
+  const handleShareRestaurant = async (order) => {
+    if (!order) return
     const companyName = await getCompanyNameAsync()
-    const shareUrl = "https://zin-zoo.vercel.app"
-    const shareText = `Check out ${companyName} to order food, grocery, services, and accessories!`
+    const restaurantName = order.restaurant || "this restaurant"
+    const restaurantSlug = order.restaurantSlug || order.restaurantId
+
+    // Share URL points directly to the app vercel URL
+    const shareUrl = "https://zin-zoo.vercel.app/"
+    const shareText = `Check out ${restaurantName} on ${companyName}! They have amazing food.`
 
     const payload = {
-      title: companyName,
+      title: restaurantName,
       text: shareText,
       url: shareUrl,
     }
@@ -483,15 +488,15 @@ export default function Orders() {
     try {
       const shared = await tryNativeShare(payload)
       if (shared) {
-        toast.success("App shared successfully")
+        toast.success("Restaurant shared successfully")
         return
       }
 
       openShareModal(payload)
     } catch (error) {
       if (error?.name !== "AbortError") {
-        debugError("Error sharing app:", error)
-        toast.error("Failed to share app")
+        debugError("Error sharing restaurant:", error)
+        toast.error("Failed to share restaurant")
       }
     } finally {
       setActiveMenuOrderId(null)
@@ -677,10 +682,10 @@ export default function Orders() {
                   <div className="absolute right-3 top-10 z-20 w-40 rounded-xl bg-white shadow-lg border border-gray-100 py-1 text-xs">
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); handleShareApp(); }}
+                      onClick={(e) => { e.stopPropagation(); handleShareRestaurant(order); }}
                       className="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-800"
                     >
-                      Share app
+                      Share restaurant
                     </button>
                     <button
                       type="button"

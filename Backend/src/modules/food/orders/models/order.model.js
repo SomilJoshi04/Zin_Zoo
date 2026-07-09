@@ -206,6 +206,7 @@ const orderSchema = new mongoose.Schema(
         },
         restaurantId: {
             type: mongoose.Schema.Types.ObjectId,
+            ref: 'FoodRestaurant',
             required: false
         },
         moduleType: {

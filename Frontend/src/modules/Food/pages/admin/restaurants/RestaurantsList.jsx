@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { Search, Trash2, Loader2, Eye, Pencil, Plus, ChevronLeft, ChevronRight, Check, X, Building2, MapPin, Phone, Mail, Clock, Star, AlertTriangle, ShieldCheck, ShieldX, Save } from "lucide-react"
-import { adminAPI } from "@food/api"
+import { adminAPI, uploadAPI } from "@food/api"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog"
 
@@ -69,6 +69,8 @@ const createEmptyForm = () => ({
   pureVegRestaurant: false,
   restaurantType: "Both",
   zoneId: "",
+  profileImage: "",
+  isAcceptingOrders: true,
 })
 
 export default function RestaurantsList() {
@@ -99,6 +101,10 @@ export default function RestaurantsList() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createForm, setCreateForm] = useState(createEmptyForm())
   const [creating, setCreating] = useState(false)
+
+  // Image Upload States
+  const [selectedImageFile, setSelectedImageFile] = useState(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState("")
 
   // Approve/Reject
   const [showApproveDialog, setShowApproveDialog] = useState(false)
@@ -245,17 +251,21 @@ export default function RestaurantsList() {
         ownerName: fullRes.ownerName || "",
         ownerPhone: fullRes.ownerPhone || fullRes.primaryContactNumber || "",
         ownerEmail: fullRes.ownerEmail || "",
-        area: fullRes.area || "",
-        city: fullRes.city || "",
-        state: fullRes.state || "",
-        pincode: fullRes.pincode || "",
+        area: fullRes.area || fullRes.location?.area || "",
+        city: fullRes.city || fullRes.location?.city || "",
+        state: fullRes.state || fullRes.location?.state || "",
+        pincode: fullRes.pincode || fullRes.location?.pincode || "",
         cuisines: Array.isArray(fullRes.cuisines) ? fullRes.cuisines.join(", ") : "",
         openingTime: fullRes.openingTime || "09:00",
         closingTime: fullRes.closingTime || "22:00",
         pureVegRestaurant: fullRes.pureVegRestaurant || false,
         restaurantType: fullRes.restaurantType || (fullRes.pureVegRestaurant ? "Veg" : "Both"),
         zoneId: getZoneId(fullRes),
+        profileImage: fullRes.profileImage || "",
+        isAcceptingOrders: fullRes.isAcceptingOrders !== false,
       })
+      setSelectedImageFile(null)
+      setImagePreviewUrl(fullRes.profileImage || "")
       setShowEditModal(true)
     } catch (error) {
       console.error("Error loading restaurant for edit:", error)
@@ -270,8 +280,21 @@ export default function RestaurantsList() {
     try {
       setSaving(true)
       const id = editTarget._id || editTarget.id
+
+      let profileImageUrl = editForm.profileImage || ""
+      if (selectedImageFile) {
+        const uploadResponse = await uploadAPI.uploadMedia(selectedImageFile, {
+          folder: "restaurants",
+        })
+        profileImageUrl =
+          uploadResponse?.data?.data?.url ||
+          uploadResponse?.data?.url ||
+          profileImageUrl
+      }
+
       const body = {
         ...editForm,
+        profileImage: profileImageUrl,
         cuisines: editForm.cuisines
           ? editForm.cuisines.split(",").map((c) => c.trim()).filter(Boolean)
           : [],
@@ -294,6 +317,8 @@ export default function RestaurantsList() {
   // Create
   const handleCreateOpen = () => {
     setCreateForm(createEmptyForm())
+    setSelectedImageFile(null)
+    setImagePreviewUrl("")
     setShowCreateModal(true)
   }
 
@@ -304,8 +329,21 @@ export default function RestaurantsList() {
     }
     try {
       setCreating(true)
+
+      let profileImageUrl = ""
+      if (selectedImageFile) {
+        const uploadResponse = await uploadAPI.uploadMedia(selectedImageFile, {
+          folder: "restaurants",
+        })
+        profileImageUrl =
+          uploadResponse?.data?.data?.url ||
+          uploadResponse?.data?.url ||
+          ""
+      }
+
       const body = {
         ...createForm,
+        profileImage: profileImageUrl,
         cuisines: createForm.cuisines
           ? createForm.cuisines.split(",").map((c) => c.trim()).filter(Boolean)
           : [],
@@ -404,34 +442,41 @@ export default function RestaurantsList() {
     <div className="space-y-6">
       {/* Header */}
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-md shadow-violet-500/20">
-              <Building2 className="w-5 h-5 text-white" />
+        <div className="flex flex-col gap-6">
+          {/* Top Row: Title & Add Button */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-[#F84E04] flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <Building2 className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Restaurant Management</h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+                  {totalRestaurants} total restaurant{totalRestaurants !== 1 ? "s" : ""}
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900 dark:text-white">Restaurant Management</h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
-                {totalRestaurants} total restaurant{totalRestaurants !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            {/* Add Restaurant Button */}
             <button
               onClick={handleCreateOpen}
-              className="px-4 py-2.5 rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 inline-flex items-center gap-2 transition-colors shadow-sm"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-[#F84E04] hover:bg-[#d84303] text-white text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all duration-200 shadow-md shadow-orange-500/20 active:scale-[0.98]"
             >
               <Plus className="w-4 h-4" />
               Add Restaurant
             </button>
+          </div>
+
+          {/* Divider */}
+          <div className="h-px bg-slate-200 dark:bg-slate-800 w-full" />
+
+          {/* Bottom Row: Filters & Search */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Status Filter Tabs */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-1 gap-0.5">
+            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1 self-start">
               {STATUS_FILTERS.map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setStatusFilter(filter)}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
                     statusFilter === filter
                       ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
@@ -441,16 +486,17 @@ export default function RestaurantsList() {
                 </button>
               ))}
             </div>
-            {/* Search */}
-            <div className="relative flex-1 sm:flex-initial min-w-[200px]">
+
+            {/* Search Input */}
+            <div className="relative w-full md:max-w-md">
               <input
                 type="text"
-                placeholder="Search restaurants..."
+                placeholder="Search restaurants by name, city, owner..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 w-full text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+                className="pl-10 pr-4 py-2.5 w-full text-sm rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04] transition-all"
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             </div>
           </div>
         </div>
@@ -477,7 +523,7 @@ export default function RestaurantsList() {
                 <tr>
                   <td colSpan={8} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
-                      <Loader2 className="w-8 h-8 animate-spin text-violet-600 mb-2" />
+                      <Loader2 className="w-8 h-8 animate-spin text-[#F84E04] mb-2" />
                       <p className="text-sm text-slate-500 dark:text-slate-400">Loading restaurants...</p>
                     </div>
                   </td>
@@ -516,8 +562,11 @@ export default function RestaurantsList() {
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">{restaurant.restaurantName || "Unnamed"}</p>
                             <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
-                              {[restaurant.area, restaurant.city].filter(Boolean).join(", ") || "—"}
+                              {[restaurant.area || restaurant.location?.area, restaurant.city || restaurant.location?.city].filter(Boolean).join(", ") || "—"}
                             </p>
+                            {/* <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5 select-all">
+                              ID: {restaurant._id || restaurant.id}
+                            </p> */}
                           </div>
                         </div>
                       </td>
@@ -594,7 +643,7 @@ export default function RestaurantsList() {
             </div>
             <div className="flex items-center gap-2">
               <select value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}
-                className="px-2.5 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500/20">
+                className="px-2.5 py-1.5 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-orange-500/20">
                 <option value={10}>10 / page</option>
                 <option value={20}>20 / page</option>
                 <option value={50}>50 / page</option>
@@ -645,7 +694,7 @@ export default function RestaurantsList() {
                 <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Owner Information</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center flex-shrink-0"><Building2 className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" /></div>
+                    <div className="w-7 h-7 rounded-lg bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center flex-shrink-0"><Building2 className="w-3.5 h-3.5 text-[#F84E04] dark:text-orange-400" /></div>
                     <div><p className="text-xs text-slate-500 dark:text-slate-400">Owner Name</p><p className="font-medium text-slate-900 dark:text-white">{selectedRestaurant.ownerName || "—"}</p></div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -718,14 +767,14 @@ export default function RestaurantsList() {
             <DialogTitle className="text-lg font-semibold text-slate-900 dark:text-white">Edit Restaurant</DialogTitle>
           </DialogHeader>
           <div className="p-6 max-h-[75vh] overflow-y-auto">
-            <RestaurantFormFields form={editForm} setForm={setEditForm} zones={zones} />
+            <RestaurantFormFields form={editForm} setForm={setEditForm} zones={zones} setSelectedImageFile={setSelectedImageFile} imagePreviewUrl={imagePreviewUrl} setImagePreviewUrl={setImagePreviewUrl} />
             <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
               <button onClick={() => setShowEditModal(false)} disabled={saving}
                 className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50">
                 Cancel
               </button>
               <button onClick={handleEditSave} disabled={saving}
-                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
+                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-[#F84E04] text-white hover:bg-[#d84303] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 Save Changes
               </button>
@@ -741,14 +790,14 @@ export default function RestaurantsList() {
             <DialogTitle className="text-lg font-semibold text-slate-900 dark:text-white">Add New Restaurant</DialogTitle>
           </DialogHeader>
           <div className="p-6 max-h-[75vh] overflow-y-auto">
-            <RestaurantFormFields form={createForm} setForm={setCreateForm} zones={zones} />
+            <RestaurantFormFields form={createForm} setForm={setCreateForm} zones={zones} setSelectedImageFile={setSelectedImageFile} imagePreviewUrl={imagePreviewUrl} setImagePreviewUrl={setImagePreviewUrl} />
             <div className="flex items-center gap-3 mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
               <button onClick={() => setShowCreateModal(false)} disabled={creating}
                 className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50">
                 Cancel
               </button>
               <button onClick={handleCreateSave} disabled={creating}
-                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-violet-600 text-white hover:bg-violet-700 transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
+                className="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg bg-[#F84E04] text-white hover:bg-[#d84303] transition-colors disabled:opacity-50 inline-flex items-center justify-center gap-2">
                 {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 Create Restaurant
               </button>
@@ -838,61 +887,95 @@ export default function RestaurantsList() {
 }
 
 // Reusable form fields component defined outside the parent to avoid focus loss on every keystroke
-const RestaurantFormFields = ({ form, setForm, zones = [] }) => (
+const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile, imagePreviewUrl, setImagePreviewUrl }) => (
   <div className="space-y-4">
+    {/* Restaurant Image Upload */}
+    <div>
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Image</label>
+      <div className="flex items-start gap-4">
+        {imagePreviewUrl ? (
+          <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-orange-200 dark:border-orange-950/30 flex-shrink-0">
+            <img src={imagePreviewUrl} alt="Preview" className="w-full h-full object-cover" />
+            <button type="button" onClick={() => { setSelectedImageFile?.(null); setImagePreviewUrl?.(""); setForm((p) => ({ ...p, profileImage: "" })) }}
+              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs hover:bg-red-600 transition-colors shadow">✕</button>
+          </div>
+        ) : (
+          <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-50 dark:bg-slate-800/50">
+            <span className="text-xs text-slate-400 dark:text-slate-500 text-center px-1">No image</span>
+          </div>
+        )}
+        <div className="flex-1">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null
+              setSelectedImageFile?.(file)
+              if (file) {
+                setImagePreviewUrl?.(URL.createObjectURL(file))
+              } else {
+                setImagePreviewUrl?.(form.profileImage || "")
+              }
+            }}
+            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white file:mr-3 file:rounded file:border-0 file:bg-orange-50 file:px-3 file:py-1.5 file:text-sm file:text-[#F84E04] file:font-medium dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:file:bg-slate-700 dark:file:text-white hover:file:bg-orange-100 dark:hover:file:bg-slate-600 transition-colors"
+          />
+          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Upload restaurant image (shown on user side)</p>
+        </div>
+      </div>
+    </div>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Name *</label>
         <input type="text" value={form.restaurantName} onChange={(e) => setForm((p) => ({ ...p, restaurantName: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Enter restaurant name" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Name *</label>
         <input type="text" value={form.ownerName} onChange={(e) => setForm((p) => ({ ...p, ownerName: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Enter owner name" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Phone</label>
         <input type="text" value={form.ownerPhone} onChange={(e) => setForm((p) => ({ ...p, ownerPhone: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Enter phone number" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Email</label>
         <input type="email" value={form.ownerEmail} onChange={(e) => setForm((p) => ({ ...p, ownerEmail: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Enter email" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Area</label>
         <input type="text" value={form.area} onChange={(e) => setForm((p) => ({ ...p, area: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Area / locality" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">City</label>
         <input type="text" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="City" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">State</label>
         <input type="text" value={form.state} onChange={(e) => setForm((p) => ({ ...p, state: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="State" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Pincode</label>
         <input type="text" value={form.pincode} onChange={(e) => setForm((p) => ({ ...p, pincode: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Pincode" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Zone</label>
         <select value={form.zoneId} onChange={(e) => setForm((p) => ({ ...p, zoneId: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500">
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]">
           <option value="">Global Zone</option>
           {zones.map((z) => (
             <option key={z._id || z.id} value={String(z._id || z.id)}>
@@ -904,26 +987,34 @@ const RestaurantFormFields = ({ form, setForm, zones = [] }) => (
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Cuisines</label>
         <input type="text" value={form.cuisines} onChange={(e) => setForm((p) => ({ ...p, cuisines: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="North Indian, Chinese, etc." />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Opening Time</label>
         <input type="time" value={form.openingTime} onChange={(e) => setForm((p) => ({ ...p, openingTime: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500" />
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Closing Time</label>
         <input type="time" value={form.closingTime} onChange={(e) => setForm((p) => ({ ...p, closingTime: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500" />
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Type</label>
         <select value={form.restaurantType} onChange={(e) => setForm((p) => ({ ...p, restaurantType: e.target.value, pureVegRestaurant: e.target.value === "Veg" }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500">
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]">
           <option value="Veg">Veg</option>
           <option value="Non-Veg">Non-Veg</option>
           <option value="Both">Both</option>
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status (Accepting Orders)</label>
+        <select value={String(form.isAcceptingOrders)} onChange={(e) => setForm((p) => ({ ...p, isAcceptingOrders: e.target.value === "true" }))}
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]">
+          <option value="true">Active (Open)</option>
+          <option value="false">Inactive (Force Closed)</option>
         </select>
       </div>
     </div>

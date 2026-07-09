@@ -555,7 +555,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
     handlePrintOrder,
     toggleColumn,
     resetColumns,
-  } = useOrdersManagement(normalizedOrders, statusKey, config.title)
+  } = useOrdersManagement(normalizedOrders, statusKey, config.title, "accessories")
 
   useEffect(() => {
     isFirstLoadRef.current = true
@@ -1051,7 +1051,6 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
           si: "Serial Number",
           orderId: "Order ID",
           orderDate: "Order Date",
-          orderOtp: "Order OTP",
           customer: "Customer Information",
           foodItems: "Food Items",
           totalAmount: "Total Amount",

@@ -284,8 +284,9 @@ export async function createRestaurantFood(restaurantId, body = {}) {
         foodType,
         isAvailable,
         preparationTime,
-        approvalStatus: 'pending',
-        requestedAt: new Date()
+        approvalStatus: 'approved',
+        requestedAt: new Date(),
+        approvedAt: new Date()
     });
 
     try {
@@ -356,10 +357,10 @@ export async function updateRestaurantFood(restaurantId, foodId, body = {}) {
     const shouldResubmitForApproval = Object.keys(update).length > 0;
 
     if (shouldResubmitForApproval) {
-        update.approvalStatus = 'pending';
+        update.approvalStatus = 'approved';
         update.requestedAt = new Date();
         update.rejectionReason = '';
-        update.approvedAt = null;
+        update.approvedAt = new Date();
         update.rejectedAt = null;
     }
 
@@ -436,8 +437,9 @@ export async function bulkCreateFood(restaurantId, items = []) {
                 foodType,
                 isAvailable: item.isAvailable !== false,
                 preparationTime: toStr(item.preparationTime),
-                approvalStatus: 'pending',
-                requestedAt: new Date()
+                approvalStatus: 'approved',
+                requestedAt: new Date(),
+                approvedAt: new Date()
             });
 
             results.successCount++;

@@ -51,13 +51,7 @@ const startServer = async () => {
         // 1. Connect to Database (MongoDB)
         await connectDB();
 
-        // Seed default restaurant
-        try {
-            const { ensureDefaultRestaurant } = await import('./src/modules/food/admin/services/admin.service.js');
-            await ensureDefaultRestaurant();
-        } catch (err) {
-            logger.error(`Seed default restaurant error: ${err.message}`);
-        }
+
 
         // 2. Create HTTP server from Express app
         const httpServer = http.createServer(app);

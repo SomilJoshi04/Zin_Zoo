@@ -1773,12 +1773,8 @@ export default function Home() {
                 return (a.rating || 0) - (b.rating || 0);
               }
 
-              // Default: sort by distance
-              const aDistance =
-                a.distanceInKm !== null ? a.distanceInKm : Infinity;
-              const bDistance =
-                b.distanceInKm !== null ? b.distanceInKm : Infinity;
-              return aDistance - bDistance;
+              // Default: preserve server order (newest first from backend)
+              return 0;
             });
           };
 
@@ -1895,6 +1891,18 @@ export default function Home() {
     },
     [activeFilters, sortBy, selectedCuisine, fetchRestaurants],
   );
+
+  const publicSocketListeners = useMemo(() => ({
+    'food:product:update': () => {
+      debugLog('Real-time socket update for food: refetching restaurants');
+      fetchRestaurants(appliedFilters);
+    },
+    'food:restaurant:update': () => {
+      debugLog('Real-time socket update for restaurant: refetching restaurants');
+      fetchRestaurants(appliedFilters);
+    }
+  }), [fetchRestaurants, appliedFilters]);
+  usePublicSocket(publicSocketListeners);
 
   // Fetch restaurants when appliedFilters change
   useEffect(() => {

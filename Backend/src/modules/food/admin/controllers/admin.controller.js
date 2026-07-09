@@ -453,6 +453,7 @@ export async function updateRestaurantById(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Restaurant not found' });
         }
+        broadcastPublicUpdate('food:restaurant:update', { action: 'update', data: updated });
         res.status(200).json({ success: true, message: 'Restaurant updated successfully', data: { restaurant: updated } });
     } catch (error) {
         next(error);
@@ -469,6 +470,7 @@ export async function updateRestaurantStatus(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Restaurant not found' });
         }
+        broadcastPublicUpdate('food:restaurant:update', { action: 'update', data: updated });
         res.status(200).json({ success: true, message: 'Restaurant status updated successfully', data: { restaurant: updated } });
     } catch (error) {
         next(error);
@@ -485,6 +487,7 @@ export async function updateRestaurantLocation(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Restaurant not found' });
         }
+        broadcastPublicUpdate('food:restaurant:update', { action: 'update', data: updated });
         res.status(200).json({ success: true, message: 'Restaurant location updated successfully', data: { restaurant: updated } });
     } catch (error) {
         next(error);
@@ -501,6 +504,7 @@ export async function deleteRestaurant(req, res, next) {
         if (!result) {
             return res.status(404).json({ success: false, message: 'Restaurant not found' });
         }
+        broadcastPublicUpdate('food:restaurant:update', { action: 'delete', data: { _id: id } });
         res.status(200).json({ success: true, message: 'Restaurant deleted successfully', data: result });
     } catch (error) {
         next(error);
@@ -1214,6 +1218,7 @@ export async function approveRestaurant(req, res, next) {
                 message: 'Restaurant not found'
             });
         }
+        broadcastPublicUpdate('food:restaurant:update', { action: 'approve', data: restaurant });
         res.status(200).json({
             success: true,
             message: 'Restaurant approved successfully',
@@ -1227,6 +1232,7 @@ export async function approveRestaurant(req, res, next) {
 export async function createRestaurant(req, res, next) {
     try {
         const restaurant = await adminService.createRestaurantByAdmin(req.body || {});
+        broadcastPublicUpdate('food:restaurant:update', { action: 'create', data: restaurant });
         res.status(201).json({
             success: true,
             message: 'Restaurant created successfully',
@@ -1254,6 +1260,7 @@ export async function rejectRestaurant(req, res, next) {
                 message: 'Restaurant not found'
             });
         }
+        broadcastPublicUpdate('food:restaurant:update', { action: 'reject', data: { _id: id } });
         res.status(200).json({
             success: true,
             message: 'Restaurant rejected successfully',

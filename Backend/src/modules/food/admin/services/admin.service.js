@@ -123,9 +123,6 @@ const validateOpeningClosingTimes = (openingTime, closingTime) => {
     if (open === close) {
         throw new ValidationError('Opening time and closing time cannot be same');
     }
-    if (close < open) {
-        throw new ValidationError('Closing time cannot be less than opening time');
-    }
 };
 
 const normalizeDayName = (value) => {
@@ -3429,55 +3426,12 @@ const getAdminFoodUpdatedPricing = (existing = {}, body = {}) => {
     return update;
 };
 
-export async function ensureDefaultRestaurant() {
-    let defaultRest = await FoodRestaurant.findOne({ isDefault: true }).lean();
-    if (!defaultRest) {
-        let zoneId = undefined;
-        try {
-            const FoodZone = mongoose.model('FoodZone');
-            const zone = await FoodZone.findOne().lean();
-            if (zone) zoneId = zone._id;
-        } catch (e) {}
-
-        defaultRest = await FoodRestaurant.findOne({ restaurantName: 'Zin Zoo Kitchen' }).lean();
-        if (!defaultRest) {
-            const newRest = await FoodRestaurant.create({
-                restaurantName: 'Zin Zoo Kitchen',
-                phone: '1234567890',
-                email: 'kitchen@zinzoo.com',
-                status: 'approved',
-                isDefault: true,
-                isAcceptingOrders: true,
-                pureVegRestaurant: false,
-                zoneId,
-                location: {
-                    type: 'Point',
-                    coordinates: [77.5946, 12.9716]
-                },
-                cuisines: ['North Indian', 'Chinese', 'Continental']
-            });
-            defaultRest = newRest.toObject ? newRest.toObject() : newRest;
-            console.log('Seeded default restaurant Zin Zoo Kitchen ID:', defaultRest._id);
-        } else {
-            await FoodRestaurant.updateOne({ _id: defaultRest._id }, { $set: { isDefault: true } });
-        }
-    }
-    try {
-        await mongoose.model('FoodItem').updateMany(
-            { restaurantId: { $ne: defaultRest._id } },
-            { $set: { restaurantId: defaultRest._id } }
-        );
-    } catch (e) {}
-    return defaultRest;
-}
-
 export async function createFood(body) {
-    const defaultRest = await ensureDefaultRestaurant();
-    const targetRestaurantId = body.restaurantId && mongoose.Types.ObjectId.isValid(body.restaurantId)
-        ? body.restaurantId
-        : defaultRest._id;
+    if (!body.restaurantId || !mongoose.Types.ObjectId.isValid(body.restaurantId)) {
+        throw new ValidationError('Valid Restaurant ID is required to add food');
+    }
 
-    const restaurant = await FoodRestaurant.findById(targetRestaurantId);
+    const restaurant = await FoodRestaurant.findById(body.restaurantId);
     if (!restaurant) throw new ValidationError('Restaurant not found');
 
     const name = typeof body.name === 'string' ? body.name.trim() : '';
@@ -3614,12 +3568,12 @@ export async function createRestaurantByAdmin(body) {
         restaurantType: body.restaurantType !== undefined
             ? toStr(body.restaurantType)
             : 'Both',
-        addressLine1: toStr(loc.addressLine1),
-        addressLine2: toStr(loc.addressLine2),
-        area: toStr(loc.area),
-        city: toStr(loc.city),
-        state: toStr(loc.state),
-        pincode: toStr(loc.pincode),
+        addressLine1: toStr(loc.addressLine1 || body.addressLine1),
+        addressLine2: toStr(loc.addressLine2 || body.addressLine2),
+        area: toStr(loc.area || body.area),
+        city: toStr(loc.city || body.city),
+        state: toStr(loc.state || body.state),
+        pincode: toStr(loc.pincode || body.pincode),
         landmark: toStr(loc.landmark),
         cuisines: Array.isArray(body.cuisines) ? body.cuisines : [],
         openingTime: normalizedOpeningTime,

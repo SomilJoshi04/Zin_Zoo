@@ -24,7 +24,8 @@ const foodSchema = new mongoose.Schema(
         isAvailable: { type: Boolean, default: true, index: true },
         isRecommended: { type: Boolean, default: false, index: true },
         preparationTime: { type: String, trim: true, default: '' },
-        quantity: { type: Number, default: 0 }
+        quantity: { type: Number, default: 0 },
+        approvalStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'approved', index: true }
     },
     {
         collection: 'food_items',

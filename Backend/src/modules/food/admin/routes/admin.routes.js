@@ -325,6 +325,7 @@ router.patch('/restaurants/:id/reject', adminController.rejectRestaurant);
 router.get('/restaurant-subscription-settings', adminController.getRestaurantSubscriptionSettings);
 router.patch('/restaurant-subscription-settings', adminController.updateRestaurantSubscriptionSettings);
 router.get('/restaurant-subscriptions/history', adminController.getRestaurantSubscriptionHistory);
+router.post('/restaurants', adminController.createRestaurant);
 router.get('/restaurants', adminController.getRestaurants);
 router.get('/restaurants/reviews', adminController.getRestaurantReviews);
 router.get('/restaurants/:id', adminController.getRestaurantById);

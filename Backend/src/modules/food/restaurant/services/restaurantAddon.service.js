@@ -109,11 +109,17 @@ export async function createRestaurantAddon(restaurantId, body) {
             image: String(body.image || '').trim(),
             images: Array.isArray(body.images) ? body.images.filter(Boolean).slice(0, 10) : []
         },
-        published: null,
-        approvalStatus: 'pending',
+        published: {
+            name,
+            description: String(body.description || '').trim(),
+            price: Number(body.price) || 0,
+            image: String(body.image || '').trim(),
+            images: Array.isArray(body.images) ? body.images.filter(Boolean).slice(0, 10) : []
+        },
+        approvalStatus: 'approved',
         rejectionReason: '',
         requestedAt: new Date(),
-        approvedAt: null,
+        approvedAt: new Date(),
         rejectedAt: null,
         isAvailable: true,
         isDeleted: false
@@ -148,10 +154,11 @@ export async function updateRestaurantAddon(restaurantId, addonId, updateDto) {
     const rid = new mongoose.Types.ObjectId(String(restaurantId));
     const _id = new mongoose.Types.ObjectId(String(addonId));
 
-    const set = {};
+    const doc = await FoodAddon.findOne({ _id, restaurantId: rid, isDeleted: { $ne: true } });
+    if (!doc) return null;
 
     if (updateDto?.isAvailable !== undefined) {
-        set.isAvailable = updateDto.isAvailable !== false;
+        doc.isAvailable = updateDto.isAvailable !== false;
     }
 
     if (updateDto?.draft) {
@@ -173,39 +180,40 @@ export async function updateRestaurantAddon(restaurantId, addonId, updateDto) {
                 .lean();
             if (exists?._id) throw new ValidationError('Add-on already exists');
 
-            set['draft.name'] = name;
+            doc.draft.name = name;
         }
-        if (d.description !== undefined) set['draft.description'] = String(d.description || '').trim();
+        if (d.description !== undefined) doc.draft.description = String(d.description || '').trim();
         if (d.price !== undefined) {
             const price = Number(d.price);
             if (!Number.isFinite(price) || price < 0) throw new ValidationError('Price must be >= 0');
-            set['draft.price'] = price;
+            doc.draft.price = price;
         }
-        if (d.image !== undefined) set['draft.image'] = String(d.image || '').trim();
+        if (d.image !== undefined) doc.draft.image = String(d.image || '').trim();
         if (d.images !== undefined) {
             const imgs = Array.isArray(d.images) ? d.images.filter(Boolean).slice(0, 10) : [];
-            set['draft.images'] = imgs;
+            doc.draft.images = imgs;
         }
 
-        // Any draft content change must go through admin approval again.
-        set.approvalStatus = 'pending';
-        set.rejectionReason = '';
-        set.requestedAt = new Date();
-        set.approvedAt = null;
-        set.rejectedAt = null;
+        // Copy entire draft to published for auto-publishing and auto-approval
+        doc.published = {
+            name: doc.draft.name,
+            description: doc.draft.description,
+            price: doc.draft.price,
+            image: doc.draft.image,
+            images: doc.draft.images
+        };
+
+        doc.approvalStatus = 'approved';
+        doc.rejectionReason = '';
+        doc.requestedAt = new Date();
+        doc.approvedAt = new Date();
+        doc.rejectedAt = null;
+    } else {
+        // If not updating draft, we just save any status updates (e.g. isAvailable)
     }
 
-    if (Object.keys(set).length === 0) {
-        const existing = await FoodAddon.findOne({ _id, restaurantId: rid, isDeleted: { $ne: true } }).lean();
-        return existing ? normalizeAddonDoc(existing) : null;
-    }
-
-    const updated = await FoodAddon.findOneAndUpdate(
-        { _id, restaurantId: rid, isDeleted: { $ne: true } },
-        { $set: set },
-        { new: true }
-    ).lean();
-    return updated ? normalizeAddonDoc(updated) : null;
+    await doc.save();
+    return normalizeAddonDoc(doc.toObject());
 }
 
 export async function deleteRestaurantAddon(restaurantId, addonId) {

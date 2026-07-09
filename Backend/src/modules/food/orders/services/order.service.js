@@ -465,8 +465,8 @@ async function createUnifiedOrder(userId, dto) {
           orderId: rzOrder.id,
         };
 
-        const { FoodOrder } = await import('../../admin/models/order.model.js');
-        const { GroceryOrder } = await import('../../admin/models/groceryOrder.model.js');
+        const { FoodOrder } = await import('../models/order.model.js');
+        const { GroceryOrder } = await import('../models/groceryOrder.model.js');
 
         for (const order of createdOrders) {
           order.payment.method = "razorpay";
@@ -511,10 +511,33 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
       return await createGroceryOrder(userId, dto, bypassRazorpay);
     }
 
-    // Fetch default restaurant automatically for restaurant-free checkout
-    const { ensureDefaultRestaurant } = await import('../../admin/services/admin.service.js');
-    const restaurant = await ensureDefaultRestaurant();
-    const restaurantId = restaurant._id;
+    let restaurantId = null;
+    let restaurant = null;
+
+    if (!dto.items || dto.items.length === 0) {
+      throw new ValidationError('At least one item must be ordered');
+    }
+
+    // Dynamically retrieve restaurant from the food items being ordered
+    try {
+      const itemIdCandidate = dto.items[0].itemId || dto.items[0].id || dto.items[0]._id;
+      if (itemIdCandidate && mongoose.Types.ObjectId.isValid(itemIdCandidate)) {
+        const firstItem = await mongoose.model('FoodItem').findById(itemIdCandidate).lean();
+        if (firstItem && firstItem.restaurantId) {
+          const actualRestaurant = await mongoose.model('FoodRestaurant').findById(firstItem.restaurantId).lean();
+          if (actualRestaurant) {
+            restaurantId = actualRestaurant._id;
+            restaurant = actualRestaurant;
+          }
+        }
+      }
+    } catch (err) {
+      logger.error(`Error resolving actual restaurant for checkout: ${err.message}`);
+    }
+
+    if (!restaurantId || !restaurant) {
+      throw new ValidationError('Restaurant not found for the ordered items');
+    }
 
     const settings = await getDispatchSettings();
     const dispatchMode = settings.dispatchMode;
