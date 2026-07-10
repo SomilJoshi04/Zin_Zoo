@@ -1674,7 +1674,9 @@ export default function Cart() {
         image: item.image || "",
         description: item.description || "",
         isVeg: item.isVeg !== false,
-        preparationTime: item.preparationTime
+        preparationTime: item.preparationTime,
+        restaurantId: item.restaurantId || undefined,
+        restaurantName: item.restaurant || undefined
       }))
 
       debugLog("?? Order items to send:", orderItems)

@@ -4,9 +4,9 @@ import { Save, Loader2, DollarSign, Plus, Trash2, Edit, Check, X, ArrowLeft } fr
 import { Button } from "@food/components/ui/button"
 import { adminAPI } from "@food/api"
 import { toast } from "sonner"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 
 // Fee Settings Component - Range-based delivery fee configuration
@@ -22,12 +22,12 @@ export default function FeeSettings() {
   const [loadingFeeSettings, setLoadingFeeSettings] = useState(false)
   const [savingFeeSettings, setSavingFeeSettings] = useState(false)
   const [editingRangeIndex, setEditingRangeIndex] = useState(null)
-  const [newRange, setNewRange] = useState({ 
-    min: '', 
-    max: '', 
-    fee: '0', 
-    deliveryBoyPerKm: '0', 
-    deliveryBoyBasePay: '0' 
+  const [newRange, setNewRange] = useState({
+    min: '',
+    max: '',
+    fee: '0',
+    deliveryBoyPerKm: '0',
+    deliveryBoyBasePay: '0'
   })
 
   // Fetch fee settings
@@ -82,9 +82,9 @@ export default function FeeSettings() {
         gstRate: settingsToSave.gstRate === "" ? undefined : Number(settingsToSave.gstRate),
         isActive: true,
       }
-      
+
       debugLog('[DEBUG] Saving Fee Settings Payload:', payload)
-      
+
       const response = await adminAPI.createOrUpdateFeeSettings(payload)
 
       if (response.data.success) {
@@ -119,7 +119,7 @@ export default function FeeSettings() {
   }
   // Check if any range (other than the one being edited) has a base pay set
   const hasBasePayConfigured = (excludeIndex = null) => {
-    return feeSettings.deliveryFeeRanges.some((range, idx) => 
+    return feeSettings.deliveryFeeRanges.some((range, idx) =>
       idx !== excludeIndex && Number(range.deliveryBoyBasePay) > 0
     )
   }
@@ -185,12 +185,12 @@ export default function FeeSettings() {
       }
     }
 
-    const updatedRanges = [...feeSettings.deliveryFeeRanges, { 
-      min, 
-      max, 
-      fee, 
-      deliveryBoyPerKm: dbPerKm, 
-      deliveryBoyBasePay: dbBasePay 
+    const updatedRanges = [...feeSettings.deliveryFeeRanges, {
+      min,
+      max,
+      fee,
+      deliveryBoyPerKm: dbPerKm,
+      deliveryBoyBasePay: dbBasePay
     }]
     updatedRanges.sort((a, b) => a.min - b.min)
 
@@ -200,7 +200,7 @@ export default function FeeSettings() {
     }
 
     setFeeSettings(updatedSettings)
-    
+
     // Save to DB immediately
     await saveSettings(updatedSettings)
 
@@ -222,9 +222,9 @@ export default function FeeSettings() {
   // Edit delivery fee range
   const handleEditRange = (index) => {
     const range = feeSettings.deliveryFeeRanges[index]
-    setNewRange({ 
-      min: range.min, 
-      max: range.max, 
+    setNewRange({
+      min: range.min,
+      max: range.max,
       fee: range.fee || '0',
       deliveryBoyPerKm: range.deliveryBoyPerKm ?? '0',
       deliveryBoyBasePay: range.deliveryBoyBasePay ?? '0'
@@ -280,12 +280,12 @@ export default function FeeSettings() {
     }
 
     // Add updated range
-    ranges.push({ 
-      min, 
-      max, 
-      fee, 
-      deliveryBoyPerKm: dbPerKm, 
-      deliveryBoyBasePay: dbBasePay 
+    ranges.push({
+      min,
+      max,
+      fee,
+      deliveryBoyPerKm: dbPerKm,
+      deliveryBoyBasePay: dbBasePay
     })
     ranges.sort((a, b) => a.min - b.min)
 
@@ -399,7 +399,7 @@ export default function FeeSettings() {
                             const isEditing = editingRangeIndex === originalIndex;
                             return (
                               <tr key={originalIndex} className={`${isEditing ? 'bg-blue-50' : 'hover:bg-slate-50'} transition-colors`}>
-                                  <td className="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
+                                <td className="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
                                   {isEditing ? (
                                     <div className="flex items-center gap-1">
                                       <input
@@ -527,12 +527,12 @@ export default function FeeSettings() {
 
                 {/* Add/Edit Range Form */}
                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      {editingRangeIndex !== null ? (
-                        <Edit className="w-4 h-4 text-blue-600" />
-                      ) : (
-                        <Plus className="w-4 h-4 text-green-600" />
-                      )}
+                  <div className="flex items-center gap-2 mb-3">
+                    {editingRangeIndex !== null ? (
+                      <Edit className="w-4 h-4 text-blue-600" />
+                    ) : (
+                      <Plus className="w-4 h-4 text-green-600" />
+                    )}
                     <h4 className="text-sm font-semibold text-slate-700">
                       {editingRangeIndex !== null ? 'Edit Range' : 'Add New Range'}
                     </h4>
@@ -625,9 +625,26 @@ export default function FeeSettings() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 border-t border-slate-200 pt-6 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-slate-200 pt-6 mt-6">
 
-
+                {/* Free Delivery Threshold */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Free Delivery Threshold (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={feeSettings.freeDeliveryThreshold || ""}
+                    onChange={(e) => setFeeSettings({ ...feeSettings, freeDeliveryThreshold: e.target.value })}
+                    min="0"
+                    step="1"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    placeholder="500"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Subtotal required to get free delivery (set 0 to disable)
+                  </p>
+                </div>
 
                 {/* Platform Fee */}
                 <div className="space-y-2">
@@ -668,7 +685,7 @@ export default function FeeSettings() {
                   </p>
                 </div>
               </div>
-          </>
+            </>
           )}
         </div>
       </div>

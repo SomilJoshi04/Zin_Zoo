@@ -1,21 +1,24 @@
 import { useState, useMemo } from "react";
-import { Search, Download, ChevronDown, Settings, ArrowUpDown, FileText, FileSpreadsheet, Code, Check, Columns, Eye } from "lucide-react";
+import { 
+  Search, Download, ChevronDown, Settings, ArrowUpDown, 
+  FileText, FileSpreadsheet, Code, Check, Columns, Eye,
+  Users, CheckCircle2, XCircle, AlertCircle, TrendingUp, 
+  DollarSign, CreditCard, Star
+} from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@food/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog";
 
 import burgerIcon from "@food/assets/Dashboard-icons/image13.png";
 import leafIcon from "@food/assets/Dashboard-icons/image14.png";
 import chefIcon from "@food/assets/Dashboard-icons/image16.png";
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
 
+const debugLog = (...args) => {}
 
 const statsCards = [
-  { id: 1, label: "Total Subscribed User", value: 3, bg: "bg-sky-50" },
-  { id: 2, label: "Active Subscriptions", value: 0, bg: "bg-emerald-50" },
-  { id: 3, label: "Expired Subscription", value: 3, bg: "bg-rose-50" },
-  { id: 4, label: "Expiring Soon", value: 0, bg: "bg-amber-50" },
+  { id: 1, label: "Total Subscribed User", value: 3, bg: "bg-sky-50 dark:bg-sky-950/20 dark:border-sky-900/30", textClass: "text-sky-600 dark:text-sky-400", icon: Users },
+  { id: 2, label: "Active Subscriptions", value: 0, bg: "bg-emerald-50 dark:bg-emerald-950/20 dark:border-emerald-900/30", textClass: "text-emerald-600 dark:text-emerald-400", icon: CheckCircle2 },
+  { id: 3, label: "Expired Subscription", value: 3, bg: "bg-rose-50 dark:bg-rose-950/20 dark:border-rose-900/30", textClass: "text-rose-600 dark:text-rose-400", icon: XCircle },
+  { id: 4, label: "Expiring Soon", value: 0, bg: "bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900/30", textClass: "text-amber-600 dark:text-amber-400", icon: AlertCircle },
 ];
 
 const restaurantRows = [
@@ -121,69 +124,70 @@ export default function SubscriberList() {
   };
 
   return (
-    <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
+    <div className="p-4 lg:p-6 bg-slate-50 dark:bg-[#121212] min-h-screen text-slate-900 dark:text-slate-100">
       {/* Header */}
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h1 className="text-xl lg:text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <span role="img" aria-label="subscribed">
-            ??
-          </span>
+        <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <Users className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           <span>Subscribed Restaurant List</span>
         </h1>
 
         <div className="relative">
-          <select className="pl-3 pr-8 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
+          <select className="pl-3 pr-8 py-2 text-xs border border-slate-300 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
             <option value="all-zones">{zoneFilter}</option>
           </select>
           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none">
-            ?
+            ▼
           </span>
         </div>
       </div>
 
       {/* Top stats cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        {statsCards.map((card) => (
-          <div
-            key={card.id}
-            className={`${card.bg} rounded-lg px-5 py-4 flex flex-col justify-between`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold text-slate-600">
-                {card.label}
-              </p>
-              <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center">
-                <span className="text-lg">??</span>
+        {statsCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div
+              key={card.id}
+              className={`${card.bg} border border-transparent rounded-lg px-5 py-4 flex flex-col justify-between`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  {card.label}
+                </p>
+                <div className="w-8 h-8 rounded-full bg-white dark:bg-zinc-900 shadow-sm flex items-center justify-center">
+                  <Icon className={`w-4 h-4 ${card.textClass}`} />
+                </div>
               </div>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{card.value}</p>
             </div>
-            <p className="text-2xl font-bold text-slate-900">{card.value}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Summary strip */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 mb-4">
-        <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-slate-200 dark:border-zinc-800 mb-4">
+        <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-zinc-800">
           <div className="flex-1 px-5 py-3 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-slate-700">
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-sky-50 text-sky-600 text-lg">
-                ?
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-sky-50 dark:bg-sky-950/30 text-sky-600 dark:text-sky-400 text-lg">
+                <CreditCard className="w-4 h-4" />
               </span>
               <div>
-                <p className="font-semibold">TOTAL TRANSACTIONS</p>
-                <p className="text-[11px] text-slate-500">5</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-200">TOTAL TRANSACTIONS</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">5</p>
               </div>
             </div>
           </div>
 
           <div className="flex-1 px-5 py-3 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-slate-700">
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 text-emerald-600 text-lg">
-                ??
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-lg">
+                <DollarSign className="w-4 h-4" />
               </span>
               <div>
-                <p className="font-semibold">TOTAL EARNING</p>
-                <p className="text-[11px] text-emerald-600 font-semibold">
+                <p className="font-semibold text-slate-900 dark:text-slate-200">TOTAL EARNING</p>
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
                   $ 4,795.00
                 </p>
               </div>
@@ -191,13 +195,13 @@ export default function SubscriberList() {
           </div>
 
           <div className="flex-1 px-5 py-3 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-slate-700">
-              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-50 text-amber-600 text-lg">
-                ??
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
+              <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 text-lg">
+                <TrendingUp className="w-4 h-4" />
               </span>
               <div>
-                <p className="font-semibold">EARNED THIS MONTH</p>
-                <p className="text-[11px] text-slate-500">$ 0.00</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-200">EARNED THIS MONTH</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">$ 0.00</p>
               </div>
             </div>
           </div>
@@ -205,24 +209,24 @@ export default function SubscriberList() {
       </div>
 
       {/* Restaurant list card */}
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200">
-        <div className="px-4 py-3 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-lg shadow-sm border border-slate-200 dark:border-zinc-800">
+        <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-slate-900">
+            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
               Restaurant List
             </h2>
-            <span className="inline-flex items-center justify-center min-w-[24px] h-6 text-xs font-semibold rounded-full bg-slate-100 text-slate-700">
+            <span className="inline-flex items-center justify-center min-w-[24px] h-6 text-xs font-semibold rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-slate-300">
               3
             </span>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center gap-2">
             <div className="relative">
-              <select className="pl-3 pr-8 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
+              <select className="pl-3 pr-8 py-2 text-xs border border-slate-300 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none">
                 <option>All</option>
               </select>
               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 pointer-events-none">
-                ?
+                ▼
               </span>
             </div>
 
@@ -232,35 +236,35 @@ export default function SubscriberList() {
                 placeholder="Ex: Search by name & pack"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-xs border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full pl-8 pr-3 py-2 text-xs border border-slate-300 dark:border-zinc-800 rounded-lg bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
               <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 flex items-center gap-2 transition-all">
+                <button className="px-4 py-2.5 text-sm font-medium rounded-lg border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-300 flex items-center gap-2 transition-all">
                   <Download className="w-4 h-4" />
-                  <span className="text-black font-bold">Export</span>
+                  <span className="text-black dark:text-white font-bold">Export</span>
                   <ChevronDown className="w-3 h-3" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50 animate-in fade-in-0 zoom-in-95 duration-200 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95">
+              <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-lg shadow-lg z-50 text-slate-900 dark:text-white">
                 <DropdownMenuLabel>Export Format</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => handleExport("csv")} className="cursor-pointer">
+                <DropdownMenuItem onClick={() => handleExport("csv")} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800">
                   <FileText className="w-4 h-4 mr-2" />
                   Export as CSV
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("excel")} className="cursor-pointer">
+                <DropdownMenuItem onClick={() => handleExport("excel")} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800">
                   <FileSpreadsheet className="w-4 h-4 mr-2" />
                   Export as Excel
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("pdf")} className="cursor-pointer">
+                <DropdownMenuItem onClick={() => handleExport("pdf")} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800">
                   <FileText className="w-4 h-4 mr-2" />
                   Export as PDF
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExport("json")} className="cursor-pointer">
+                <DropdownMenuItem onClick={() => handleExport("json")} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800">
                   <Code className="w-4 h-4 mr-2" />
                   Export as JSON
                 </DropdownMenuItem>
@@ -268,7 +272,7 @@ export default function SubscriberList() {
             </DropdownMenu>
             <button 
               onClick={() => setIsSettingsOpen(true)}
-              className="p-2.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 transition-all"
+              className="p-2.5 rounded-lg border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-700 dark:text-slate-300 transition-all"
             >
               <Settings className="w-5 h-5" />
             </button>
@@ -277,11 +281,11 @@ export default function SubscriberList() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-100">
-            <thead className="bg-slate-50 border-b border-slate-200">
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-zinc-800">
+            <thead className="bg-slate-50 dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800">
               <tr>
                 {visibleColumns.si && (
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <span>SI</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
@@ -289,7 +293,7 @@ export default function SubscriberList() {
                   </th>
                 )}
                 {visibleColumns.restaurantInfo && (
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <span>Restaurant Info</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
@@ -297,7 +301,7 @@ export default function SubscriberList() {
                   </th>
                 )}
                 {visibleColumns.packageName && (
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <span>Current Package Name</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
@@ -305,7 +309,7 @@ export default function SubscriberList() {
                   </th>
                 )}
                 {visibleColumns.price && (
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <span>Package Price</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
@@ -313,7 +317,7 @@ export default function SubscriberList() {
                   </th>
                 )}
                 {visibleColumns.expDate && (
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <span>Exp Date</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
@@ -321,7 +325,7 @@ export default function SubscriberList() {
                   </th>
                 )}
                 {visibleColumns.subscriptionUsed && (
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <span>Total Subscription Used</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
@@ -329,7 +333,7 @@ export default function SubscriberList() {
                   </th>
                 )}
                 {visibleColumns.isTrial && (
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <span>Is Trial</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
@@ -337,7 +341,7 @@ export default function SubscriberList() {
                   </th>
                 )}
                 {visibleColumns.isCancel && (
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <span>Is Cancel</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
@@ -345,7 +349,7 @@ export default function SubscriberList() {
                   </th>
                 )}
                 {visibleColumns.status && (
-                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
                     <div className="flex items-center gap-2">
                       <span>Status</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400 cursor-pointer hover:text-slate-600" />
@@ -353,29 +357,29 @@ export default function SubscriberList() {
                   </th>
                 )}
                 {visibleColumns.actions && (
-                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-700 uppercase tracking-wider">Action</th>
+                  <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Action</th>
                 )}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-slate-100">
+            <tbody className="bg-white dark:bg-[#1a1a1a] divide-y divide-slate-100 dark:divide-zinc-800">
               {filteredRows.length === 0 ? (
                 <tr>
-                  <td colSpan={Object.values(visibleColumns).filter(v => v).length} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={Object.values(visibleColumns).filter(v => v).length} className="px-6 py-8 text-center text-slate-500 dark:text-slate-400">
                     No subscribers found
                   </td>
                 </tr>
               ) : (
                 filteredRows.map((row, index) => (
-                  <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                  <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/40 transition-colors">
                     {visibleColumns.si && (
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-slate-700">{index + 1}</span>
+                        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{index + 1}</span>
                       </td>
                     )}
                     {visibleColumns.restaurantInfo && (
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-full bg-slate-50 flex items-center justify-center overflow-hidden border border-slate-200">
+                          <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-zinc-800 flex items-center justify-center overflow-hidden border border-slate-200 dark:border-zinc-700">
                             <img
                               src={row.icon}
                               alt={row.name}
@@ -383,34 +387,35 @@ export default function SubscriberList() {
                             />
                           </div>
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-sm font-semibold">
+                            <span className="text-sm font-semibold text-slate-900 dark:text-white">
                               {row.name}
                             </span>
-                            <span className="text-xs text-amber-500">
-                              ? 0
-                            </span>
+                            <div className="flex items-center gap-1 text-xs text-amber-500">
+                              <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                              <span>0</span>
+                            </div>
                           </div>
                         </div>
                       </td>
                     )}
                     {visibleColumns.packageName && (
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-700">{row.packageName}</span>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{row.packageName}</span>
                       </td>
                     )}
                     {visibleColumns.price && (
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-700">{row.price}</span>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{row.price}</span>
                       </td>
                     )}
                     {visibleColumns.expDate && (
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-700">{row.expDate}</span>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{row.expDate}</span>
                       </td>
                     )}
                     {visibleColumns.subscriptionUsed && (
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-slate-700">{row.subscriptionUsed}</span>
+                        <span className="text-sm text-slate-700 dark:text-slate-300">{row.subscriptionUsed}</span>
                       </td>
                     )}
                     {visibleColumns.isTrial && (
@@ -430,7 +435,7 @@ export default function SubscriberList() {
                     )}
                     {visibleColumns.actions && (
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <button className="p-1.5 rounded text-blue-600 hover:bg-blue-50 transition-colors" title="View">
+                        <button className="p-1.5 rounded text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors" title="View">
                           <Eye className="w-4 h-4" />
                         </button>
                       </td>
@@ -445,16 +450,16 @@ export default function SubscriberList() {
 
       {/* Settings Dialog */}
       <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
-        <DialogContent className="max-w-md bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+        <DialogContent className="max-w-md bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white p-0 border border-slate-200 dark:border-zinc-800 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200">
           <DialogHeader className="px-6 pt-6 pb-4">
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
               <Settings className="w-5 h-5" />
               Table Settings
             </DialogTitle>
           </DialogHeader>
           <div className="px-6 pb-6 space-y-4">
             <div>
-              <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
                 <Columns className="w-4 h-4" />
                 Visible Columns
               </h3>
@@ -462,32 +467,32 @@ export default function SubscriberList() {
                 {Object.entries(columnsConfig).map(([key, label]) => (
                   <label
                     key={key}
-                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
+                    className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-zinc-800/40 cursor-pointer"
                   >
                     <input
                       type="checkbox"
                       checked={visibleColumns[key]}
                       onChange={() => toggleColumn(key)}
-                      className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                      className="w-4 h-4 text-emerald-600 dark:text-emerald-400 border-slate-300 dark:border-zinc-700 rounded focus:ring-emerald-500"
                     />
-                    <span className="text-sm text-slate-700">{label}</span>
+                    <span className="text-sm text-slate-700 dark:text-slate-300">{label}</span>
                     {visibleColumns[key] && (
-                      <Check className="w-4 h-4 text-emerald-600 ml-auto" />
+                      <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 ml-auto" />
                     )}
                   </label>
                 ))}
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-zinc-800">
               <button
                 onClick={resetColumns}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-all"
               >
                 Reset
               </button>
               <button
                 onClick={() => setIsSettingsOpen(false)}
-                className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 transition-all shadow-md"
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white transition-all shadow-md"
               >
                 Apply
               </button>
@@ -502,16 +507,15 @@ export default function SubscriberList() {
 function StatusPill({ label, variant }) {
   if (variant === "danger") {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full bg-rose-50 text-rose-500 text-[11px] font-semibold">
+      <span className="inline-flex items-center px-3 py-1 rounded-full bg-rose-50 dark:bg-rose-950/20 text-rose-500 dark:text-rose-400 text-[11px] font-semibold">
         {label}
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-semibold">
+    <span className="inline-flex items-center px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold">
       {label}
     </span>
   );
 }
-

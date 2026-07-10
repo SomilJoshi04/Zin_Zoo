@@ -54,12 +54,15 @@ export default function DesktopNavbar({ showLogo = true }) {
     const isUnder250 = location.pathname === "/food/user/under-250" || location.pathname === "/food/under-250"
     const isProfile = location.pathname.startsWith("/food/user/profile") || location.pathname.startsWith("/food/profile")
     const isServices = location.pathname === "/food/user/services" || location.pathname === "/food/services"
-    const isDelivery = !isUnder250 && !isProfile && !isServices && (location.pathname === "/food/user" || location.pathname === "/food" || (location.pathname.startsWith("/food/user") && !location.pathname.includes("/under-250") && !location.pathname.includes("/services") && !location.pathname.includes("/profile")))
+    const isAccessories = location.pathname === "/food/user/accessories" || location.pathname === "/food/accessories"
+    const isDelivery = !isUnder250 && !isProfile && !isServices && !isAccessories && (location.pathname === "/food/user" || location.pathname === "/food" || (location.pathname.startsWith("/food/user") && !location.pathname.includes("/under-250") && !location.pathname.includes("/services") && !location.pathname.includes("/profile") && !location.pathname.includes("/accessories")))
     const isBannerRoute =
         location.pathname === "/food/user" ||
         location.pathname === "/food" ||
         location.pathname === "/food/user/under-250" ||
-        location.pathname === "/food/under-250"
+        location.pathname === "/food/under-250" ||
+        location.pathname === "/food/user/accessories" ||
+        location.pathname === "/food/accessories"
 
     // Load business settings logo
     useEffect(() => {
@@ -144,13 +147,10 @@ export default function DesktopNavbar({ showLogo = true }) {
     return (
         <nav
             ref={navRef}
-            className={`hidden md:flex flex-col fixed top-0 left-0 right-0 z-50 py-2 transition-all duration-300 ${(isBannerRoute && !hasScrolledPastBanner)
-                ? "bg-transparent !bg-transparent border-0 shadow-none"
-                : "bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-gray-800 shadow-sm"
-                }`}
+            className="hidden md:flex flex-col fixed top-0 left-0 right-0 z-50 py-2 transition-all duration-300 bg-white dark:bg-[#1a1a1a] border-b border-gray-200 dark:border-gray-800 shadow-sm"
         >
             {/* Top Row: Location - Search - Icons */}
-            <div className={`w-full ${(isBannerRoute && !hasScrolledPastBanner) ? "border-b border-transparent" : "border-b border-gray-100 dark:border-gray-800"}`}>
+            <div className="w-full border-b border-gray-100 dark:border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16 gap-4">
                         {/* Left: Logo & Location */}
@@ -294,11 +294,11 @@ export default function DesktopNavbar({ showLogo = true }) {
             </div>
 
             {/* Bottom Row: Navigation Tabs & Veg Mode */}
-            <div className={`w-full pb-3 ${(isBannerRoute && !hasScrolledPastBanner) ? "bg-transparent !bg-transparent" : "bg-white dark:bg-[#1a1a1a]"}`}>
+            <div className="w-full pb-3 bg-white dark:bg-[#1a1a1a]">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-center h-12">
                         {/* Navigation Tabs - Centered with spacing */}
-                        <div className="flex items-center space-x-24">
+                        <div className="flex items-center space-x-8 sm:space-x-12 md:space-x-16 lg:space-x-20 xl:space-x-24">
                             {/* Delivery Tab */}
                             <Link
                                 to="/food/user"
@@ -329,6 +329,26 @@ export default function DesktopNavbar({ showLogo = true }) {
                             >
                                 <span className="text-sm font-bold tracking-wide uppercase">Grocery</span>
                                 {isUnder250 && (
+                                    <motion.div
+                                        layoutId="navIndicator"
+                                        className="absolute -bottom-3 left-0 right-0 h-0.5 bg-orange-600 dark:bg-orange-500"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ duration: 0.3 }}
+                                    />
+                                )}
+                            </Link>
+
+                            {/* Accessories Tab */}
+                            <Link
+                                to="/food/user/accessories"
+                                className={`flex flex-col items-center gap-1 px-2 py-1 transition-colors relative group ${isAccessories
+                                    ? "text-orange-600 dark:text-orange-500"
+                                    : "text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-500"
+                                    }`}
+                            >
+                                <span className="text-sm font-bold tracking-wide uppercase">Accessories</span>
+                                {isAccessories && (
                                     <motion.div
                                         layoutId="navIndicator"
                                         className="absolute -bottom-3 left-0 right-0 h-0.5 bg-orange-600 dark:bg-orange-500"

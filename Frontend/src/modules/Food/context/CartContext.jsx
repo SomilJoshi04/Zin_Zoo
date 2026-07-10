@@ -220,6 +220,8 @@ export function CartProvider({ children }) {
       }
     }
 
+
+
     setCart((prev) => {
       const safePrev = normalizeCartData(prev)
       

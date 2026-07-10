@@ -7,6 +7,7 @@ import { servicesPublicAPI } from "@food/api"
 import { usePublicSocket } from "@food/hooks/usePublicSocket"
 import ModuleNavbar from "@food/components/user/ModuleNavbar";
 import HeaderCartIcon from "@food/components/user/HeaderCartIcon"
+import HeaderNotificationBell from "@food/components/user/HeaderNotificationBell";
 
 export default function Services() {
   const navigate = useNavigate()
@@ -104,8 +105,8 @@ export default function Services() {
         <ArrowLeft className="w-5 h-5" />
       </button>
 
-      {/* Top Right Actions */}
       <div className="absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-2 z-50">
+        <HeaderNotificationBell className="w-5 h-5 text-gray-700 dark:text-gray-300" triggerClass="h-9 w-9 bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-100 dark:border-gray-800 rounded-full" />
       </div>
 
       {/* Header Section */}

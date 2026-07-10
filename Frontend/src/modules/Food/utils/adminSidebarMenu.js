@@ -49,6 +49,18 @@ export const adminSidebarMenu = [
         icon: "Building2",
         path: "/admin/food/restaurants",
       },
+      /* Commented out as restaurant subscription flow is not currently needed
+      {
+        type: "expandable",
+        label: "Restaurants",
+        icon: "Building2",
+        subItems: [
+          { label: "Restaurants List", path: "/admin/food/restaurants" },
+          { label: "Subscription Settings", path: "/admin/food/restaurants/subscription-settings" },
+          { label: "Subscription History", path: "/admin/food/restaurants/subscription-history" },
+        ],
+      },
+      */
       {
         type: "link",
         label: "Restaurant Commissions",
@@ -160,8 +172,9 @@ export const adminSidebarMenu = [
 
   {
     type: "section",
-    label: "REFERRAL & REWARDS",
+    label: "PROMOTIONS & REWARDS",
     items: [
+      { type: "link", label: "Offers & Coupons", path: "/admin/food/coupons", icon: "Megaphone" },
       { type: "link", label: "Referral Settings", path: "/admin/food/referral-settings", icon: "Gift" },
     ],
   },

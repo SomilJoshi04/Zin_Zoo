@@ -369,7 +369,7 @@ export default function UserOrderDetails() {
     <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] pb-24 font-sans relative">
       {/* Header */}
       <div className="bg-[var(--module-theme-color,#F84E04)] p-4 flex items-center sticky top-0 z-20 shadow-md">
-        <div className="flex items-center gap-3">
+        <div className="max-w-3xl mx-auto w-full flex items-center gap-3">
           <button
             type="button"
             onClick={goBack}
@@ -382,7 +382,7 @@ export default function UserOrderDetails() {
       </div>
 
       {/* Scrollable Content */}
-      <div className="p-4 space-y-4">
+      <div className="max-w-3xl mx-auto p-4 space-y-4">
         {/* Status Card */}
         <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl flex items-center gap-3 shadow-sm border border-gray-100 dark:border-zinc-800">
           <div className="bg-gray-100 dark:bg-zinc-800 p-2 rounded-lg">
@@ -478,9 +478,16 @@ export default function UserOrderDetails() {
                       }`}
                   />
                 </div>
-                <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
-                  {item.quantity || item.qty || 1} x {item.name}{item.variantName ? ` (${item.variantName})` : ""}
-                </span>
+                <div className="flex flex-col">
+                  <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                    {item.quantity || item.qty || 1} x {item.name}{item.variantName ? ` (${item.variantName})` : ""}
+                  </span>
+                  {item.restaurantName && (
+                    <span className="text-xs text-orange-600 dark:text-orange-400 mt-0.5">
+                      From: {item.restaurantName}
+                    </span>
+                  )}
+                </div>
               </div>
               <span className="text-sm text-gray-800 dark:text-gray-200 font-medium">
                 ₹{(item.price || 0).toFixed(2)}
@@ -542,12 +549,7 @@ export default function UserOrderDetails() {
                 ₹{Number(pricing.platformFee || 0).toFixed(2)}
               </span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500 dark:text-gray-400">Subscription / other fees</span>
-              <span className="text-gray-800 dark:text-gray-200">
-                ₹{Number(pricing.subscriptionFee || 0).toFixed(2)}
-              </span>
-            </div>
+
 
             <div className="border-t border-gray-100 dark:border-zinc-800 my-2 pt-2 flex justify-between items-center">
               <span className="font-bold text-gray-800 dark:text-white">Paid</span>
@@ -646,23 +648,25 @@ export default function UserOrderDetails() {
       </div>
 
       {/* Fixed Bottom Buttons */}
-      <div className="fixed bottom-0 w-full bg-white dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-800 p-4 flex gap-3 z-20">
-        <button
-          type="button"
-          onClick={() => handleReorder(order)}
-          className="flex-1 bg-[#F84E04] text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-[#D94F0C] transition-colors"
-        >
-          <RotateCcw className="w-4 h-4" />
-          Reorder
-        </button>
-        <button
-          type="button"
-          onClick={handleDownloadSummary}
-          className="flex-1 bg-white dark:bg-zinc-800 border border-[#F84E04] text-[#F84E04] py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
-        >
-          <Download className="w-4 h-4" />
-          Invoice
-        </button>
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-800 p-4 z-20">
+        <div className="max-w-3xl mx-auto flex gap-3">
+          <button
+            type="button"
+            onClick={() => handleReorder(order)}
+            className="flex-1 bg-[#F84E04] text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-[#D94F0C] transition-colors"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reorder
+          </button>
+          <button
+            type="button"
+            onClick={handleDownloadSummary}
+            className="flex-1 bg-white dark:bg-zinc-800 border border-[#F84E04] text-[#F84E04] py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Invoice
+          </button>
+        </div>
       </div>
 
 

@@ -220,6 +220,25 @@ export default function UserLayout() {
 
   const isUnder250 = normalizedPath === "/under-250" || normalizedPath === "/user/under-250"
 
+  // Desktop Navbar visibility rule (exclude auth, checkout, profile subpages, and orders pages)
+  const isAuthPage = normalizedPath.includes("/auth")
+  const isCartOrCheckoutPage =
+    normalizedPath.includes("/cart") ||
+    normalizedPath.includes("/checkout") ||
+    normalizedPath.includes("/address")
+  const isProfileSubpage =
+    normalizedPath.startsWith("/profile/") ||
+    normalizedPath.startsWith("/user/profile/") ||
+    normalizedPath.startsWith("/orders") ||
+    normalizedPath.startsWith("/user/orders") ||
+    normalizedPath.startsWith("/wallet") ||
+    normalizedPath.startsWith("/user/wallet") ||
+    normalizedPath.startsWith("/notifications") ||
+    normalizedPath.startsWith("/user/notifications") ||
+    normalizedPath.startsWith("/complaints") ||
+    normalizedPath.startsWith("/user/complaints")
+  const showDesktopNavbar = !isAuthPage && !isCartOrCheckoutPage && !isProfileSubpage
+
   return (
     <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0a] transition-colors duration-200">
       <CartProvider>
@@ -230,10 +249,10 @@ export default function UserLayout() {
                 {/* <Navbar /> */}
                 {/* Desktop Navbar - Hidden on mobile, visible on medium+ screens */}
                 <div className="hidden md:block">
-                  {showBottomNav && <DesktopNavbar showLogo={!isUnder250} />}
+                  {showDesktopNavbar && <DesktopNavbar showLogo={!isUnder250} />}
                 </div>
                 {/* <LocationPrompt /> */}
-                <main className={showBottomNav ? "md:pt-40" : ""}>
+                <main className={showDesktopNavbar ? "md:pt-40" : ""}>
                   <Outlet />
                 </main>
                 {showBottomNav && <BottomNavigation />}

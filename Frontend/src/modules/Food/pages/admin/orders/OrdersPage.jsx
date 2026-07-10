@@ -610,6 +610,7 @@ export default function OrdersPage({ statusKey = "all" }) {
           `admin-order-socket-${Date.now()}`,
         )
         fetchOrders({ silent: true, withRingCheck: false })
+        window.dispatchEvent(new Event("adminNotificationsUpdated"))
         return
       }
 
@@ -629,6 +630,7 @@ export default function OrdersPage({ statusKey = "all" }) {
       toast.info(title, { description: body })
       showBrowserNotification(title, body, `admin-order-${orderId}`)
       fetchOrders({ silent: true, withRingCheck: false })
+      window.dispatchEvent(new Event("adminNotificationsUpdated"))
     }
 
     socket.on("connect", () => {

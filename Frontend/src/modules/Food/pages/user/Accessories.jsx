@@ -15,6 +15,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { usePublicSocket } from "@food/hooks/usePublicSocket";
 import ModuleNavbar from "@food/components/user/ModuleNavbar";
 import StickyCartCard from "@food/components/user/StickyCartCard";
+import HeaderNotificationBell from "@food/components/user/HeaderNotificationBell";
 
 export default function AccessoriesPage() {
   const navigate = useNavigate();
@@ -216,7 +217,7 @@ export default function AccessoriesPage() {
     <AnimatedPage>
       <div className="min-h-screen bg-gray-50 dark:bg-[#121212] pb-24 font-outfit">
         {/* Header */}
-        <div className="sticky top-0 z-40 bg-[var(--module-theme-color,#F84E04)] shadow-md">
+        <div className="md:hidden sticky top-0 z-40 bg-[var(--module-theme-color,#F84E04)] shadow-md">
           <div className="flex items-center gap-3 p-4">
             <button onClick={() => navigate("/food")} className="p-2 -ml-2 rounded-full hover:bg-white/20">
               <ChevronLeft className="w-6 h-6 text-white" />
@@ -225,7 +226,8 @@ export default function AccessoriesPage() {
               <h1 className="text-xl font-bold font-poppins text-white">Zin Zoo X</h1>
               <p className="text-xs text-white/80 font-medium">Premium Accessories</p>
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2.5">
+              <HeaderNotificationBell className="w-5 h-5 text-white/95" triggerClass="h-9 w-9 rounded-lg" />
               <div ref={cartIconRef} className="bg-white/10 text-white p-2 rounded-lg flex items-center gap-2 relative cursor-pointer hover:bg-white/20 transition-colors" onClick={() => navigate("/food/user/cart?module=accessories")}>
                 <ShoppingCart className="w-5 h-5" />
                 {cart.filter(i => i.moduleType === 'accessories').reduce((a, b) => a + (b.quantity || 1), 0) > 0 && (
@@ -254,9 +256,27 @@ export default function AccessoriesPage() {
           </div>
         </div>
 
-        {/* Promotional Banner Carousel */}
-        {dynamicBanners.length > 0 && (
-          <div className="px-4 py-4 relative">
+        <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 py-0 md:py-6">
+          {/* Desktop Header */}
+          <div className="hidden md:flex items-center justify-between gap-4 mb-6 px-4 md:px-0">
+            <div>
+              <h1 className="text-2xl font-bold font-poppins text-gray-900 dark:text-white">Zin Zoo X</h1>
+              <p className="text-xs text-gray-500 font-medium">Premium Accessories</p>
+            </div>
+            <div className="relative w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Input
+                placeholder="Search for 'Watches', 'Bags'..."
+                className="pl-9 h-10 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-[var(--module-theme-color,#F84E04)]"
+                value={searchQuery}
+                onChange={handleSearch}
+              />
+            </div>
+          </div>
+
+          {/* Promotional Banner Carousel */}
+          {dynamicBanners.length > 0 && (
+            <div className="px-4 md:px-0 py-4 relative">
             <div className="w-full h-32 md:h-48 rounded-2xl overflow-hidden relative shadow-[0_8px_20px_-4px_rgba(0,0,0,0.1)] bg-gray-100">
               {dynamicBanners.map((banner, index) => (
                 <div 
@@ -295,7 +315,7 @@ export default function AccessoriesPage() {
         )}
 
         {/* Categories Section */}
-        <div className="px-4 mb-6">
+        <div className="px-4 md:px-0 mb-6">
           <h3 className="text-lg font-bold font-poppins mb-3">Shop by Category</h3>
           <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide">
             {loadingCats ? (
@@ -333,12 +353,12 @@ export default function AccessoriesPage() {
         </div>
 
         {/* Products Grid */}
-        <div className="px-4 mb-8">
+        <div className="px-4 md:px-0 mb-8">
           <h3 className="text-lg font-bold font-poppins mb-4">
             {activeCategory ? "Category Products" : "Trending Daily Needs"}
           </h3>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 md:gap-4">
             {loadingProds ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <Card key={i} className="rounded-xl overflow-hidden shadow-sm border-0 border-gray-100">
@@ -456,6 +476,7 @@ export default function AccessoriesPage() {
             )}
           </div>
         </div>
+        </div> {/* closes max-w-7xl wrapper */}
       </div>
 
       {/* Product Details Bottom Sheet */}

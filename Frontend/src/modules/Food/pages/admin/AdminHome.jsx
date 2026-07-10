@@ -190,10 +190,10 @@ export default function AdminHome() {
           </div>
           <div className="flex flex-wrap gap-3">
             <Select value={selectedZone} onValueChange={setSelectedZone}>
-              <SelectTrigger className="min-w-[160px] border-neutral-300 bg-white text-neutral-900">
+              <SelectTrigger className="min-w-[160px] border-neutral-300 dark:border-neutral-800 bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white">
                 <SelectValue placeholder="All zones" />
               </SelectTrigger>
-              <SelectContent className="border-neutral-200 bg-white text-neutral-900">
+              <SelectContent className="border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white">
                 <SelectItem value="all">All zones</SelectItem>
                 {zones.map((zone) => (
                   <SelectItem key={zone._id} value={zone._id}>
@@ -203,10 +203,10 @@ export default function AdminHome() {
               </SelectContent>
             </Select>
             <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
-              <SelectTrigger className="min-w-[140px] border-neutral-300 bg-white text-neutral-900">
+              <SelectTrigger className="min-w-[140px] border-neutral-300 dark:border-neutral-800 bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white">
                 <SelectValue placeholder="Overall" />
               </SelectTrigger>
-              <SelectContent className="border-neutral-200 bg-white text-neutral-900">
+              <SelectContent className="border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#1a1a1a] text-neutral-900 dark:text-white">
                 <SelectItem value="overall">Overall</SelectItem>
                 <SelectItem value="today">Today</SelectItem>
                 <SelectItem value="week">This week</SelectItem>

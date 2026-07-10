@@ -105,6 +105,30 @@ export default function FeatureSettings() {
                 <p className="text-sm text-gray-500 mt-1">Enable or disable platform features safely from one place.</p>
             </div>
 
+            {/* Commented out as subscription flow is not currently needed
+            {restaurantSubscription && (
+                <Card className="border-slate-200">
+                    <CardHeader>
+                        <CardTitle className="text-lg">Restaurant Subscription</CardTitle>
+                        <CardDescription>
+                            Controls restaurant onboarding payment, subscription dues checks, and subscription settings UI.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex items-center justify-between gap-4">
+                        <div className="text-sm text-slate-700 dark:text-gray-300">
+                            {restaurantSubscription.isEnabled
+                                ? 'Enabled: Restaurant subscription is active'
+                                : 'Disabled: Restaurant subscription is inactive'}
+                        </div>
+                        <Switch
+                            checked={Boolean(restaurantSubscription.isEnabled)}
+                            onCheckedChange={(checked) => setToggle(FEATURE_KEYS.RESTAURANT_SUBSCRIPTION, checked)}
+                        />
+                    </CardContent>
+                </Card>
+            )}
+            */}
+
             <Card className="border-slate-200">
                 <CardHeader>
                     <CardTitle className="text-lg">Cash On Delivery (COD)</CardTitle>

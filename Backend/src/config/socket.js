@@ -129,6 +129,17 @@ export const initSocket = async (server) => {
             }
         }
 
+        // Explicit join (used by admin dashboard).
+        socket.on('join-admin-orders', () => {
+            if (socket.user?.role !== 'ADMIN') {
+                logger.warn(`Non-admin socket ${socket.id} tried to join admin-orders`);
+                return;
+            }
+            socket.join('admin-orders');
+            logger.info(`Socket ${socket.id} (ADMIN) joined admin-orders room`);
+            socket.emit('admin-room-joined', { room: 'admin-orders' });
+        });
+
         // Explicit join (used by existing restaurant client hook).
         socket.on('join-restaurant', (restaurantId) => {
             if (socket.user?.role !== 'RESTAURANT') return;

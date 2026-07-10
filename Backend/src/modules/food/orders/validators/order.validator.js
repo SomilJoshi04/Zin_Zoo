@@ -11,7 +11,9 @@ const orderItemSchema = z.object({
     quantity: z.number().int().min(1),
     isVeg: z.boolean().optional().default(true),
     image: z.string().optional(),
-    notes: z.string().optional()
+    notes: z.string().optional(),
+    restaurantId: z.string().optional(),
+    restaurantName: z.string().optional()
 });
 
 const addressSchema = z.object({

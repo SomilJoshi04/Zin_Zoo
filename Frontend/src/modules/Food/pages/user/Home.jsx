@@ -2360,7 +2360,7 @@ export default function Home() {
   const HeroBannerSection = useMemo(() => {
     if (showBannerSkeleton) {
       return (
-        <div className="px-4 py-2">
+        <div className="px-4 md:px-0 py-2">
           <HeroBannerSkeleton className="h-36 sm:h-44 lg:h-56 rounded-2xl" />
         </div>
       );
@@ -2369,11 +2369,11 @@ export default function Home() {
     if (heroBannerImages.length === 0) return null;
 
     return (
-      <div className="px-4 py-2">
+      <div className="px-4 md:px-0 py-2">
         <div
           ref={heroShellRef}
           data-home-hero-shell="true"
-          className="relative w-full overflow-hidden aspect-[1.7/1] sm:aspect-[1.9/1] lg:aspect-[2.1/1] min-h-[180px] sm:min-h-[220px] lg:min-h-[260px] rounded-2xl shadow-sm group cursor-pointer bg-white"
+          className="relative w-full overflow-hidden aspect-[1.7/1] sm:aspect-[2.0/1] lg:aspect-[2.8/1] xl:aspect-[3.2/1] min-h-[140px] sm:min-h-[180px] lg:min-h-[200px] lg:max-h-[280px] rounded-2xl shadow-sm group cursor-pointer bg-white"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -2632,9 +2632,9 @@ export default function Home() {
           `}</style>
         </div>
 
-        <div className="md:hidden relative overflow-x-clip bg-white dark:bg-[#0a0a0a]">
+        <div className="relative overflow-x-clip bg-white dark:bg-[#0a0a0a]">
           {/* Brand Top Section (Theme Color) */}
-          <div className="relative overflow-hidden bg-[var(--module-theme-color,#F84E04)] rounded-b-[2rem] shadow-lg mb-2">
+          <div className="md:hidden relative overflow-hidden bg-[var(--module-theme-color,#F84E04)] rounded-b-[2rem] shadow-lg mb-2">
             {festVideoActive && (
               <div className="absolute inset-0 z-0">
                 <video
@@ -2671,7 +2671,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="mb-4 mt-2">
+          <div className="md:hidden mb-4 mt-2">
             <ModuleNavbar />
           </div>
 
@@ -2683,13 +2683,13 @@ export default function Home() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.3 }}
-                className="bg-transparent dark:bg-transparent"
+                className="bg-transparent dark:bg-transparent max-w-7xl mx-auto px-0 md:px-6 lg:px-8"
               >
 
                 {/* "What's on your mind today?" Section - Now with Sticky Logic */}
                 <div
                   id="categories-section"
-                  className="px-4 py-2.5 space-y-3 bg-white dark:bg-[#0a0a0a]"
+                  className="px-4 md:px-0 py-2.5 space-y-3 bg-white dark:bg-[#0a0a0a]"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white min-w-0 flex-shrink leading-tight">What's on your mind today?</h2>
@@ -2748,7 +2748,7 @@ export default function Home() {
                       animate={{ y: 0 }}
                       exit={{ y: -200 }}
                       transition={{ duration: 0.3, ease: "easeOut" }}
-                      className="fixed top-0 left-0 right-0 z-[100] bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md shadow-md border-b border-gray-100 dark:border-gray-855 safe-top"
+                      className="md:hidden fixed top-0 left-0 right-0 z-[100] bg-white/95 dark:bg-[#121212]/95 backdrop-blur-md shadow-md border-b border-gray-100 dark:border-gray-855 safe-top"
                     >
                       {/* Search Bar Row (appears when scrolling up) */}
                       <AnimatePresence>
@@ -2858,14 +2858,14 @@ export default function Home() {
 
         {recommendedForYouRestaurants.length > 0 && (
           <motion.section
-            className="content-auto pt-1 sm:pt-2"
+            className="content-auto pt-1 sm:pt-2 max-w-7xl mx-auto px-0 md:px-6 lg:px-8"
             initial={false}
             animate={{ opacity: 1, y: 0 }}>
-            <h2 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-400 dark:text-gray-500 tracking-widest uppercase mb-2 sm:mb-3 px-4">
+            <h2 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-400 dark:text-gray-500 tracking-widest uppercase mb-2 sm:mb-3 px-4 md:px-0">
               Recommended For You
             </h2>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 px-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4 px-4 md:px-0">
               {recommendedForYouRestaurants.map((restaurant, index) => {
                 const restaurantSlug =
                   restaurant.slug ||
@@ -2983,10 +2983,10 @@ export default function Home() {
 
         {/* Restaurants Grid */}
         <motion.section
-          className="content-auto space-y-0 pt-3 sm:pt-4 lg:pt-6 pb-8 md:pb-10"
+          className="content-auto space-y-0 pt-3 sm:pt-4 lg:pt-6 pb-8 md:pb-10 max-w-7xl mx-auto px-0 md:px-6 lg:px-8"
           initial={false}
           animate={{ opacity: 1 }}>
-          <div className="px-4 mb-5 flex items-center justify-between">
+          <div className="px-4 md:px-0 mb-5 flex items-center justify-between">
             <div className="flex flex-col gap-0.5 lg:gap-1">
               <h2 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-400 tracking-widest uppercase">
                 Restaurants Near You
@@ -3005,7 +3005,7 @@ export default function Home() {
           </div>
 
           {showRestaurantSkeleton || loadingRestaurants ? (
-            <div className="px-4">
+            <div className="px-4 md:px-0">
               <RestaurantGridSkeleton count={4} />
             </div>
           ) : visibleRestaurants.length === 0 ? (
@@ -3015,7 +3015,7 @@ export default function Home() {
               <p className="text-xs text-gray-500 dark:text-gray-400">We couldn't find any restaurants in your area right now. Try changing your location.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 px-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 px-4 md:px-0">
               {visibleRestaurants.map((restaurant, index) => {
                 const restaurantSlug = restaurant.slug || restaurant.name.toLowerCase().replace(/\s+/g, "-");
                 const availability = getRestaurantAvailabilityStatus(restaurant, new Date());
@@ -3089,7 +3089,7 @@ export default function Home() {
                                 <span>{restaurant.distance || ""}</span>
                               </div>
                             </div>
-                            <span className="bg-[#F84E04] text-white text-[9px] sm:text-[10px] font-extrabold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm hover:bg-[#D94203] transition-colors">
+                            <span className="bg-[#F84E04] text-white text-[9px] sm:text-[10px] font-extrabold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm hover:bg-[#D94203] transition-colors whitespace-nowrap flex-shrink-0">
                               Order Now
                             </span>
                           </div>

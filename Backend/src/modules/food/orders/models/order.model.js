@@ -1,7 +1,20 @@
 import mongoose from 'mongoose';
 
 const orderItemSchema = new mongoose.Schema(
-    {
+    {   // NEW
+        restaurantId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'FoodRestaurant',
+            required: false
+        },
+
+        // NEW (Snapshot)
+        restaurantName: {
+            type: String,
+            default: '',
+            trim: true
+        },
+
         itemId: { type: String, required: true, trim: true },
         name: { type: String, required: true, trim: true },
         variantId: { type: String, trim: true, default: '' },
@@ -204,11 +217,20 @@ const orderSchema = new mongoose.Schema(
             ref: 'FoodUser',
             required: true
         },
-        restaurantId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'FoodRestaurant',
-            required: false
-        },
+
+        restaurantIds: [
+            {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'FoodRestaurant'
+            }
+        ],
+
+        // restaurantId: {
+        //     type: mongoose.Schema.Types.ObjectId,
+        //     ref: 'FoodRestaurant',
+        //     required: false
+        // },
+
         moduleType: {
             type: String,
             enum: ['food', 'grocery', 'accessories'],
@@ -300,7 +322,8 @@ const orderSchema = new mongoose.Schema(
             type: { type: String, enum: ['Point'] },
             coordinates: { type: [Number] }
         },
-        coinsEarned: { type: Number, default: 0 }
+        coinsEarned: { type: Number, default: 0 },
+        checkoutGroupId: { type: String, default: '', index: true }
     },
     {
         collection: 'food_orders',
@@ -311,7 +334,12 @@ const orderSchema = new mongoose.Schema(
 orderSchema.index({ 'deliveryAddress.location': '2dsphere' });
 orderSchema.index({ lastRiderLocation: '2dsphere' });
 orderSchema.index({ userId: 1, createdAt: -1 });
-orderSchema.index({ restaurantId: 1, orderStatus: 1, createdAt: -1 });
+// orderSchema.index({ restaurantId: 1, orderStatus: 1, createdAt: -1 });
+orderSchema.index({
+    restaurantIds: 1,
+    orderStatus: 1,
+    createdAt: -1
+});
 orderSchema.index({ 'dispatch.deliveryPartnerId': 1, orderStatus: 1 });
 orderSchema.index({ 'dispatch.status': 1, orderStatus: 1 });
 orderSchema.index({ 'dispatch.status': 1, orderStatus: 1, updatedAt: -1 });

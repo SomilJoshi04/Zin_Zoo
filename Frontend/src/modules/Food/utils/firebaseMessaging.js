@@ -659,6 +659,27 @@ async function registerNativeWebViewFcmToken(moduleName) {
   }
 }
 
+const saveLocalNotification = (title, message, icon = "Bell") => {
+  try {
+    const saved = localStorage.getItem('food_user_notifications');
+    const list = saved ? JSON.parse(saved) : [];
+    const newNotif = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title,
+      message,
+      read: false,
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      icon
+    };
+    const updatedList = [newNotif, ...list].slice(0, 20);
+    localStorage.setItem('food_user_notifications', JSON.stringify(updatedList));
+    window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+  } catch (error) {
+    console.error('Failed to save local notification:', error);
+  }
+};
+
 function showForegroundNotification(payload = {}) {
   if (!isRecord(payload)) {
     pushDebugWarn(PUSH_DEBUG_PREFIX, "Ignoring malformed foreground notification payload", { payload });
@@ -700,11 +721,13 @@ function showForegroundNotification(payload = {}) {
       pushDebugLog(PUSH_DEBUG_PREFIX, "Skipping blank foreground notification after sanitize");
       return;
     }
-    if (body) {
-      toast.success(`${title}: ${body}`);
+    const textMessage = body || "";
+    if (textMessage) {
+      toast.success(`${title}: ${textMessage}`);
     } else {
       toast.success(title);
     }
+    saveLocalNotification(title, textMessage, "Bell");
     pushDebugLog(PUSH_DEBUG_PREFIX, "Foreground notification shown as toast", { title, body });
   }
 }

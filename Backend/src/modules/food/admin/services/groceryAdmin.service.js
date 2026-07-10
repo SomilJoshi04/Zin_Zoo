@@ -130,7 +130,7 @@ export async function getGroceryOrders(query = {}) {
     }
     if (query.status && query.status !== 'all') {
         const statusMap = {
-            'pending': ['pending_payment', 'created', 'pending'],
+            'pending': ['pending_payment', 'created', 'pending', 'confirmed'],
             'accepted': ['confirmed', 'accepted'],
             'processing': ['preparing', 'processing'],
             'out-for-delivery': ['picked_up', 'out_for_delivery'],

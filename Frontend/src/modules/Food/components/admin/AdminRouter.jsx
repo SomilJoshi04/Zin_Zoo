@@ -92,9 +92,12 @@ const RefundPolicy = lazy(() => import("@food/pages/admin/settings/RefundPolicy"
 const ShippingPolicy = lazy(() => import("@food/pages/admin/settings/ShippingPolicy"));
 const CancellationPolicy = lazy(() => import("@food/pages/admin/settings/CancellationPolicy"));
 const ReactRegistration = lazy(() => import("@food/pages/admin/settings/ReactRegistration"));
+const SubscriptionSettings = lazy(() => import("@food/pages/admin/settings/SubscriptionSettings"));
+const SubscriberList = lazy(() => import("@food/pages/admin/settings/SubscriberList"));
 const SupportCMS = lazy(() => import("@food/pages/admin/settings/SupportCMS"));
 const CoinSettings = () => null;
 const CoinRequests = () => null;
+
 
 // System Settings
 const ThirdParty = lazy(() => import("@food/pages/admin/system/ThirdParty"));
@@ -245,6 +248,10 @@ export default function AdminRouter() {
             {/* RESTAURANT MANAGEMENT */}
             <Route path="restaurants" element={<RestaurantsList />} />
             <Route path="restaurant-commissions" element={<RestaurantCommissions />} />
+            {/* Commented out as restaurant subscription flow is not currently needed
+            <Route path="restaurants/subscription-settings" element={<SubscriptionSettings />} />
+            <Route path="restaurants/subscription-history" element={<SubscriberList />} />
+            */}
 
             {/* FOOD & CATEGORY MANAGEMENT */}
             <Route path="grocery-categories" element={<GroceryCategory />} />

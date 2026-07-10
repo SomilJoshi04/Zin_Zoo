@@ -80,6 +80,41 @@ export default function App() {
             element={<UserRouter />}
           />
 
+          {/* Admin Auth Routes */}
+          <Route
+            path="admin/login"
+            element={
+              <AuthRedirect module="admin">
+                <AdminLogin />
+              </AuthRedirect>
+            }
+          />
+          <Route
+            path="admin/signup"
+            element={
+              <AuthRedirect module="admin">
+                <AdminSignup />
+              </AuthRedirect>
+            }
+          />
+          <Route
+            path="admin/forgot-password"
+            element={
+              <AuthRedirect module="admin">
+                <AdminForgotPassword />
+              </AuthRedirect>
+            }
+          />
+
+          {/* Admin Dashboard Router */}
+          <Route
+            path="admin/*"
+            element={
+              <ProtectedRoute requiredRole="admin" loginPath="/food/admin/login">
+                <AdminRouter />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Legacy Redirects & Fallbacks - use absolute path to avoid /user appended in a loop */}
           <Route path="/" element={<Navigate to="/food/user" replace />} />

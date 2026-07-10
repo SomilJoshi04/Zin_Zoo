@@ -11,6 +11,32 @@ const debugLog = (...args) => {
   }
 };
 
+const saveLocalNotification = (title, message, icon = "Bell") => {
+  try {
+    const saved = localStorage.getItem('food_user_notifications');
+    const list = saved ? JSON.parse(saved) : [];
+    
+    const newNotif = {
+      id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      title,
+      message,
+      read: false,
+      timestamp: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      icon
+    };
+    
+    const updatedList = [newNotif, ...list].slice(0, 20);
+    localStorage.setItem('food_user_notifications', JSON.stringify(updatedList));
+    
+    window.dispatchEvent(new CustomEvent('notificationsUpdated'));
+  } catch (error) {
+    if (import.meta.env.DEV) {
+      console.error('Failed to save local notification:', error);
+    }
+  }
+};
+
 /**
  * Hook for user to receive real-time order notifications.
  * Dispatches 'orderStatusNotification' custom event for OrderTrackingCard.
@@ -85,14 +111,14 @@ export const useUserNotifications = () => {
       const title = data.title || `Order #${data.orderId || 'Update'}`;
       const message = data.message || `Your order status is now ${String(data.orderStatus || '').replace(/_/g, ' ')}`;
 
-      // Optional: Show toast for important updates (Cancel, Ready, etc.)
-      const isImportant = String(data.orderStatus).includes('cancel') || ['ready_for_pickup', 'ready', 'confirmed'].includes(data.orderStatus);
-      if (isImportant) {
-        toast.message(title, {
-          description: message,
-          duration: 10000
-        });
-      }
+      // Show toast alert
+      toast.message(title, {
+        description: message,
+        duration: 8000
+      });
+
+      // Save to notification inbox list
+      saveLocalNotification(title, message, "CheckCircle2");
 
       // Dispatch custom event for OrderTrackingCard and other listeners
       const event = new CustomEvent('orderStatusNotification', {
@@ -130,17 +156,24 @@ export const useUserNotifications = () => {
       );
       const title = orderId ? `Order ${orderId}` : 'Delivery OTP';
       const parts = [message, otp ? `OTP: ${otp}` : ''].filter(Boolean);
+      const textMessage = parts.join(' - ') || 'Handover OTP from your delivery partner.';
       toast.message(title, {
-        description: parts.join(' - ') || 'Handover OTP from your delivery partner.',
+        description: textMessage,
         duration: 90_000
       });
+
+      // Save to notification inbox list
+      saveLocalNotification(title, textMessage, "Gift");
     });
 
     socketRef.current.on('admin_notification', (payload) => {
-      toast.message(payload?.title || 'Notification', {
-        description: payload?.message || 'New broadcast notification received.',
+      const title = payload?.title || 'Notification';
+      const message = payload?.message || 'New broadcast notification received.';
+      toast.message(title, {
+        description: message,
         duration: 8000
       });
+      saveLocalNotification(title, message, "Bell");
       dispatchNotificationInboxRefresh();
     });
 

@@ -16,6 +16,7 @@ import hotelIcon from "@food/assets/category-icons/hotel.png";
 import useNotificationInbox from "@food/hooks/useNotificationInbox";
 // import ModuleSwitcher from "../ModuleSwitcher"; // Removed
 import HeaderCartIcon from "../HeaderCartIcon";
+import HeaderNotificationBell from "../HeaderNotificationBell";
 
 const ICON_MAP = {
   CheckCircle2,
@@ -36,69 +37,7 @@ export default function HomeHeader({
   vegMode = false,
   handleVegModeChange
 }) {
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem('food_user_notifications');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const {
-    items: broadcastNotifications,
-    unreadCount: broadcastUnreadCount,
-    dismiss: dismissBroadcastNotification,
-  } = useNotificationInbox("user", { limit: 20 });
 
-  useEffect(() => {
-    const syncNotifications = () => {
-      const saved = localStorage.getItem('food_user_notifications');
-      setNotifications(saved ? JSON.parse(saved) : []);
-    };
-
-    window.addEventListener('notificationsUpdated', syncNotifications);
-
-    return () => window.removeEventListener('notificationsUpdated', syncNotifications);
-  }, []);
-
-  const mergedNotifications = useMemo(() => {
-    const localItems = Array.isArray(notifications)
-      ? notifications.map((item) => ({ ...item, source: "local" }))
-      : [];
-    const broadcastItems = (broadcastNotifications || []).map((item) => ({
-      ...item,
-      source: "broadcast",
-      time: item.createdAt
-        ? new Date(item.createdAt).toLocaleString("en-IN", {
-          day: "2-digit",
-          month: "short",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
-        : "Just now",
-      type: "broadcast",
-      icon: "Bell",
-      iconColor: "text-blue-600",
-    }));
-
-    return [...broadcastItems, ...localItems].sort(
-      (a, b) =>
-        new Date(b.createdAt || b.timestamp || 0).getTime() -
-        new Date(a.createdAt || a.timestamp || 0).getTime()
-    );
-  }, [broadcastNotifications, notifications]);
-
-  const unreadCount = notifications.filter(n => !n.read).length + broadcastUnreadCount;
-
-  const handleDeleteNotification = (id, source = "local") => {
-    if (source === "broadcast") {
-      dismissBroadcastNotification(id);
-      return;
-    }
-    setNotifications((prev) => {
-      const next = prev.filter((notification) => notification.id !== id);
-      localStorage.setItem('food_user_notifications', JSON.stringify(next));
-      window.dispatchEvent(new CustomEvent('notificationsUpdated', { detail: { count: next.filter((n) => !n.read).length } }));
-      return next;
-    });
-  };
 
   return (
     <div className="relative pt-2 pb-0 px-4 transition-all duration-700 overflow-hidden bg-transparent shadow-none">
@@ -194,56 +133,7 @@ export default function HomeHeader({
               <span className={`text-[8px] font-black uppercase tracking-tight ${vegMode ? 'text-white' : 'text-white/60'}`}>Veg</span>
             </div>
  
-            <Popover>
-              <PopoverTrigger asChild>
-                <div className="h-8 w-8 relative flex items-center justify-center rounded-full bg-white/10 border border-white/10 cursor-pointer active:scale-90 transition-all">
-                  <Bell className="h-4 w-4 text-white/90" />
-                  {unreadCount > 0 && (
-                    <span className={`absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full border animate-pulse ${vegMode ? 'bg-orange-400 border-[#00b09b]' : 'bg-orange-400 border-[#F84E04]'}`} />
-                  )}
-                </div>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-0 overflow-hidden border-none shadow-2xl rounded-2xl mt-2" align="end">
-                <div className="bg-white dark:bg-gray-900">
-                  <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
-                    <h3 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                      Notifications
-                      {unreadCount > 0 && (
-                        <Badge variant="secondary" className="bg-orange-100 text-[#F84E04] border-none text-[10px] h-4">
-                          {unreadCount} New
-                        </Badge>
-                      )}
-                    </h3>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {mergedNotifications.length > 0 ? (
-                      mergedNotifications.slice(0, 5).map((notif) => {
-                        const Icon = ICON_MAP[notif.icon] || Bell;
-                        return (
-                          <div key={notif.id} className="p-4 flex items-start gap-3 border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50 transition-colors">
-                            <div className="mt-1 p-2 rounded-full bg-gray-100 text-[#F84E04]">
-                              <Icon className="h-4 w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                               <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{notif.title}</p>
-                               <p className="text-xs text-gray-500 line-clamp-1">{notif.message}</p>
-                            </div>
-                          </div>
-                        )
-                      })
-                    ) : (
-                      <div className="p-8 text-center flex flex-col items-center gap-2">
-                        <BellOff className="h-10 w-10 text-gray-200" />
-                        <p className="text-xs text-gray-400 font-medium">All caught up!</p>
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3 bg-gray-50 dark:bg-gray-800/50 text-center">
-                    <Link to="/food/user/notifications" className="text-xs font-bold text-gray-400">View All</Link>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
+            <HeaderNotificationBell className="h-4 w-4 text-white/90" triggerClass="rounded-full h-8 w-8" />
 
             <HeaderCartIcon />
           </div>

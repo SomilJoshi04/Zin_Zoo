@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { adminAPI } from "@food/api";
+import { adminAPI, groceryAdminAPI, accessoriesAdminAPI } from "@food/api";
 
 const STORAGE_KEY = "admin_notifications_dismissed_v1";
 const UPDATE_EVENT = "adminNotificationsUpdated";
@@ -192,6 +192,31 @@ const mapExpiredFssai = (response) => {
   }));
 };
 
+const mapPendingOrders = (rows = [], moduleType = "food") => {
+  const list = Array.isArray(rows) ? rows : (rows?.orders || rows?.docs || rows?.data || []);
+  return (Array.isArray(list) ? list : []).map((item) => {
+    const totalAmount = item?.pricing?.total ?? item?.totalAmount ?? 0;
+    const orderId = item?.orderId ?? item?.id ?? item?._id ?? "N/A";
+    const customer = item?.customerName ?? item?.userId?.name ?? item?.userId?.fullName ?? "Customer";
+    
+    let path = "/admin/food/orders";
+    if (moduleType === "grocery") path = "/admin/food/grocery-orders";
+    if (moduleType === "accessories") path = "/admin/food/accessories-orders";
+
+    return {
+      id: `pending-order-${String(item?._id || item?.id || "")}`,
+      title: `New ${moduleType === "food" ? "Food" : (moduleType === "grocery" ? "Grocery" : "Accessories")} Order`,
+      message: `Order #${orderId} was placed. Total: ₹${Number(totalAmount).toFixed(2)}. Status: Pending.`,
+      type: "order",
+      category: "pending_order",
+      path,
+      createdAt: item?.createdAt || item?.updatedAt,
+      timeLabel: toDateLabel(item?.createdAt || item?.updatedAt),
+      metaLabel: joinMeta(orderId, customer, `₹${Number(totalAmount).toFixed(2)}`),
+    };
+  });
+};
+
 export default function useAdminNotifications(options = {}) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(Boolean(options?.autoload !== false));
@@ -208,13 +233,19 @@ export default function useAdminNotifications(options = {}) {
         supportRes,
         deliverySupportRes,
         fssaiExpiredRes,
+        foodOrdersRes,
+        groceryOrdersRes,
+        accessoriesOrdersRes,
       ] = await Promise.all([
-        adminAPI.getPendingRestaurants(),
-        adminAPI.getDeliveryPartnerJoinRequests({ page: 1, limit: 50 }),
-        adminAPI.getPendingFoodApprovals({ page: 1, limit: 50 }),
-        adminAPI.getSupportTicketsAdmin({ page: 1, limit: 50, source: "all" }),
-        adminAPI.getDeliverySupportTickets({ page: 1, limit: 50 }),
-        adminAPI.getExpiredFssaiNotifications(),
+        adminAPI.getPendingRestaurants().catch(() => null),
+        adminAPI.getDeliveryPartnerJoinRequests({ page: 1, limit: 50 }).catch(() => null),
+        adminAPI.getPendingFoodApprovals({ page: 1, limit: 50 }).catch(() => null),
+        adminAPI.getSupportTicketsAdmin({ page: 1, limit: 50, source: "all" }).catch(() => null),
+        adminAPI.getDeliverySupportTickets({ page: 1, limit: 50 }).catch(() => null),
+        adminAPI.getExpiredFssaiNotifications().catch(() => null),
+        adminAPI.getOrders({ status: "pending", limit: 20 }).catch(() => null),
+        groceryAdminAPI.getOrders({ status: "pending", limit: 20 }).catch(() => null),
+        accessoriesAdminAPI.getOrders({ status: "pending", limit: 20 }).catch(() => null),
       ]);
 
       const restaurantRows =
@@ -222,7 +253,14 @@ export default function useAdminNotifications(options = {}) {
         restaurantsRes?.data?.restaurants ||
         [];
 
+      const foodOrdersRows = foodOrdersRes?.data?.data?.data || foodOrdersRes?.data?.data?.orders || foodOrdersRes?.data?.orders || foodOrdersRes?.data?.data?.docs || foodOrdersRes?.data?.data || [];
+      const groceryOrdersRows = groceryOrdersRes?.data?.data?.orders || groceryOrdersRes?.data?.orders || groceryOrdersRes?.data?.data?.docs || groceryOrdersRes?.data?.data || [];
+      const accessoriesOrdersRows = accessoriesOrdersRes?.data?.data?.orders || accessoriesOrdersRes?.data?.orders || accessoriesOrdersRes?.data?.data?.docs || accessoriesOrdersRes?.data?.data || [];
+
       const aggregated = uniqueById([
+        ...mapPendingOrders(foodOrdersRows, "food"),
+        ...mapPendingOrders(groceryOrdersRows, "grocery"),
+        ...mapPendingOrders(accessoriesOrdersRows, "accessories"),
         ...mapPendingRestaurants(restaurantRows),
         ...mapDeliveryJoinRequests(deliveryJoinRes),
         ...mapFoodApprovals(foodApprovalRes),

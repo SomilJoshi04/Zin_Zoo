@@ -49,10 +49,9 @@ export function computeRestaurantCommissionAmount(baseAmount, rule) {
 
 export async function getRestaurantCommissionSnapshot(orderDoc) {
   const baseAmount = Number(orderDoc?.pricing?.subtotal ?? 0) || 0;
-  const restaurantIdRaw =
-    orderDoc?.restaurantId?._id ?? orderDoc?.restaurantId ?? null;
+  const items = Array.isArray(orderDoc?.items) ? orderDoc.items : [];
 
-  if (!restaurantIdRaw) {
+  if (items.length === 0) {
     return {
       commissionAmount: 0,
       commissionType: 'percentage',
@@ -62,22 +61,39 @@ export async function getRestaurantCommissionSnapshot(orderDoc) {
   }
 
   const rules = await getActiveRestaurantCommissionRules();
-  const rule =
-    rules.find((r) => String(r.restaurantId) === String(restaurantIdRaw)) ||
-    // Fallback: accept legacy docs where restaurantId may be stored under `restaurant` / `restaurant_id`
-    rules.find((r) => String(r.restaurant || r.restaurant_id || '') === String(restaurantIdRaw)) ||
-    null;
+  let totalCommissionAmount = 0;
 
-  if (!rule) {
-    return {
-      commissionAmount: 0,
-      commissionType: 'percentage',
-      commissionValue: 0,
-      baseAmount,
-    };
+  for (const item of items) {
+    const itemSubtotal = (Number(item.price) || 0) * (Number(item.quantity) || 1);
+    
+    // Resolve item-level restaurant ID
+    let rIdRaw = item.restaurantId?._id ?? item.restaurantId ?? null;
+    if (!rIdRaw) {
+      rIdRaw = orderDoc?.restaurantId?._id ?? orderDoc?.restaurantId ?? null;
+    }
+    if (!rIdRaw && Array.isArray(orderDoc?.restaurantIds) && orderDoc.restaurantIds.length > 0) {
+      rIdRaw = orderDoc.restaurantIds[0];
+    }
+
+    if (!rIdRaw) continue;
+
+    const rule =
+      rules.find((r) => String(r.restaurantId) === String(rIdRaw)) ||
+      rules.find((r) => String(r.restaurant || r.restaurant_id || '') === String(rIdRaw)) ||
+      null;
+
+    if (rule) {
+      const calc = computeRestaurantCommissionAmount(itemSubtotal, rule);
+      totalCommissionAmount += calc.commissionAmount;
+    }
   }
 
-  return computeRestaurantCommissionAmount(baseAmount, rule);
+  return {
+    commissionAmount: Math.round(totalCommissionAmount * 100) / 100,
+    commissionType: 'mixed',
+    commissionValue: 0,
+    baseAmount,
+  };
 }
 
 /**

@@ -236,9 +236,20 @@ export default function OrdersTable({
 
                 {visibleColumns.restaurant && (
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-slate-800">
-                      {order.restaurant || "N/A"}
-                    </span>
+                    <div className="flex flex-col gap-1.5 items-start">
+                      {order.restaurant ? (
+                        order.restaurant.split(", ").map((rName, idx) => (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-md bg-orange-50 text-orange-600 border border-orange-100 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-900/50"
+                          >
+                            {rName}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-sm text-slate-400">N/A</span>
+                      )}
+                    </div>
                   </td>
                 )}
 

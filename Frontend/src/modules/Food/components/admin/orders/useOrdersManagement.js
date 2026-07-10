@@ -484,15 +484,34 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
         margin: { left: 14, right: 14 },
       })
 
-      const tableBody = items.length > 0
-        ? items.map((item) => {
-          const qty = toNumber(item.quantity || 1)
-          const title = item.name || item.itemName || item.title || "Item"
-          const unitPrice = toNumber(item.price)
-          const lineTotal = qty * unitPrice
-          return [qty, title, formatMoney(unitPrice), formatMoney(lineTotal)]
+      const tableBody = []
+      if (items.length > 0) {
+        const groups = {}
+        items.forEach((item) => {
+          const rName = item.restaurantName || "Default Kitchen"
+          if (!groups[rName]) groups[rName] = []
+          groups[rName].push(item)
         })
-        : [[1, "Order Total", formatMoney(totalAmount), formatMoney(totalAmount)]]
+
+        Object.entries(groups).forEach(([restaurantName, groupItems]) => {
+          tableBody.push([
+            {
+              content: restaurantName,
+              colSpan: 4,
+              styles: { fontStyle: "bold", fillColor: [241, 245, 249], textColor: [15, 118, 110] }
+            }
+          ])
+          groupItems.forEach((item) => {
+            const qty = toNumber(item.quantity || 1)
+            const title = item.name || item.itemName || item.title || "Item"
+            const unitPrice = toNumber(item.price)
+            const lineTotal = qty * unitPrice
+            tableBody.push([qty, title, formatMoney(unitPrice), formatMoney(lineTotal)])
+          })
+        })
+      } else {
+        tableBody.push([1, "Order Total", formatMoney(totalAmount), formatMoney(totalAmount)])
+      }
 
       autoTable(doc, {
         startY: (doc.lastAutoTable?.finalY || 110) + 6,

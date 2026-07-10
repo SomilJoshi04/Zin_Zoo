@@ -436,7 +436,7 @@ export default function Profile() {
   return (
     <AnimatedPage className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0a]">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-[var(--module-theme-color,#F84E04)] text-white shadow-md">
+      <div className="md:hidden sticky top-0 z-40 bg-[var(--module-theme-color,#F84E04)] text-white shadow-md">
         <div className="px-4 h-[60px] flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/user" className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors -ml-2">
@@ -448,6 +448,11 @@ export default function Profile() {
       </div>
 
       <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 py-4 sm:py-6 md:py-8 lg:py-10 pb-20 sm:pb-24">
+        {/* Desktop Header */}
+        <div className="hidden md:block mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage your account settings, orders, and payment methods.</p>
+        </div>
 
         {/* Profile Info Card */}
         <Card className="bg-white dark:bg-[#1a1a1a] rounded-2xl py-0 pt-1 shadow-sm mb-0 border-0 dark:border-gray-800 overflow-hidden">

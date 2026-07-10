@@ -4,6 +4,7 @@ import {
   sendNotificationToOwner,
   sendNotificationToOwners,
 } from "../../../../core/notifications/firebase.service.js";
+import { createInboxNotifications } from "../../../../core/notifications/notification.service.js";
 import { getIO, rooms } from '../../../../config/socket.js';
 import { addOrderJob } from '../../../../queues/producers/order.producer.js';
 
@@ -72,6 +73,20 @@ export function emitDeliveryDropOtpToUser(order, plainOtp) {
 export async function notifyOwnersSafely(targets, payload) {
   try {
     await sendNotificationToOwners(targets, payload);
+    
+    // Save in user inbox database so they see them in their notification bell
+    const inboxNotifications = (Array.isArray(targets) ? targets : []).map(target => ({
+      ownerType: target.ownerType,
+      ownerId: target.ownerId,
+      title: payload.title || "Order Update",
+      message: payload.body || payload.message || "",
+      link: payload.data?.link || "",
+      category: "order",
+      metadata: payload.data || {}
+    }));
+    if (inboxNotifications.length > 0) {
+      await createInboxNotifications({ notifications: inboxNotifications });
+    }
   } catch (error) {
     logger.warn(`FCM notification failed: ${error?.message || error}`);
   }
@@ -80,6 +95,20 @@ export async function notifyOwnersSafely(targets, payload) {
 export async function notifyOwnerSafely(target, payload) {
   try {
     await sendNotificationToOwner({ ...target, payload });
+    
+    if (target?.ownerType && target?.ownerId) {
+      await createInboxNotifications({
+        notifications: [{
+          ownerType: target.ownerType,
+          ownerId: target.ownerId,
+          title: payload.title || "Order Update",
+          message: payload.body || payload.message || "",
+          link: payload.data?.link || "",
+          category: "order",
+          metadata: payload.data || {}
+        }]
+      });
+    }
   } catch (error) {
     logger.warn(`FCM notification failed: ${error?.message || error}`);
   }
@@ -150,6 +179,12 @@ export function normalizeOrderForClient(orderDoc) {
   else if (String(cancellationEntry?.byRole || "").toUpperCase() === "ADMIN")
     cancelledBy = "admin";
 
+  const uniqueNames = Array.from(new Set((order.items || []).map(it => it.restaurantName).filter(Boolean)));
+  const isFood = order.moduleType === 'food' || (!order.moduleType && uniqueNames.length > 0) || (!order.moduleType && !order.items?.[0]?.foodName);
+  const restaurantNameText = uniqueNames.length > 0 
+    ? uniqueNames.join(", ") 
+    : (isFood ? "ZinZooX Kitchen" : "");
+
   return {
     ...order,
     orderMongoId: mongoId,
@@ -163,6 +198,11 @@ export function normalizeOrderForClient(orderDoc) {
     deliveryPartnerId:
       order?.dispatch?.deliveryPartnerId || order?.deliveryPartnerId || null,
     rating: order?.ratings?.restaurant?.rating ?? order?.rating ?? null,
+    restaurant: restaurantNameText,
+    restaurantName: restaurantNameText,
+    restaurantId: order.restaurantId && typeof order.restaurantId === 'object' && order.restaurantId.restaurantName
+      ? order.restaurantId
+      : String((order.restaurantIds && order.restaurantIds[0]) || order.restaurantId || ""),
     deliveryState: {
       ...(order?.deliveryState || {}),
       currentLocation: order?.lastRiderLocation?.coordinates?.length >= 2 ? {
@@ -222,7 +262,9 @@ export function buildDeliverySocketPayload(orderDoc, restaurantDoc = null) {
     restaurantId:
       order?.restaurantId?._id?.toString?.() ||
       order?.restaurantId?.toString?.() ||
-      order?.restaurantId,
+      order?.restaurantId ||
+      (order?.restaurantIds && order.restaurantIds[0]?.toString?.()) ||
+      "",
     restaurantName: restaurant?.restaurantName || order?.restaurantName,
     restaurantAddress:
       restaurantLocation?.address ||
@@ -269,36 +311,57 @@ export function canExposeOrderToRestaurant(orderLike) {
 
 export async function notifyRestaurantNewOrder(orderDoc) {
   try {
-    if (!orderDoc || !orderDoc.restaurantId || !canExposeOrderToRestaurant(orderDoc)) return;
+    if (!orderDoc || !canExposeOrderToRestaurant(orderDoc)) return;
 
-    const io = getIO();
-    if (io) {
-      const payload = {
-        ...orderDoc.toObject(),
-        orderMongoId: orderDoc._id?.toString?.() || undefined,
-        orderId: orderDoc.order_id || orderDoc._id?.toString?.(),
-      };
-      logger.info(
-        `[RestaurantOrders] Emitting new_order to ${rooms.restaurant(orderDoc.restaurantId)} for order ${orderDoc._id?.toString?.() || ''}`,
-      );
-      io.to(rooms.restaurant(orderDoc.restaurantId)).emit("new_order", payload);
+    // Collect all unique restaurant IDs from restaurantIds array or restaurantId field
+    const rIds = new Set();
+    if (orderDoc.restaurantId) {
+      rIds.add(orderDoc.restaurantId.toString());
+    }
+    if (Array.isArray(orderDoc.restaurantIds)) {
+      orderDoc.restaurantIds.forEach(id => {
+        if (id) rIds.add(id.toString());
+      });
     }
 
-    await notifyOwnersSafely(
-      [{ ownerType: "RESTAURANT", ownerId: orderDoc.restaurantId }],
-      {
-        title: "New order received",
-        body: `Order #${orderDoc.order_id || orderDoc._id} is waiting for review.`,
-        data: {
-          type: "new_order",
-          orderId: orderDoc._id.toString(),
-          orderMongoId: orderDoc._id?.toString?.() || "",
-          link: `/restaurant/orders/${orderDoc._id?.toString?.() || ""}`,
+    if (rIds.size === 0) return;
+
+    const io = getIO();
+    const payload = {
+      ...orderDoc.toObject(),
+      orderMongoId: orderDoc._id?.toString?.() || undefined,
+      orderId: orderDoc.order_id || orderDoc._id?.toString?.(),
+    };
+
+    const targetOwners = [];
+
+    for (const rId of rIds) {
+      if (io) {
+        logger.info(
+          `[RestaurantOrders] Emitting new_order to ${rooms.restaurant(rId)} for order ${orderDoc._id?.toString?.() || ''}`,
+        );
+        io.to(rooms.restaurant(rId)).emit("new_order", payload);
+      }
+      targetOwners.push({ ownerType: "RESTAURANT", ownerId: rId });
+    }
+
+    if (targetOwners.length > 0) {
+      await notifyOwnersSafely(
+        targetOwners,
+        {
+          title: "New order received",
+          body: `Order #${orderDoc.order_id || orderDoc._id} is waiting for review.`,
+          data: {
+            type: "new_order",
+            orderId: orderDoc._id.toString(),
+            orderMongoId: orderDoc._id?.toString?.() || "",
+            link: `/restaurant/orders/${orderDoc._id?.toString?.() || ""}`,
+          },
         },
-      },
-    );
-  } catch {
-    // Do not block order/payment flow if notification fails.
+      );
+    }
+  } catch (err) {
+    logger.error(`Error notifying restaurants: ${err.message}`);
   }
 }
 
@@ -337,4 +400,24 @@ export function isStatusAdvance(current, next) {
   if (nextPrio === 100 && currentPrio < 80) return true;
 
   return nextPrio > currentPrio;
+}
+
+export function broadcastNewOrderToAdmin(order) {
+  try {
+    const io = getIO();
+    if (io) {
+      const payload = {
+        orderId: order.order_id || order.orderId || order._id?.toString() || "N/A",
+        orderMongoId: order._id?.toString() || "",
+        moduleType: order.moduleType || 'food',
+        restaurantName: order.restaurantName || (order.items?.[0]?.restaurantName) || "",
+        pricing: order.pricing
+      };
+      logger.info(`[Socket] Broadcasting new order ${payload.orderId} to admin-orders`);
+      io.to('admin-orders').emit("admin_new_order", payload);
+      io.to('admin-orders').emit("play_notification_sound", payload);
+    }
+  } catch (err) {
+    logger.warn(`Failed to broadcast new order to admin via sockets: ${err.message}`);
+  }
 }

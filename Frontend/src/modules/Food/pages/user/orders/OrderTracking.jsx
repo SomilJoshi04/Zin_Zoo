@@ -1587,6 +1587,9 @@ export default function OrderTracking() {
                     {item?.variantName ? (
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">{item.variantName}</p>
                     ) : null}
+                    {item?.restaurantName ? (
+                      <p className="text-xs text-orange-600 dark:text-orange-400 mt-0.5 truncate">From: {item.restaurantName}</p>
+                    ) : null}
                   </div>
                 </div>
                 <span className="text-sm font-bold text-gray-900 dark:text-white shrink-0">

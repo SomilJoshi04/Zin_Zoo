@@ -49,6 +49,7 @@ import {
   buildDeliverySocketPayload,
   notifyRestaurantNewOrder,
   isStatusAdvance,
+  broadcastNewOrderToAdmin,
 } from './order.helpers.js';
 
 
@@ -238,7 +239,10 @@ async function expireUnacceptedOrders(filter = {}) {
           message: "Order was not accepted by restaurant in time.",
         };
         io.to(rooms.user(updated.userId)).emit("order_status_update", payload);
-        io.to(rooms.restaurant(updated.restaurantId)).emit("order_status_update", payload);
+        const rIds = updated.restaurantIds && updated.restaurantIds.length > 0 ? updated.restaurantIds : [updated.restaurantId].filter(Boolean);
+        rIds.forEach(rId => {
+          io.to(rooms.restaurant(rId)).emit("order_status_update", payload);
+        });
       }
     } catch (err) {
       logger.warn(`expireUnacceptedOrders socket emit failed: ${err?.message || err}`);
@@ -511,31 +515,62 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
       return await createGroceryOrder(userId, dto, bypassRazorpay);
     }
 
-    let restaurantId = null;
-    let restaurant = null;
-
     if (!dto.items || dto.items.length === 0) {
       throw new ValidationError('At least one item must be ordered');
     }
 
-    // Dynamically retrieve restaurant from the food items being ordered
-    try {
-      const itemIdCandidate = dto.items[0].itemId || dto.items[0].id || dto.items[0]._id;
-      if (itemIdCandidate && mongoose.Types.ObjectId.isValid(itemIdCandidate)) {
-        const firstItem = await mongoose.model('FoodItem').findById(itemIdCandidate).lean();
-        if (firstItem && firstItem.restaurantId) {
-          const actualRestaurant = await mongoose.model('FoodRestaurant').findById(firstItem.restaurantId).lean();
-          if (actualRestaurant) {
-            restaurantId = actualRestaurant._id;
-            restaurant = actualRestaurant;
+    // Resolve restaurant IDs & names from database for all items
+    const populatedItems = [];
+    const restaurantIdsSet = new Set();
+    
+    if (Array.isArray(dto.items)) {
+      for (const item of dto.items) {
+        let rId = item.restaurantId;
+        let rName = item.restaurantName;
+        
+        // Resolve restaurant ID from FoodItem if missing
+        if (!rId && mongoose.Types.ObjectId.isValid(item.itemId)) {
+          const foodItem = await mongoose.model('FoodItem').findById(item.itemId).lean();
+          if (foodItem && foodItem.restaurantId) {
+            rId = foodItem.restaurantId.toString();
           }
         }
+        
+        // Resolve restaurant name if missing
+        if (rId && (!rName || String(rName).trim() === "")) {
+          const restDoc = await mongoose.model('FoodRestaurant').findById(rId).select('restaurantName').lean();
+          if (restDoc) {
+            rName = restDoc.restaurantName;
+          }
+        }
+        
+        if (rId) {
+          restaurantIdsSet.add(rId.toString());
+        }
+        
+        populatedItems.push({
+          ...item,
+          itemId: toObjectId(item.itemId, 'Item ID'),
+          restaurantId: rId ? toObjectId(rId, 'Restaurant ID') : undefined,
+          restaurantName: rName || "Default Kitchen"
+        });
       }
-    } catch (err) {
-      logger.error(`Error resolving actual restaurant for checkout: ${err.message}`);
     }
 
-    if (!restaurantId || !restaurant) {
+    if (restaurantIdsSet.size === 0) {
+      // Fallback default restaurant ID
+      restaurantIdsSet.add('6a47438661bc505016a5ad33');
+    }
+
+    const distinctRestaurantIds = Array.from(restaurantIdsSet);
+    const firstRestaurantId = distinctRestaurantIds[0];
+    let restaurant = null;
+
+    if (mongoose.Types.ObjectId.isValid(firstRestaurantId)) {
+      restaurant = await mongoose.model('FoodRestaurant').findById(firstRestaurantId).lean();
+    }
+
+    if (!restaurant) {
       throw new ValidationError('Restaurant not found for the ordered items');
     }
 
@@ -623,8 +658,9 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
     let restaurantCommission = 0;
     try {
       const snapshot = await foodTransactionService.getRestaurantCommissionSnapshot({
+        items: populatedItems,
         pricing: normalizedPricing,
-        restaurantId: restaurantId
+        restaurantIds: distinctRestaurantIds
       });
       restaurantCommission = Number(snapshot?.commissionAmount) || 0;
     } catch (err) {
@@ -660,13 +696,10 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
 
     const order = new FoodOrder({
       userId: toObjectId(userId, 'User ID'),
-      restaurantId: restaurantId,
+      restaurantIds: distinctRestaurantIds.map(id => toObjectId(id, 'Restaurant ID')),
       moduleType: dto.moduleType || 'food',
       zoneId: dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID') : (restaurant.zoneId ? toObjectId(restaurant.zoneId, 'Restaurant Zone ID') : null),
-      items: (dto.items || []).map(item => ({
-        ...item,
-        itemId: toObjectId(item.itemId, 'Item ID')
-      })),
+      items: populatedItems,
       deliveryAddress,
       customerName: String(dto.customerName || deliveryAddress.fullName || ""),
       customerPhone: String(dto.customerPhone || deliveryAddress.phone || ""),
@@ -760,6 +793,9 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
 
       // Restaurant gets new-order request only when payment flow is eligible.
       await notifyRestaurantNewOrder(order);
+      if (initialStatus === "confirmed") {
+        broadcastNewOrderToAdmin(order);
+      }
     } catch (err) {
       logger.warn(`Notifications failed for order ${order._id}: ${err.message}`);
     }
@@ -848,6 +884,7 @@ export async function verifyPayment(userId, dto) {
 
   // After online payment is verified, now notify restaurant about the new order.
   await notifyRestaurantNewOrder(order);
+  broadcastNewOrderToAdmin(order);
 
   // Notify Customer about payment success
   await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
@@ -894,7 +931,6 @@ export async function listOrdersUser(userId, query) {
 
   const [foodDocs, groceryDocs] = await Promise.all([
     FoodOrder.find(filter)
-      .populate("restaurantId", "restaurantName profileImage area city location rating totalRatings")
       .populate("dispatch.deliveryPartnerId", "name phone rating totalRatings")
       .lean(),
     GroceryOrder.find(filter)
@@ -1070,6 +1106,9 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
         link: `/food/user/orders/${order._id.toString()}`,
       },
     });
+    if (initialStatus === "confirmed") {
+      broadcastNewOrderToAdmin(order);
+    }
   } catch (err) {
     logger.warn(`Notifications failed for grocery order ${order._id}: ${err.message}`);
   }
@@ -1085,10 +1124,6 @@ export async function getOrderById(
   const identity = buildOrderIdentityFilter(orderId);
   if (!identity) throw new ValidationError("Order id required");
   let order = await FoodOrder.findOne(identity)
-    .populate(
-      "restaurantId",
-      "restaurantName ownerPhone profileImage area city location rating totalRatings primaryContactNumber",
-    )
     .populate("dispatch.deliveryPartnerId", "name fullName phone phoneNumber rating totalRatings profileImage avatar")
     .populate("userId", "name fullName phone email")
     .select("+deliveryOtp")
@@ -1135,12 +1170,17 @@ export async function getOrderById(
   if (admin) return normalizeOrderForClient(order);
 
   const orderUserId = order.userId?._id?.toString() || order.userId?.toString();
-  const orderRestaurantId = order.restaurantId?._id?.toString() || order.restaurantId?.toString();
   const orderPartnerId = order.dispatch?.deliveryPartnerId?._id?.toString() || order.dispatch?.deliveryPartnerId?.toString();
+
+  // Resolve all restaurant IDs on the order (both legacy field and restaurantIds array)
+  const rIds = (order.restaurantIds || []).map(id => id?.toString?.() || String(id));
+  if (order.restaurantId) {
+    rIds.push(order.restaurantId?._id?.toString() || order.restaurantId?.toString());
+  }
 
   if (userId && orderUserId !== userId.toString())
     throw new ForbiddenError("Not your order");
-  if (restaurantId && orderRestaurantId !== restaurantId.toString())
+  if (restaurantId && !rIds.includes(restaurantId.toString()))
     throw new ForbiddenError("Not your restaurant order");
   if (deliveryPartnerId && orderPartnerId !== deliveryPartnerId.toString())
     throw new ForbiddenError("Not assigned to you");
@@ -1297,7 +1337,6 @@ export async function resyncState(userId, role) {
         $nin: ["delivered", "cancelled_by_user", "cancelled_by_restaurant"],
       },
     })
-      .populate("restaurantId")
       .lean();
     return { activeOrder: order ? sanitizeOrderForExternal(order) : null };
   }
@@ -1408,7 +1447,10 @@ export async function cancelOrder(orderId, userId, reason) {
         message: `Order #${order.order_id || order._id} has been cancelled successfully.${refundDetail}`
       };
       io.to(rooms.user(userId)).emit("order_status_update", payload);
-      io.to(rooms.restaurant(order.restaurantId)).emit("order_status_update", payload);
+      const rIds = order.restaurantIds && order.restaurantIds.length > 0 ? order.restaurantIds : [order.restaurantId].filter(Boolean);
+      rIds.forEach(rId => {
+        io.to(rooms.restaurant(rId)).emit("order_status_update", payload);
+      });
     }
   } catch (err) {
     logger.warn(`cancelOrder socket emit failed: ${err?.message || err}`);
@@ -1440,15 +1482,27 @@ export async function updateOrderInstructions(orderId, userId, instructions) {
 // ----- Restaurant -----
 export async function listOrdersRestaurant(restaurantId, query) {
   await expireUnacceptedOrders({
-    restaurantId: new mongoose.Types.ObjectId(restaurantId),
+    $or: [
+      { restaurantId: new mongoose.Types.ObjectId(restaurantId) },
+      { restaurantIds: new mongoose.Types.ObjectId(restaurantId) }
+    ]
   });
   const { page, limit, skip } = buildPaginationOptions(query);
   const filter = {
-    restaurantId: new mongoose.Types.ObjectId(restaurantId),
-    $or: [
-      { "payment.method": { $in: ["cash", "wallet"] } },
-      { "payment.status": { $in: ["paid", "authorized", "captured", "settled", "refunded"] } },
-    ],
+    $and: [
+      {
+        $or: [
+          { restaurantId: new mongoose.Types.ObjectId(restaurantId) },
+          { restaurantIds: new mongoose.Types.ObjectId(restaurantId) }
+        ]
+      },
+      {
+        $or: [
+          { "payment.method": { $in: ["cash", "wallet"] } },
+          { "payment.status": { $in: ["paid", "authorized", "captured", "settled", "refunded"] } }
+        ]
+      }
+    ]
   };
   const [docs, total] = await Promise.all([
     FoodOrder.find(filter)
@@ -1469,12 +1523,18 @@ export async function updateOrderStatusRestaurant(
   note = "",
 ) {
   await expireUnacceptedOrders({
-    restaurantId: new mongoose.Types.ObjectId(restaurantId),
+    $or: [
+      { restaurantId: new mongoose.Types.ObjectId(restaurantId) },
+      { restaurantIds: new mongoose.Types.ObjectId(restaurantId) }
+    ]
   });
   const identity = buildOrderIdentityFilter(orderId);
   let order = await FoodOrder.findOne({
     ...identity,
-    restaurantId: new mongoose.Types.ObjectId(restaurantId),
+    $or: [
+      { restaurantId: new mongoose.Types.ObjectId(restaurantId) },
+      { restaurantIds: new mongoose.Types.ObjectId(restaurantId) }
+    ]
   });
   if (!order) throw new NotFoundError("Order not found");
 
@@ -1575,12 +1635,13 @@ export async function updateOrderStatusRestaurant(
         message: body,
       };
 
-      const restRoom = rooms.restaurant(restaurantId);
       const userRoom = rooms.user(order.userId);
-
-      console.log(`[DEBUG] Emitting order_status_update to rooms: ${restRoom}, ${userRoom}`);
-      io.to(restRoom).emit("order_status_update", payload);
       io.to(userRoom).emit("order_status_update", payload);
+
+      const rIds = order.restaurantIds && order.restaurantIds.length > 0 ? order.restaurantIds : [restaurantId || order.restaurantId].filter(Boolean);
+      rIds.forEach(rId => {
+        io.to(rooms.restaurant(rId)).emit("order_status_update", payload);
+      });
 
       // Notify assigned rider via socket if they exist
       const assignedRiderId = order.dispatch?.deliveryPartnerId;
@@ -1890,20 +1951,28 @@ export async function listOrdersAdmin(query) {
   if (moduleType === 'food') {
     const foodFilter = { ...filter };
     if (query.restaurantId && mongoose.Types.ObjectId.isValid(query.restaurantId)) {
-      foodFilter.restaurantId = new mongoose.Types.ObjectId(query.restaurantId);
+      const rIdObj = new mongoose.Types.ObjectId(query.restaurantId);
+      foodFilter.$or = [
+        { restaurantId: rIdObj },
+        { restaurantIds: rIdObj }
+      ];
     }
     if (query.zoneId && mongoose.Types.ObjectId.isValid(query.zoneId)) {
       const zoneRestaurantIds = await FoodRestaurant.find({
         zoneId: new mongoose.Types.ObjectId(query.zoneId),
       }).distinct("_id");
-      if (foodFilter.restaurantId) {
-        foodFilter.restaurantId = {
-          $in: zoneRestaurantIds.filter(
-            (id) => String(id) === String(foodFilter.restaurantId)
-          )
-        };
+      const zoneRIdObjs = zoneRestaurantIds.map(id => new mongoose.Types.ObjectId(id));
+      if (foodFilter.$or) {
+        const filterRIdStr = String(query.restaurantId);
+        const inZone = zoneRestaurantIds.some(id => String(id) === filterRIdStr);
+        if (!inZone) {
+          foodFilter.$or = [{ restaurantId: null }, { restaurantIds: null }];
+        }
       } else {
-        foodFilter.restaurantId = { $in: zoneRestaurantIds };
+        foodFilter.$or = [
+          { restaurantId: { $in: zoneRIdObjs } },
+          { restaurantIds: { $in: zoneRIdObjs } }
+        ];
       }
     }
 
@@ -1911,7 +1980,6 @@ export async function listOrdersAdmin(query) {
       FoodOrder.find(foodFilter)
         .select("+deliveryOtp")
         .populate("userId", "name phone email")
-        .populate("restaurantId", "restaurantName area city ownerPhone zoneId")
         .populate("dispatch.deliveryPartnerId", "name phone")
         .sort({ createdAt: -1 })
         .skip(skip)
@@ -1950,7 +2018,6 @@ export async function listOrdersAdmin(query) {
       FoodOrder.find(foodFilter)
         .select("+deliveryOtp")
         .populate("userId", "name phone email")
-        .populate("restaurantId", "restaurantName area city ownerPhone zoneId")
         .populate("dispatch.deliveryPartnerId", "name phone")
         .lean(),
       GroceryOrder.find(groceryFilter)
@@ -2043,7 +2110,10 @@ export async function deleteOrderAdmin(orderId, adminId) {
       };
 
       if (order.userId) io.to(rooms.user(order.userId)).emit("order_deleted", payload);
-      if (order.restaurantId) io.to(rooms.restaurant(order.restaurantId)).emit("order_deleted", payload);
+      const rIds = order.restaurantIds && order.restaurantIds.length > 0 ? order.restaurantIds : [order.restaurantId].filter(Boolean);
+      rIds.forEach(rId => {
+        io.to(rooms.restaurant(rId)).emit("order_deleted", payload);
+      });
       if (order.dispatch?.deliveryPartnerId) {
         io.to(rooms.delivery(order.dispatch.deliveryPartnerId)).emit("order_deleted", payload);
       }
@@ -2168,7 +2238,10 @@ export async function updateOrderStatusAdmin(orderId, orderStatus, note = "", ad
         note: order.note || note || "",
       };
       io.to(rooms.user(order.userId)).emit("order_status_update", payload);
-      io.to(rooms.restaurant(order.restaurantId)).emit("order_status_update", payload);
+      const rIds = order.restaurantIds && order.restaurantIds.length > 0 ? order.restaurantIds : [order.restaurantId].filter(Boolean);
+      rIds.forEach(rId => {
+        io.to(rooms.restaurant(rId)).emit("order_status_update", payload);
+      });
       if (order.dispatch?.deliveryPartnerId) {
         io.to(rooms.delivery(order.dispatch.deliveryPartnerId)).emit("order_status_update", payload);
       }

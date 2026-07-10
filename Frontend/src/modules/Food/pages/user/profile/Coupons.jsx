@@ -52,7 +52,7 @@ export default function Coupons() {
 
   return (
     <AnimatedPage className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0a]">
-      <div className="max-w-md mx-auto px-4 py-4">
+      <div className="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto px-4 py-4">
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
           <Link to="/user/profile">
@@ -68,7 +68,7 @@ export default function Coupons() {
             Loading coupons...
           </div>
         ) : sortedOffers.length > 0 ? (
-          <div className="space-y-3 pb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-6">
             {sortedOffers.map((offer) => {
               const code = offer?.couponCode || ""
               const title = offer?.title || ""

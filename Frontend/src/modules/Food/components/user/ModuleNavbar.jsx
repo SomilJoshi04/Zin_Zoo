@@ -29,7 +29,7 @@ export default function ModuleNavbar({ className = "" }) {
   }, [activeModuleId]);
 
   return (
-    <div className={`w-full py-2 bg-transparent ${className}`}>
+    <div className={`w-full py-2 bg-transparent md:hidden ${className}`}>
       <div 
         ref={scrollRef}
         className="flex justify-center gap-2 sm:gap-3 overflow-x-auto scrollbar-hide scroll-smooth px-4 pb-2"

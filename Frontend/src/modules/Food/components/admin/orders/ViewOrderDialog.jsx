@@ -98,6 +98,18 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
     return null
   }
 
+  // Group items by restaurant name
+  const groupedItems = {}
+  if (order.items && Array.isArray(order.items)) {
+    order.items.forEach((item) => {
+      const rName = item.restaurantName || "Default Kitchen"
+      if (!groupedItems[rName]) {
+        groupedItems[rName] = []
+      }
+      groupedItems[rName].push(item)
+    })
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] bg-white dark:bg-slate-900 border dark:border-slate-800/80 p-0 overflow-y-auto">
@@ -276,42 +288,53 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
                 <Package className="w-4 h-4" />
                 Order Items ({order.items.length})
               </h3>
-              <div className="space-y-3">
-                {order.items.map((item, index) => (
-                  <div key={index} className="flex items-start justify-between p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg">
-                    <div className="flex items-start gap-3 flex-1">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name || "Item"}
-                          className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-800 flex-shrink-0"
-                          onError={(e) => { e.target.style.display = 'none' }}
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
-                          <Package className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-1 rounded">
-                            {item.quantity || 1}x
-                          </span>
-                          <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{item.name || "Unknown Item"}</p>
-                          {item.isVeg !== undefined && (
-                            <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 ${item.isVeg ? 'bg-green-100 text-green-700 dark:bg-green-950/55 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-950/55 dark:text-red-400'}`}>
-                              {item.isVeg ? 'Veg' : 'Non-Veg'}
-                            </span>
-                          )}
-                        </div>
-                        {item.description && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.description}</p>
-                        )}
-                      </div>
+              <div className="space-y-6">
+                {Object.entries(groupedItems).map(([restaurantName, items]) => (
+                  <div key={restaurantName} className="space-y-3">
+                    <div className="flex items-center gap-2 border-b border-dashed border-slate-200 dark:border-slate-800 pb-2">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 px-2.5 py-1 rounded-md">
+                        {restaurantName}
+                      </span>
                     </div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white flex-shrink-0 ml-3">
-                      ₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
-                    </p>
+                    <div className="space-y-3">
+                      {items.map((item, index) => (
+                        <div key={index} className="flex items-start justify-between p-3 bg-slate-50 dark:bg-slate-800/40 rounded-lg">
+                          <div className="flex items-start gap-3 flex-1">
+                            {item.image ? (
+                              <img
+                                src={item.image}
+                                alt={item.name || "Item"}
+                                className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-800 flex-shrink-0"
+                                onError={(e) => { e.target.style.display = 'none' }}
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center flex-shrink-0">
+                                <Package className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 px-2 py-1 rounded">
+                                  {item.quantity || 1}x
+                                </span>
+                                <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{item.name || "Unknown Item"}</p>
+                                {item.isVeg !== undefined && (
+                                  <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 ${item.isVeg ? 'bg-green-100 text-green-700 dark:bg-green-950/55 dark:text-green-400' : 'bg-red-100 text-red-700 dark:bg-red-950/55 dark:text-red-400'}`}>
+                                    {item.isVeg ? 'Veg' : 'Non-Veg'}
+                                  </span>
+                                )}
+                              </div>
+                              {item.description && (
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{item.description}</p>
+                              )}
+                            </div>
+                          </div>
+                          <p className="text-sm font-semibold text-slate-900 dark:text-white flex-shrink-0 ml-3">
+                            ₹{((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
