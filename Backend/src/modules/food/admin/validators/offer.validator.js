@@ -10,6 +10,8 @@ const createOfferSchema = z.object({
     restaurantScope: z.enum(['all', 'selected']).default('all'),
     restaurantId: z.string().optional(),
     restaurantIds: z.array(z.string()).optional(),
+    moduleType: z.enum(['food', 'grocery', 'accessories']).default('food').optional(),
+    itemIds: z.array(z.string()).optional(),
     endDate: z.string().optional().or(z.literal('')).or(z.undefined()),
     startDate: z.string().optional().or(z.literal('')).or(z.undefined()),
     minOrderValue: z.number().min(0).optional(),
@@ -33,6 +35,10 @@ export const validateCreateOfferDto = (body) => {
         restaurantIds: Array.isArray(body?.restaurantIds)
             ? body.restaurantIds.map((id) => String(id)).filter(Boolean)
             : undefined,
+        moduleType: body?.moduleType || 'food',
+        itemIds: Array.isArray(body?.itemIds)
+            ? body.itemIds.map((id) => String(id)).filter(Boolean)
+            : undefined,
         endDate: body?.endDate ? String(body.endDate) : undefined,
         startDate: body?.startDate ? String(body.startDate) : undefined,
         minOrderValue: body?.minOrderValue !== undefined ? Number(body.minOrderValue) : undefined,
@@ -49,7 +55,7 @@ export const validateCreateOfferDto = (body) => {
         throw new ValidationError(result.error.errors[0].message);
     }
 
-    if (result.data.restaurantScope === 'selected') {
+    if (result.data.moduleType === 'food' && result.data.restaurantScope === 'selected') {
         const restaurantIds = [
             ...(result.data.restaurantIds || []),
             ...(result.data.restaurantId ? [result.data.restaurantId] : [])
@@ -96,6 +102,11 @@ export const validateCreateOfferDto = (body) => {
         throw new ValidationError('Admin bear and restaurant bear must total 100%');
     }
 
+    const moduleType = result.data.moduleType || 'food';
+    const itemIds = Array.isArray(result.data.itemIds)
+        ? [...new Set(result.data.itemIds)].map(id => new mongoose.Types.ObjectId(id))
+        : [];
+
     return {
         couponCode: result.data.couponCode.trim().toUpperCase(),
         discountType: result.data.discountType,
@@ -104,6 +115,8 @@ export const validateCreateOfferDto = (body) => {
         restaurantScope: result.data.restaurantScope,
         restaurantId: restaurantIds[0],
         restaurantIds,
+        moduleType,
+        itemIds,
         endDate,
         startDate,
         minOrderValue: result.data.minOrderValue,

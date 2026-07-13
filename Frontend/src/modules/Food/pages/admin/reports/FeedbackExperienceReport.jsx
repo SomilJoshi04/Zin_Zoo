@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { adminAPI } from "@food/api"
 import { toast } from "sonner"
 import { exportReportsToCSV, exportReportsToExcel, exportReportsToPDF, exportReportsToJSON } from "@food/components/admin/reports/reportsExportUtils"
+import { usePublicSocket } from "@food/hooks/usePublicSocket"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -45,6 +46,14 @@ export default function FeedbackExperienceReport() {
   useEffect(() => {
     fetchFeedbackExperiences()
   }, [filters])
+
+  const socketListeners = useMemo(() => ({
+    "feedback:update": () => {
+      fetchFeedbackExperiences()
+    }
+  }), [filters])
+
+  usePublicSocket(socketListeners)
 
   const fetchFeedbackExperiences = async () => {
     try {

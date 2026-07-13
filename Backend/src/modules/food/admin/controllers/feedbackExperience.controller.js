@@ -37,6 +37,13 @@ export const createFeedbackExperience = async (req, res) => {
 
         const feedback = await FeedbackExperience.create(feedbackData);
 
+        try {
+            const { broadcastPublicUpdate } = await import('../../../../config/socket.js');
+            broadcastPublicUpdate('feedback:update', { action: 'create', data: feedback });
+        } catch (e) {
+            console.error('Failed to broadcast feedback update:', e);
+        }
+
         return sendResponse(res, 201, 'Feedback submitted successfully', feedback);
     } catch (error) {
         console.error('Error creating feedback:', error);
@@ -161,6 +168,13 @@ export const deleteFeedbackExperience = async (req, res) => {
         
         if (!feedback) {
             return sendError(res, 404, 'Feedback not found');
+        }
+
+        try {
+            const { broadcastPublicUpdate } = await import('../../../../config/socket.js');
+            broadcastPublicUpdate('feedback:update', { action: 'delete', data: { _id: id } });
+        } catch (e) {
+            console.error('Failed to broadcast feedback update:', e);
         }
 
         return sendResponse(res, 200, 'Feedback deleted successfully');

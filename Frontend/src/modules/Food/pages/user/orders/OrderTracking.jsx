@@ -35,7 +35,6 @@ import { Textarea } from "@food/components/ui/textarea"
 import { useOrders } from "@food/context/OrdersContext"
 import { useProfile } from "@food/context/ProfileContext"
 import { useLocation as useUserLocation } from "@food/hooks/useLocation"
-import DeliveryTrackingMap from "@food/components/user/DeliveryTrackingMap"
 import { orderAPI, restaurantAPI } from "@food/api"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { useUserNotifications } from "@food/hooks/useUserNotifications"
@@ -89,101 +88,115 @@ const AnimatedCheckmark = ({ delay = 0 }) => (
 )
 
 // Real Delivery Map Component with User Live Location
-const DeliveryMap = React.memo(({ orderId, order, isVisible, fallbackCustomerCoords = null, userLiveCoords = null, userLocationAccuracy = null, onEtaUpdate = null }) => {
-  const toPointFromGeoJSON = (coords) => {
-    if (!Array.isArray(coords) || coords.length < 2) return null;
-    const lng = Number(coords[0]);
-    const lat = Number(coords[1]);
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-    return { lat, lng };
-  };
-
-  // Memoize coordinates to prevent re-calculating on every parent render
-  const restaurantCoords = useMemo(() => {
-    // Try multiple sources for restaurant coordinates
-    let coords = null;
-
-    if (order?.restaurantLocation?.coordinates &&
-      Array.isArray(order.restaurantLocation.coordinates) &&
-      order.restaurantLocation.coordinates.length >= 2) {
-      coords = order.restaurantLocation.coordinates;
-    }
-    else if (order?.restaurantId?.location?.coordinates &&
-      Array.isArray(order.restaurantId.location.coordinates) &&
-      order.restaurantId.location.coordinates.length >= 2) {
-      coords = order.restaurantId.location.coordinates;
-    }
-    else if (order?.restaurantId?.location?.latitude && order?.restaurantId?.location?.longitude) {
-      coords = [order.restaurantId.location.longitude, order.restaurantId.location.latitude];
-    }
-
-    const fromCoords = toPointFromGeoJSON(coords);
-    if (fromCoords) return fromCoords;
-
-    const fallbackLat = Number(order?.restaurantId?.location?.latitude || order?.restaurant?.location?.latitude);
-    const fallbackLng = Number(order?.restaurantId?.location?.longitude || order?.restaurant?.location?.longitude);
-    if (Number.isFinite(fallbackLat) && Number.isFinite(fallbackLng)) {
-      return { lat: fallbackLat, lng: fallbackLng };
-    }
-    return null;
-  }, [order?.restaurantId, order?.restaurantLocation, order?.restaurant]);
-
-  const customerCoords = useMemo(() => {
-    const coords = order?.address?.coordinates || order?.address?.location?.coordinates;
-    const fromCoords = toPointFromGeoJSON(coords);
-    if (fromCoords) return fromCoords;
-
-    if (
-      fallbackCustomerCoords &&
-      Number.isFinite(fallbackCustomerCoords.lat) &&
-      Number.isFinite(fallbackCustomerCoords.lng)
-    ) {
-      return fallbackCustomerCoords;
-    }
-    return null;
-  }, [order?.address, fallbackCustomerCoords]);
-
-  // Delivery boy data
-  const deliveryBoyData = useMemo(() => order?.deliveryPartner ? {
-    name: order.deliveryPartner.name || 'Delivery Partner',
-    avatar: order.deliveryPartner.avatar || null
-  } : null, [order?.deliveryPartner]);
-
-  // Firebase and backend write tracking under order.orderId (string) or mongoId; subscribe to all so we receive updates
-  const orderTrackingIdsList = useMemo(() => [
-    order?.orderId,
-    order?.mongoId,
-    order?._id,
-    orderId,
-    order?.id
-  ].filter(Boolean), [order?.orderId, order?.mongoId, order?._id, orderId, order?.id]);
-
-  if (!isVisible || !orderId || !order || !restaurantCoords || !customerCoords) {
+// Premium Order Progress Component
+const DeliveryMap = React.memo(({ orderId, order, isVisible }) => {
+  if (!isVisible || !orderId || !order) {
     return (
       <div
-        className="relative min-h-[250px] bg-gradient-to-b from-gray-100 to-gray-200"
+        className="relative min-h-[250px] bg-gradient-to-b from-gray-50 to-gray-100 rounded-xl"
         style={{ height: '250px' }}
       />
     );
   }
 
+  const status = String(order?.orderStatus || "created").toLowerCase();
+  
+  // Define sequence states
+  const states = [
+    { key: "created", label: "Placed", desc: "Waiting for confirmation" },
+    { key: "confirmed", label: "Accepted", desc: "Order accepted by kitchen" },
+    { key: "preparing", label: "Preparing", desc: "Chef is cooking your meal" },
+    { key: "ready_for_pickup", label: "Ready", desc: "Hot & fresh, ready at counter" },
+    { key: "delivered", label: "Delivered", desc: "Thank you for ordering!" }
+  ];
+
+  // Determine current active index
+  let activeIndex = 0;
+  if (status === "confirmed") activeIndex = 1;
+  else if (status === "preparing") activeIndex = 2;
+  else if (status === "ready_for_pickup") activeIndex = 3;
+  else if (status === "delivered") activeIndex = 4;
+  else if (status.includes("cancel")) activeIndex = -1;
+
   return (
     <div
-      className="relative w-full min-h-[250px] overflow-visible"
+      className="relative w-full min-h-[250px] bg-gradient-to-br from-indigo-900 via-slate-900 to-black text-white p-6 rounded-xl flex flex-col justify-between shadow-2xl overflow-hidden border border-white/10"
       style={{ height: '250px' }}
     >
-      <DeliveryTrackingMap
-        orderId={orderId}
-        orderTrackingIds={orderTrackingIdsList}
-        restaurantCoords={restaurantCoords}
-        customerCoords={customerCoords}
+      {/* Background ambient light */}
+      <div className="absolute top-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-48 h-48 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        userLiveCoords={userLiveCoords}
-        userLocationAccuracy={userLocationAccuracy}
-        deliveryBoyData={deliveryBoyData}
-        order={order}
-        onEtaUpdate={onEtaUpdate}
-      />
+      {/* Header Info */}
+      <div className="z-10 flex items-center justify-between">
+        <div>
+          <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-900/30">
+            {states[activeIndex]?.label || "Cancelled"}
+          </span>
+          <h3 className="text-lg font-extrabold mt-1 text-white leading-tight tracking-tight">
+            {states[activeIndex]?.desc || "This order has been cancelled"}
+          </h3>
+        </div>
+        <div className="flex flex-col items-end">
+          <span className="text-xs text-slate-400 font-medium">Order ID</span>
+          <span className="text-sm font-bold text-indigo-300">#{orderId.slice(-6).toUpperCase()}</span>
+        </div>
+      </div>
+
+      {/* Premium Step Progress Bar */}
+      <div className="z-10 my-auto flex items-center justify-between relative px-2">
+        {/* Track Line */}
+        <div className="absolute left-6 right-6 top-[13px] h-[3px] bg-white/10 -z-10 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400"
+            initial={{ width: 0 }}
+            animate={{ width: activeIndex >= 0 ? `${(activeIndex / (states.length - 1)) * 100}%` : "0%" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          />
+        </div>
+
+        {states.map((st, idx) => {
+          const isDone = idx < activeIndex;
+          const isActive = idx === activeIndex;
+          
+          return (
+            <div key={st.key} className="flex flex-col items-center flex-1">
+              <motion.div
+                className={`w-7 h-7 rounded-full flex items-center justify-center border font-bold text-xs transition-all duration-300 ${
+                  isActive
+                    ? "bg-emerald-400 border-emerald-300 text-slate-950 shadow-[0_0_12px_rgba(52,211,153,0.6)]"
+                    : isDone
+                    ? "bg-indigo-600 border-indigo-500 text-white"
+                    : "bg-slate-950 border-white/20 text-slate-500"
+                }`}
+                animate={isActive ? { scale: [1, 1.15, 1] } : {}}
+                transition={isActive ? { repeat: Infinity, duration: 2, ease: "easeInOut" } : {}}
+              >
+                {isDone ? "✓" : idx + 1}
+              </motion.div>
+              <span className={`text-[10px] font-bold mt-2 tracking-tight transition-colors duration-300 ${
+                isActive ? "text-emerald-400" : isDone ? "text-indigo-300" : "text-slate-500"
+              }`}>
+                {st.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Decorative details */}
+      <div className="z-10 flex items-center justify-between border-t border-white/5 pt-3.5 text-xs text-slate-400 font-medium">
+        <div className="flex items-center gap-1.5">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span>Preparing fresh at ZinZOO Partner Kitchen</span>
+        </div>
+        <div>
+          <span>ZinZOO Direct Kitchen Dispatch</span>
+        </div>
+      </div>
     </div>
   );
 });
@@ -1291,10 +1304,10 @@ export default function OrderTracking() {
       iconType: 'rider'
     },
     ready: {
-      title: "Handover in progress",
-      subtitle: "Rider is picking up your order",
+      title: "Order Ready",
+      subtitle: "Your order is prepared and ready",
       color: "bg-green-600",
-      iconType: 'rider'
+      iconType: 'food'
     },
     on_way: {
       title: "Out for delivery",

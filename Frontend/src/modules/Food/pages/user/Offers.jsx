@@ -170,8 +170,8 @@ export default function Offers() {
                           </span>
                         </div>
                         <p className="text-sm text-slate-700 dark:text-slate-300">
-                          <span className="font-semibold">Restaurant:</span>{" "}
-                          {o.restaurantName || "All Restaurants"}
+                          <span className="font-semibold">Scope:</span>{" "}
+                          {o.restaurantScope === "all" || o.restaurantName === "All Restaurants" ? "Global / Platform" : o.restaurantName}
                         </p>
                         {o.endDate && (
                           <p className="text-xs text-slate-500 dark:text-slate-400">

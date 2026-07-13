@@ -297,7 +297,7 @@ export default function TransactionReport() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
           {/* Completed Transaction - Green */}
           <div className="rounded-lg shadow-sm border border-slate-200 p-4 bg-slate-100 dark:bg-[#1a1a1a]">
             <div className="relative mb-3 flex justify-center">
@@ -343,6 +343,22 @@ export default function TransactionReport() {
             <div className="text-center">
               <p className="text-xl font-bold text-blue-600 dark:text-blue-400 mb-1">{formatFullCurrency(summary.adminEarning)}</p>
               <p className="text-sm text-slate-600 leading-tight">Admin Earning</p>
+            </div>
+          </div>
+
+          {/* Restaurant Earning */}
+          <div className="rounded-lg shadow-sm border border-slate-200 p-4 bg-slate-100 dark:bg-[#1a1a1a]">
+            <div className="relative mb-3 flex justify-center">
+              <div className="w-16 h-16 rounded-full bg-orange-100 dark:bg-amber-950/40 flex items-center justify-center">
+                <img src={restaurantEarningIcon} alt="Restaurant Earning" className="w-10 h-10" />
+              </div>
+              <div className="absolute top-0 right-0 w-6 h-6 rounded-full bg-orange-500 flex items-center justify-center">
+                <Info className="w-3 h-3 text-white" />
+              </div>
+            </div>
+            <div className="text-center">
+              <p className="text-xl font-bold text-orange-600 dark:text-orange-400 mb-1">{formatFullCurrency(summary.restaurantEarning)}</p>
+              <p className="text-sm text-slate-600 leading-tight">Restaurant Earning</p>
             </div>
           </div>
         </div>

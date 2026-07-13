@@ -4,14 +4,16 @@ const feedbackExperienceSchema = new mongoose.Schema(
     {
         userId: { 
             type: mongoose.Schema.Types.ObjectId, 
-            required: true,
             refPath: 'userModel'
         },
         userModel: {
             type: String,
-            required: true,
             enum: ['FoodUser'],
             default: 'FoodUser'
+        },
+        orderId: {
+            type: mongoose.Schema.Types.ObjectId,
+            index: true
         },
         restaurantId: { 
             type: mongoose.Schema.Types.ObjectId, 
@@ -28,9 +30,19 @@ const feedbackExperienceSchema = new mongoose.Schema(
             trim: true,
             default: ''
         },
+        customerName: {
+            type: String,
+            trim: true,
+            default: ''
+        },
+        customerPhone: {
+            type: String,
+            trim: true,
+            default: ''
+        },
         module: { 
             type: String, 
-            enum: ['user', 'app'],
+            enum: ['user', 'app', 'order'],
             required: true,
             index: true
         }

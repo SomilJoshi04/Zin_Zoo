@@ -1235,22 +1235,30 @@ export const restaurantAPI = {
   updateMyOfferStatus: (id, status) => apiClient.patch(`/food/restaurant/my-offers/${id}/status`, { status }, { contextModule: "restaurant" }),
   /** Public Offers for users (global/selected restaurant) */
   getPublicOffers: (params = {}) => apiClient.get("/food/restaurant/offers", { params }),
-  /** Backward-compat helper used by Cart: returns coupons array for an item by adapting public offers */
-  getCouponsByItemIdPublic: (restaurantId, _itemId, subtotal) =>
+  getCouponsByItemIdPublic: (restaurantId, itemId, subtotal) =>
     apiClient.get("/food/restaurant/offers", { params: { restaurantId, subtotal } }).then((res) => {
       const list = res?.data?.data?.allOffers || res?.data?.allOffers || [];
       const now = Date.now();
       const coupons = list
         .filter((o) => {
-          // Guard: respect selected restaurant scope
-          if (String(o?.restaurantScope) === "selected") {
-            if (!restaurantId) return false;
-            const restaurantIds = Array.isArray(o.restaurantIds) && o.restaurantIds.length > 0
-              ? o.restaurantIds
-              : [o.restaurantId].filter(Boolean);
-            return restaurantIds.some((id) => String(id) === String(restaurantId || ""));
+          const isFood = !o.moduleType || o.moduleType === 'food';
+          if (isFood) {
+            if (String(o?.restaurantScope) === "selected") {
+              if (!restaurantId) return false;
+              const restaurantIds = Array.isArray(o.restaurantIds) && o.restaurantIds.length > 0
+                ? o.restaurantIds
+                : [o.restaurantId].filter(Boolean);
+              return restaurantIds.some((id) => String(id) === String(restaurantId || ""));
+            }
+            return true;
+          } else {
+            // Grocery/Accessories: check itemIds if specified
+            if (Array.isArray(o.itemIds) && o.itemIds.length > 0) {
+              if (!itemId) return false;
+              return o.itemIds.some((id) => String(id) === String(itemId));
+            }
+            return true;
           }
-          return true;
         })
         .map((o) => {
           const isPct = o.discountType === "percentage";
@@ -1267,9 +1275,11 @@ export const restaurantAPI = {
             minOrder: Number(o.minOrderValue || 0),
             maxDiscount: o.maxDiscount != null ? Number(o.maxDiscount) : null,
             customerGroup: o.customerScope || "all",
-            isGlobalCoupon: o.restaurantScope === "all",
+            isGlobalCoupon: o.restaurantScope === "all" && (!o.moduleType || o.moduleType === 'food'),
             endDate: o.endDate || null,
             showInCart: o.showInCart !== false,
+            moduleType: o.moduleType || 'food',
+            itemIds: o.itemIds || [],
             _ts: now,
           };
         });
@@ -2327,6 +2337,9 @@ export const userAPI = {
     apiClient.post("/food/user/profile/app-feedback", body ?? {}, {
       contextModule: "user",
     }),
+  /** Submit public feedback for order from QR code (Anonymous, no auth) */
+  submitPublicFeedback: (body) =>
+    apiClient.post("/food/public/feedback", body ?? {}),
   /** Upload and set user profile image (multipart). Field name: file */
   uploadProfileImage: async (file) => {
     if (!file) return Promise.reject(new Error("File is required"));

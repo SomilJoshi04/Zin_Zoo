@@ -34,6 +34,14 @@ export const submitAppFeedbackController = async (req, res, next) => {
         const userId = req.user?.userId;
         const { rating, comment } = req.body;
         const result = await submitAppFeedback(userId, rating, comment);
+        
+        try {
+            const { broadcastPublicUpdate } = await import('../../../../config/socket.js');
+            broadcastPublicUpdate('feedback:update', { action: 'create', data: result });
+        } catch (e) {
+            console.error('Failed to broadcast feedback update:', e);
+        }
+        
         return sendResponse(res, 201, 'Feedback submitted successfully', result);
     } catch (error) {
         next(error);

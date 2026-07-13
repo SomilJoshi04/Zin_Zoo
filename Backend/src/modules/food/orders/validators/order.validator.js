@@ -6,9 +6,9 @@ const orderItemSchema = z.object({
     name: z.string().min(1, 'Item name required'),
     variantId: z.string().optional(),
     variantName: z.string().optional(),
-    variantPrice: z.number().min(0).optional(),
-    price: z.number().min(0),
-    quantity: z.number().int().min(1),
+    variantPrice: z.coerce.number().min(0).optional(),
+    price: z.coerce.number().min(0),
+    quantity: z.coerce.number().int().min(1),
     isVeg: z.boolean().optional().default(true),
     image: z.string().optional(),
     notes: z.string().optional(),
@@ -35,13 +35,13 @@ const addressSchema = z.object({
 });
 
 const pricingSchema = z.object({
-    subtotal: z.number().min(0),
-    tax: z.number().min(0).optional(),
-    packagingFee: z.number().min(0).optional(),
-    deliveryFee: z.number().min(0).optional(),
-    platformFee: z.number().min(0).optional(),
-    discount: z.number().min(0).optional(),
-    total: z.number().min(0),
+    subtotal: z.coerce.number().min(0),
+    tax: z.coerce.number().min(0).optional(),
+    packagingFee: z.coerce.number().min(0).optional(),
+    deliveryFee: z.coerce.number().min(0).optional(),
+    platformFee: z.coerce.number().min(0).optional(),
+    discount: z.coerce.number().min(0).optional(),
+    total: z.coerce.number().min(0),
     currency: z.string().optional(),
     couponCode: z.string().nullable().optional()
 });
@@ -49,11 +49,11 @@ const pricingSchema = z.object({
 export function validateCalculateOrderDto(body) {
     const schema = z.object({
         items: z.array(orderItemSchema).min(1, 'At least one item required'),
-        restaurantId: z.string().min(1, 'Restaurant id required'),
-        deliveryAddressId: z.string().optional(),
-        zoneId: z.string().optional(),
-        couponCode: z.string().optional(),
-        deliveryFleet: z.string().optional()
+        restaurantId: z.string().nullable().optional(),
+        deliveryAddressId: z.string().nullable().optional(),
+        zoneId: z.string().nullable().optional(),
+        couponCode: z.string().nullable().optional(),
+        deliveryFleet: z.string().nullable().optional()
     });
     const result = schema.safeParse(body);
     if (!result.success) {
@@ -70,9 +70,9 @@ export function validateCreateOrderDto(body) {
         items: z.array(orderItemSchema).min(1, 'At least one item required'),
         address: addressSchema,
         moduleType: z.enum(['food', 'grocery', 'accessories', 'all', 'unified']).optional(),
-        restaurantId: z.string().optional(),
-        restaurantName: z.string().optional(),
-        customerName: z.string().optional(),
+        restaurantId: z.string().nullable().optional(),
+        restaurantName: z.string().nullable().optional(),
+        customerName: z.string().nullable().optional(),
         customerPhone: z.string().optional(),
         pricing: pricingSchema,
         deliveryFleet: z.string().optional(),

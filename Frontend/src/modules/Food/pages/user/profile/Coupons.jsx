@@ -1,43 +1,75 @@
 import { Link } from "react-router-dom"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { ArrowLeft, Copy, MapPin, TicketPercent } from "lucide-react"
 import AnimatedPage from "@food/components/user/AnimatedPage"
 import { Button } from "@food/components/ui/button"
 import { restaurantAPI } from "@food/api"
 import { toast } from "sonner"
+import { usePublicSocket } from "@food/hooks/usePublicSocket"
 
 export default function Coupons() {
   const [loading, setLoading] = useState(true)
   const [offers, setOffers] = useState([])
+  const [activeTab, setActiveTab] = useState("all")
 
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        setLoading(true)
-        const res = await restaurantAPI.getPublicOffers()
-        const list = res?.data?.data?.allOffers || res?.data?.allOffers || []
-        if (!cancelled) {
-          // Only show offers meant to be visible to users (default true)
-          const visible = Array.isArray(list) ? list.filter((o) => o?.showInCart !== false) : []
-          setOffers(visible)
-        }
-      } catch (e) {
-        if (!cancelled) setOffers([])
-      } finally {
-        if (!cancelled) setLoading(false)
+  const load = useCallback(async (cancelled = false) => {
+    try {
+      setLoading(true)
+      const res = await restaurantAPI.getPublicOffers()
+      const list = res?.data?.data?.allOffers || res?.data?.allOffers || []
+      if (!cancelled) {
+        // Only show offers meant to be visible to users (default true)
+        const visible = Array.isArray(list) ? list.filter((o) => o?.showInCart !== false) : []
+        setOffers(visible)
       }
-    }
-    load()
-    return () => {
-      cancelled = true
+    } catch (e) {
+      if (!cancelled) setOffers([])
+    } finally {
+      if (!cancelled) setLoading(false)
     }
   }, [])
 
-  const sortedOffers = useMemo(() => {
-    if (!Array.isArray(offers)) return []
-    return [...offers].sort((a, b) => String(a?.couponCode || "").localeCompare(String(b?.couponCode || "")))
+  useEffect(() => {
+    let cancelled = false
+    load(cancelled)
+    return () => {
+      cancelled = true
+    }
+  }, [load])
+
+  const socketListeners = useMemo(() => ({
+    "offer:update": () => {
+      load(false)
+    }
+  }), [load])
+
+  usePublicSocket(socketListeners)
+
+  const counts = useMemo(() => {
+    if (!Array.isArray(offers)) return { all: 0, food: 0, grocery: 0, accessories: 0 }
+    return offers.reduce((acc, offer) => {
+      acc.all++
+      const mod = offer?.moduleType || "food"
+      if (mod === "grocery") {
+        acc.grocery++
+      } else if (mod === "accessories") {
+        acc.accessories++
+      } else {
+        acc.food++
+      }
+      return acc
+    }, { all: 0, food: 0, grocery: 0, accessories: 0 })
   }, [offers])
+
+  const filteredOffers = useMemo(() => {
+    if (!Array.isArray(offers)) return []
+    const filtered = offers.filter((offer) => {
+      if (activeTab === "all") return true
+      const mod = offer?.moduleType || "food"
+      return mod === activeTab
+    })
+    return [...filtered].sort((a, b) => String(a?.couponCode || "").localeCompare(String(b?.couponCode || "")))
+  }, [offers, activeTab])
 
   const handleCopy = async (code) => {
     const value = String(code || "").trim()
@@ -67,61 +99,110 @@ export default function Coupons() {
           <div className="flex items-center justify-center min-h-[60vh] text-sm text-gray-600 dark:text-gray-400">
             Loading coupons...
           </div>
-        ) : sortedOffers.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-6">
-            {sortedOffers.map((offer) => {
-              const code = offer?.couponCode || ""
-              const title = offer?.title || ""
-              const restaurantName = offer?.restaurantName || "All Restaurants"
-              const endDate = offer?.endDate ? new Date(offer.endDate) : null
-              const expiryText =
-                endDate && !Number.isNaN(endDate.getTime())
-                  ? `Valid till ${endDate.toLocaleDateString()}`
-                  : "No expiry"
+        ) : offers.length > 0 ? (
+          <div>
+            {/* Filter Tabs */}
+            <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none shrink-0 -mx-4 px-4 md:mx-0 md:px-0">
+              {[
+                { id: "all", label: "All" },
+                { id: "food", label: "Food" },
+                { id: "grocery", label: "Grocery" },
+                { id: "accessories", label: "Accessories" }
+              ].map(tab => {
+                const count = counts[tab.id] || 0
+                const active = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all duration-200 border flex items-center gap-1.5 outline-none ${
+                      active
+                        ? "bg-blue-600 border-blue-600 text-white dark:bg-blue-600 dark:border-blue-600 dark:text-white shadow-sm"
+                        : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 dark:bg-slate-900 dark:border-slate-800 dark:text-gray-300 dark:hover:bg-slate-800"
+                    }`}
+                  >
+                    <span>{tab.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      active 
+                        ? "bg-blue-700 text-white dark:bg-white/20 dark:text-white" 
+                        : "bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-gray-400"
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
 
-              return (
-                <div
-                  key={offer?.id || offer?.offerId || code}
-                  className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-gray-800 p-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
-                        <TicketPercent className="h-5 w-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-semibold text-gray-900 dark:text-white">
-                            {code}
-                          </span>
-                          {title && (
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
-                              {title}
-                            </span>
-                          )}
+            {filteredOffers.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-6">
+                {filteredOffers.map((offer) => {
+                  const code = offer?.couponCode || ""
+                  const title = offer?.title || ""
+                  const isGrocery = offer?.moduleType === "grocery"
+                  const isAccessories = offer?.moduleType === "accessories"
+                  const scopeText = isGrocery
+                    ? "Grocery Offer"
+                    : isAccessories
+                      ? "Accessories Offer"
+                      : offer?.restaurantName || "All Restaurants"
+                  const endDate = offer?.endDate ? new Date(offer.endDate) : null
+                  const expiryText =
+                    endDate && !Number.isNaN(endDate.getTime())
+                      ? `Valid till ${endDate.toLocaleDateString()}`
+                      : "No expiry"
+
+                  return (
+                    <div
+                      key={offer?.id || offer?.offerId || code}
+                      className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-200 dark:border-gray-800 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="h-10 w-10 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                            <TicketPercent className="h-5 w-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-semibold text-gray-900 dark:text-white">
+                                {code}
+                              </span>
+                              {title && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200">
+                                  {title}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
+                              {scopeText}
+                            </p>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1">
+                              {expiryText}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
-                          {restaurantName}
-                        </p>
-                        <p className="text-[11px] text-gray-500 dark:text-gray-500 mt-1">
-                          {expiryText}
-                        </p>
+
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="h-9 px-3 rounded-xl"
+                          onClick={() => handleCopy(code)}
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy
+                        </Button>
                       </div>
                     </div>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="h-9 px-3 rounded-xl"
-                      onClick={() => handleCopy(code)}
-                    >
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copy
-                    </Button>
-                  </div>
-                </div>
-              )
-            })}
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-white dark:bg-[#1b1b1b] rounded-2xl border border-gray-200 dark:border-gray-800 p-8 shadow-sm">
+                <TicketPercent className="w-12 h-12 mx-auto text-gray-400 dark:text-gray-600 mb-3" />
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">No Offers Available</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">There are no coupons in this category at the moment.</p>
+              </div>
+            )}
           </div>
         ) : (
           /* Empty State */

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { FoodOrder } from '../../orders/models/order.model.js';
 import { FoodTransaction } from '../../orders/models/foodTransaction.model.js';
 import { FoodRestaurant } from '../models/restaurant.model.js';
-import { FoodRestaurantWithdrawal } from '../models/foodRestaurantWithdrawal.model.js';
+const FoodRestaurantWithdrawal = mongoose.models.FoodRestaurantWithdrawal || mongoose.model('FoodRestaurantWithdrawal', new mongoose.Schema({}, { strict: false, collection: 'food_restaurant_withdrawals' }));
 
 function toTwoDigitYearString(dateObj) {
     const y = String(dateObj.getFullYear());

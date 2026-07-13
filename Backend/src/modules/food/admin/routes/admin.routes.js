@@ -143,6 +143,7 @@ router.get('/global-search', adminController.globalSearch);
 
 router.get('/dashboard-stats', adminController.getDashboardStats);
 router.get('/reports/transactions', adminController.getTransactionReport);
+router.get('/reports/restaurants', adminController.getRestaurantReport);
 router.get('/reports/tax', adminController.getTaxReport);
 router.get('/reports/tax/:id', adminController.getTaxReportDetail);
 router.get('/feature-settings', adminController.getFeatureSettings);

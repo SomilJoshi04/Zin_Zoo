@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
+import { useTheme } from "next-themes"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardHeader, CardTitle } from "@food/components/ui/card"
 import {
@@ -23,7 +24,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts"
-import { Activity, ArrowUpRight, ShoppingBag, CreditCard, Truck, Receipt, DollarSign, Store, UserCheck, Package, UserCircle, Clock, CheckCircle, Plus, XCircle } from "lucide-react"
+import { Activity, ArrowUpRight, ShoppingBag, CreditCard, Truck, Receipt, DollarSign, Store, UserCheck, Package, UserCircle, Clock, CheckCircle, Plus, XCircle, Watch } from "lucide-react"
 import { adminAPI } from "@food/api"
 const debugLog = () => {}
 const debugError = () => {}
@@ -39,6 +40,22 @@ function formatCurrency(amount, options = {}) {
 
 export default function AdminHome() {
   const navigate = useNavigate()
+  const { theme, resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === "dark" || theme === "dark"
+
+  // Theme-aware chart styles
+  const chartStyles = useMemo(() => ({
+    tooltip: {
+      background: isDark ? "#262626" : "#ffffff",
+      border: isDark ? "1px solid #404040" : "1px solid #e5e7eb",
+      borderRadius: 12,
+    },
+    labelStyle: { color: isDark ? "#f3f4f6" : "#111827" },
+    itemStyle: { color: isDark ? "#d4d4d4" : "#111827" },
+    grid: isDark ? "#333333" : "#e5e7eb",
+    axis: isDark ? "#a3a3a3" : "#6b7280",
+    legendText: isDark ? "#d4d4d4" : "#111827",
+  }), [isDark])
   const [selectedZone, setSelectedZone] = useState("all")
   const [selectedPeriod, setSelectedPeriod] = useState("overall")
   const [isLoading, setIsLoading] = useState(true)
@@ -144,6 +161,8 @@ export default function AdminHome() {
   const totalDeliveryBoys = dashboardData?.deliveryBoys?.total || 0
   const pendingDeliveryBoyRequests = dashboardData?.deliveryBoys?.pendingRequests || 0
   const totalFoods = dashboardData?.foods?.total || 0
+  const totalGroceryProducts = dashboardData?.groceryProducts?.total || 0
+  const totalAccessoriesProducts = dashboardData?.accessoriesProducts?.total || 0
   const totalAddons = dashboardData?.addons?.total || 0
   const totalCustomers = dashboardData?.customers?.total || 0
   const pendingOrders = dashboardData?.orderStats?.pending || 0
@@ -285,6 +304,22 @@ export default function AdminHome() {
               path="/admin/food/customers"
             />
             <MetricCard
+              title="Total grocery"
+              value={totalGroceryProducts.toLocaleString("en-IN")}
+              helper="Approved grocery items"
+              icon={<ShoppingBag className="h-5 w-5 text-green-600" />}
+              accent="bg-green-200/40"
+              path="/admin/food/grocery-products"
+            />
+            <MetricCard
+              title="Total accessories"
+              value={totalAccessoriesProducts.toLocaleString("en-IN")}
+              helper="Approved accessories items"
+              icon={<Watch className="h-5 w-5 text-indigo-600" />}
+              accent="bg-indigo-200/40"
+              path="/admin/food/accessories-products"
+            />
+            <MetricCard
               title="Pending orders"
               value={pendingOrders.toLocaleString("en-IN")}
               helper="Orders awaiting processing"
@@ -321,13 +356,13 @@ export default function AdminHome() {
                         </linearGradient>
 
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="month" stroke="#6b7280" />
-                      <YAxis stroke="#6b7280" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.grid} />
+                      <XAxis dataKey="month" stroke={chartStyles.axis} />
+                      <YAxis stroke={chartStyles.axis} />
                       <Tooltip
-                        contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12 }}
-                        labelStyle={{ color: "#111827" }}
-                        itemStyle={{ color: "#111827" }}
+                        contentStyle={chartStyles.tooltip}
+                        labelStyle={chartStyles.labelStyle}
+                        itemStyle={chartStyles.itemStyle}
                       />
                       <Legend />
                       <Area
@@ -379,12 +414,12 @@ export default function AdminHome() {
                         ))}
                       </Pie>
                       <Tooltip
-                        contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12 }}
-                        labelStyle={{ color: "#111827" }}
-                        itemStyle={{ color: "#111827" }}
+                        contentStyle={chartStyles.tooltip}
+                        labelStyle={chartStyles.labelStyle}
+                        itemStyle={chartStyles.itemStyle}
                       />
                       <Legend
-                        formatter={(value) => <span style={{ color: "#111827", fontSize: 12 }}>{value}</span>}
+                        formatter={(value) => <span style={{ color: chartStyles.legendText, fontSize: 12 }}>{value}</span>}
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -426,13 +461,13 @@ export default function AdminHome() {
                 <div className="h-64 w-full min-w-0">
                   <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <BarChart data={monthlyData.slice(-6)}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                      <XAxis dataKey="month" stroke="#6b7280" />
-                      <YAxis stroke="#6b7280" />
+                      <CartesianGrid strokeDasharray="3 3" stroke={chartStyles.grid} />
+                      <XAxis dataKey="month" stroke={chartStyles.axis} />
+                      <YAxis stroke={chartStyles.axis} />
                       <Tooltip
-                        contentStyle={{ background: "#ffffff", border: "1px solid #e5e7eb", borderRadius: 12 }}
-                        labelStyle={{ color: "#111827" }}
-                        itemStyle={{ color: "#111827" }}
+                        contentStyle={chartStyles.tooltip}
+                        labelStyle={chartStyles.labelStyle}
+                        itemStyle={chartStyles.itemStyle}
                       />
                       <Legend />
                       <Bar dataKey="orders" fill="#0ea5e9" radius={[8, 8, 0, 0]} name="Orders" />

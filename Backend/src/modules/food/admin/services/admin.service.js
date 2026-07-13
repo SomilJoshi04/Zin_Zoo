@@ -38,6 +38,8 @@ const FoodDeliveryCashDeposit = mongoose.models.FoodDeliveryCashDeposit || mongo
 const FoodUnregisteredRestaurant = mongoose.models.FoodUnregisteredRestaurant || mongoose.model('FoodUnregisteredRestaurant', new mongoose.Schema({}, { strict: false, collection: 'food_unregistered_restaurants' }));
 import { FoodAdmin } from '../../../../core/admin/admin.model.js';
 import { GroceryOrder } from '../../orders/models/groceryOrder.model.js';
+import { GroceryProduct } from '../models/groceryProduct.model.js';
+import { AccessoriesProduct } from '../../../accessories/models/accessoriesProduct.model.js';
 import { ServiceBooking } from '../../../../modules/services/models/serviceBooking.model.js';
 const getAdminRestaurantSubscriptionHistoryFromRestaurant = async () => [];
 import { ADMIN_FULL_PERMISSIONS, isValidPermissionPayload, sanitizeAdminPermissions } from '../../../../constants/permissions.js';
@@ -436,7 +438,9 @@ export async function getDashboardStats(query = {}) {
         recentCustomers,
         groceryPending,
         groceryCompleted,
-        groceryOrderTotalsAgg
+        groceryOrderTotalsAgg,
+        groceryProductsTotal,
+        accessoriesProductsTotal
     ] = await Promise.all([
         FoodOrder.aggregate([
             { $match: orderMatch },
@@ -620,7 +624,9 @@ export async function getDashboardStats(query = {}) {
                     }
                 }
             }
-        ])
+        ]),
+        GroceryProduct.countDocuments(zoneScopedFoodMatch),
+        AccessoriesProduct.countDocuments(zoneScopedFoodMatch)
     ]);
 
     const liveSignals = [];
@@ -752,6 +758,8 @@ export async function getDashboardStats(query = {}) {
             pendingRequests: Number(deliveryPending || 0)
         },
         foods: { total: Number(foodsTotal || 0) },
+        groceryProducts: { total: Number(groceryProductsTotal || 0) },
+        accessoriesProducts: { total: Number(accessoriesProductsTotal || 0) },
         addons: { total: Number(addonsTotal || 0) },
         customers: { total: Number(customersTotal || 0) },
         orderStats: {
@@ -3814,6 +3822,8 @@ export async function getAllOffers(_query = {}) {
             usageLimit: o.usageLimit ?? null,
             usedCount: o.usedCount ?? 0,
             restaurantScope: o.restaurantScope,
+            moduleType: o.moduleType || 'food',
+            itemIds: o.itemIds || [],
             createdByRole: o.createdByRole || 'ADMIN',
             adminBearPercentage: Number(o.adminBearPercentage ?? (o.createdByRole === 'RESTAURANT' ? 0 : 100)),
             restaurantBearPercentage: Number(o.restaurantBearPercentage ?? (o.createdByRole === 'RESTAURANT' ? 100 : 0))
@@ -3837,6 +3847,8 @@ export async function createAdminOffer(body) {
         restaurantScope: body.restaurantScope,
         restaurantId: body.restaurantScope === 'selected' ? body.restaurantId : undefined,
         restaurantIds: body.restaurantScope === 'selected' ? body.restaurantIds : [],
+        moduleType: body.moduleType || 'food',
+        itemIds: body.itemIds || [],
         minOrderValue: body.minOrderValue ?? 0,
         maxDiscount: body.maxDiscount ?? null,
         usageLimit: body.usageLimit ?? null,

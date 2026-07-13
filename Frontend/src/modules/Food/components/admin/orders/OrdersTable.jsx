@@ -20,6 +20,65 @@ const getPaymentStatusColor = (paymentStatus) => {
   return "text-slate-600"
 }
 
+const getRestaurantColor = (name) => {
+  if (!name) return {
+    bg: "bg-slate-50 dark:bg-slate-900/40",
+    text: "text-slate-600 dark:text-slate-400",
+    border: "border-slate-200 dark:border-slate-800/50"
+  };
+  
+  const colors = [
+    {
+      bg: "bg-orange-50 dark:bg-orange-950/40",
+      text: "text-orange-600 dark:text-orange-400",
+      border: "border-orange-200/60 dark:border-orange-900/50"
+    },
+    {
+      bg: "bg-blue-50 dark:bg-blue-950/40",
+      text: "text-blue-600 dark:text-blue-400",
+      border: "border-blue-200/60 dark:border-blue-900/50"
+    },
+    {
+      bg: "bg-emerald-50 dark:bg-emerald-950/40",
+      text: "text-emerald-600 dark:text-emerald-400",
+      border: "border-emerald-200/60 dark:border-emerald-900/50"
+    },
+    {
+      bg: "bg-purple-50 dark:bg-purple-950/40",
+      text: "text-purple-600 dark:text-purple-400",
+      border: "border-purple-200/60 dark:border-purple-900/50"
+    },
+    {
+      bg: "bg-pink-50 dark:bg-pink-950/40",
+      text: "text-pink-600 dark:text-pink-400",
+      border: "border-pink-200/60 dark:border-pink-900/50"
+    },
+    {
+      bg: "bg-amber-50 dark:bg-amber-950/40",
+      text: "text-amber-600 dark:text-amber-400",
+      border: "border-amber-200/60 dark:border-amber-900/50"
+    },
+    {
+      bg: "bg-cyan-50 dark:bg-cyan-950/40",
+      text: "text-cyan-600 dark:text-cyan-400",
+      border: "border-cyan-200/60 dark:border-cyan-900/50"
+    },
+    {
+      bg: "bg-rose-50 dark:bg-rose-950/40",
+      text: "text-rose-600 dark:text-rose-400",
+      border: "border-rose-200/60 dark:border-rose-900/50"
+    },
+  ];
+  
+  let hash = 0;
+  const cleanName = name.trim().toLowerCase();
+  for (let i = 0; i < cleanName.length; i++) {
+    hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+};
+
 export default function OrdersTable({
   orders,
   visibleColumns,
@@ -63,7 +122,9 @@ export default function OrdersTable({
       "pending",
       "accepted",
       "processing",
-      "out for delivery",
+      "preparing",
+      "ready_for_pickup",
+      "ready",
     ].includes(currentStatus)
   }
 
@@ -238,14 +299,17 @@ export default function OrdersTable({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-col gap-1.5 items-start">
                       {order.restaurant ? (
-                        order.restaurant.split(", ").map((rName, idx) => (
-                          <span
-                            key={idx}
-                            className="inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-md bg-orange-50 text-orange-600 border border-orange-100 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-900/50"
-                          >
-                            {rName}
-                          </span>
-                        ))
+                        order.restaurant.split(", ").map((rName, idx) => {
+                          const cls = getRestaurantColor(rName);
+                          return (
+                            <span
+                              key={idx}
+                              className={`inline-flex items-center text-xs font-semibold px-2.5 py-1 rounded-md border ${cls.bg} ${cls.text} ${cls.border}`}
+                            >
+                              {rName}
+                            </span>
+                          );
+                        })
                       ) : (
                         <span className="text-sm text-slate-400">N/A</span>
                       )}
@@ -257,35 +321,46 @@ export default function OrdersTable({
                   <td className="px-6 py-4">
                     <div className="flex flex-col min-w-[200px] max-w-md">
                       {order.items && Array.isArray(order.items) && order.items.length > 0 ? (
-                        order.items.map((item, idx) => (
-                          <div key={idx || item.itemId || idx} className="flex items-center justify-between gap-3 text-sm py-1.5 border-b border-slate-100 last:border-0">
-                            <div className="flex items-center gap-2 flex-1 min-w-0">
-                              {item.image ? (
-                                <img
-                                  src={item.image}
-                                  alt={item.name || "Item"}
-                                  className="w-8 h-8 rounded-md object-cover border border-slate-200 flex-shrink-0"
-                                  onError={(e) => { e.target.style.display = 'none' }}
-                                />
-                              ) : (
-                                <div className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0">
-                                  <Package className="w-3.5 h-3.5 text-slate-400" />
+                        order.items.map((item, idx) => {
+                          const itemRestName = item.restaurantName || item.restaurant || "";
+                          const cls = getRestaurantColor(itemRestName);
+                          return (
+                            <div key={idx || item.itemId || idx} className="flex items-center justify-between gap-3 text-sm py-1.5 border-b border-slate-100 last:border-0">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                {item.image ? (
+                                  <img
+                                    src={item.image}
+                                    alt={item.name || "Item"}
+                                    className="w-8 h-8 rounded-md object-cover border border-slate-200 flex-shrink-0"
+                                    onError={(e) => { e.target.style.display = 'none' }}
+                                  />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                    <Package className="w-3.5 h-3.5 text-slate-400" />
+                                  </div>
+                                )}
+                                <span className="font-semibold text-slate-500 min-w-[1.5rem] flex-shrink-0">
+                                  {item.quantity || 1}x
+                                </span>
+                                <div className="flex flex-col min-w-0">
+                                  <span className="text-slate-800 font-medium truncate">
+                                    {item.name || item.itemName || item.title || 'Unknown Item'}
+                                  </span>
+                                  {itemRestName && (
+                                    <span className={`inline-block w-fit text-[9px] font-bold px-1.5 py-0.5 rounded border mt-0.5 ${cls.bg} ${cls.text} ${cls.border}`}>
+                                      {itemRestName}
+                                    </span>
+                                  )}
                                 </div>
+                              </div>
+                              {item.price && (
+                                <span className="text-slate-600 font-medium whitespace-nowrap flex-shrink-0">
+                                  ₹{item.price}
+                                </span>
                               )}
-                              <span className="font-semibold text-slate-500 min-w-[1.5rem] flex-shrink-0">
-                                {item.quantity || 1}x
-                              </span>
-                              <span className="text-slate-800 font-medium truncate">
-                                {item.name || item.itemName || item.title || 'Unknown Item'}
-                              </span>
                             </div>
-                            {item.price && (
-                              <span className="text-slate-600 font-medium whitespace-nowrap flex-shrink-0">
-                                ₹{item.price}
-                              </span>
-                            )}
-                          </div>
-                        ))
+                          );
+                        })
                       ) : (
                         <span className="text-sm text-slate-400 italic">No items found</span>
                       )}
@@ -373,7 +448,6 @@ export default function OrdersTable({
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.orderStatus)}`}>
                           {order.orderStatus}
                         </span>
-                        <span className="text-xs text-slate-500">{order.deliveryType}</span>
                       </div>
                       {order.cancellationReason && (
                         <div className="text-xs text-red-600 mt-1">
@@ -430,23 +504,22 @@ export default function OrdersTable({
                         String(order.orderStatus || "").trim().toLowerCase() === "preparing"
                       ) && (
                         <button
-                          onClick={() => onUpdateStatus(order, 'picked_up')}
+                          onClick={() => onUpdateStatus(order, 'ready_for_pickup')}
                           disabled={actionLoadingOrderId === (order.id || order.orderId)}
                           className="p-1.5 rounded transition-colors text-blue-600 hover:bg-blue-50 disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed flex items-center gap-1 border border-blue-200 bg-blue-50/50 hover:border-blue-300"
-                          title="Mark Out For Delivery"
+                          title="Mark Ready for Pickup"
                         >
                           {actionLoadingOrderId === (order.id || order.orderId) ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <><Truck className="w-3.5 h-3.5" /><span className="text-[10px] font-semibold">Dispatch</span></>
+                            <><Check className="w-3.5 h-3.5" /><span className="text-[10px] font-semibold">Ready</span></>
                           )}
                         </button>
                       )}
 
                       {onUpdateStatus && (
-                        String(order.orderStatus || "").trim().toLowerCase() === "out for delivery" ||
-                        String(order.orderStatus || "").trim().toLowerCase() === "out_for_delivery" ||
-                        String(order.orderStatus || "").trim().toLowerCase() === "picked_up"
+                        String(order.orderStatus || "").trim().toLowerCase() === "ready_for_pickup" ||
+                        String(order.orderStatus || "").trim().toLowerCase() === "ready"
                       ) && (
                         <button
                           onClick={() => onUpdateStatus(order, 'delivered')}

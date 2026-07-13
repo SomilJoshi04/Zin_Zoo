@@ -1,6 +1,6 @@
 import * as groceryAdminService from '../services/groceryAdmin.service.js';
 import mongoose from 'mongoose';
-import { broadcastPublicUpdate } from '../../../../config/socket.js';
+import { broadcastPublicUpdate, broadcastOrderUpdateToAdmin } from '../../../../config/socket.js';
 
 // ----- Categories -----
 export async function getCategories(req, res, next) {
@@ -138,6 +138,7 @@ export async function updateOrderStatus(req, res, next) {
         }
         const order = await groceryAdminService.updateGroceryOrderStatus(id, status);
         if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        broadcastOrderUpdateToAdmin(id);
         res.status(200).json({ success: true, message: 'Order status updated successfully', data: { order } });
     } catch (error) {
         next(error);

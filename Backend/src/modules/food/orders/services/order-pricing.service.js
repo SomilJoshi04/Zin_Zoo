@@ -117,9 +117,42 @@ export async function calculateOrderPricing(userId, dto) {
       const selectedRestaurantIds = Array.isArray(offer.restaurantIds) && offer.restaurantIds.length > 0
         ? offer.restaurantIds
         : [offer.restaurantId].filter(Boolean);
-      const scopeOk =
-        offer.restaurantScope !== "selected" ||
-        selectedRestaurantIds.some((id) => String(id) === String(dto.restaurantId || ""));
+      const isFood = !offer.moduleType || offer.moduleType === 'food';
+      let scopeOk = true;
+      if (isFood) {
+        scopeOk =
+          offer.restaurantScope !== "selected" ||
+          selectedRestaurantIds.some((id) => String(id) === String(dto.restaurantId || ""));
+      } else {
+        const eligibleItemIds = Array.isArray(offer.itemIds) ? offer.itemIds.map(id => String(id)) : [];
+        if (eligibleItemIds.length > 0) {
+          scopeOk = items.some(it => eligibleItemIds.includes(String(it.itemId || it.id)));
+        } else {
+          scopeOk = true;
+        }
+      }
+
+      let discountableSubtotal = subtotal;
+      if (isFood) {
+        if (offer.restaurantScope === "selected") {
+          const eligibleResIds = selectedRestaurantIds.map(id => String(id));
+          const eligibleItems = items.filter(it => it.restaurantId && eligibleResIds.includes(String(it.restaurantId)));
+          discountableSubtotal = eligibleItems.reduce(
+            (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+            0,
+          );
+        }
+      } else {
+        const eligibleItemIds = Array.isArray(offer.itemIds) ? offer.itemIds.map(id => String(id)) : [];
+        if (eligibleItemIds.length > 0) {
+          const eligibleItems = items.filter(it => eligibleItemIds.includes(String(it.itemId || it.id)));
+          discountableSubtotal = eligibleItems.reduce(
+            (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+            0,
+          );
+        }
+      }
+
       const minOk = subtotal >= (Number(offer.minOrderValue) || 0);
       let usageOk = true;
       if (
@@ -168,15 +201,15 @@ export async function calculateOrderPricing(userId, dto) {
 
       if (allowed) {
         if (offer.discountType === "percentage") {
-          const raw = subtotal * (Number(offer.discountValue) / 100);
+          const raw = discountableSubtotal * (Number(offer.discountValue) / 100);
           const capped = Number(offer.maxDiscount)
             ? Math.min(raw, Number(offer.maxDiscount))
             : raw;
-          discount = Math.max(0, Math.min(subtotal, Math.floor(capped)));
+          discount = Math.max(0, Math.min(discountableSubtotal, Math.floor(capped)));
         } else {
           discount = Math.max(
             0,
-            Math.min(subtotal, Math.floor(Number(offer.discountValue) || 0)),
+            Math.min(discountableSubtotal, Math.floor(Number(offer.discountValue) || 0)),
           );
         }
         appliedCoupon = { code: codeRaw, discount };

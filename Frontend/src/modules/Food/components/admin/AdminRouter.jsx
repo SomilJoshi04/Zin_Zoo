@@ -65,7 +65,7 @@ const DisbursementReportRestaurants = () => null;
 const DisbursementReportDeliverymen = () => null;
 const RegularOrderReport = lazy(() => import("@food/pages/admin/reports/RegularOrderReport"));
 const CampaignOrderReport = lazy(() => import("@food/pages/admin/reports/CampaignOrderReport"));
-const RestaurantReport = () => null;
+const RestaurantReport = lazy(() => import("@food/pages/admin/reports/RestaurantReport"));
 const FeedbackExperienceReport = lazy(() => import("@food/pages/admin/reports/FeedbackExperienceReport"));
 const TaxReport = lazy(() => import("@food/pages/admin/reports/TaxReport"));
 const RestaurantVATReport = () => null;
@@ -95,8 +95,8 @@ const ReactRegistration = lazy(() => import("@food/pages/admin/settings/ReactReg
 const SubscriptionSettings = lazy(() => import("@food/pages/admin/settings/SubscriptionSettings"));
 const SubscriberList = lazy(() => import("@food/pages/admin/settings/SubscriberList"));
 const SupportCMS = lazy(() => import("@food/pages/admin/settings/SupportCMS"));
-const CoinSettings = () => null;
-const CoinRequests = () => null;
+const CoinSettings = lazy(() => import("@food/pages/admin/settings/CoinSettings"));
+const CoinRequests = lazy(() => import("@food/pages/admin/settings/CoinRequests"));
 
 
 // System Settings
@@ -233,13 +233,11 @@ export default function AdminRouter() {
             <Route path="orders/pending" element={<OrdersPage statusKey="pending" />} />
             <Route path="orders/accepted" element={<OrdersPage statusKey="accepted" />} />
             <Route path="orders/processing" element={<OrdersPage statusKey="processing" />} />
-            <Route path="orders/out-for-delivery" element={<OrdersPage statusKey="out-for-delivery" />} />
             <Route path="orders/delivered" element={<OrdersPage statusKey="delivered" />} />
             <Route path="orders/canceled" element={<OrdersPage statusKey="canceled" />} />
             <Route path="orders/payment-failed" element={<OrdersPage statusKey="payment-failed" />} />
             <Route path="orders/refunded" element={<OrdersPage statusKey="refunded" />} />
             <Route path="orders/offline-payments" element={<OrdersPage statusKey="offline-payments" />} />
-            <Route path="order-detect-delivery" element={<OrderDetectDelivery />} />
             <Route path="order-refunds/new" element={<NewRefundRequests />} />
 
             {/* ZONE MANAGEMENT */}
@@ -275,7 +273,6 @@ export default function AdminRouter() {
             <Route path="grocery-orders/pending" element={<GroceryOrdersPage statusKey="pending" />} />
             <Route path="grocery-orders/accepted" element={<GroceryOrdersPage statusKey="accepted" />} />
             <Route path="grocery-orders/processing" element={<GroceryOrdersPage statusKey="processing" />} />
-            <Route path="grocery-orders/out-for-delivery" element={<GroceryOrdersPage statusKey="out-for-delivery" />} />
             <Route path="grocery-orders/delivered" element={<GroceryOrdersPage statusKey="delivered" />} />
             <Route path="grocery-orders/canceled" element={<GroceryOrdersPage statusKey="canceled" />} />
             <Route path="grocery-categories" element={<GroceryCategory />} />
@@ -313,7 +310,6 @@ export default function AdminRouter() {
             <Route path="transaction-report" element={<TransactionReport />} />
             <Route path="expense-report" element={<ExpenseReport />} />
             <Route path="disbursement-report/restaurants" element={<DisbursementReportRestaurants />} />
-            <Route path="disbursement-report/deliverymen" element={<DisbursementReportDeliverymen />} />
             <Route path="order-report/regular" element={<RegularOrderReport />} />
             <Route path="order-report/campaign" element={<CampaignOrderReport />} />
             <Route path="restaurant-report" element={<RestaurantReport />} />
@@ -336,9 +332,9 @@ export default function AdminRouter() {
             <Route path="theme-settings" element={<ThemeSettings />} />
             <Route path="gallery" element={<Gallery />} />
             <Route path="login-setup" element={<LoginSetup />} />
-            
-            {/* Reward Coin System (Removed) */}
-            
+            {/* Reward Coin System */}
+            <Route path="coin-settings" element={<CoinSettings />} />
+            <Route path="coin-requests" element={<CoinRequests />} />
             {/* PAGES & SOCIAL MEDIA */}
             <Route path="pages-social-media/terms" element={<TermsAndCondition />} />
             <Route path="pages-social-media/privacy" element={<PrivacyPolicy />} />

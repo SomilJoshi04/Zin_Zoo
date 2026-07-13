@@ -30,44 +30,12 @@ export function haversineKm(lat1, lon1, lat2, lon2) {
   return R * c;
 }
 
-export function generateFourDigitDeliveryOtp() {
-  return String(Math.floor(1000 + Math.random() * 9000));
-}
-
 export function sanitizeOrderForExternal(orderDoc) {
   const o = orderDoc?.toObject ? orderDoc.toObject() : { ...(orderDoc || {}) };
-  delete o.deliveryOtp;
-  const dv = o.deliveryVerification;
-  if (dv && dv.dropOtp != null) {
-    const d = dv.dropOtp;
-    o.deliveryVerification = {
-      ...dv,
-      dropOtp: {
-        required: Boolean(d.required),
-        verified: Boolean(d.verified),
-      },
-    };
-  }
   o.orderMongoId = (o._id || orderDoc?._id || "").toString();
   // Ensure orderId field for UI always contains the pretty ID
   o.orderId = o.order_id || o.orderMongoId; 
   return o;
-}
-
-export function emitDeliveryDropOtpToUser(order, plainOtp) {
-  try {
-    const io = getIO();
-    if (!io || !plainOtp || !order?.userId) return;
-    io.to(rooms.user(order.userId)).emit("delivery_drop_otp", {
-      orderMongoId: order._id?.toString?.(),
-      orderId: order.order_id || order._id?.toString?.(),
-      otp: plainOtp,
-      message:
-        "Share this OTP with your delivery partner to hand over the order.",
-    });
-  } catch (e) {
-    logger.warn(`emitDeliveryDropOtpToUser failed: ${e?.message || e}`);
-  }
 }
 
 export async function notifyOwnersSafely(targets, payload) {
@@ -179,7 +147,21 @@ export function normalizeOrderForClient(orderDoc) {
   else if (String(cancellationEntry?.byRole || "").toUpperCase() === "ADMIN")
     cancelledBy = "admin";
 
-  const uniqueNames = Array.from(new Set((order.items || []).map(it => it.restaurantName).filter(Boolean)));
+  const uniqueNamesSet = new Set();
+  (order.items || []).forEach(it => {
+    if (it.restaurantName) uniqueNamesSet.add(it.restaurantName);
+  });
+  if (order.restaurantId && typeof order.restaurantId === 'object' && order.restaurantId.restaurantName) {
+    uniqueNamesSet.add(order.restaurantId.restaurantName);
+  }
+  if (Array.isArray(order.restaurantIds)) {
+    order.restaurantIds.forEach(r => {
+      if (r && typeof r === 'object' && r.restaurantName) {
+        uniqueNamesSet.add(r.restaurantName);
+      }
+    });
+  }
+  const uniqueNames = Array.from(uniqueNamesSet).filter(Boolean);
   const isFood = order.moduleType === 'food' || (!order.moduleType && uniqueNames.length > 0) || (!order.moduleType && !order.items?.[0]?.foodName);
   const restaurantNameText = uniqueNames.length > 0 
     ? uniqueNames.join(", ") 
@@ -204,11 +186,7 @@ export function normalizeOrderForClient(orderDoc) {
       ? order.restaurantId
       : String((order.restaurantIds && order.restaurantIds[0]) || order.restaurantId || ""),
     deliveryState: {
-      ...(order?.deliveryState || {}),
-      currentLocation: order?.lastRiderLocation?.coordinates?.length >= 2 ? {
-        lat: order.lastRiderLocation.coordinates[1],
-        lng: order.lastRiderLocation.coordinates[0]
-      } : (order?.deliveryState?.currentLocation || null)
+      status: order?.deliveryState?.status || ""
     }
   };
 }

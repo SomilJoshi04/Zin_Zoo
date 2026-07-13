@@ -1,4 +1,4 @@
-﻿import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Search, Download, ChevronDown, Filter, Briefcase, RefreshCw, Settings, ArrowUpDown, FileText, FileSpreadsheet, Code, Loader2, Star } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@food/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@food/components/ui/dialog"
@@ -74,9 +74,21 @@ export default function RestaurantReport() {
     fetchRestaurantReport()
   }, [filters, searchQuery])
 
-  const filteredRestaurants = useMemo(() => {
-    return restaurants // Backend already filters, so just return restaurants
+  const processedRestaurants = useMemo(() => {
+    return restaurants.map(r => {
+      const orderAmt = parseFloat(String(r.totalOrderAmount || "0").replace(/[^0-9.-]/g, "")) || 0
+      const commAmt = parseFloat(String(r.totalAdminCommission || "0").replace(/[^0-9.-]/g, "")) || 0
+      const netShare = Math.max(0, orderAmt - commAmt)
+      return {
+        ...r,
+        restaurantNetShare: `₹${netShare.toFixed(2)}`
+      }
+    })
   }, [restaurants])
+
+  const filteredRestaurants = useMemo(() => {
+    return processedRestaurants
+  }, [processedRestaurants])
 
   const totalRestaurants = filteredRestaurants.length
 
@@ -103,6 +115,7 @@ export default function RestaurantReport() {
       { key: "totalOrderAmount", label: "Total Order Amount" },
       { key: "totalDiscountGiven", label: "Total Discount Given" },
       { key: "totalAdminCommission", label: "Total Admin Commission" },
+      { key: "restaurantNetShare", label: "Restaurant Net Earning (Payout)" },
       { key: "totalVATTAX", label: "Total VAT/TAX" },
       { key: "averageRatings", label: "Average Ratings" },
     ]
@@ -364,6 +377,12 @@ export default function RestaurantReport() {
                   </th>
                   <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                     <div className="flex items-center gap-1">
+                      <span>Restaurant Net Earning</span>
+                      <ArrowUpDown className="w-3 h-3 text-slate-400" />
+                    </div>
+                  </th>
+                  <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    <div className="flex items-center gap-1">
                       <span>Total VAT/TAX</span>
                       <ArrowUpDown className="w-3 h-3 text-slate-400" />
                     </div>
@@ -432,6 +451,11 @@ export default function RestaurantReport() {
                             : 'text-slate-900'
                         }`}>
                           {restaurant.totalAdminCommission}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-450">
+                          {restaurant.restaurantNetShare}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">

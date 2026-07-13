@@ -427,4 +427,21 @@ export const broadcastPublicUpdate = (eventName, payload = {}) => {
     }
 };
 
+/**
+ * Broadcasts an order status or details update to the admin dashboard orders room.
+ * @param {string} orderId
+ */
+export const broadcastOrderUpdateToAdmin = (orderId) => {
+    try {
+        if (!io) {
+            logger.warn(`broadcastOrderUpdateToAdmin: Socket.IO not initialized, skipping ${orderId}`);
+            return;
+        }
+        io.to('admin-orders').emit("admin_order_update", { orderId, timestamp: Date.now() });
+        logger.info(`Admin order update broadcast: ${orderId}`);
+    } catch (err) {
+        logger.warn(`broadcastOrderUpdateToAdmin failed for ${orderId}: ${err.message}`);
+    }
+};
+
 export const rooms = roomNames;

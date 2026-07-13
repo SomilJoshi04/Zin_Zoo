@@ -336,6 +336,7 @@ export default function OrdersPage({ statusKey = "all" }) {
       const params = {
         page: 1,
         limit: 1000,
+        moduleType: "food",
         status:
           statusKey === "all"
             ? undefined
@@ -471,6 +472,8 @@ export default function OrdersPage({ statusKey = "all" }) {
         displayStatus = "Accepted"
       } else if (backendStatus === "preparing") {
         displayStatus = "Processing"
+      } else if (backendStatus === "ready_for_pickup" || backendStatus === "ready") {
+        displayStatus = "Ready"
       } else if (backendStatus === "picked_up") {
         displayStatus = "Out For Delivery"
       } else if (backendStatus === "delivered") {
@@ -494,6 +497,8 @@ export default function OrdersPage({ statusKey = "all" }) {
             quantity: item.quantity || 1,
             name: item.name || item.foodName || item.title || "Item",
             price: item.price || 0,
+            restaurantName: item.restaurantName || order.restaurant || order.restaurantName || "",
+            restaurantId: item.restaurantId || order.restaurantId || ""
           }))
         : []
 
@@ -633,14 +638,21 @@ export default function OrdersPage({ statusKey = "all" }) {
       window.dispatchEvent(new Event("adminNotificationsUpdated"))
     }
 
+    const handleIncomingRealtimeOrderUpdate = (payload = {}) => {
+      fetchOrders({ silent: true, withRingCheck: false })
+      window.dispatchEvent(new Event("adminNotificationsUpdated"))
+    }
+
     socket.on("connect", () => {
       socket.emit("join-admin-orders")
     })
     socket.on("admin_new_order", handleIncomingRealtimeOrder)
+    socket.on("admin_order_update", handleIncomingRealtimeOrderUpdate)
     socket.on("play_notification_sound", handleIncomingRealtimeOrder)
 
     return () => {
       socket.off("admin_new_order", handleIncomingRealtimeOrder)
+      socket.off("admin_order_update", handleIncomingRealtimeOrderUpdate)
       socket.off("play_notification_sound", handleIncomingRealtimeOrder)
       socket.disconnect()
       socketRef.current = null

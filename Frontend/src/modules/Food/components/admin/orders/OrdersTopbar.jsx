@@ -60,20 +60,20 @@ export default function OrdersTopbar({
                 <ChevronDown className="w-3 h-3" />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-white border border-slate-200 rounded-lg shadow-lg z-50">
-              <DropdownMenuLabel>Export Format</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onExport("excel")} className="cursor-pointer">
-                <div className="w-6 h-6 rounded-md bg-green-50 flex items-center justify-center mr-3">
-                  <FileSpreadsheet className="w-4 h-4 text-green-600" />
+            <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-slate-800 rounded-lg shadow-lg z-50 text-slate-700 dark:text-slate-200">
+              <DropdownMenuLabel className="dark:text-slate-300">Export Format</DropdownMenuLabel>
+              <DropdownMenuSeparator className="dark:bg-slate-800" />
+              <DropdownMenuItem onClick={() => onExport("excel")} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 focus:text-slate-900 dark:focus:bg-slate-800 dark:focus:text-white transition-colors">
+                <div className="w-6 h-6 rounded-md bg-green-50 dark:bg-green-950/30 flex items-center justify-center mr-3">
+                  <FileSpreadsheet className="w-4 h-4 text-green-600 dark:text-green-400" />
                 </div>
-                <span>Excel</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">Excel</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onExport("pdf")} className="cursor-pointer">
-                <div className="w-6 h-6 rounded-md bg-red-50 flex items-center justify-center mr-3">
-                  <FileText className="w-4 h-4 text-red-600" />
+              <DropdownMenuItem onClick={() => onExport("pdf")} className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 focus:bg-slate-50 focus:text-slate-900 dark:focus:bg-slate-800 dark:focus:text-white transition-colors">
+                <div className="w-6 h-6 rounded-md bg-red-50 dark:bg-red-950/30 flex items-center justify-center mr-3">
+                  <FileText className="w-4 h-4 text-red-600 dark:text-red-400" />
                 </div>
-                <span>PDF</span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">PDF</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -9,6 +9,8 @@ const foodOfferSchema = new mongoose.Schema(
         restaurantScope: { type: String, enum: ['all', 'selected'], default: 'all', index: true },
         restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: 'FoodRestaurant' },
         restaurantIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'FoodRestaurant' }],
+        moduleType: { type: String, enum: ['food', 'grocery', 'accessories'], default: 'food', index: true },
+        itemIds: [{ type: mongoose.Schema.Types.ObjectId, index: true }],
         minOrderValue: { type: Number, default: 0, min: 0 },
         maxDiscount: { type: Number, default: null, min: 0 },
         usageLimit: { type: Number, default: null, min: 0 },

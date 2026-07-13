@@ -303,6 +303,7 @@
   .hover\:bg-neutral-50:hover, 
   .hover\:bg-gray-50:hover, 
   .hover\:bg-gray-100:hover,
+  .hover\:bg-neutral-100:hover,
   .hover\:bg-slate-50:hover,
   .hover\:bg-slate-100:hover {
     background-color: #262626 !important;
@@ -343,4 +344,117 @@
     filter: invert(1) brightness(2) !important;
     mix-blend-mode: normal !important;
   }
+
+  /* Pastel signal / activity feed backgrounds */
+  .bg-amber-50 {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+  }
+  .bg-emerald-50 {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+  }
+  .bg-red-50 {
+    background-color: rgba(239, 68, 68, 0.12) !important;
+  }
+  .bg-blue-50 {
+    background-color: rgba(59, 130, 246, 0.12) !important;
+  }
+  .bg-purple-50 {
+    background-color: rgba(168, 85, 247, 0.12) !important;
+  }
+  .bg-pink-50 {
+    background-color: rgba(236, 72, 153, 0.12) !important;
+  }
+
+  /* Hover overrides for signal items and order stat rows */
+  .hover\:border-neutral-300:hover {
+    border-color: #404040 !important;
+  }
+
+  /* Recharts chart overrides */
+  .recharts-cartesian-grid line {
+    stroke: #333333 !important;
+  }
+  .recharts-text,
+  .recharts-cartesian-axis-tick-value {
+    fill: #a3a3a3 !important;
+  }
+  .recharts-legend-item-text {
+    color: #d4d4d4 !important;
+  }
+  .recharts-default-tooltip {
+    background-color: #262626 !important;
+    border-color: #404040 !important;
+  }
+  .recharts-tooltip-label {
+    color: #f3f4f6 !important;
+  }
+  .recharts-tooltip-item {
+    color: #d4d4d4 !important;
+  }
+
+  /* Ring overrides for icon containers */
+  .ring-neutral-200 {
+    --tw-ring-color: #404040 !important;
+  }
 }
+
+/* ─── Radix Portals Dark Mode Support ─────────────────────────────────────── */
+.dark [data-slot="dialog-content"],
+.dark [data-slot="dropdown-menu-content"],
+.dark [data-slot="popover-content"],
+.dark [data-slot="sheet-content"] {
+  background-color: #1a1a1a !important;
+  color: #f3f4f6 !important;
+  border-color: #262626 !important;
+}
+
+/* Titles and labels within portals */
+.dark [data-slot="dialog-content"] [data-slot="dialog-title"],
+.dark [data-slot="dialog-content"] h1,
+.dark [data-slot="dialog-content"] h2,
+.dark [data-slot="dialog-content"] h3,
+.dark [data-slot="dropdown-menu-content"] [data-slot="dropdown-menu-label"] {
+  color: #ffffff !important;
+}
+
+/* Text, spans and labels within portals */
+.dark [data-slot="dialog-content"] span,
+.dark [data-slot="dialog-content"] p,
+.dark [data-slot="dialog-content"] label,
+.dark [data-slot="dropdown-menu-content"] span {
+  color: #d4d4d8 !important;
+}
+
+/* Hover background styling for lists/buttons inside portals */
+.dark [data-slot="dialog-content"] .hover\:bg-slate-50:hover,
+.dark [data-slot="dialog-content"] button.bg-white:hover,
+.dark [data-slot="dropdown-menu-content"] [data-slot="dropdown-menu-item"]:hover {
+  background-color: #262626 !important;
+}
+
+.dark [data-slot="dialog-content"] button.bg-white {
+  background-color: #1a1a1a !important;
+  color: #ffffff !important;
+  border-color: #404040 !important;
+}
+
+/* Inputs, select elements inside dialogs */
+.dark [data-slot="dialog-content"] input,
+.dark [data-slot="dialog-content"] select,
+.dark [data-slot="dialog-content"] textarea {
+  background-color: #262626 !important;
+  color: #ffffff !important;
+  border-color: #404040 !important;
+}
+
+/* Form checkboxes in dialogs */
+.dark [data-slot="dialog-content"] input[type="checkbox"] {
+  border-color: #404040 !important;
+  background-color: #262626 !important;
+}
+
+.dark [data-slot="dialog-content"] .border-slate-200,
+.dark [data-slot="dialog-content"] .border-t {
+  border-color: #262626 !important;
+}
+

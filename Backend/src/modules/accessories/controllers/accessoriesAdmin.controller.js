@@ -102,7 +102,9 @@ export async function getProducts(req, res, next) {
             .populate('categoryId', 'name')
             .sort({ createdAt: -1 });
 
-        res.status(200).json({ success: true, message: 'Accessories products fetched successfully', data: { products } });
+        const total = await AccessoriesProduct.countDocuments(query);
+
+        res.status(200).json({ success: true, message: 'Accessories products fetched successfully', data: { products, total } });
     } catch (error) {
         next(error);
     }
@@ -260,8 +262,9 @@ export async function updateOrderStatus(req, res, next) {
         if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
         
         // Also broadcast update
-        const { broadcastPublicUpdate } = await import('../../../config/socket.js');
+        const { broadcastPublicUpdate, broadcastOrderUpdateToAdmin } = await import('../../../config/socket.js');
         broadcastPublicUpdate('accessories:order:update', { action: 'update', data: order });
+        broadcastOrderUpdateToAdmin(id);
         
         res.status(200).json({ success: true, message: 'Order status updated successfully', data: { order } });
     } catch (error) {

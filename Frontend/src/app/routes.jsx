@@ -13,6 +13,8 @@ import ProtectedRoute from '@food/components/ProtectedRoute'
 // Test comment to trigger Antigravity UI popup
 const PageLoader = () => <AppShellSkeleton />
 
+const OrderFeedback = lazy(() => import('../modules/Food/pages/public/OrderFeedback'))
+
 
 const FoodAppWrapper = () => {
   return (
@@ -63,6 +65,16 @@ const AppRoutes = () => {
     <Routes>
       {/* Root → Redirect to login or home */}
       <Route path="/" element={<RootRedirect />} />
+      
+      {/* Public Feedback Route */}
+      <Route
+        path="/feedback"
+        element={
+          <Suspense fallback={<PageLoader />}>
+            <OrderFeedback />
+          </Suspense>
+        }
+      />
 
       {/* Food Module */}
       <Route path="/food/*" element={<FoodAppWrapper />} />

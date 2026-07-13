@@ -32,7 +32,6 @@ export const adminSidebarMenu = [
           { label: "Pending Orders", path: "/admin/food/orders/pending" },
           { label: "Accepted Orders", path: "/admin/food/orders/accepted" },
           { label: "Processing Orders", path: "/admin/food/orders/processing" },
-          { label: "Out For Delivery", path: "/admin/food/orders/out-for-delivery" },
           { label: "Delivered Orders", path: "/admin/food/orders/delivered" },
           { label: "Canceled Orders", path: "/admin/food/orders/canceled" },
         ],
@@ -90,7 +89,6 @@ export const adminSidebarMenu = [
           { label: "Pending Orders", path: "/admin/food/grocery-orders/pending" },
           { label: "Accepted Orders", path: "/admin/food/grocery-orders/accepted" },
           { label: "Processing Orders", path: "/admin/food/grocery-orders/processing" },
-          { label: "Out For Delivery", path: "/admin/food/grocery-orders/out-for-delivery" },
           { label: "Delivered Orders", path: "/admin/food/grocery-orders/delivered" },
           { label: "Canceled Orders", path: "/admin/food/grocery-orders/canceled" },
         ],
@@ -124,7 +122,6 @@ export const adminSidebarMenu = [
           { label: "Pending Orders", path: "/admin/food/accessories-orders/pending" },
           { label: "Accepted Orders", path: "/admin/food/accessories-orders/accepted" },
           { label: "Processing Orders", path: "/admin/food/accessories-orders/processing" },
-          { label: "Out For Delivery", path: "/admin/food/accessories-orders/out-for-delivery" },
           { label: "Delivered Orders", path: "/admin/food/accessories-orders/delivered" },
           { label: "Canceled Orders", path: "/admin/food/accessories-orders/canceled" },
         ],
@@ -176,6 +173,8 @@ export const adminSidebarMenu = [
     items: [
       { type: "link", label: "Offers & Coupons", path: "/admin/food/coupons", icon: "Megaphone" },
       { type: "link", label: "Referral Settings", path: "/admin/food/referral-settings", icon: "Gift" },
+      { type: "link", label: "Reward Coin Settings", path: "/admin/food/coin-settings", icon: "Coins" },
+      { type: "link", label: "Coin Requests", path: "/admin/food/coin-requests", icon: "FileSpreadsheet" },
     ],
   },
 
@@ -207,6 +206,7 @@ export const adminSidebarMenu = [
     items: [
       { type: "link", label: "Transaction Report", path: "/admin/food/transaction-report", icon: "FileText" },
       { type: "link", label: "Order Report", path: "/admin/food/order-report/regular", icon: "FileText" },
+      { type: "link", label: "Restaurant Report", path: "/admin/food/restaurant-report", icon: "FileText" },
       { type: "link", label: "Tax Report", path: "/admin/food/tax-report", icon: "Receipt" },
       {
         type: "expandable",

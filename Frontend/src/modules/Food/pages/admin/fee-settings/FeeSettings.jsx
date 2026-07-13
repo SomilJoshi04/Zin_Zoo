@@ -308,12 +308,12 @@ export default function FeeSettings() {
   }
 
   return (
-    <div className="p-4 lg:p-6 bg-slate-50 min-h-screen">
+    <div className="p-4 lg:p-6 bg-slate-50 dark:bg-[#0a0a0a] min-h-screen">
       {/* Header Section */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6 flex items-start gap-4">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6 flex items-start gap-4">
         <button
           onClick={() => navigate('/admin/food')}
-          className="p-2.5 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-900 flex items-center justify-center shrink-0 border border-slate-200 mt-1"
+          className="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-800 mt-1"
           title="Back to Dashboard"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -323,21 +323,21 @@ export default function FeeSettings() {
             <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center shrink-0">
               <DollarSign className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">Delivery & Platform Fee</h1>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Delivery & Platform Fee</h1>
           </div>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-slate-600 dark:text-slate-400">
             Configure delivery fee, platform fee, and GST settings for orders
           </p>
         </div>
       </div>
 
       {/* Fee Settings Panel */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-xl font-bold text-slate-900">Fee Configuration</h2>
-              <p className="text-sm text-slate-500 mt-1">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Fee Configuration</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                 Set the fees and charges that will be applied to all orders
               </p>
             </div>
@@ -370,8 +370,8 @@ export default function FeeSettings() {
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-slate-900">Delivery Fee by Distance Range</h3>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Delivery Fee by Distance Range</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                       Set different delivery fees based on distance ranges (in km)
                     </p>
                   </div>
@@ -380,15 +380,13 @@ export default function FeeSettings() {
                 {/* Ranges Table */}
                 {feeSettings.deliveryFeeRanges.length > 0 && (
                   <div className="mb-4 overflow-x-auto">
-                    <table className="w-full border border-slate-200 rounded-lg">
-                      <thead className="bg-slate-50">
+                    <table className="w-full border border-slate-200 dark:border-slate-800 rounded-lg">
+                      <thead className="bg-slate-50 dark:bg-slate-900">
                         <tr>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">Min Distance (km)</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">Max Distance (km)</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">User Delivery Fee (₹)</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">DB Per KM (₹)</th>
-                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 border-b border-slate-200">DB Base Pay (₹)</th>
-                          <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700 border-b border-slate-200">Actions</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-305 border-b border-slate-200 dark:border-slate-800">Min Distance (km)</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-305 border-b border-slate-200 dark:border-slate-800">Max Distance (km)</th>
+                          <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700 dark:text-slate-305 border-b border-slate-200 dark:border-slate-800">User Delivery Fee (₹)</th>
+                          <th className="px-4 py-3 text-center text-sm font-semibold text-slate-700 dark:text-slate-305 border-b border-slate-200 dark:border-slate-800">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -398,100 +396,67 @@ export default function FeeSettings() {
                           .map(({ range, originalIndex }) => {
                             const isEditing = editingRangeIndex === originalIndex;
                             return (
-                              <tr key={originalIndex} className={`${isEditing ? 'bg-blue-50' : 'hover:bg-slate-50'} transition-colors`}>
-                                <td className="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
+                              <tr key={originalIndex} className={`${isEditing ? 'bg-blue-50 dark:bg-blue-950/40' : 'hover:bg-slate-50 dark:hover:bg-slate-900/50'} transition-colors`}>
+                                <td className="px-4 py-3 text-sm text-slate-900 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800">
                                   {isEditing ? (
                                     <div className="flex items-center gap-1">
                                       <input
                                         type="number"
                                         value={newRange.min}
                                         onChange={(e) => setNewRange({ ...newRange, min: e.target.value })}
-                                        className="w-24 px-2 py-1 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-24 px-2 py-1 border border-blue-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded focus:ring-2 focus:ring-blue-500 outline-none"
                                       />
-                                      <span className="text-slate-400">km</span>
+                                      <span className="text-slate-400 dark:text-slate-500">km</span>
                                     </div>
                                   ) : (
                                     <>{range.min} km</>
                                   )}
                                 </td>
-                                <td className="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
+                                <td className="px-4 py-3 text-sm text-slate-900 dark:text-slate-100 border-b border-slate-100 dark:border-slate-800">
                                   {isEditing ? (
                                     <div className="flex items-center gap-1">
                                       <input
                                         type="number"
                                         value={newRange.max}
                                         onChange={(e) => setNewRange({ ...newRange, max: e.target.value })}
-                                        className="w-24 px-2 py-1 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                        className="w-24 px-2 py-1 border border-blue-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded focus:ring-2 focus:ring-blue-500 outline-none"
                                       />
-                                      <span className="text-slate-400">km</span>
+                                      <span className="text-slate-400 dark:text-slate-500">km</span>
                                     </div>
                                   ) : (
                                     <>{range.max} km</>
                                   )}
                                 </td>
-                                <td className="px-4 py-3 text-sm font-medium text-green-600 border-b border-slate-100">
+                                <td className="px-4 py-3 text-sm font-medium text-green-600 dark:text-green-400 border-b border-slate-100 dark:border-slate-800">
                                   {isEditing ? (
                                     <div className="flex items-center gap-1">
-                                      <span className="text-slate-400">₹</span>
+                                      <span className="text-slate-400 dark:text-slate-500">₹</span>
                                       <input
                                         type="number"
                                         value={newRange.fee}
                                         onChange={(e) => setNewRange({ ...newRange, fee: e.target.value })}
-                                        className="w-20 px-2 py-1 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 outline-none text-green-600 font-medium"
+                                        className="w-20 px-2 py-1 border border-blue-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-green-600 dark:text-green-400 font-medium rounded focus:ring-2 focus:ring-blue-500 outline-none"
                                       />
                                     </div>
                                   ) : (
                                     <>₹{range.fee}</>
                                   )}
                                 </td>
-                                <td className="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
-                                  {isEditing ? (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-slate-400">₹</span>
-                                      <input
-                                        type="number"
-                                        value={newRange.deliveryBoyPerKm}
-                                        disabled={Number(newRange.deliveryBoyBasePay) > 0}
-                                        onChange={(e) => setNewRange({ ...newRange, deliveryBoyPerKm: e.target.value, deliveryBoyBasePay: '0' })}
-                                        className="w-20 px-2 py-1 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
-                                        placeholder="0"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <>{range.deliveryBoyPerKm !== undefined && range.deliveryBoyPerKm !== null ? `₹${range.deliveryBoyPerKm}` : '-'}</>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-sm text-slate-900 border-b border-slate-100">
-                                  {isEditing ? (
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-slate-400">₹</span>
-                                      <input
-                                        type="number"
-                                        value={newRange.deliveryBoyBasePay}
-                                        disabled={Number(newRange.deliveryBoyPerKm) > 0 || (hasBasePayConfigured(originalIndex))}
-                                        onChange={(e) => setNewRange({ ...newRange, deliveryBoyBasePay: e.target.value, deliveryBoyPerKm: '0' })}
-                                        className="w-20 px-2 py-1 border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-slate-100 disabled:cursor-not-allowed"
-                                        placeholder="0"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <>{range.deliveryBoyBasePay !== undefined && range.deliveryBoyBasePay !== null ? `₹${range.deliveryBoyBasePay}` : '-'}</>
-                                  )}
-                                </td>
-                                <td className="px-4 py-3 text-center border-b border-slate-100">
+
+                                <td className="px-4 py-3 text-center border-b border-slate-100 dark:border-slate-800">
                                   <div className="flex items-center justify-center gap-2">
                                     {isEditing ? (
                                       <>
                                         <button
                                           onClick={handleSaveEditRange}
-                                          className="p-1.5 text-green-600 hover:bg-green-100 rounded transition-colors"
+                                          className="p-1.5 text-green-650 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-950/40 rounded transition-colors"
                                           title="Save"
                                         >
                                           <Check className="w-4 h-4" />
                                         </button>
                                         <button
                                           onClick={handleCancelEdit}
-                                          className="p-1.5 text-red-600 hover:bg-red-100 rounded transition-colors"
+                                          className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-950/40 rounded transition-colors"
                                           title="Cancel"
                                         >
                                           <X className="w-4 h-4" />
@@ -501,14 +466,14 @@ export default function FeeSettings() {
                                       <>
                                         <button
                                           onClick={() => handleEditRange(originalIndex)}
-                                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                          className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded transition-colors"
                                           title="Edit"
                                         >
                                           <Edit className="w-4 h-4" />
                                         </button>
                                         <button
                                           onClick={() => handleDeleteRange(originalIndex)}
-                                          className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                          className="p-1.5 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded transition-colors"
                                           title="Delete"
                                         >
                                           <Trash2 className="w-4 h-4" />
@@ -526,80 +491,55 @@ export default function FeeSettings() {
                 )}
 
                 {/* Add/Edit Range Form */}
-                <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div className="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-lg border border-slate-200 dark:border-slate-800">
                   <div className="flex items-center gap-2 mb-3">
                     {editingRangeIndex !== null ? (
-                      <Edit className="w-4 h-4 text-blue-600" />
+                      <Edit className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                     ) : (
-                      <Plus className="w-4 h-4 text-green-600" />
+                      <Plus className="w-4 h-4 text-green-600 dark:text-green-455" />
                     )}
-                    <h4 className="text-sm font-semibold text-slate-700">
+                    <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       {editingRangeIndex !== null ? 'Edit Range' : 'Add New Range'}
                     </h4>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Min Distance (km)</label>
+                      <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Min Distance (km)</label>
                       <input
                         type="number"
                         value={newRange.min}
                         onChange={(e) => setNewRange({ ...newRange, min: e.target.value })}
                         min="0"
                         step="0.1"
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                        className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                         placeholder="0"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">Max Distance (km)</label>
+                      <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">Max Distance (km)</label>
                       <input
                         type="number"
                         value={newRange.max}
                         onChange={(e) => setNewRange({ ...newRange, max: e.target.value })}
                         min="0"
                         step="0.1"
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                        className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                         placeholder="5"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">User Delivery Fee (₹)</label>
+                      <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">User Delivery Fee (₹)</label>
                       <input
                         type="number"
                         value={newRange.fee}
                         onChange={(e) => setNewRange({ ...newRange, fee: e.target.value })}
                         min="0"
                         step="1"
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                        className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                         placeholder="0"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">DB Per KM (₹)</label>
-                      <input
-                        type="number"
-                        value={newRange.deliveryBoyPerKm}
-                        disabled={Number(newRange.deliveryBoyBasePay) > 0}
-                        onChange={(e) => setNewRange({ ...newRange, deliveryBoyPerKm: e.target.value, deliveryBoyBasePay: '0' })}
-                        min="0"
-                        step="1"
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
-                        placeholder="0"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-slate-600 mb-1">DB Base Pay (₹)</label>
-                      <input
-                        type="number"
-                        value={newRange.deliveryBoyBasePay}
-                        disabled={Number(newRange.deliveryBoyPerKm) > 0 || (hasBasePayConfigured(editingRangeIndex))}
-                        onChange={(e) => setNewRange({ ...newRange, deliveryBoyBasePay: e.target.value, deliveryBoyPerKm: '0' })}
-                        min="0"
-                        step="1"
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
-                        placeholder="0"
-                      />
-                    </div>
+
                     <div className="flex items-end gap-2">
                       <Button
                         onClick={editingRangeIndex !== null ? handleSaveEditRange : handleAddRange}
@@ -612,24 +552,43 @@ export default function FeeSettings() {
                         <Button
                           variant="outline"
                           onClick={handleCancelEdit}
-                          className="border-slate-300 text-slate-600 hover:bg-slate-100"
+                          className="border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
                         >
                           <X className="w-4 h-4" />
                         </Button>
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-slate-500 mt-2 italic">
+                  <p className="text-xs text-slate-500 dark:text-slate-455 mt-2 italic">
                     Example: Orders within 0 to 3 km will have ₹20 delivery fee.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-slate-200 pt-6 mt-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 border-t border-slate-200 dark:border-slate-800 pt-6 mt-6">
+
+                {/* Default Base Delivery Fee */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                    Default Base Delivery Fee (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={feeSettings.deliveryFee || ""}
+                    onChange={(e) => setFeeSettings({ ...feeSettings, deliveryFee: e.target.value })}
+                    min="0"
+                    step="1"
+                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    placeholder="25"
+                  />
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Base delivery fee for Grocery & Accessories
+                  </p>
+                </div>
 
                 {/* Free Delivery Threshold */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Free Delivery Threshold (₹)
                   </label>
                   <input
@@ -638,17 +597,17 @@ export default function FeeSettings() {
                     onChange={(e) => setFeeSettings({ ...feeSettings, freeDeliveryThreshold: e.target.value })}
                     min="0"
                     step="1"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                     placeholder="500"
                   />
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Subtotal required to get free delivery (set 0 to disable)
                   </p>
                 </div>
 
                 {/* Platform Fee */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Platform Fee (₹)
                   </label>
                   <input
@@ -657,17 +616,17 @@ export default function FeeSettings() {
                     onChange={(e) => setFeeSettings({ ...feeSettings, platformFee: e.target.value })}
                     min="0"
                     step="1"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                     placeholder="5"
                   />
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     Platform service fee per order
                   </p>
                 </div>
 
                 {/* GST Rate */}
                 <div className="space-y-2">
-                  <label className="block text-sm font-semibold text-slate-700">
+                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-305">
                     GST Rate (%)
                   </label>
                   <input
@@ -677,10 +636,10 @@ export default function FeeSettings() {
                     min="0"
                     max="100"
                     step="0.1"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
                     placeholder="5"
                   />
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
                     GST percentage applied on order subtotal
                   </p>
                 </div>

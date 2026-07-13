@@ -25,7 +25,7 @@ import {
   isRazorpayConfigured,
   initiateRazorpayRefund
 } from '../helpers/razorpay.helper.js';
-import { getIO, rooms, broadcastPublicUpdate } from '../../../../config/socket.js';
+import { getIO, rooms, broadcastPublicUpdate, broadcastOrderUpdateToAdmin } from '../../../../config/socket.js';
 import { addOrderJob } from '../../../../queues/producers/order.producer.js';
 import { fetchPolyline } from '../utils/googleMaps.js';
 import { getFirebaseDB } from '../../../../config/firebase.js';
@@ -36,9 +36,7 @@ import * as paymentService from './order-payment.service.js';
 import {
   enqueueOrderEvent,
   haversineKm,
-  generateFourDigitDeliveryOtp,
   sanitizeOrderForExternal,
-  emitDeliveryDropOtpToUser,
   notifyOwnersSafely,
   notifyOwnerSafely,
   buildOrderIdentityFilter,
@@ -243,6 +241,7 @@ async function expireUnacceptedOrders(filter = {}) {
         rIds.forEach(rId => {
           io.to(rooms.restaurant(rId)).emit("order_status_update", payload);
         });
+        broadcastOrderUpdateToAdmin(updated._id.toString());
       }
     } catch (err) {
       logger.warn(`expireUnacceptedOrders socket emit failed: ${err?.message || err}`);
@@ -279,75 +278,7 @@ async function getActiveCommissionRules() {
 
 
 async function getRiderEarning(distanceKm) {
-  const d = Number(distanceKm);
-  console.log(`[DEBUG] getRiderEarning - Calculated Distance: ${d}`);
-  if (!Number.isFinite(d) || d < 0) {
-    console.log(`[DEBUG] getRiderEarning - Invalid distance, returning 0`);
-    return 0;
-  }
-
-  // Fetch fee settings to get distance-based delivery boy payment ranges
-  const feeDoc = await FoodFeeSettings.findOne().sort({ createdAt: -1 }).lean();
-  if (!feeDoc) {
-    console.log(`[DEBUG] getRiderEarning - No fee settings document found`);
-    return 0;
-  }
-
-  console.log(`[DEBUG] getRiderEarning - Fee Settings Doc:`, JSON.stringify({
-    _id: feeDoc._id,
-    deliveryFee: feeDoc.deliveryFee,
-    rangesCount: feeDoc.deliveryFeeRanges?.length
-  }));
-
-  if (!Array.isArray(feeDoc.deliveryFeeRanges) || feeDoc.deliveryFeeRanges.length === 0) {
-    console.log(`[DEBUG] getRiderEarning - No ranges found in document`);
-    return 0;
-  }
-
-  const ranges = [...feeDoc.deliveryFeeRanges].sort((a, b) => Number(a.min) - Number(b.min));
-
-  let earning = 0;
-  let matched = false;
-
-  for (let i = 0; i < ranges.length; i++) {
-    const r = ranges[i];
-    const min = Number(r.min);
-    const max = Number(r.max);
-
-    const isLast = i === ranges.length - 1;
-    const inRange = isLast
-      ? d >= min && d <= max
-      : d >= min && d < max;
-
-    if (inRange) {
-      console.log(`[DEBUG] getRiderEarning - Matched range: ${min}-${max}`);
-      console.log(`[DEBUG] getRiderEarning - Range Config:`, JSON.stringify(r));
-
-      const basePay = Number(r.deliveryBoyBasePay || 0);
-      const perKm = Number(r.deliveryBoyPerKm || 0);
-
-      if (basePay > 0) {
-        earning = basePay;
-        console.log(`[DEBUG] getRiderEarning - Using Base Pay: ${earning}`);
-      } else if (perKm > 0) {
-        earning = d * perKm;
-        console.log(`[DEBUG] getRiderEarning - Using Per KM: ${d} * ${perKm} = ${earning}`);
-      } else {
-        console.log(`[DEBUG] getRiderEarning - No rider payment config (> 0) in matched range`);
-      }
-      matched = true;
-      break;
-    }
-  }
-
-  if (!matched) {
-    console.log(`[DEBUG] getRiderEarning - No range matched for distance ${d}`);
-    return 0;
-  }
-
-  const finalEarning = Math.round(earning);
-  console.log(`[DEBUG] getRiderEarning - Final earning: ${finalEarning}`);
-  return finalEarning;
+  return 0;
 }
 
 /** Append-only food_order_payments row; never blocks main flow on failure */
@@ -812,6 +743,7 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
             { $inc: { count: 1 }, $set: { lastUsedAt: new Date() } },
             { upsert: true },
           );
+          broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
         }
       } catch (err) {
         logger.error(`Coupon usage update failed: ${err.message}`);
@@ -1113,6 +1045,25 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
     logger.warn(`Notifications failed for grocery order ${order._id}: ${err.message}`);
   }
 
+  // Handle Coupon usage
+  const couponCode = dto.pricing?.couponCode ? String(dto.pricing.couponCode).trim().toUpperCase() : "";
+  if (couponCode) {
+    try {
+      const offer = await FoodOffer.findOne({ couponCode }).lean();
+      if (offer) {
+        await FoodOffer.updateOne({ _id: offer._id }, { $inc: { usedCount: 1 } });
+        await FoodOfferUsage.updateOne(
+          { offerId: offer._id, userId: toObjectId(userId, 'User ID') },
+          { $inc: { count: 1 }, $set: { lastUsedAt: new Date() } },
+          { upsert: true },
+        );
+        broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+      }
+    } catch (err) {
+      logger.error(`Coupon usage update failed: ${err.message}`);
+    }
+  }
+
   return { order: normalizeOrderForClient(order), razorpay: razorpayPayload };
 }
 
@@ -1126,6 +1077,8 @@ export async function getOrderById(
   let order = await FoodOrder.findOne(identity)
     .populate("dispatch.deliveryPartnerId", "name fullName phone phoneNumber rating totalRatings profileImage avatar")
     .populate("userId", "name fullName phone email")
+    .populate("restaurantId", "restaurantName")
+    .populate("restaurantIds", "restaurantName")
     .select("+deliveryOtp")
     .lean();
 
@@ -1190,20 +1143,13 @@ export async function getOrderById(
   }
 
   if (userId) {
-    const drop = order.deliveryVerification?.dropOtp || {};
-    const secret = String(order.deliveryOtp || "").trim();
     const out = normalizeOrderForClient(order);
-    delete out.deliveryOtp;
     out.deliveryVerification = {
-      ...(order.deliveryVerification || {}),
       dropOtp: {
-        required: Boolean(drop.required),
-        verified: Boolean(drop.verified),
-      },
+        required: false,
+        verified: false
+      }
     };
-    if (!drop.verified && secret) {
-      out.handoverOtp = secret;
-    }
 
     // Attach current coin settings min/max to allow frontend range display before delivery
     try {
@@ -1226,35 +1172,7 @@ export async function getOrderById(
 }
 
 export async function getDropOtpUser(orderId, userId) {
-  const identity = buildOrderIdentityFilter(orderId);
-  if (!identity) throw new ValidationError("Order id required");
-
-  let order = await FoodOrder.findOne({
-    ...identity,
-    userId: new mongoose.Types.ObjectId(userId),
-  }).select("+deliveryOtp");
-
-  if (!order) {
-    order = await GroceryOrder.findOne({
-      ...identity,
-      userId: new mongoose.Types.ObjectId(userId),
-    }).select("+deliveryOtp");
-  }
-
-  if (!order) throw new NotFoundError("Order not found");
-
-  const phase = order.deliveryState?.currentPhase;
-  const status = order.orderStatus;
-  const eligiblePhases = ["at_drop", "en_route_to_delivery"];
-  const isEligible = eligiblePhases.includes(phase) || status === "picked_up";
-
-  if (!isEligible) {
-    throw new ValidationError(
-      "Rider is still at the restaurant. Wait for them to pick up your order to see the OTP."
-    );
-  }
-
-  return { otp: order.deliveryOtp };
+  throw new ValidationError("Delivery OTP verification is discontinued.");
 }
 
 /**
@@ -1278,11 +1196,10 @@ export async function recoverStuckOrders() {
     if (stuckAssigned.length > 0) {
       logger.info(`Watchdog: Healing ${stuckAssigned.length} stuck assigned orders.`);
       for (const order of stuckAssigned) {
-        // Reset status to unassigned and re-trigger auto-assign
+        // Reset status to unassigned
         order.dispatch.status = 'unassigned';
         order.dispatch.deliveryPartnerId = null;
         await order.save();
-        await tryAutoAssign(order._id);
       }
     }
 
@@ -1451,6 +1368,7 @@ export async function cancelOrder(orderId, userId, reason) {
       rIds.forEach(rId => {
         io.to(rooms.restaurant(rId)).emit("order_status_update", payload);
       });
+      broadcastOrderUpdateToAdmin(order._id.toString());
     }
   } catch (err) {
     logger.warn(`cancelOrder socket emit failed: ${err?.message || err}`);
@@ -1476,6 +1394,7 @@ export async function updateOrderInstructions(orderId, userId, instructions) {
 
   order.note = String(instructions || "").trim();
   await order.save();
+  broadcastOrderUpdateToAdmin(order._id.toString());
   return order;
 }
 
@@ -1650,6 +1569,7 @@ export async function updateOrderStatusRestaurant(
         console.log(`[DEBUG] Emitting order_status_update to rider room: ${riderRoom}`);
         io.to(riderRoom).emit("order_status_update", payload);
       }
+      broadcastOrderUpdateToAdmin(order._id.toString());
     }
 
     const notifyList = [
@@ -1707,22 +1627,7 @@ export async function updateOrderStatusRestaurant(
     const io = getIO();
     if (io) {
       // On accept (confirmed or preparing) -> request delivery partners via central logic
-      if (
-        (String(orderStatus) === "preparing" || String(orderStatus) === "confirmed") &&
-        (String(from) !== "preparing" && String(from) !== "confirmed")
-      ) {
-        console.log(
-          `[DEBUG] Order ${order._id.toString()} status changed to '${orderStatus}'. Triggering central delivery dispatch.`,
-        );
-
-        try {
-          await tryAutoAssign(order._id);
-          // Refresh local order state after assignment search
-          order = await FoodOrder.findById(order._id);
-        } catch (err) {
-          console.error(`[DEBUG] Auto-assign in updateOrderStatusRestaurant failed:`, err);
-        }
-      }
+      // Auto-assign block removed as delivery partner system is discontinued
 
       // When ready for pickup -> ping assigned delivery partner.
       if (String(orderStatus) === 'ready_for_pickup' && String(from) !== 'ready_for_pickup') {
@@ -1981,6 +1886,8 @@ export async function listOrdersAdmin(query) {
         .select("+deliveryOtp")
         .populate("userId", "name phone email")
         .populate("dispatch.deliveryPartnerId", "name phone")
+        .populate("restaurantId", "restaurantName")
+        .populate("restaurantIds", "restaurantName")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -2019,6 +1926,8 @@ export async function listOrdersAdmin(query) {
         .select("+deliveryOtp")
         .populate("userId", "name phone email")
         .populate("dispatch.deliveryPartnerId", "name phone")
+        .populate("restaurantId", "restaurantName")
+        .populate("restaurantIds", "restaurantName")
         .lean(),
       GroceryOrder.find(groceryFilter)
         .select("+deliveryOtp")
@@ -2245,24 +2154,9 @@ export async function updateOrderStatusAdmin(orderId, orderStatus, note = "", ad
       if (order.dispatch?.deliveryPartnerId) {
         io.to(rooms.delivery(order.dispatch.deliveryPartnerId)).emit("order_status_update", payload);
       }
+      broadcastOrderUpdateToAdmin(order._id.toString());
 
-      // On accept (confirmed or preparing) -> request delivery partners via central logic
-      if (
-        (String(orderStatus) === "preparing" || String(orderStatus) === "confirmed") &&
-        (String(from) !== "preparing" && String(from) !== "confirmed")
-      ) {
-        console.log(
-          `[DEBUG] Order ${order._id.toString()} status changed to '${orderStatus}' by Admin. Triggering central delivery dispatch.`,
-        );
-
-        try {
-          await tryAutoAssign(order._id);
-          // Refresh local order state after assignment search
-          order = await FoodOrder.findById(order._id);
-        } catch (err) {
-          console.error(`[DEBUG] Auto-assign in updateOrderStatusAdmin failed:`, err);
-        }
-      }
+      // Auto-assign block removed as delivery partner system is discontinued
     }
   } catch (err) {
     logger.warn(`Admin status update socket emit failed: ${err?.message || err}`);

@@ -1544,7 +1544,8 @@ export const listPublicOffers = async () => {
     const activeRestaurantSet = new Set(activeRestaurantIds.map(id => id.toString()));
 
     const filteredList = list.filter((o) => {
-        if (o.restaurantScope === 'selected') {
+        const isFood = !o.moduleType || o.moduleType === 'food';
+        if (isFood && o.restaurantScope === 'selected') {
             const rId = o.restaurantId && typeof o.restaurantId === 'object' ? o.restaurantId._id : o.restaurantId;
             return rId && activeRestaurantSet.has(rId.toString());
         }
@@ -1583,7 +1584,9 @@ export const listPublicOffers = async () => {
             endDate: o.endDate || null,
             showInCart: o.showInCart !== false,
             minOrderValue: o.minOrderValue ?? 0,
-            isFirstOrderOnly: Boolean(o.isFirstOrderOnly)
+            isFirstOrderOnly: Boolean(o.isFirstOrderOnly),
+            moduleType: o.moduleType || 'food',
+            itemIds: o.itemIds || []
         };
     });
 

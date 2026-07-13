@@ -14,7 +14,7 @@ import { Badge } from "@food/components/ui/badge"
 import { useCart } from "@food/context/CartContext"
 import { useProfile } from "@food/context/ProfileContext"
 import { useOrders } from "@food/context/OrdersContext"
-import { userAPI } from "@food/api"
+import { userAPI, adminAPI } from "@food/api"
 
 export default function Checkout() {
   const navigate = useNavigate()
@@ -25,6 +25,7 @@ export default function Checkout() {
   const [selectedAddressId, setSelectedAddressId] = useState(getAddressId(getDefaultAddress()))
   const [selectedPayment, setSelectedPayment] = useState(getDefaultPaymentMethod()?.id || "")
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [baseDeliveryFee, setBaseDeliveryFee] = useState(25)
 
   const selectedAddress = addresses.find(addr => getAddressId(addr) === selectedAddressId) || getDefaultAddress()
   const defaultPayment = paymentMethods.find(pm => pm.id === selectedPayment) || getDefaultPaymentMethod()
@@ -54,8 +55,25 @@ export default function Checkout() {
     fetchCoinSettings()
   }, [])
 
+  useEffect(() => {
+    const fetchFeeSettings = async () => {
+      try {
+        const response = await adminAPI.getPublicFeeSettings()
+        if (response.data.success && response.data.data.feeSettings) {
+          const fee = response.data.data.feeSettings.deliveryFee
+          if (fee !== undefined && fee !== null) {
+            setBaseDeliveryFee(Number(fee))
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching public base delivery fee:", err)
+      }
+    }
+    fetchFeeSettings()
+  }, [])
+
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity * 83, 0)
-  const deliveryFee = 2.99 * 83
+  const deliveryFee = baseDeliveryFee
   const tax = subtotal * 0.08
   const total = subtotal + deliveryFee + tax
 

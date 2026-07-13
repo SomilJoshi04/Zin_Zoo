@@ -958,7 +958,8 @@ export default function Cart() {
   // Fetch coupons for items in cart
   useEffect(() => {
     const fetchCouponsForCartItems = async () => {
-      if (cart.length === 0 || !restaurantId) {
+      const isFoodCart = cart.some(i => (i.moduleType || 'food') === 'food');
+      if (cart.length === 0 || (isFoodCart && !restaurantId)) {
         setAvailableCoupons([])
         return
       }
@@ -1022,7 +1023,7 @@ export default function Cart() {
     }
 
     fetchCouponsForCartItems()
-  }, [cart, restaurantId])
+  }, [cart, restaurantId, activeCartTab])
 
   // Calculate pricing from backend whenever cart, address, or coupon changes
   useEffect(() => {

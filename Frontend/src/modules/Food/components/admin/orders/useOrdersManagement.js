@@ -282,315 +282,242 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
   const handlePrintOrder = async (order) => {
     try {
       const { default: jsPDF } = await import("jspdf")
-      const { default: autoTable } = await import("jspdf-autotable")
+      const { default: QRCode } = await import("qrcode")
+
+      // 58mm receipt width ≈ 48mm printable area, use generous height
+      const receiptWidth = 58
+      const margin = 6.5
+      const contentWidth = receiptWidth - margin * 2
+      const centerX = receiptWidth / 2
+
+      // Gather order data
+      const orderId = order.orderId || order.id || "N/A"
+      const orderDate = order.date || new Date().toLocaleDateString()
+      const orderTime = order.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const customerName = formatDisplayText(order.customerName)
+      const items = Array.isArray(order.items) ? order.items : []
+
+      const subtotal = toNumber(
+        items.reduce((sum, item) => sum + toNumber(item?.price) * toNumber(item?.quantity || 1), 0)
+        || order.pricing?.subtotal || order.totalItemAmount || order.subtotal || 0
+      )
+      const deliveryFee = toNumber(order.deliveryCharge ?? order.deliveryFee ?? order.pricing?.deliveryFee ?? 0)
+      const taxAmount = toNumber(order.vatTax ?? order.taxAmount ?? order.tax ?? order.pricing?.tax ?? 0)
+      const platformFee = toNumber(order.platformFee ?? order.pricing?.platformFee ?? 0)
+      const discountAmount = toNumber(order.couponDiscount ?? order.discountAmount ?? order.pricing?.discount ?? 0)
+      const totalAmount = toNumber(order.totalAmount ?? order.pricing?.total ?? (subtotal + deliveryFee + taxAmount + platformFee - discountAmount))
+      const paymentType = order.paymentType || order.payment?.method || order.paymentMethod || "N/A"
+      const paymentStatus = formatDisplayText(
+        order.paymentStatus || order.paymentCollectionStatus || (paymentType === "Cash on Delivery" ? "Not Collected" : "Paid")
+      )
+
+      // Generate QR code as data URL
+      const feedbackUrl = `https://zin-zoo.vercel.app/feedback?orderId=${order.id || order.orderId || order._id || ""}`
+      const qrDataUrl = await QRCode.toDataURL(feedbackUrl, {
+        width: 200,
+        margin: 1,
+        color: { dark: "#000000", light: "#ffffff" }
+      })
+
+      // Load logo as data URL
+      const logoDataUrl = await imageUrlToDataUrl("/zinzoo-logo.png")
+
+      // Calculate height dynamically
+      let estimatedHeight = 40 // logo + header
+      estimatedHeight += 20 // customer info
+      estimatedHeight += items.length * 5 + 15 // items table
+      estimatedHeight += 30 // pricing summary
+      estimatedHeight += 18 // payment info
+      estimatedHeight += 12 // thank you message
+      estimatedHeight += 40 // QR code
+      estimatedHeight += 10 // padding
+      estimatedHeight = Math.max(estimatedHeight, 140)
 
       const doc = new jsPDF({
         orientation: "portrait",
         unit: "mm",
-        format: "a4",
+        format: [receiptWidth, estimatedHeight],
       })
 
-      const pageWidth = doc.internal.pageSize.getWidth()
-      const orderId = order.orderId || order.id || order.subscriptionId || "N/A"
-      const orderDate = order.date && order.time
-        ? `${order.date}, ${order.time}`
-        : (order.date || new Date().toLocaleDateString())
+      let y = 4
+      const fontSize = (size) => doc.setFontSize(size)
+      const bold = () => doc.setFont(undefined, "bold")
+      const normal = () => doc.setFont(undefined, "normal")
+      const center = (text, yPos) => doc.text(text, centerX, yPos, { align: "center" })
+      const dashLine = (yPos) => {
+        doc.setDrawColor(0)
+        doc.setLineDashPattern([0.5, 0.5], 0)
+        doc.line(margin, yPos, receiptWidth - margin, yPos)
+        doc.setLineDashPattern([], 0)
+      }
 
-      const settings = getCachedSettings() || await loadBusinessSettings()
-      const companyName = settings?.companyName || "SwitchEats Food"
-      const logoUrl = settings?.logo?.url || quickSpicyLogo
-      const logoDataUrl = await imageUrlToDataUrl(logoUrl)
-
-      const items = Array.isArray(order.items) ? order.items : []
-      const itemsSubtotal = items.reduce((sum, item) => {
-        const qty = toNumber(item?.quantity || 1)
-        const unitPrice = toNumber(item?.price)
-        return sum + (qty * unitPrice)
-      }, 0)
-      const subtotal = itemsSubtotal > 0
-        ? itemsSubtotal
-        : toNumber(
-            order.totalItemAmount ??
-            order.subtotal ??
-            order.pricing?.subtotal ??
-            order.totalAmount
-          )
-      const deliveryFee = toNumber(
-        order.deliveryCharge ??
-        order.deliveryFee ??
-        order.pricing?.deliveryFee ??
-        order.delivery?.fee
-      )
-      const taxAmount = toNumber(
-        order.vatTax ??
-        order.taxAmount ??
-        order.tax ??
-        order.pricing?.tax
-      )
-      const discountAmount = toNumber(
-        order.couponDiscount ??
-        order.itemDiscount ??
-        order.discountAmount ??
-        order.pricing?.discount
-      )
-      const computedTotal = subtotal + deliveryFee + taxAmount - discountAmount
-      const totalAmount = toNumber(
-        order.totalAmount ??
-        order.pricing?.total ??
-        computedTotal
-      )
-      const paymentType = order.paymentType || order.payment?.method || order.paymentMethod || "N/A"
-      const deliveryPartnerName = formatDisplayText(
-        order.deliveryPartnerName ||
-        order.deliveryBoyName ||
-        order.deliveryPartnerId?.name ||
-        order.dispatch?.deliveryPartnerId?.name,
-      )
-      const deliveryPartnerPhone = formatDisplayText(
-        order.deliveryPartnerPhone ||
-        order.deliveryBoyNumber ||
-        order.deliveryPartnerId?.phone ||
-        order.dispatch?.deliveryPartnerId?.phone,
-      )
-      const orderStatus = formatDisplayText(order.orderStatus || order.status)
-      const paymentStatus = formatDisplayText(
-        order.paymentStatus
-          || order.paymentCollectionStatus
-          || (paymentType === "Cash on Delivery" ? "Not Collected" : null),
-      )
-      const customerName = formatDisplayText(order.customerName)
-      const customerPhone = formatDisplayText(order.customerPhone)
-      const restaurantName = formatDisplayText(order.restaurant)
-      const deliveryType = formatDisplayText(order.deliveryType)
-      const deliveryAddress = formatOrderAddress(order.address || order.customerAddress || order.deliveryAddress)
-      const itemCount = items.reduce((sum, item) => sum + toNumber(item?.quantity || 1), 0) || items.length
-
-      doc.setFillColor(15, 118, 110)
-      doc.rect(0, 0, pageWidth, 46, "F")
-      doc.setFillColor(255, 255, 255)
-      doc.setGState(new doc.GState({ opacity: 0.08 }))
-      doc.circle(pageWidth - 24, 12, 18, "F")
-      doc.circle(pageWidth - 6, 36, 22, "F")
-      doc.setGState(new doc.GState({ opacity: 1 }))
-
+      // === LOGO ===
       if (logoDataUrl) {
         try {
-          const logoFormat = logoDataUrl.includes("image/jpeg") ? "JPEG" : "PNG"
-          doc.addImage(logoDataUrl, logoFormat, 14, 8, 24, 24, undefined, "FAST")
+          const logoSize = 24
+          doc.addImage(logoDataUrl, "PNG", centerX - logoSize / 2, y, logoSize, logoSize, undefined, "FAST")
+          y += logoSize + 2
         } catch {
-          // Ignore logo rendering issues and continue with text-only header.
+          y += 2
         }
       }
 
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(17)
-      doc.setFont(undefined, "bold")
-      doc.text(companyName, logoDataUrl ? 42 : 14, 17)
-      doc.setFontSize(10)
-      doc.setFont(undefined, "normal")
-      doc.text("Order Invoice", logoDataUrl ? 42 : 14, 24)
-      doc.setFontSize(8.5)
-      doc.text("Admin order summary with billing and delivery details", logoDataUrl ? 42 : 14, 30)
-
-      doc.setFontSize(9)
-      doc.text(`Invoice #: ${orderId}`, pageWidth - 14, 14, { align: "right" })
-      doc.text(`Date: ${orderDate}`, pageWidth - 14, 20, { align: "right" })
-      doc.text(`Status: ${orderStatus}`, pageWidth - 14, 26, { align: "right" })
-      doc.text(`Payment: ${paymentStatus}`, pageWidth - 14, 32, { align: "right" })
-
-      doc.setDrawColor(226, 232, 240)
-      doc.setFillColor(248, 250, 252)
-
-      const drawInfoCard = (titleText, x, y, width, rows, accentColor = [15, 118, 110]) => {
-        const cardPaddingX = 4
-        const titleBarHeight = 8
-        const contentStartY = y + 14
-        const labelX = x + cardPaddingX
-        const valueX = x + 30
-        const valueWidth = width - 34
-
-        let measuredHeight = contentStartY
-        const measuredRows = rows.map((row) => {
-          const label = `${row.label}:`
-          const valueLines = doc.splitTextToSize(formatDisplayText(row.value), valueWidth)
-          const rowHeight = Math.max(5, valueLines.length * 4)
-          measuredHeight += rowHeight
-          return { label, valueLines, rowHeight }
-        })
-
-        const cardHeight = Math.max(39, measuredHeight - y + 4)
-
-        doc.setFillColor(255, 255, 255)
-        doc.roundedRect(x, y, width, cardHeight, 3, 3, "FD")
-        doc.setFillColor(...accentColor)
-        doc.roundedRect(x, y, width, titleBarHeight, 3, 3, "F")
-        doc.setTextColor(255, 255, 255)
-        doc.setFontSize(9)
-        doc.setFont(undefined, "bold")
-        doc.text(titleText, labelX, y + 5.5)
-        doc.setTextColor(71, 85, 105)
-        doc.setFont(undefined, "normal")
-        doc.setFontSize(8.5)
-
-        let currentY = contentStartY
-        measuredRows.forEach((row) => {
-          doc.setFont(undefined, "bold")
-          doc.text(row.label, labelX, currentY)
-          doc.setFont(undefined, "normal")
-          doc.text(row.valueLines, valueX, currentY)
-          currentY += row.rowHeight
-        })
-
-        return cardHeight
+      // === HEADER ===
+      doc.setTextColor(0, 0, 0)
+      fontSize(9)
+      bold()
+      center("Zin Zoo", y)
+      y += 3.5
+      fontSize(6)
+      normal()
+      
+      let serviceSubText = "Food Delivery Service"
+      if (moduleType === "grocery") {
+        serviceSubText = "Grocery Delivery Service"
+      } else if (moduleType === "accessories") {
+        serviceSubText = "Accessories Store Service"
+      } else if (moduleType === "services" || moduleType === "service") {
+        serviceSubText = "Home Booking Service"
+      } else if (moduleType) {
+        const capitalized = String(moduleType).charAt(0).toUpperCase() + String(moduleType).slice(1)
+        serviceSubText = `${capitalized} Service`
       }
+      center(serviceSubText, y)
+      y += 4
 
-      const customerCardHeight = drawInfoCard("Customer Details", 14, 53, 88, [
-        { label: "Name", value: customerName },
-        { label: "Phone", value: customerPhone },
-        { label: "Address", value: deliveryAddress },
-      ])
-      const orderCardHeight = drawInfoCard("Order Info", 108, 53, 88, [
-        { label: "Payment Method", value: paymentType },
-        { label: "Delivery Mode", value: deliveryType },
-        { label: "Total Items", value: `${itemCount} item${itemCount === 1 ? "" : "s"}` },
-      ], [249, 115, 22])
+      dashLine(y)
+      y += 3
 
-      const infoCardsBottomY = 53 + Math.max(customerCardHeight, orderCardHeight)
+      // === ORDER INFO ===
+      fontSize(6.5)
+      normal()
+      doc.text(`Customer: ${customerName}`, margin, y)
+      y += 3.5
+      doc.text(`Date: ${orderDate}`, margin, y)
+      doc.text(orderTime, receiptWidth - margin, y, { align: "right" })
+      y += 3.5
+      doc.text(`Bill No: #${orderId}`, margin, y)
+      y += 4
 
-      autoTable(doc, {
-        startY: infoCardsBottomY + 8,
-        body: [[
-          `Order ID: ${orderId}`,
-          `Status: ${orderStatus}`,
-          `Payment Status: ${paymentStatus}`,
-          `Grand Total: ${formatMoney(totalAmount)}`,
-        ]],
-        theme: "plain",
-        styles: {
-          fontSize: 9,
-          textColor: [30, 41, 59],
-          fillColor: [241, 245, 249],
-          cellPadding: { top: 3.5, right: 4, bottom: 3.5, left: 4 },
-          lineColor: [226, 232, 240],
-          lineWidth: 0.25,
-          fontStyle: "bold",
-        },
-        columnStyles: {
-          0: { cellWidth: 45 },
-          1: { cellWidth: 45 },
-          2: { cellWidth: 50 },
-          3: { cellWidth: 42, halign: "right", textColor: [15, 118, 110] },
-        },
-        margin: { left: 14, right: 14 },
-      })
+      dashLine(y)
+      y += 3
 
-      const tableBody = []
+      // === ITEMS TABLE HEADER ===
+      fontSize(6.5)
+      bold()
+      doc.text("Item", margin, y)
+      doc.text("Qty", margin + 22, y, { align: "center" })
+      doc.text("Price", margin + 31, y, { align: "right" })
+      doc.text("Amt", receiptWidth - margin, y, { align: "right" })
+      y += 1.5
+      dashLine(y)
+      y += 3
+
+      // === ITEMS ===
+      fontSize(6)
+      normal()
       if (items.length > 0) {
-        const groups = {}
         items.forEach((item) => {
-          const rName = item.restaurantName || "Default Kitchen"
-          if (!groups[rName]) groups[rName] = []
-          groups[rName].push(item)
-        })
+          const qty = toNumber(item.quantity || 1)
+          const price = toNumber(item.price)
+          const amount = qty * price
+          const name = String(item.name || item.itemName || item.title || "Item").substring(0, 18)
 
-        Object.entries(groups).forEach(([restaurantName, groupItems]) => {
-          tableBody.push([
-            {
-              content: restaurantName,
-              colSpan: 4,
-              styles: { fontStyle: "bold", fillColor: [241, 245, 249], textColor: [15, 118, 110] }
-            }
-          ])
-          groupItems.forEach((item) => {
-            const qty = toNumber(item.quantity || 1)
-            const title = item.name || item.itemName || item.title || "Item"
-            const unitPrice = toNumber(item.price)
-            const lineTotal = qty * unitPrice
-            tableBody.push([qty, title, formatMoney(unitPrice), formatMoney(lineTotal)])
-          })
+          doc.text(name, margin, y)
+          doc.text(String(qty), margin + 22, y, { align: "center" })
+          doc.text(price.toFixed(0), margin + 31, y, { align: "right" })
+          doc.text(amount.toFixed(0), receiptWidth - margin, y, { align: "right" })
+          y += 3.5
         })
       } else {
-        tableBody.push([1, "Order Total", formatMoney(totalAmount), formatMoney(totalAmount)])
+        doc.text("Order Total", margin, y)
+        doc.text(totalAmount.toFixed(2), receiptWidth - margin, y, { align: "right" })
+        y += 3.5
       }
 
-      autoTable(doc, {
-        startY: (doc.lastAutoTable?.finalY || 110) + 6,
-        head: [["Qty", "Item", "Unit Price", "Line Total"]],
-        body: tableBody,
-        theme: "grid",
-        headStyles: {
-          fillColor: [15, 118, 110],
-          textColor: 255,
-          fontSize: 9,
-          fontStyle: "bold",
-        },
-        bodyStyles: {
-          fontSize: 9,
-          textColor: [30, 41, 59],
-        },
-        alternateRowStyles: {
-          fillColor: [248, 250, 252],
-        },
-        styles: {
-          cellPadding: 3.2,
-          lineColor: [226, 232, 240],
-          lineWidth: 0.3,
-        },
-        columnStyles: {
-          0: { halign: "center", cellWidth: 18 },
-          1: { cellWidth: 94 },
-          2: { halign: "right", cellWidth: 36 },
-          3: { halign: "right", cellWidth: 38 },
-        },
-        margin: { left: 14, right: 14 },
-      })
+      y += 1
+      dashLine(y)
+      y += 3
 
-      const summaryStartY = (doc.lastAutoTable?.finalY || 130) + 10
-      doc.setDrawColor(226, 232, 240)
-      doc.setFillColor(248, 250, 252)
-      doc.roundedRect(pageWidth - 92, summaryStartY - 5, 78, 35, 2, 2, "FD")
-      autoTable(doc, {
-        startY: summaryStartY,
-        body: [
-          ["Subtotal", formatMoney(subtotal)],
-          ["Delivery Fee", formatMoney(deliveryFee)],
-          ["Tax", formatMoney(taxAmount)],
-          ["Discount", formatMoney(discountAmount)],
-          ["Grand Total", formatMoney(totalAmount)],
-        ],
-        theme: "plain",
-        styles: {
-          fontSize: 10,
-          textColor: [30, 41, 59],
-          cellPadding: 1.8,
-        },
-        columnStyles: {
-          0: { cellWidth: 34, fontStyle: "bold" },
-          1: { cellWidth: 40, halign: "right" },
-        },
-        margin: { left: pageWidth - 88 },
-        didParseCell: (hookData) => {
-          if (hookData.row.index === 4) {
-            hookData.cell.styles.fontStyle = "bold"
-            hookData.cell.styles.fontSize = 11
-            hookData.cell.styles.textColor = [15, 118, 110]
-          }
-        },
-      })
+      // === PRICING SUMMARY ===
+      fontSize(6.5)
+      normal()
 
-      const footerY = Math.max((doc.lastAutoTable?.finalY || summaryStartY) + 18, 262)
-      doc.setDrawColor(226, 232, 240)
-      doc.line(14, footerY - 6, pageWidth - 14, footerY - 6)
-      doc.setFontSize(9)
-      doc.setTextColor(100, 116, 139)
-      doc.text(`Generated on ${new Date().toLocaleString()}`, 14, footerY)
-      doc.text("Includes customer, restaurant, and delivery partner details.", pageWidth - 14, footerY, { align: "right" })
+      const addSummaryRow = (label, value, isBold = false) => {
+        if (isBold) bold(); else normal()
+        doc.text(label, margin, y)
+        doc.text(`Rs. ${value.toFixed(2)}`, receiptWidth - margin, y, { align: "right" })
+        y += 3.5
+      }
 
-      const filename = `Invoice_${orderId}_${new Date().toISOString().split("T")[0]}.pdf`
+      addSummaryRow("Sub Total", subtotal)
+      if (deliveryFee > 0) addSummaryRow("Delivery Fee", deliveryFee)
+      if (platformFee > 0) addSummaryRow("Platform Fee", platformFee)
+      if (taxAmount > 0) addSummaryRow("Tax", taxAmount)
+      if (discountAmount > 0) {
+        normal()
+        doc.text("Discount", margin, y)
+        doc.text(`-Rs. ${discountAmount.toFixed(2)}`, receiptWidth - margin, y, { align: "right" })
+        y += 3.5
+      }
+
+      y += 1
+      dashLine(y)
+      y += 3
+
+      // === GRAND TOTAL ===
+      fontSize(7.5)
+      bold()
+      center(`Grand Total: Rs. ${totalAmount.toFixed(2)}`, y)
+      y += 4.5
+
+      fontSize(6.5)
+      normal()
+      center(`Payment: ${paymentType}  |  ${paymentStatus}`, y)
+      y += 4
+
+      dashLine(y)
+      y += 4
+
+      // === THANK YOU MESSAGE ===
+      fontSize(7)
+      bold()
+      center("Thank You!", y)
+      y += 3.5
+      fontSize(6)
+      normal()
+      center("We Look Forward to", y)
+      y += 3
+      center("Serving You Again.", y)
+      y += 5
+
+      dashLine(y)
+      y += 3
+
+      // === FEEDBACK QR CODE ===
+      fontSize(6)
+      normal()
+      center("Your feedback matters to us!", y)
+      y += 3
+      center("Scan to share your experience:", y)
+      y += 3
+
+      if (qrDataUrl) {
+        const qrSize = 22
+        doc.addImage(qrDataUrl, "PNG", centerX - qrSize / 2, y, qrSize, qrSize)
+        y += qrSize + 3
+      }
+
+      fontSize(5)
+      center("Scan QR to give feedback", y)
+      y += 5
+
+      // Trim the page to actual content height
+      const filename = `Receipt_${orderId}_${new Date().toISOString().split("T")[0]}.pdf`
       doc.save(filename)
     } catch (error) {
-      debugError("Error generating PDF invoice:", error)
-      alert("Failed to download PDF invoice. Please try again.")
+      debugError("Error generating receipt PDF:", error)
+      alert("Failed to download receipt. Please try again.")
     }
   }
 

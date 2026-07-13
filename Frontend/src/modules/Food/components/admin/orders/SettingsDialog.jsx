@@ -25,16 +25,16 @@ export default function SettingsDialog({ isOpen, onOpenChange, visibleColumns, t
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-slate-850 p-0 opacity-0 data-[state=open]:opacity-100 data-[state=closed]:opacity-0 transition-opacity duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:scale-100 data-[state=closed]:scale-100">
         <DialogHeader className="px-6 pt-6 pb-4">
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-slate-900 dark:text-white">
             <Settings className="w-5 h-5" />
             Table Settings
           </DialogTitle>
         </DialogHeader>
         <div className="px-6 pb-6 space-y-4">
           <div>
-            <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-200 mb-3 flex items-center gap-2">
               <Columns className="w-4 h-4" />
               Visible Columns
             </h3>
@@ -42,15 +42,15 @@ export default function SettingsDialog({ isOpen, onOpenChange, visibleColumns, t
               {Object.entries(columnLabels).map(([key, label]) => (
                 <label
                   key={key}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer"
+                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
                 >
                   <input
                     type="checkbox"
                     checked={visibleColumns[key]}
                     onChange={() => toggleColumn(key)}
-                    className="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500"
+                    className="w-4 h-4 text-emerald-600 border-slate-300 dark:border-slate-700 rounded focus:ring-emerald-500 dark:bg-slate-800"
                   />
-                  <span className="text-sm text-slate-700">{label}</span>
+                  <span className="text-sm text-slate-700 dark:text-slate-300">{label}</span>
                   {visibleColumns[key] && (
                     <Check className="w-4 h-4 text-emerald-600 ml-auto" />
                   )}
@@ -58,10 +58,10 @@ export default function SettingsDialog({ isOpen, onOpenChange, visibleColumns, t
               ))}
             </div>
           </div>
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800">
             <button
               onClick={resetColumns}
-              className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-all"
+              className="px-4 py-2 text-sm font-medium rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
             >
               Reset
             </button>

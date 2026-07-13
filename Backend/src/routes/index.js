@@ -23,6 +23,7 @@ import { requireRoles } from '../core/roles/role.middleware.js';
 import { getQueuesController } from '../controllers/admin.controller.js';
 import webhookRoutes from '../core/payments/routes/webhook.routes.js'; // ✅ NEW
 import searchRoutes from '../modules/food/search/routes/search.routes.js';
+import { submitPublicFeedback } from '../controllers/publicFeedback.controller.js';
 
 const router = express.Router();
 
@@ -41,6 +42,9 @@ router.use('/v1/food/restaurant', restaurantRoutes);
 router.use('/v1/food/grocery', groceryPublicRoutes);
 router.use('/v1/food/search', searchRoutes);
 router.use('/v1/uploads', uploadRoutes);
+
+// Public feedback endpoint (no auth - for QR code invoice feedback)
+router.post('/v1/food/public/feedback', submitPublicFeedback);
 
 // Mark business-settings/public as truly public (must be before protected admin block)
 router.get('/v1/food/admin/business-settings/public', businessSettingsController.getBusinessSettings);
@@ -71,7 +75,7 @@ router.use('/v1/accessories/admin', authMiddleware, requireRoles('ADMIN'), acces
 router.use('/v1/accessories/public', accessoriesPublicRoutes);
 
 router.use('/v1/food/user', authMiddleware, requireRoles('USER'), userRoutes);
-router.use('/v1/food/notifications', authMiddleware, requireRoles('USER', 'RESTAURANT', 'DELIVERY_PARTNER'), notificationRoutes);
+router.use('/v1/food/notifications', authMiddleware, requireRoles('USER', 'RESTAURANT'), notificationRoutes);
 router.use('/v1/food/orders', authMiddleware, requireRoles('USER'), orderUserRoutes);
 router.use('/v1/food/payments', authMiddleware, paymentRoutes);
 router.use('/v1/payments/webhook', webhookRoutes); // ✅ NEW: Public Webhook

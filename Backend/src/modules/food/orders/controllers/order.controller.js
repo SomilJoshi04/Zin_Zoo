@@ -166,162 +166,7 @@ export async function updateOrderStatusRestaurantController(req, res, next) {
     }
 }
 
-export async function listOrdersAvailableDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const result = await orderService.listOrdersAvailableDelivery(deliveryPartnerId, req.query);
-        return sendResponse(res, 200, 'Orders retrieved', result);
-    } catch (err) {
-        next(err);
-    }
-}
 
-export async function acceptOrderDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const order = await orderService.acceptOrderDelivery(orderId, deliveryPartnerId);
-        return sendResponse(res, 200, 'Order accepted', { order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function rejectOrderDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const order = await orderService.rejectOrderDelivery(orderId, deliveryPartnerId);
-        return sendResponse(res, 200, 'Order rejected', { order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function confirmReachedPickupDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const order = await orderService.confirmReachedPickupDelivery(orderId, deliveryPartnerId);
-        return sendResponse(res, 200, 'Reached pickup confirmed', { order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function confirmPickupDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const { billImageUrl } = req.body;
-        const order = await orderService.confirmPickupDelivery(orderId, deliveryPartnerId, billImageUrl);
-        return sendResponse(res, 200, 'Pickup confirmed', { order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function confirmReachedDropDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const order = await orderService.confirmReachedDropDelivery(orderId, deliveryPartnerId);
-        return sendResponse(res, 200, 'Reached drop confirmed', { order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function verifyDropOtpDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const { otp } = req.body;
-        const result = await orderService.verifyDropOtpDelivery(orderId, deliveryPartnerId, otp);
-        return sendResponse(res, 200, 'OTP verified', { order: result.order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function completeDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const order = await orderService.completeDelivery(orderId, deliveryPartnerId, req.body || {});
-        return sendResponse(res, 200, 'Delivery completed', { order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function updateOrderStatusDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const dto = validateOrderStatusDto(req.body);
-        const order = await orderService.updateOrderStatusDelivery(orderId, deliveryPartnerId, dto.orderStatus);
-        return sendResponse(res, 200, 'Order status updated', { order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function getCurrentTripDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const order = await orderService.getCurrentTripDelivery(deliveryPartnerId);
-        return sendResponse(res, 200, 'Current trip retrieved', { activeOrder: order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function createCollectQrController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const customerInfo = req.body || {};
-        const result = await orderService.createCollectQr(orderId, deliveryPartnerId, customerInfo);
-        return sendResponse(res, 200, 'QR created', result);
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function getOrderByIdDeliveryController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const order = await orderService.getOrderById(orderId, { deliveryPartnerId });
-        return sendResponse(res, 200, 'Order retrieved', { order });
-    } catch (err) {
-        next(err);
-    }
-}
-
-
-export async function getPaymentStatusController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const result = await orderService.getPaymentStatus(orderId, deliveryPartnerId);
-        return sendResponse(res, 200, 'Payment status retrieved', result);
-    } catch (err) {
-        next(err);
-    }
-}
-
-export async function switchToCashController(req, res, next) {
-    try {
-        const deliveryPartnerId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const result = await orderService.switchToCash(orderId, deliveryPartnerId);
-        return sendResponse(res, 200, 'Switched to cash collection', result);
-    } catch (err) {
-        next(err);
-    }
-}
 
 
 export async function listOrdersAdminController(req, res, next) {
@@ -343,17 +188,7 @@ export async function getOrderByIdAdminController(req, res, next) {
     }
 }
 
-export async function assignDeliveryPartnerController(req, res, next) {
-    try {
-        const adminId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const dto = validateAssignDeliveryDto(req.body);
-        const order = await orderService.assignDeliveryPartnerAdmin(orderId, dto.deliveryPartnerId, adminId);
-        return sendResponse(res, 200, 'Delivery partner assigned', { order });
-    } catch (err) {
-        next(err);
-    }
-}
+
 
 export async function deleteOrderAdminController(req, res, next) {
     try {
@@ -366,26 +201,7 @@ export async function deleteOrderAdminController(req, res, next) {
     }
 }
 
-export async function resendDeliveryNotificationRestaurantController(req, res, next) {
-    try {
-        const restaurantId = req.user?.userId;
-        const orderId = req.params.orderId;
-        const result = await orderService.resendDeliveryNotificationRestaurant(orderId, restaurantId);
-        return sendResponse(res, 200, 'Notification resent successfully', result);
-    } catch (err) {
-        next(err);
-    }
-}
 
-export async function resendDeliveryNotificationAdminController(req, res, next) {
-    try {
-        const orderId = req.params.orderId;
-        const result = await orderService.resendDeliveryNotificationAdmin(orderId);
-        return sendResponse(res, 200, 'Notification resent successfully', result);
-    } catch (err) {
-        next(err);
-    }
-}
 
 export async function acceptOrderAdminController(req, res, next) {
     try {

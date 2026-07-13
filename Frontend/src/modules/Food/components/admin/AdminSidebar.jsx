@@ -50,6 +50,8 @@ import {
   LayoutGrid,
   ShoppingBag,
   Watch,
+  Coins,
+  FileSpreadsheet,
 } from "lucide-react"
 import { cn } from "@food/utils/utils"
 import { Input } from "@food/components/ui/input"
@@ -91,6 +93,8 @@ const iconMap = {
   Wallet,
   Award,
   Truck,
+  Coins,
+  FileSpreadsheet,
   Package,
   CreditCard,
   Settings,

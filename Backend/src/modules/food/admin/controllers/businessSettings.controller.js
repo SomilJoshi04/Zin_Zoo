@@ -1,6 +1,7 @@
 import { FoodBusinessSettings } from '../models/businessSettings.model.js';
 import { sendResponse } from '../../../../utils/response.js';
 import { uploadImageBufferDetailed } from '../../../../services/cloudinary.service.js';
+import { broadcastPublicUpdate } from '../../../../config/socket.js';
 
 const POWER_SCANNING_DEFAULT = {
     user: { themeColor: '#F84E04', fontFamily: 'Poppins' },
@@ -124,6 +125,8 @@ export async function updatePowerScanningSettings(req, res, next) {
 
         settings.powerScanning = buildPowerScanningPayload(payload, settings.powerScanning || POWER_SCANNING_DEFAULT);
         await settings.save();
+        
+        broadcastPublicUpdate('settings:update', { action: 'update', data: settings });
 
         return sendResponse(res, 200, 'Power scanning settings updated successfully', settings.powerScanning);
     } catch (error) {
@@ -176,6 +179,8 @@ export async function updateOrderAcceptanceSettings(req, res, next) {
 
         settings.orderAcceptanceTimeMinutes = minutes;
         await settings.save();
+
+        broadcastPublicUpdate('settings:update', { action: 'update', data: settings });
 
         return sendResponse(res, 200, 'Order acceptance settings updated successfully', {
             orderAcceptanceTimeMinutes: minutes,
@@ -291,6 +296,9 @@ export async function updateBusinessSettings(req, res, next) {
         }
 
         await settings.save();
+        
+        broadcastPublicUpdate('settings:update', { action: 'update', data: settings });
+
         return sendResponse(res, 200, 'Business settings updated successfully', settings);
     } catch (error) {
         next(error);

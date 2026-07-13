@@ -144,7 +144,8 @@ export default function AccessoriesProductsList() {
 
       const foodsRes = await accessoriesAdminAPI.getProducts(params)
       const list = foodsRes?.data?.data?.products || []
-      const total = Number(foodsRes?.data?.data?.total ?? foodsRes?.data?.total ?? 0)
+      const totalVal = foodsRes?.data?.data?.total ?? foodsRes?.data?.total
+      const total = totalVal !== undefined && totalVal !== null ? Number(totalVal) : null
       const normalizedFoods = Array.isArray(list)
         ? list.map((f) => ({
             id: String(f.id || f._id || ""),
@@ -176,7 +177,7 @@ export default function AccessoriesProductsList() {
         : []
 
       setFoods(normalizedFoods)
-      setTotalFoods(Number.isFinite(total) ? total : normalizedFoods.length)
+      setTotalFoods(total !== null && total > 0 ? total : normalizedFoods.length)
       setImageVersion(Date.now())
     } catch (error) {
       debugError("Error fetching foods:", error)

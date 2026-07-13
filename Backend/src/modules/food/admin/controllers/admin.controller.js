@@ -580,6 +580,7 @@ export async function createCategory(req, res, next) {
     try {
         const body = validateCategoryUpsertDto(req.body || {});
         const created = await adminService.createCategory(body);
+        broadcastPublicUpdate('food:category:update', { action: 'create', data: created });
         res.status(201).json({ success: true, message: 'Category created successfully', data: { category: created } });
     } catch (error) {
         next(error);
@@ -597,6 +598,7 @@ export async function updateCategory(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Category not found' });
         }
+        broadcastPublicUpdate('food:category:update', { action: 'update', data: updated });
         res.status(200).json({ success: true, message: 'Category updated successfully', data: { category: updated } });
     } catch (error) {
         next(error);
@@ -613,6 +615,7 @@ export async function deleteCategory(req, res, next) {
         if (!result) {
             return res.status(404).json({ success: false, message: 'Category not found' });
         }
+        broadcastPublicUpdate('food:category:update', { action: 'delete', data: { _id: id } });
         res.status(200).json({ success: true, message: 'Category deleted successfully', data: result });
     } catch (error) {
         next(error);
@@ -698,6 +701,7 @@ export async function createAdminOffer(req, res, next) {
     try {
         const body = validateCreateOfferDto(req.body || {});
         const created = await adminService.createAdminOffer(body);
+        broadcastPublicUpdate('offer:update', { action: 'create', data: created });
         res.status(201).json({ success: true, message: 'Offer created successfully', data: { offer: created } });
     } catch (error) {
         next(error);
@@ -715,6 +719,7 @@ export async function updateAdminOfferCartVisibility(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Offer not found' });
         }
+        broadcastPublicUpdate('offer:update', { action: 'update', data: updated });
         res.status(200).json({ success: true, message: 'Offer updated successfully', data: { offer: updated } });
     } catch (error) {
         next(error);
@@ -731,6 +736,7 @@ export async function deleteAdminOffer(req, res, next) {
         if (!result) {
             return res.status(404).json({ success: false, message: 'Offer not found' });
         }
+        broadcastPublicUpdate('offer:update', { action: 'delete', data: { _id: id } });
         res.status(200).json({ success: true, message: 'Offer deleted successfully', data: result });
     } catch (error) {
         next(error);
@@ -1472,6 +1478,7 @@ export async function createZone(req, res, next) {
                 message: result.error
             });
         }
+        broadcastPublicUpdate('zone:update', { action: 'create', data: result });
         res.status(201).json({
             success: true,
             message: 'Zone created successfully',
@@ -1491,6 +1498,7 @@ export async function updateZone(req, res, next) {
                 message: 'Zone not found'
             });
         }
+        broadcastPublicUpdate('zone:update', { action: 'update', data: result });
         res.status(200).json({
             success: true,
             message: 'Zone updated successfully',
@@ -1510,6 +1518,7 @@ export async function deleteZone(req, res, next) {
                 message: 'Zone not found'
             });
         }
+        broadcastPublicUpdate('zone:update', { action: 'delete', data: { _id: req.params.id } });
         res.status(200).json({
             success: true,
             message: 'Zone deleted successfully',

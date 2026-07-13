@@ -628,14 +628,21 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
       window.dispatchEvent(new Event("adminNotificationsUpdated"))
     }
 
+    const handleIncomingRealtimeOrderUpdate = (payload = {}) => {
+      fetchOrders({ silent: true, withRingCheck: false })
+      window.dispatchEvent(new Event("adminNotificationsUpdated"))
+    }
+
     socket.on("connect", () => {
       socket.emit("join-admin-orders")
     })
     socket.on("admin_new_order", handleIncomingRealtimeOrder)
+    socket.on("admin_order_update", handleIncomingRealtimeOrderUpdate)
     socket.on("play_notification_sound", handleIncomingRealtimeOrder)
 
     return () => {
       socket.off("admin_new_order", handleIncomingRealtimeOrder)
+      socket.off("admin_order_update", handleIncomingRealtimeOrderUpdate)
       socket.off("play_notification_sound", handleIncomingRealtimeOrder)
       socket.disconnect()
       socketRef.current = null

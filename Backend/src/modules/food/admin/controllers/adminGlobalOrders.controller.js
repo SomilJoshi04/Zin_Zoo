@@ -25,7 +25,7 @@ export async function getGlobalOrders(req, res, next) {
                 .sort({ createdAt: -1 })
                 .lean(),
             GroceryOrder.find(groceryFilter)
-                .select('_id order_id orderId orderStatus customerName customerPhone pricing.total createdAt')
+                .select('_id order_id orderId orderStatus customerName customerPhone pricing.total createdAt moduleType')
                 .populate('userId', 'name phone email')
                 .sort({ createdAt: -1 })
                 .lean()
@@ -37,11 +37,16 @@ export async function getGlobalOrders(req, res, next) {
             detailsPath: `/admin/food/orders/all?orderId=${order._id}` 
         }));
 
-        const formattedGroceryOrders = groceryOrders.map(order => ({
-            ...order,
-            category: 'Grocery',
-            detailsPath: `/admin/food/grocery-orders/all?orderId=${order._id}`
-        }));
+        const formattedGroceryOrders = groceryOrders.map(order => {
+            const isAccessories = order.moduleType === 'accessories';
+            return {
+                ...order,
+                category: isAccessories ? 'Accessories' : 'Grocery',
+                detailsPath: isAccessories
+                    ? `/admin/food/accessories-orders/all?orderId=${order._id}`
+                    : `/admin/food/grocery-orders/all?orderId=${order._id}`
+            };
+        });
 
         const allOrders = [...formattedFoodOrders, ...formattedGroceryOrders].sort(
             (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
