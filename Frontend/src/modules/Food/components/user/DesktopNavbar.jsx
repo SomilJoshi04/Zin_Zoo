@@ -12,6 +12,7 @@ import { FaLocationDot } from "react-icons/fa6"
 import { AnimatePresence, motion } from "framer-motion"
 import quickSpicyLogo from "@food/assets/switcheats-logo.png"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
+import HeaderNotificationBell from "./HeaderNotificationBell"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -272,6 +273,12 @@ export default function DesktopNavbar({ showLogo = true }) {
                                     <Wallet className="!h-5 !w-5 lg:!h-6 lg:!w-6 text-gray-700 dark:text-gray-300" strokeWidth={2} />
                                 </Button>
                             </Link>
+
+                            {/* Notification Bell */}
+                            <HeaderNotificationBell 
+                                className="!h-5 !w-5 lg:!h-6 lg:!w-6 text-gray-700 dark:text-gray-300"
+                                triggerClass="h-12 w-12 lg:h-14 lg:w-14 rounded-full p-0 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center"
+                            />
 
                             {/* Cart Icon */}
                             <Link to="/food/user/cart">

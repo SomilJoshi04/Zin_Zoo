@@ -113,6 +113,14 @@ export default function HeaderNotificationBell({ className = "", triggerClass = 
               </div>
             )}
           </div>
+          <div className="p-3 border-t border-gray-100 dark:border-zinc-800 text-center bg-gray-50/30 dark:bg-zinc-900/30">
+            <Link
+              to="/food/user/notifications"
+              className="text-xs font-bold text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-350 transition-colors inline-block w-full"
+            >
+              View All Notifications
+            </Link>
+          </div>
         </div>
       </PopoverContent>
     </Popover>

@@ -290,7 +290,13 @@ export default function OrdersTable({
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-slate-700">{order.customerName}</span>
+                      {order.accountName && order.accountName !== order.customerName && (
+                        <span className="text-[10px] text-slate-400 font-semibold mt-0.5">By: {order.accountName}</span>
+                      )}
                       <span className="text-xs text-slate-500 mt-0.5">{order.customerPhone}</span>
+                      {order.accountPhone && order.accountPhone !== order.customerPhone && (
+                        <span className="text-[10px] text-slate-400 mt-0.5">Acct: {order.accountPhone}</span>
+                      )}
                     </div>
                   </td>
                 )}

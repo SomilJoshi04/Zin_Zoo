@@ -166,8 +166,8 @@ export default function useAdminNotifications(options = {}) {
       ]);
 
       const foodOrdersRows = foodOrdersRes?.data?.data?.data || foodOrdersRes?.data?.data?.orders || foodOrdersRes?.data?.orders || foodOrdersRes?.data?.data?.docs || foodOrdersRes?.data?.data || [];
-      const groceryOrdersRows = groceryOrdersRes?.data?.data?.orders || groceryOrdersRes?.data?.orders || groceryOrdersRes?.data?.data?.docs || groceryOrdersRes?.data?.data || [];
-      const accessoriesOrdersRows = accessoriesOrdersRes?.data?.data?.orders || accessoriesOrdersRes?.data?.orders || accessoriesOrdersRes?.data?.data?.docs || accessoriesOrdersRes?.data?.data || [];
+      const groceryOrdersRows = groceryOrdersRes?.data?.data?.data || groceryOrdersRes?.data?.data?.orders || groceryOrdersRes?.data?.orders || groceryOrdersRes?.data?.data?.docs || groceryOrdersRes?.data?.data || [];
+      const accessoriesOrdersRows = accessoriesOrdersRes?.data?.data?.data || accessoriesOrdersRes?.data?.data?.orders || accessoriesOrdersRes?.data?.orders || accessoriesOrdersRes?.data?.data?.docs || accessoriesOrdersRes?.data?.data || [];
 
       const aggregated = uniqueById([
         ...mapPendingOrders(foodOrdersRows, "food"),
@@ -204,7 +204,7 @@ export default function useAdminNotifications(options = {}) {
   useEffect(() => {
     const timer = window.setInterval(() => {
       loadNotifications();
-    }, 5 * 60 * 1000);
+    }, 15 * 1000);
     return () => window.clearInterval(timer);
   }, [loadNotifications]);
 

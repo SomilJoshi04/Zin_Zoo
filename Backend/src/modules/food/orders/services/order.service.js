@@ -706,13 +706,31 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
         String(paymentMethod || "").toLowerCase() === "razorpay" &&
         String(payment?.status || "").toLowerCase() !== "paid";
 
+      let restaurantDisplayString = "ZinZooX";
+      try {
+        if (distinctRestaurantIds.length === 1) {
+          restaurantDisplayString = restaurant?.restaurantName || "ZinZooX";
+        } else if (distinctRestaurantIds.length > 1) {
+          const restDocs = await mongoose.model('FoodRestaurant')
+            .find({ _id: { $in: distinctRestaurantIds.map(id => toObjectId(id, 'Restaurant ID')) } })
+            .select('restaurantName')
+            .lean();
+          const names = restDocs.map(r => r.restaurantName).filter(Boolean);
+          if (names.length > 0) {
+            restaurantDisplayString = names.join(", ");
+          }
+        }
+      } catch (err) {
+        logger.error(`Failed to resolve restaurant display string: ${err.message}`);
+      }
+
       await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
         title: isAwaitingOnlinePayment
           ? "Complete Payment to Confirm Order"
           : "Order Confirmed! 🍔",
         body: isAwaitingOnlinePayment
-          ? `Order #${order.order_id || order._id} is created. Please complete payment to send it to ${restaurant.restaurantName || "the restaurant"}.`
-          : `Your order #${order.order_id || order._id} from ${restaurant.restaurantName || "the restaurant"} has been placed successfully.`,
+          ? `Order #${order.order_id || order._id} is created. Please complete payment to send it to ${restaurantDisplayString}.`
+          : `Your order #${order.order_id || order._id} from ${restaurantDisplayString} has been placed successfully.`,
         image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
         data: {
           type: isAwaitingOnlinePayment ? "order_created_pending_payment" : "order_created",
@@ -1751,6 +1769,56 @@ export async function switchToCash(orderId, deliveryPartnerId) {
 
 
 // ----- Admin -----
+async function resolveFoodOrdersItemRestaurants(ordersList) {
+  if (!ordersList || !Array.isArray(ordersList) || ordersList.length === 0) return;
+  
+  const foodItemCache = new Map();
+  const restaurantCache = new Map();
+
+  for (const doc of ordersList) {
+    if (doc.items && Array.isArray(doc.items)) {
+      let changed = false;
+      for (const item of doc.items) {
+        if (!item.restaurantName || String(item.restaurantName).trim() === "") {
+          const itemKey = String(item.itemId);
+          let resolved = foodItemCache.get(itemKey);
+          if (!resolved) {
+            try {
+              const foodItem = await mongoose.model('FoodItem').findById(item.itemId).lean();
+              if (foodItem && foodItem.restaurantId) {
+                const rId = String(foodItem.restaurantId);
+                let rName = restaurantCache.get(rId);
+                if (!rName) {
+                  const restDoc = await mongoose.model('FoodRestaurant').findById(rId).select('restaurantName').lean();
+                  rName = restDoc?.restaurantName || "ZinZooX";
+                  restaurantCache.set(rId, rName);
+                }
+                resolved = { restaurantId: rId, restaurantName: rName };
+                foodItemCache.set(itemKey, resolved);
+              }
+            } catch (err) {
+              logger.warn(`Failed to dynamically resolve restaurant for item ${item.itemId}: ${err.message}`);
+            }
+          }
+
+          if (resolved) {
+            item.restaurantId = resolved.restaurantId;
+            item.restaurantName = resolved.restaurantName;
+            changed = true;
+          }
+        }
+      }
+
+      if (changed) {
+        mongoose.model('FoodOrder').updateOne(
+          { _id: doc._id },
+          { $set: { items: doc.items } }
+        ).catch(err => logger.warn(`Failed to self-heal items for order ${doc._id}: ${err.message}`));
+      }
+    }
+  }
+}
+
 export async function listOrdersAdmin(query) {
   const { page, limit, skip } = buildPaginationOptions(query);
   const moduleType = query.moduleType || 'all';
@@ -1894,6 +1962,7 @@ export async function listOrdersAdmin(query) {
         .lean(),
       FoodOrder.countDocuments(foodFilter),
     ]);
+    await resolveFoodOrdersItemRestaurants(docs);
   } else if (moduleType === 'grocery' || moduleType === 'accessories') {
     const groceryFilter = { ...filter };
     groceryFilter.moduleType = moduleType;
@@ -1935,6 +2004,8 @@ export async function listOrdersAdmin(query) {
         .populate("dispatch.deliveryPartnerId", "name phone")
         .lean(),
     ]);
+
+    await resolveFoodOrdersItemRestaurants(foodDocs);
 
     const allDocs = [...foodDocs, ...groceryDocs].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
@@ -2095,6 +2166,12 @@ export async function updateOrderStatusAdmin(orderId, orderStatus, note = "", ad
       });
     } catch (err) {
       logger.warn(`updateOrderStatusAdmin delivered transaction sync failed: ${err?.message || err}`);
+    }
+
+    try {
+      await userWalletService.awardCoinsForOrder(order.userId, order._id);
+    } catch (err) {
+      logger.warn(`updateOrderStatusAdmin award coins failed: ${err?.message || err}`);
     }
   }
 

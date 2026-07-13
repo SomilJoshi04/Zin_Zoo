@@ -249,8 +249,11 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer Name</p>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Customer Name (Recipient)</p>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">{order.customerName || "N/A"}</p>
+                {order.accountName && order.accountName !== order.customerName && (
+                  <p className="text-xs text-slate-500">Account: <span className="font-semibold text-slate-700 dark:text-slate-300">{order.accountName}</span></p>
+                )}
               </div>
               {order.customerPhone && (
                 <div className="space-y-1">
@@ -259,6 +262,9 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
                     Phone
                   </p>
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{order.customerPhone}</p>
+                  {order.accountPhone && order.accountPhone !== order.customerPhone && (
+                    <p className="text-xs text-slate-500">Account Phone: <span className="font-semibold text-slate-700 dark:text-slate-300">{order.accountPhone}</span></p>
+                  )}
                 </div>
               )}
               {order.customerEmail && (

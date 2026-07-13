@@ -115,71 +115,9 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
   }, [resolveAudioSource])
 
   const playDefaultRing = useCallback(() => {
-    playDeliveryStyleBuzz().then((played) => {
-      if (played) return
-
-      try {
-        if (!fallbackAudioRef.current) {
-          fallbackAudioRef.current = new Audio(alertSound)
-          fallbackAudioRef.current.preload = "auto"
-          fallbackAudioRef.current.volume = 1
-        }
-
-        fallbackAudioRef.current.muted = false
-        fallbackAudioRef.current.volume = 1
-        fallbackAudioRef.current.currentTime = 0
-        fallbackAudioRef.current.play().catch(() => {})
-      } catch (_) {}
-
-      const AudioCtx = window.AudioContext || window.webkitAudioContext
-      if (AudioCtx) {
-        if (!audioContextRef.current) {
-          audioContextRef.current = new AudioCtx()
-        }
-        const ctx = audioContextRef.current
-        const playWithContext = async () => {
-          if (ctx.state === "suspended") {
-            await ctx.resume()
-          }
-
-          const beep = (startAt, frequency = 880, duration = 0.2) => {
-            const osc = ctx.createOscillator()
-            const gain = ctx.createGain()
-            osc.type = "sine"
-            osc.frequency.value = frequency
-            gain.gain.value = 0.0001
-            osc.connect(gain)
-            gain.connect(ctx.destination)
-
-            const start = ctx.currentTime + startAt
-            osc.start(start)
-            gain.gain.exponentialRampToValueAtTime(0.25, start + 0.02)
-            gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
-            osc.stop(start + duration + 0.02)
-          }
-
-          beep(0, 880, 0.2)
-          beep(0.26, 880, 0.2)
-          beep(0.52, 988, 0.26)
-
-          setTimeout(() => {
-            if (ctx.state === "running") {
-              ctx.suspend().catch(() => {})
-            }
-          }, 1200)
-        }
-        playWithContext().catch(async () => {
-          if (fallbackAudioRef.current) {
-            fallbackAudioRef.current.currentTime = 0
-            await fallbackAudioRef.current.play()
-          }
-        })
-        return
-      }
-    }).catch((error) => {
-      debugWarn("Ring sound could not be played:", error)
-    })
-  }, [playDeliveryStyleBuzz])
+    // Notification sound disabled per user request
+    return;
+  }, [])
 
   const stopAlertLoop = useCallback(() => {
     if (alertLoopTimerRef.current) {
