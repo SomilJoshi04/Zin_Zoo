@@ -42,9 +42,6 @@ const isStepComplete = (stepData, stepNumber) => {
       stepData.deliveryTimings?.closingTime &&
       Array.isArray(stepData.openDays) &&
       stepData.openDays.length > 0 &&
-      // Check for menu images (must have at least one)
-      Array.isArray(stepData.menuImageUrls) &&
-      stepData.menuImageUrls.length > 0 &&
       // Check for profile image
       stepData.profileImageUrl &&
       (stepData.profileImageUrl.url || typeof stepData.profileImageUrl === 'string')
@@ -52,21 +49,7 @@ const isStepComplete = (stepData, stepNumber) => {
   }
 
   if (stepNumber === 3) {
-    const hasPanImage = stepData.pan?.image && 
-      (stepData.pan.image.url || typeof stepData.pan.image === 'string')
-    const hasFssaiImage = stepData.fssai?.image && 
-      (stepData.fssai.image.url || typeof stepData.fssai.image === 'string')
-    // GST image is required only if GST is registered
-    const hasGstImage = !stepData.gst?.isRegistered || 
-      (stepData.gst?.image && (stepData.gst.image.url || typeof stepData.gst.image === 'string'))
-    
     return (
-      stepData.pan?.panNumber &&
-      stepData.pan?.nameOnPan &&
-      hasPanImage &&
-      stepData.fssai?.registrationNumber &&
-      hasFssaiImage &&
-      hasGstImage &&
       stepData.bank?.accountNumber &&
       stepData.bank?.ifscCode &&
       stepData.bank?.accountHolderName &&
@@ -119,33 +102,13 @@ const buildOnboardingLikeDataFromRestaurant = (restaurant) => {
         restaurant?.deliveryTimings ||
         (openingTime || closingTime ? { openingTime, closingTime } : null),
       openDays: restaurant?.openDays,
-      menuImageUrls: restaurant?.menuImages,
       profileImageUrl: restaurant?.profileImage,
     },
     step3:
       onboarding.step3 ||
-      (restaurant?.panNumber ||
-      restaurant?.fssaiNumber ||
-      restaurant?.accountNumber ||
+      (restaurant?.accountNumber ||
       restaurant?.ifscCode
         ? {
-            pan: {
-              panNumber: restaurant?.panNumber,
-              nameOnPan: restaurant?.nameOnPan,
-              image: restaurant?.panImage,
-            },
-            gst: {
-              isRegistered: Boolean(restaurant?.gstRegistered),
-              gstNumber: restaurant?.gstNumber,
-              legalName: restaurant?.gstLegalName,
-              address: restaurant?.gstAddress,
-              image: restaurant?.gstImage,
-            },
-            fssai: {
-              registrationNumber: restaurant?.fssaiNumber,
-              expiryDate: restaurant?.fssaiExpiry,
-              image: restaurant?.fssaiImage,
-            },
             bank: {
               accountNumber: restaurant?.accountNumber,
               ifscCode: restaurant?.ifscCode,

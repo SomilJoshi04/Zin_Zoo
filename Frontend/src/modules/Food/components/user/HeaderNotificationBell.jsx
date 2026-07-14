@@ -21,11 +21,16 @@ export default function HeaderNotificationBell({ className = "", triggerClass = 
     const saved = localStorage.getItem('food_user_notifications');
     return saved ? JSON.parse(saved) : [];
   });
+  const isAuthenticated = localStorage.getItem("user_authenticated") === "true" || !!localStorage.getItem("user_accessToken");
+
   const {
     items: broadcastNotifications,
     unreadCount: broadcastUnreadCount,
     dismiss: dismissBroadcastNotification,
-  } = useNotificationInbox("user", { limit: 20 });
+  } = useNotificationInbox("user", { 
+    limit: 20, 
+    autoload: isAuthenticated 
+  });
 
   useEffect(() => {
     const syncNotifications = () => {

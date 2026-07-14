@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { ValidationError } from '../../../../core/auth/errors.js';
+import { deleteLocalFile } from '../../../../services/localUpload.service.js';
 import { FoodRestaurant } from '../../restaurant/models/restaurant.model.js';
 const FoodRestaurantOutletTimings = mongoose.models.FoodRestaurantOutletTimings || mongoose.model('FoodRestaurantOutletTimings', new mongoose.Schema({}, { strict: false, collection: 'food_restaurant_outlet_timings' }));
 const FoodDeliveryPartner = mongoose.models.FoodDeliveryPartner || mongoose.model('FoodDeliveryPartner', new mongoose.Schema({}, { strict: false, collection: 'food_delivery_partners' }));
@@ -2668,15 +2669,7 @@ export async function updateRestaurantById(id, body = {}) {
         }
     }
 
-    // Business & Docs
-    if (body.panNumber !== undefined) doc.panNumber = toStr(body.panNumber);
-    if (body.nameOnPan !== undefined) doc.nameOnPan = toStr(body.nameOnPan);
-    if (body.gstRegistered !== undefined) doc.gstRegistered = parseBooleanLike(body.gstRegistered, 'gstRegistered');
-    if (body.gstNumber !== undefined) doc.gstNumber = toStr(body.gstNumber);
-    if (body.gstLegalName !== undefined) doc.gstLegalName = toStr(body.gstLegalName);
-    if (body.gstAddress !== undefined) doc.gstAddress = toStr(body.gstAddress);
-    if (body.fssaiNumber !== undefined) doc.fssaiNumber = toStr(body.fssaiNumber);
-    if (body.fssaiExpiry !== undefined) doc.fssaiExpiry = body.fssaiExpiry ? new Date(body.fssaiExpiry) : undefined;
+
 
     // Bank Details
     if (body.accountNumber !== undefined) doc.accountNumber = toStr(body.accountNumber);
@@ -2691,17 +2684,6 @@ export async function updateRestaurantById(id, body = {}) {
     // Images
     const getUrl = (v) => (v && typeof v === 'object' ? v.url : v);
     if (body.profileImage !== undefined) doc.profileImage = toStr(getUrl(body.profileImage)) || undefined;
-    if (body.panImage !== undefined) doc.panImage = toStr(getUrl(body.panImage)) || undefined;
-    if (body.gstImage !== undefined) doc.gstImage = toStr(getUrl(body.gstImage)) || undefined;
-    if (body.fssaiImage !== undefined) doc.fssaiImage = toStr(getUrl(body.fssaiImage)) || undefined;
-
-    if (body.menuImages !== undefined) {
-        if (Array.isArray(body.menuImages)) {
-            doc.menuImages = body.menuImages.map(m => toStr(getUrl(m))).filter(Boolean);
-        } else {
-            doc.menuImages = [toStr(getUrl(body.menuImages))].filter(Boolean);
-        }
-    }
 
     await doc.save();
 
@@ -3021,7 +3003,13 @@ export async function updateCategory(id, body) {
     }
 
     if (body.name !== undefined) doc.name = String(body.name || '').trim();
-    if (body.image !== undefined) doc.image = String(body.image || '').trim();
+    if (body.image !== undefined) {
+        const nextImage = String(body.image || '').trim();
+        if (nextImage !== doc.image) {
+            await deleteLocalFile(doc.image);
+        }
+        doc.image = nextImage;
+    }
     if (body.type !== undefined) doc.type = String(body.type || '').trim();
     if (body.foodTypeScope !== undefined) doc.foodTypeScope = nextFoodTypeScope;
     if (!doc.restaurantId && doc.createdByRestaurantId) {
@@ -3511,7 +3499,13 @@ export async function updateFood(id, body) {
     const pricingUpdate = getAdminFoodUpdatedPricing(doc.toObject(), body);
     if (pricingUpdate.price !== undefined) doc.price = pricingUpdate.price;
     if (pricingUpdate.variants !== undefined) doc.variants = pricingUpdate.variants;
-    if (body.image !== undefined) doc.image = String(body.image || '').trim();
+    if (body.image !== undefined) {
+        const nextImage = String(body.image || '').trim();
+        if (nextImage !== doc.image) {
+            await deleteLocalFile(doc.image);
+        }
+        doc.image = nextImage;
+    }
     if (body.foodType !== undefined) doc.foodType = targetFoodType;
     if (body.isAvailable !== undefined) doc.isAvailable = body.isAvailable !== false;
     if (body.preparationTime !== undefined) doc.preparationTime = String(body.preparationTime || '').trim();

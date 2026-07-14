@@ -397,7 +397,7 @@ const RestaurantImageCarousel = React.memo(
 
 export default function Home() {
   const HERO_BANNER_AUTO_SLIDE_MS = 3500;
-  const BACKEND_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
+  const BACKEND_ORIGIN = API_BASE_URL.replace(/\/api.*$/, "");
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";

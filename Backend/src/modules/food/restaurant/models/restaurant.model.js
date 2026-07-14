@@ -131,31 +131,6 @@ const restaurantSchema = new mongoose.Schema(
       default: true,
       index: true,
     },
-    panNumber: {
-      type: String,
-    },
-    nameOnPan: {
-      type: String,
-    },
-    gstRegistered: {
-      type: Boolean,
-      default: false,
-    },
-    gstNumber: {
-      type: String,
-    },
-    gstLegalName: {
-      type: String,
-    },
-    gstAddress: {
-      type: String,
-    },
-    fssaiNumber: {
-      type: String,
-    },
-    fssaiExpiry: {
-      type: Date,
-    },
     accountNumber: {
       type: String,
     },
@@ -171,17 +146,6 @@ const restaurantSchema = new mongoose.Schema(
     upiId: {
       type: String,
       trim: true,
-    },
-    upiQrImage: {
-      type: String,
-      trim: true,
-    },
-    menuImages: {
-      type: [String],
-      default: [],
-    },
-    menuPdf: {
-      type: String,
     },
     coverImages: {
       type: [String],
@@ -213,15 +177,6 @@ const restaurantSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    panImage: {
-      type: String,
-    },
-    gstImage: {
-      type: String,
-    },
-    fssaiImage: {
-      type: String,
-    },
     estimatedDeliveryTime: { type: String },
     /** Numeric delivery time in minutes for filtering/sorting. */
     estimatedDeliveryTimeMinutes: { type: Number, index: true },
@@ -238,12 +193,6 @@ const restaurantSchema = new mongoose.Schema(
       set: normalizeRatingValue,
     },
     totalRatings: { type: Number, default: 0, min: 0 },
-    diningSettings: {
-      isEnabled: { type: Boolean, default: false },
-      maxGuests: { type: Number, default: 6 },
-      diningType: { type: [String], default: ["family-dining"] },
-      mealPeriods: { type: [String], default: ["breakfast", "lunch", "dinner"] },
-    },
     menu: {
       sections: { type: Array, default: [] },
     },

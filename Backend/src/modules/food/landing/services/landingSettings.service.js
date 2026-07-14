@@ -1,5 +1,5 @@
 import { FoodLandingSettings } from '../models/landingSettings.model.js';
-import { v2 as cloudinary } from 'cloudinary';
+import { uploadImageBufferDetailed, deleteLocalFile } from '../../../../services/localUpload.service.js';
 
 export const getLandingSettings = async () => {
     let doc = await FoodLandingSettings.findOne().lean();
@@ -22,16 +22,7 @@ export const uploadLandingVideoFile = async (file) => {
         throw new Error('No file provided');
     }
 
-    const uploadResult = await new Promise((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-            { folder: 'food/landing-videos', resource_type: 'video' },
-            (error, result) => {
-                if (error) return reject(error);
-                return resolve(result);
-            }
-        );
-        stream.end(file.buffer);
-    });
+    const uploadResult = await uploadImageBufferDetailed(file.buffer, 'food/landing-videos');
 
     return {
         videoUrl: uploadResult.secure_url,
@@ -39,10 +30,10 @@ export const uploadLandingVideoFile = async (file) => {
     };
 };
 
-export const deleteLandingVideoFile = async (publicId) => {
-    if (!publicId) return;
+export const deleteLandingVideoFile = async (publicIdOrUrl) => {
+    if (!publicIdOrUrl) return;
     try {
-        await cloudinary.uploader.destroy(publicId, { resource_type: 'video' });
+        await deleteLocalFile(publicIdOrUrl);
     } catch (error) {
         // ignore errors
     }

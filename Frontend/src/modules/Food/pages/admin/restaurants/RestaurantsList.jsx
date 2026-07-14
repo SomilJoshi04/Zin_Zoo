@@ -729,9 +729,7 @@ export default function RestaurantsList() {
                     <Clock className="w-4 h-4 text-slate-400" />
                     <div><p className="text-xs text-slate-500 dark:text-slate-400">Operating Hours</p><p className="font-medium text-slate-900 dark:text-white">{selectedRestaurant.openingTime || "09:00"} — {selectedRestaurant.closingTime || "22:00"}</p></div>
                   </div>
-                  {selectedRestaurant.fssaiNumber && <div><p className="text-xs text-slate-500 dark:text-slate-400">FSSAI Number</p><p className="font-medium text-slate-900 dark:text-white">{selectedRestaurant.fssaiNumber}</p></div>}
-                  {selectedRestaurant.gstNumber && <div><p className="text-xs text-slate-500 dark:text-slate-400">GST Number</p><p className="font-medium text-slate-900 dark:text-white">{selectedRestaurant.gstNumber}</p></div>}
-                  {selectedRestaurant.panNumber && <div><p className="text-xs text-slate-500 dark:text-slate-400">PAN Number</p><p className="font-medium text-slate-900 dark:text-white">{selectedRestaurant.panNumber}</p></div>}
+
                   <div><p className="text-xs text-slate-500 dark:text-slate-400">Restaurant Type</p><p className="font-medium text-slate-900 dark:text-white">{selectedRestaurant.restaurantType || (selectedRestaurant.pureVegRestaurant ? "Veg" : "Both")}</p></div>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 import { FoodUser } from '../../../../core/users/user.model.js';
 import { AuthError, ValidationError } from '../../../../core/auth/errors.js';
-import { uploadImageBuffer } from '../../../../services/cloudinary.service.js';
+import { uploadImageBuffer, deleteLocalFile } from '../../../../services/localUpload.service.js';
 
 const parseIsoDateOrNull = (value) => {
     if (value === undefined) return undefined;
@@ -69,6 +69,12 @@ export const uploadCurrentUserProfileImage = async (userId, file) => {
     if (!user) throw new AuthError('Profile not found');
 
     const url = await uploadImageBuffer(file.buffer, 'food/users/profile');
+    
+    // Delete the old profile image if it exists
+    if (user.profileImage) {
+        await deleteLocalFile(user.profileImage);
+    }
+    
     user.profileImage = String(url || '').trim();
     await user.save();
     return { profileImage: user.profileImage, user: user.toObject() };
