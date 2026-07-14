@@ -2910,17 +2910,17 @@ export default function Home() {
 
         {/* Explore More Section */}
         <motion.section
-          className="content-auto pt-2 sm:pt-3 lg:pt-4"
+          className="content-auto pt-2 sm:pt-3 lg:pt-4 max-w-7xl mx-auto px-0 md:px-6 lg:px-8"
           initial={false}
           animate={{ opacity: 1, y: 0 }}>
-          <div className="px-4 mb-6 flex items-center gap-2">
+          <div className="px-4 md:px-0 mb-6 flex items-center gap-2">
             <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white leading-tight">
               {exploreMoreHeading}
             </h2>
             <div className="h-[1px] bg-gray-100 dark:bg-gray-800 flex-1"></div>
           </div>
-          <div className="px-4 pb-4 lg:pb-6">
-            <div className="flex overflow-x-auto no-scrollbar gap-10 sm:gap-12 md:gap-16 items-start justify-center py-2">
+          <div className="px-4 md:px-0 pb-4 lg:pb-6">
+            <div className="flex overflow-x-auto no-scrollbar gap-6 sm:gap-8 md:gap-10 items-start justify-start py-2">
               {showExploreSkeleton ? (
                 Array(6).fill(0).map((_, i) => (
                   <div key={i} className="flex-shrink-0 w-20 sm:w-24 md:w-28">
@@ -2988,10 +2988,10 @@ export default function Home() {
           animate={{ opacity: 1 }}>
           <div className="px-4 md:px-0 mb-5 flex items-center justify-between">
             <div className="flex flex-col gap-0.5 lg:gap-1">
-              <h2 className="text-xs sm:text-sm lg:text-base font-semibold text-gray-400 tracking-widest uppercase">
+              <h2 className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#F84E04]/90 dark:text-orange-400/90">
                 Restaurants Near You
               </h2>
-              <span className="text-base sm:text-lg lg:text-2xl text-gray-500 font-normal">
+              <span className="text-lg sm:text-xl lg:text-2xl font-black text-gray-900 dark:text-white leading-tight">
                 Order from the best
               </span>
             </div>

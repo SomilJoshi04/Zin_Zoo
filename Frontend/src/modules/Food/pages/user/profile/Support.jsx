@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import AnimatedPage from "@food/components/user/AnimatedPage"
 import { Button } from "@food/components/ui/button"
@@ -8,6 +8,7 @@ import { Card, CardContent } from "@food/components/ui/card"
 import { orderAPI, restaurantAPI, supportAPI, authAPI } from "@food/api"
 import { toast } from "sonner"
 import { ArrowLeft, Building2, HelpCircle, ShoppingBag, ChevronRight } from "lucide-react"
+import { usePublicSocket } from "../../../hooks/usePublicSocket"
 
 export default function Support() {
   const [step, setStep] = useState("pick")
@@ -22,6 +23,25 @@ export default function Support() {
   const [submitting, setSubmitting] = useState(false)
   const [tickets, setTickets] = useState([])
   const [loadingTickets, setLoadingTickets] = useState(false)
+
+  usePublicSocket({
+    "support:ticket:update": (data) => {
+      if (data?.ticketId) {
+        setTickets((prev) =>
+          prev.map((t) =>
+            String(t._id || t.id) === String(data.ticketId)
+              ? { ...t, status: data.status, adminResponse: data.adminResponse }
+              : t
+          )
+        )
+      }
+    },
+    "support:ticket:delete": (data) => {
+      if (data?.ticketId) {
+        setTickets((prev) => prev.filter((t) => String(t._id || t.id) !== String(data.ticketId)))
+      }
+    },
+  })
   const [orderSearch, setOrderSearch] = useState("")
   const [restaurantSearch, setRestaurantSearch] = useState("")
 

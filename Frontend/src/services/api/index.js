@@ -154,6 +154,11 @@ export const supportAPI = {
     apiClient.patch(`/food/admin/support-tickets/${String(id)}`, body ?? {}, {
       contextModule: "admin",
     }),
+  deleteSupportTicketAdmin: (id, params = {}) =>
+    apiClient.delete(`/food/admin/support-tickets/${String(id)}`, {
+      params,
+      contextModule: "admin",
+    }),
 };
 
 export const notificationAPI = {

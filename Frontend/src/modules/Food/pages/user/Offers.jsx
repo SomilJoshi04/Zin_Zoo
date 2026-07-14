@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link, useNavigate } from "react-router-dom"
-import { ArrowLeft, Star, Clock } from "lucide-react"
+import { ArrowLeft, Star, Clock, Copy, Ticket, Calendar } from "lucide-react"
 import { Button } from "@food/components/ui/button"
 import { Card, CardContent } from "@food/components/ui/card"
 import { restaurantAPI } from "@food/api"
@@ -24,6 +24,12 @@ export default function Offers() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const showOffersSkeleton = useDelayedLoading(loading)
+
+  const handleCopy = (code) => {
+    if (!code) return
+    navigator.clipboard.writeText(code)
+    toast.success(`Coupon code "${code}" copied to clipboard!`)
+  }
 
   // Fetch offers from API
   useEffect(() => {
@@ -150,36 +156,79 @@ export default function Offers() {
 
             {/* Coupon-style offers (admin created) */}
             {Object.keys(groupedOffers).length === 0 && offers.length > 0 && (
-              <section className="space-y-4">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  Available Coupons
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <section className="space-y-6">
+                <div className="flex items-center gap-3">
+                  <div className="bg-red-500/10 dark:bg-red-500/20 p-2 rounded-xl">
+                    <Ticket className="h-6 w-6 text-red-500" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-gray-100">
+                      Available Coupons
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                      Claim these discounts to save big on your next orders!
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {offers.map((o) => (
-                    <Card key={o.id || o.offerId} className="border border-slate-200 shadow-sm">
-                      <CardContent className="p-4 space-y-2">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Coupon</p>
-                            <p className="text-lg font-extrabold text-slate-900 dark:text-slate-100 tracking-wide">
-                              {o.couponCode || "-"}
-                            </p>
+                    <div 
+                      key={o.id || o.offerId} 
+                      className="relative overflow-hidden bg-white dark:bg-[#121212] border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5 shadow-sm hover:shadow-md hover:scale-[1.01] transition-all duration-300 flex items-stretch gap-4"
+                    >
+                      {/* Ticket Cutout Left */}
+                      <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-slate-800/80 z-10" />
+                      
+                      {/* Ticket Cutout Right */}
+                      <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-50 dark:bg-[#0a0a0a] border border-slate-200 dark:border-slate-800/80 z-10" />
+
+                      {/* Left Coupon Details */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between py-1">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                              Coupon Code
+                            </span>
                           </div>
-                          <span className="px-2 py-1 rounded-md text-xs font-semibold bg-blue-600 text-white">
-                            {o.title || "Offer"}
-                          </span>
+                          
+                          {/* Code Display */}
+                          <div 
+                            onClick={() => handleCopy(o.couponCode)}
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-700/60 cursor-pointer border border-slate-200/60 dark:border-slate-700/60 transition-colors group/code"
+                          >
+                            <span className="font-mono text-sm sm:text-base font-black text-slate-800 dark:text-slate-100 tracking-wider">
+                              {o.couponCode || "-"}
+                            </span>
+                            <Copy className="h-3.5 w-3.5 text-slate-400 group-hover/code:text-slate-600 dark:group-hover/code:text-slate-300 transition-colors" />
+                          </div>
                         </div>
-                        <p className="text-sm text-slate-700 dark:text-slate-300">
-                          <span className="font-semibold">Scope:</span>{" "}
-                          {o.restaurantScope === "all" || o.restaurantName === "All Restaurants" ? "Global / Platform" : o.restaurantName}
-                        </p>
-                        {o.endDate && (
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Valid till: {new Date(o.endDate).toLocaleDateString()}
+
+                        {/* Scope & Validation */}
+                        <div className="mt-4 space-y-1.5">
+                          <p className="text-xs text-slate-600 dark:text-slate-300 truncate">
+                            <span className="font-semibold text-slate-400 dark:text-slate-500 mr-1 uppercase text-[9px] tracking-wider">Scope:</span>
+                            {o.restaurantScope === "all" || o.restaurantName === "All Restaurants" ? "Global / Platform" : o.restaurantName}
                           </p>
-                        )}
-                      </CardContent>
-                    </Card>
+                          {o.endDate && (
+                            <div className="flex items-center gap-1.5 text-xs text-slate-400 dark:text-slate-500 font-medium">
+                              <Calendar className="h-3.5 w-3.5 shrink-0" />
+                              <span>Valid till: {new Date(o.endDate).toLocaleDateString()}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Dashed Separator */}
+                      <div className="border-l border-dashed border-slate-200 dark:border-slate-800/80 my-1 relative" />
+
+                      {/* Right Coupon Discount */}
+                      <div className="flex flex-col items-center justify-center pl-2 min-w-[90px] shrink-0 text-center">
+                        <span className="text-sm font-black bg-red-500/10 text-red-500 dark:bg-red-500/20 px-3 py-1.5 rounded-xl border border-red-500/10">
+                          {o.title || "OFF"}
+                        </span>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </section>

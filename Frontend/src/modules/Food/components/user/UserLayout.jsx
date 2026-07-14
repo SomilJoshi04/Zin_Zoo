@@ -237,7 +237,11 @@ export default function UserLayout() {
     normalizedPath.startsWith("/user/notifications") ||
     normalizedPath.startsWith("/complaints") ||
     normalizedPath.startsWith("/user/complaints")
-  const showDesktopNavbar = !isAuthPage && !isCartOrCheckoutPage && !isProfileSubpage
+  const isOffersPage =
+    normalizedPath === "/offers" ||
+    normalizedPath === "/user/offers" ||
+    normalizedPath === "/food/user/offers"
+  const showDesktopNavbar = !isAuthPage && !isCartOrCheckoutPage && !isProfileSubpage && !isOffersPage
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0a] transition-colors duration-200">

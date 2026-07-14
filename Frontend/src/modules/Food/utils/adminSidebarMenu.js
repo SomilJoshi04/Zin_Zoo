@@ -196,6 +196,7 @@ export const adminSidebarMenu = [
     type: "section",
     label: "HELP & SUPPORT",
     items: [
+      { type: "link", label: "Support Tickets", path: "/admin/food/support-tickets", icon: "MessageSquare" },
       { type: "link", label: "User Feedback", path: "/admin/food/contact-messages", icon: "Mail" },
       { type: "link", label: "Safety Emergency Reports", path: "/admin/food/safety-emergency-reports", icon: "AlertTriangle" },
     ],

@@ -139,6 +139,7 @@ router.delete('/safety-emergency-reports/:id', adminController.deleteSafetyEmerg
 // ----- Support Tickets (users) -----
 router.get('/support-tickets', adminController.getSupportTicketsController);
 router.patch('/support-tickets/:id', adminController.updateSupportTicketController);
+router.delete('/support-tickets/:id', adminController.deleteSupportTicketController);
 router.get('/global-search', adminController.globalSearch);
 
 router.get('/dashboard-stats', adminController.getDashboardStats);

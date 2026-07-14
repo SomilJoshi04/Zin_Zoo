@@ -20,6 +20,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@food/components/ui/dropdown-menu"
+import { usePublicSocket } from "../../hooks/usePublicSocket"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -35,6 +36,46 @@ export default function SafetyEmergencyReports() {
   const [priorityFilter, setPriorityFilter] = useState("all")
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+
+  usePublicSocket({
+    "safety:report:create": (data) => {
+      if (data?.report) {
+        setReports((prev) => {
+          if (prev.some((r) => String(r._id) === String(data.report._id))) return prev
+          return [data.report, ...prev]
+        })
+      }
+    },
+    "safety:report:update": (data) => {
+      if (data?.reportId) {
+        setReports((prev) =>
+          prev.map((r) =>
+            String(r._id) === String(data.reportId)
+              ? { ...r, status: data.status, priority: data.priority }
+              : r
+          )
+        )
+        setSelectedReport((prev) => {
+          if (prev && String(prev._id) === String(data.reportId)) {
+            return { ...prev, status: data.status, priority: data.priority }
+          }
+          return prev
+        })
+      }
+    },
+    "safety:report:delete": (data) => {
+      if (data?.reportId) {
+        setReports((prev) => prev.filter((r) => String(r._id) !== String(data.reportId)))
+        setSelectedReport((prev) => {
+          if (prev && String(prev._id) === String(data.reportId)) {
+            setIsViewDialogOpen(false)
+            return null
+          }
+          return prev
+        })
+      }
+    }
+  })
 
   useEffect(() => {
     fetchReports()

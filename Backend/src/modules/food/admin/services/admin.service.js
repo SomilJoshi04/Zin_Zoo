@@ -28,7 +28,6 @@ import { FoodReferralLog } from '../models/referralLog.model.js';
 import { FoodSafetyEmergencyReport } from '../models/safetyEmergencyReport.model.js';
 const FoodAddon = mongoose.models.FoodAddon || mongoose.model('FoodAddon', new mongoose.Schema({}, { strict: false, collection: 'food_addons' }));
 import { FoodSupportTicket } from '../../user/models/supportTicket.model.js';
-const FoodRestaurantSupportTicket = mongoose.models.FoodRestaurantSupportTicket || mongoose.model('FoodRestaurantSupportTicket', new mongoose.Schema({}, { strict: false, collection: 'food_restaurant_support_tickets' }));
 import { FoodOrder } from '../../orders/models/order.model.js';
 import { FoodTransaction } from '../../orders/models/foodTransaction.model.js';
 const FoodRestaurantWithdrawal = mongoose.models.FoodRestaurantWithdrawal || mongoose.model('FoodRestaurantWithdrawal', new mongoose.Schema({}, { strict: false, collection: 'food_restaurant_withdrawals' }));
@@ -1505,35 +1504,22 @@ export async function getSupportTickets(query = {}) {
     const limit = Math.min(Math.max(parseInt(query.limit, 10) || 50, 1), 1000);
     const page = Math.max(parseInt(query.page, 10) || 1, 1);
     const skip = (page - 1) * limit;
-    const source = String(query.source || 'all').toLowerCase();
     const search = String(query.search || '').trim();
 
     const userFilter = {};
-    const restaurantFilter = {};
     if (query.status && ['open', 'in-progress', 'resolved'].includes(String(query.status))) {
         userFilter.status = String(query.status);
-        restaurantFilter.status = String(query.status);
     }
     if (query.type && ['order', 'restaurant', 'other'].includes(String(query.type))) {
         userFilter.type = String(query.type);
     }
-    if (query.category && ['orders', 'payments', 'menu', 'restaurant', 'technical', 'other'].includes(String(query.category))) {
-        restaurantFilter.category = String(query.category);
-    }
 
     const userSearchOr = [];
-    const restaurantSearchOr = [];
     if (search) {
         const searchRegex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
         userSearchOr.push(
             { issueType: searchRegex },
             { description: searchRegex }
-        );
-        restaurantSearchOr.push(
-            { issueType: searchRegex },
-            { subject: searchRegex },
-            { description: searchRegex },
-            { orderRef: searchRegex }
         );
         const [restaurantIds, userIds, orderIds] = await Promise.all([
             FoodRestaurant.find({ restaurantName: searchRegex }).select('_id').lean(),
@@ -1543,7 +1529,6 @@ export async function getSupportTickets(query = {}) {
         if (restaurantIds.length) {
             const ids = restaurantIds.map((r) => r._id);
             userSearchOr.push({ restaurantId: { $in: ids } });
-            restaurantSearchOr.push({ restaurantId: { $in: ids } });
         }
         if (userIds.length) {
             userSearchOr.push({ userId: { $in: userIds.map((u) => u._id) } });
@@ -1553,39 +1538,25 @@ export async function getSupportTickets(query = {}) {
         }
     }
     if (userSearchOr.length) userFilter.$or = userSearchOr;
-    if (restaurantSearchOr.length) restaurantFilter.$or = restaurantSearchOr;
 
-    const shouldFetchUser = source === 'all' || source === 'user';
-    const shouldFetchRestaurant = source === 'all' || source === 'restaurant';
-
-    const [userList, userTotal, restaurantList, restaurantTotal] = await Promise.all([
-        shouldFetchUser
-            ? FoodSupportTicket.find(userFilter)
-                  .sort({ createdAt: -1 })
-                  .skip(source === 'all' ? 0 : skip)
-                  .limit(source === 'all' ? limit * page : limit)
-                  .populate('userId', 'name phone email')
-                  .populate('restaurantId', 'restaurantName city area')
-                  .populate({
-                      path: 'orderId',
-                      select: 'restaurantId',
-                      populate: { path: 'restaurantId', select: 'restaurantName city area' }
-                  })
-                  .lean()
-            : Promise.resolve([]),
-        shouldFetchUser ? FoodSupportTicket.countDocuments(userFilter) : Promise.resolve(0),
-        shouldFetchRestaurant
-            ? FoodRestaurantSupportTicket.find(restaurantFilter)
-                  .sort({ createdAt: -1 })
-                  .skip(source === 'all' ? 0 : skip)
-                  .limit(source === 'all' ? limit * page : limit)
-                  .populate('restaurantId', 'restaurantName city area')
-                  .lean()
-            : Promise.resolve([]),
-        shouldFetchRestaurant ? FoodRestaurantSupportTicket.countDocuments(restaurantFilter) : Promise.resolve(0)
+    const [userList, total] = await Promise.all([
+        FoodSupportTicket.find(userFilter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .populate('userId', 'name phone email')
+            .populate({ path: 'restaurantId', model: 'FoodRestaurant', select: 'restaurantName city area', options: { strictPopulate: false } })
+            .populate({ path: 'restaurantIds', model: 'FoodRestaurant', select: 'restaurantName city area' })
+            .populate({
+                path: 'orderId',
+                select: 'restaurantId restaurantIds items',
+                populate: { path: 'restaurantId', model: 'FoodRestaurant', select: 'restaurantName city area' }
+            })
+            .lean(),
+        FoodSupportTicket.countDocuments(userFilter)
     ]);
 
-    const mappedUserTickets = userList.map((t) => {
+    const tickets = userList.map((t) => {
         const user =
             t.userId && typeof t.userId === 'object' && t.userId !== null
                 ? {
@@ -1598,36 +1569,54 @@ export async function getSupportTickets(query = {}) {
         const userId =
             t.userId && typeof t.userId === 'object' && t.userId !== null ? String(t.userId._id) : String(t.userId);
 
-        let restaurantDoc = null;
-        if (t.restaurantId && typeof t.restaurantId === 'object' && t.restaurantId !== null) {
-            restaurantDoc = t.restaurantId;
-        } else if (t.orderId && typeof t.orderId === 'object' && t.orderId !== null) {
+        const restaurantMap = new Map();
+        const addRestaurant = (doc) => {
+            if (!doc || typeof doc !== 'object' || !doc._id) return;
+            const key = String(doc._id);
+            if (!restaurantMap.has(key)) {
+                restaurantMap.set(key, {
+                    _id: doc._id,
+                    name: doc.restaurantName || '',
+                    city: doc.city || '',
+                    area: doc.area || ''
+                });
+            }
+        };
+
+        if (Array.isArray(t.restaurantIds)) {
+            t.restaurantIds.forEach(addRestaurant);
+        }
+        if (t.restaurantId && typeof t.restaurantId === 'object') {
+            addRestaurant(t.restaurantId);
+        }
+        if (restaurantMap.size === 0 && t.orderId && typeof t.orderId === 'object' && t.orderId !== null) {
             const rid = t.orderId.restaurantId;
-            if (rid && typeof rid === 'object' && rid !== null) {
-                restaurantDoc = rid;
+            if (rid && typeof rid === 'object') addRestaurant(rid);
+            if (Array.isArray(t.orderId.items)) {
+                t.orderId.items.forEach(item => {
+                    if (item?.restaurantId && item?.restaurantName) {
+                        const key = String(item.restaurantId);
+                        if (!restaurantMap.has(key)) {
+                            restaurantMap.set(key, {
+                                _id: item.restaurantId,
+                                name: item.restaurantName,
+                                city: '',
+                                area: ''
+                            });
+                        }
+                    }
+                });
             }
         }
 
-        const restaurant =
-            restaurantDoc && typeof restaurantDoc === 'object'
-                ? {
-                      _id: restaurantDoc._id,
-                      name: restaurantDoc.restaurantName || '',
-                      city: restaurantDoc.city || '',
-                      area: restaurantDoc.area || ''
-                  }
-                : null;
-
-        const restaurantId =
-            restaurant && restaurant._id
-                ? String(restaurant._id)
-                : t.restaurantId
-                ? String(t.restaurantId)
-                : t.orderId && typeof t.orderId === 'object' && t.orderId !== null && t.orderId.restaurantId
-                ? String(t.orderId.restaurantId)
-                : null;
-
-        const restaurantName = restaurant ? restaurant.name : '';
+        const restaurants = [...restaurantMap.values()];
+        const restaurant = restaurants.length > 0 ? restaurants[0] : null;
+        const restaurantId = restaurant ? String(restaurant._id)
+            : t.restaurantId ? String(t.restaurantId)
+            : t.orderId && typeof t.orderId === 'object' && t.orderId !== null && t.orderId.restaurantId
+            ? String(t.orderId.restaurantId)
+            : null;
+        const restaurantName = restaurants.map(r => r.name).filter(Boolean).join(', ');
 
         return {
             _id: t._id,
@@ -1644,67 +1633,16 @@ export async function getSupportTickets(query = {}) {
             updatedAt: t.updatedAt,
             user,
             restaurant,
+            restaurants,
             restaurantName
         };
     });
-
-    const mappedRestaurantTickets = restaurantList.map((t) => {
-        const restaurant =
-            t.restaurantId && typeof t.restaurantId === 'object'
-                ? {
-                      _id: t.restaurantId._id,
-                      name: t.restaurantId.restaurantName || '',
-                      city: t.restaurantId.city || '',
-                      area: t.restaurantId.area || ''
-                  }
-                : null;
-        const restaurantId =
-            restaurant && restaurant._id ? String(restaurant._id) : t.restaurantId ? String(t.restaurantId) : null;
-        return {
-            _id: t._id,
-            source: 'restaurant',
-            userId: null,
-            type: 'restaurant-support',
-            category: t.category || 'other',
-            orderId: null,
-            orderRef: t.orderRef || '',
-            restaurantId,
-            issueType: t.issueType,
-            subject: t.subject || '',
-            description: t.description,
-            priority: t.priority || 'medium',
-            status: t.status,
-            adminResponse: t.adminResponse,
-            createdAt: t.createdAt,
-            updatedAt: t.updatedAt,
-            user: null,
-            restaurant,
-            restaurantName: restaurant ? restaurant.name : ''
-        };
-    });
-
-    let tickets = [];
-    let total = 0;
-    if (source === 'user') {
-        tickets = mappedUserTickets;
-        total = userTotal;
-    } else if (source === 'restaurant') {
-        tickets = mappedRestaurantTickets;
-        total = restaurantTotal;
-    } else {
-        const merged = [...mappedUserTickets, ...mappedRestaurantTickets].sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        tickets = merged.slice(skip, skip + limit);
-        total = userTotal + restaurantTotal;
-    }
 
     return { tickets, total, page, limit };
 }
 
 export async function updateSupportTicket(id, body = {}) {
     if (!id || !mongoose.Types.ObjectId.isValid(id)) return null;
-    const source = String(body.source || 'user').toLowerCase();
     const set = {};
     if (body.status && ['open', 'in-progress', 'resolved'].includes(String(body.status))) {
         set.status = String(body.status);
@@ -1713,23 +1651,22 @@ export async function updateSupportTicket(id, body = {}) {
         set.adminResponse = body.adminResponse;
     }
     if (!Object.keys(set).length) return null;
-    const model = source === 'restaurant' ? FoodRestaurantSupportTicket : FoodSupportTicket;
-    const updated = await model.findByIdAndUpdate(id, { $set: set }, { new: true }).lean();
+    const updated = await FoodSupportTicket.findByIdAndUpdate(id, { $set: set }, { new: true }).lean();
 
     // Send notification if admin response was added
     if (updated && set.adminResponse) {
-        const ownerType = source === 'restaurant' ? 'RESTAURANT' : 'USER';
-        const ownerId = updated.restaurantId || updated.userId;
+        const ownerType = 'USER';
+        const ownerId = updated.userId;
 
         if (ownerId) {
             await FoodNotification.create({
                 ownerType,
                 ownerId,
                 title: 'Support Ticket Response',
-                message: `Admin has responded to your ticket: "${updated.subject}"`,
+                message: `Admin has responded to your ticket: "${updated.subject || updated.issueType}"`,
                 source: 'SUPPORT_RESPONSE',
                 category: 'support',
-                metadata: { ticketId: updated._id, source }
+                metadata: { ticketId: updated._id, source: 'user' }
             }).catch(err => console.error('Error creating support notification:', err));
 
             // Also send push notification (FCM)
@@ -1738,18 +1675,50 @@ export async function updateSupportTicket(id, body = {}) {
                 ownerId,
                 payload: {
                     title: 'Support Ticket Response',
-                    body: `Admin has responded to your ticket: "${updated.subject}"`,
+                    body: `Admin has responded to your ticket: "${updated.subject || updated.issueType}"`,
                     data: {
                         type: 'SUPPORT_RESPONSE',
                         ticketId: String(updated._id),
-                        source
+                        source: 'user'
                     }
                 }
             }).catch(err => console.error('Error sending support push notification:', err));
         }
     }
 
+    if (updated) {
+        try {
+            const { broadcastPublicUpdate } = await import('../../../../config/socket.js');
+            broadcastPublicUpdate('support:ticket:update', {
+                ticketId: String(updated._id),
+                status: updated.status,
+                adminResponse: updated.adminResponse,
+                source: 'user'
+            });
+        } catch (socketErr) {
+            console.error('Failed to broadcast support:ticket:update', socketErr);
+        }
+    }
+
     return updated || null;
+}
+
+export async function deleteSupportTicket(id, source = 'user') {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) return null;
+    const deleted = await FoodSupportTicket.findByIdAndDelete(id).lean();
+
+    if (deleted) {
+        try {
+            const { broadcastPublicUpdate } = await import('../../../../config/socket.js');
+            broadcastPublicUpdate('support:ticket:delete', {
+                ticketId: String(id),
+                source: 'user'
+            });
+        } catch (socketErr) {
+            console.error('Failed to broadcast support:ticket:delete', socketErr);
+        }
+    }
+    return deleted || null;
 }
 
 // ----- Restaurant Commission (admin) -----
@@ -2099,6 +2068,19 @@ export async function updateSafetyEmergencyStatus(id, status) {
         { $set: { status: next } },
         { new: true }
     ).lean();
+
+    if (updated) {
+        try {
+            const { broadcastPublicUpdate } = await import('../../../../config/socket.js');
+            broadcastPublicUpdate('safety:report:update', {
+                reportId: String(id),
+                status: updated.status,
+                priority: updated.priority
+            });
+        } catch (socketErr) {
+            console.error('Failed to broadcast safety:report:update (status)', socketErr);
+        }
+    }
     return updated;
 }
 
@@ -2111,12 +2093,36 @@ export async function updateSafetyEmergencyPriority(id, priority) {
         { $set: { priority: next } },
         { new: true }
     ).lean();
+
+    if (updated) {
+        try {
+            const { broadcastPublicUpdate } = await import('../../../../config/socket.js');
+            broadcastPublicUpdate('safety:report:update', {
+                reportId: String(id),
+                status: updated.status,
+                priority: updated.priority
+            });
+        } catch (socketErr) {
+            console.error('Failed to broadcast safety:report:update (priority)', socketErr);
+        }
+    }
     return updated;
 }
 
 export async function deleteSafetyEmergencyReport(id) {
     if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new ValidationError('Invalid report id');
     const deleted = await FoodSafetyEmergencyReport.findByIdAndDelete(id).lean();
+
+    if (deleted) {
+        try {
+            const { broadcastPublicUpdate } = await import('../../../../config/socket.js');
+            broadcastPublicUpdate('safety:report:delete', {
+                reportId: String(id)
+            });
+        } catch (socketErr) {
+            console.error('Failed to broadcast safety:report:delete', socketErr);
+        }
+    }
     return deleted;
 }
 

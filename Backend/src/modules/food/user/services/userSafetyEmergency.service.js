@@ -23,6 +23,16 @@ export const createSafetyEmergencyReport = async (userId, message) => {
         priority: 'medium'
     });
 
+    // Real-time broadcast
+    try {
+        const { broadcastPublicUpdate } = await import('../../../../config/socket.js');
+        broadcastPublicUpdate('safety:report:create', {
+            report: created.toObject()
+        });
+    } catch (socketErr) {
+        console.error('Failed to broadcast safety:report:create', socketErr);
+    }
+
     return { report: created.toObject() };
 };
 

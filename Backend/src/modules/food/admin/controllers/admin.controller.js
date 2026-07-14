@@ -766,6 +766,21 @@ export async function updateSupportTicketController(req, res, next) {
     }
 }
 
+export async function deleteSupportTicketController(req, res, next) {
+    try {
+        const { id } = req.params;
+        const { source } = req.query;
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: 'Invalid ticket id' });
+        }
+        const deleted = await adminService.deleteSupportTicket(id, source || 'user');
+        if (!deleted) return res.status(404).json({ success: false, message: 'Ticket not found' });
+        res.status(200).json({ success: true, message: 'Support ticket deleted successfully' });
+    } catch (error) {
+        next(error);
+    }
+}
+
 export async function getPendingRestaurants(req, res, next) {
     try {
         const pending = await adminService.getPendingRestaurants();

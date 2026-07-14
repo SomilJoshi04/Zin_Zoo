@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@food/components/ui/dialog"
+import { usePublicSocket } from "../../../hooks/usePublicSocket"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -27,6 +28,25 @@ export default function ReportSafetyEmergency() {
   const [history, setHistory] = useState([])
   const [selectedHistoryItem, setSelectedHistoryItem] = useState(null)
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false)
+
+  usePublicSocket({
+    "safety:report:update": (data) => {
+      if (data?.reportId) {
+        setHistory((prev) =>
+          prev.map((r) =>
+            String(r._id || r.id) === String(data.reportId)
+              ? { ...r, status: data.status, priority: data.priority }
+              : r
+          )
+        )
+      }
+    },
+    "safety:report:delete": (data) => {
+      if (data?.reportId) {
+        setHistory((prev) => prev.filter((r) => String(r._id || r.id) !== String(data.reportId)))
+      }
+    }
+  })
 
   const fetchHistory = async () => {
     try {
