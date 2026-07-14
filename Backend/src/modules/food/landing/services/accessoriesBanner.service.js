@@ -1,5 +1,5 @@
 import { FoodAccessoriesBanner } from '../models/accessoriesBanner.model.js';
-import { uploadImageBufferDetailed, deleteLocalFile } from '../../../../services/localUpload.service.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 export const listAccessoriesBanners = async () => {
     return FoodAccessoriesBanner.find().sort({ sortOrder: 1, createdAt: -1 }).lean();
@@ -14,7 +14,16 @@ export const createAccessoriesBannersFromFiles = async (files, meta = {}) => {
 
     for (const file of files) {
         try {
-            const uploadResult = await uploadImageBufferDetailed(file.buffer, 'food/accessories-banners');
+            const uploadResult = await new Promise((resolve, reject) => {
+                const stream = cloudinary.uploader.upload_stream(
+                    { folder: 'food/accessories-banners', resource_type: 'image' },
+                    (error, result) => {
+                        if (error) return reject(error);
+                        return resolve(result);
+                    }
+                );
+                stream.end(file.buffer);
+            });
 
             const banner = await FoodAccessoriesBanner.create({
                 imageUrl: uploadResult.secure_url,
@@ -42,11 +51,11 @@ export const deleteAccessoriesBanner = async (id) => {
         return { deleted: false };
     }
 
-    if (doc.imageUrl) {
+    if (doc.publicId) {
         try {
-            await deleteLocalFile(doc.imageUrl);
+            await cloudinary.uploader.destroy(doc.publicId);
         } catch {
-            // ignore deletion errors
+            // ignore cloudinary deletion errors
         }
     }
 

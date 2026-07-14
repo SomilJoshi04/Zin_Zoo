@@ -1,5 +1,5 @@
 import { FoodRestaurant } from '../models/restaurant.model.js';
-import { uploadImageBuffer, uploadFileBuffer } from '../../../../services/localUpload.service.js';
+import { uploadImageBuffer, uploadFileBuffer } from '../../../../services/cloudinary.service.js';
 import { ValidationError } from '../../../../core/auth/errors.js';
 import mongoose from 'mongoose';
 import { FoodZone } from '../../admin/models/zone.model.js';
@@ -152,6 +152,17 @@ const toRestaurantProfile = (doc) => {
         ownerEmail: doc.ownerEmail || '',
         ownerPhone: doc.ownerPhone || '',
         primaryContactNumber: doc.primaryContactNumber || '',
+        panNumber: doc.panNumber || '',
+        nameOnPan: doc.nameOnPan || '',
+        panImage: doc.panImage ? { url: doc.panImage } : null,
+        gstRegistered: Boolean(doc.gstRegistered),
+        gstNumber: doc.gstNumber || '',
+        gstLegalName: doc.gstLegalName || '',
+        gstAddress: doc.gstAddress || '',
+        gstImage: doc.gstImage ? { url: doc.gstImage } : null,
+        fssaiNumber: doc.fssaiNumber || '',
+        fssaiExpiry: doc.fssaiExpiry || null,
+        fssaiImage: doc.fssaiImage ? { url: doc.fssaiImage } : null,
         accountNumber: doc.accountNumber || '',
         ifscCode: doc.ifscCode || '',
         accountHolderName: doc.accountHolderName || '',
@@ -159,8 +170,10 @@ const toRestaurantProfile = (doc) => {
         referralCode: doc.referralCode || '',
         externalReferralCode: doc.externalReferralCode || '',
         upiId: doc.upiId || '',
+        upiQrImage: doc.upiQrImage ? { url: doc.upiQrImage } : null,
         pureVegRestaurant: Boolean(doc.pureVegRestaurant),
         profileImage: doc.profileImage ? { url: doc.profileImage } : null,
+        menuImages,
         coverImages,
         openingTime: normalizeRestaurantTime(doc.openingTime) || null,
         closingTime: normalizeRestaurantTime(doc.closingTime) || null,
@@ -301,6 +314,41 @@ export const registerRestaurant = async (payload, files) => {
     if (files?.profileImage?.[0] && hasFileContent(files.profileImage[0])) {
         images.profileImage = await uploadImageBuffer(files.profileImage[0].buffer, 'food/restaurants/profile');
     }
+    if (files?.panImage?.[0] && hasFileContent(files.panImage[0])) {
+        images.panImage = await uploadImageBuffer(files.panImage[0].buffer, 'food/restaurants/pan');
+    }
+    if (files?.gstImage?.[0] && hasFileContent(files.gstImage[0])) {
+        images.gstImage = await uploadImageBuffer(files.gstImage[0].buffer, 'food/restaurants/gst');
+    }
+    if (files?.fssaiImage?.[0] && hasFileContent(files.fssaiImage[0])) {
+        images.fssaiImage = await uploadImageBuffer(files.fssaiImage[0].buffer, 'food/restaurants/fssai');
+    }
+
+    let menuImages = [];
+    if (files?.menuImages?.length) {
+        menuImages = await Promise.all(
+            files.menuImages
+                .filter((file) => hasFileContent(file))
+                .map((file) => uploadImageBuffer(file.buffer, 'food/restaurants/menu'))
+        );
+    }
+
+    let menuPdf = '';
+    if (files?.menuPdf?.[0] && hasFileContent(files.menuPdf[0])) {
+        menuPdf = await uploadFileBuffer(files.menuPdf[0].buffer, 'food/restaurants/menu-pdf', {
+            fileName: files.menuPdf[0].originalname || 'menu.pdf',
+            format: 'pdf'
+        });
+    }
+
+    if (files?.menuPdf?.[0] && !hasFileContent(files.menuPdf[0])) {
+        throw new ValidationError('Menu PDF file is empty');
+    }
+
+    if (!menuPdf) {
+        throw new ValidationError('Menu PDF is required');
+    }
+
     const normalizedOpeningTime = normalizeRestaurantTime(openingTime);
     const normalizedClosingTime = normalizeRestaurantTime(closingTime);
     const estimatedDeliveryTimeText = String(estimatedDeliveryTime || '').trim();
@@ -890,6 +938,62 @@ export const updateRestaurantProfile = async (restaurantId, body = {}) => {
         update.profileImage = toUrl(body.profileImage) || '';
     }
 
+    if (body.panNumber !== undefined) {
+        update.panNumber = String(body.panNumber || '').trim().toUpperCase();
+    }
+    if (body.nameOnPan !== undefined) {
+        update.nameOnPan = String(body.nameOnPan || '').trim();
+    }
+    if (body.panImage !== undefined) {
+        update.panImage = toUrl(body.panImage) || '';
+    }
+    if (body.gstRegistered !== undefined) {
+        if (typeof body.gstRegistered === 'boolean') {
+            update.gstRegistered = body.gstRegistered;
+        } else if (typeof body.gstRegistered === 'string') {
+            const normalized = body.gstRegistered.trim().toLowerCase();
+            if (normalized === 'true' || normalized === '1' || normalized === 'yes') {
+                update.gstRegistered = true;
+            } else if (normalized === 'false' || normalized === '0' || normalized === 'no') {
+                update.gstRegistered = false;
+            } else {
+                throw new ValidationError('gstRegistered must be a boolean');
+            }
+        } else {
+            throw new ValidationError('gstRegistered must be a boolean');
+        }
+    }
+    if (body.gstNumber !== undefined) {
+        update.gstNumber = String(body.gstNumber || '').trim().toUpperCase();
+    }
+    if (body.gstLegalName !== undefined) {
+        update.gstLegalName = String(body.gstLegalName || '').trim();
+    }
+    if (body.gstAddress !== undefined) {
+        update.gstAddress = String(body.gstAddress || '').trim();
+    }
+    if (body.gstImage !== undefined) {
+        update.gstImage = toUrl(body.gstImage) || '';
+    }
+    if (body.fssaiNumber !== undefined) {
+        update.fssaiNumber = String(body.fssaiNumber || '').trim();
+    }
+    if (body.fssaiExpiry !== undefined) {
+        const rawExpiry = String(body.fssaiExpiry || '').trim();
+        if (!rawExpiry) {
+            update.fssaiExpiry = null;
+        } else {
+            const parsedExpiry = new Date(rawExpiry);
+            if (Number.isNaN(parsedExpiry.getTime())) {
+                throw new ValidationError('FSSAI expiry date is invalid');
+            }
+            update.fssaiExpiry = parsedExpiry;
+        }
+    }
+    if (body.fssaiImage !== undefined) {
+        update.fssaiImage = toUrl(body.fssaiImage) || '';
+    }
+
     if (!Object.keys(update).length) {
         return getCurrentRestaurantProfile(restaurantId);
     }
@@ -908,8 +1012,12 @@ export const updateRestaurantProfile = async (restaurantId, body = {}) => {
             reason = 'Zone Update';
         } else if (updatedFields.some(f => ['accountNumber', 'ifscCode', 'accountHolderName', 'upiId'].includes(f))) {
             reason = 'Financial Details Update';
+        } else if (updatedFields.some(f => ['panNumber', 'nameOnPan', 'panImage', 'gstNumber', 'fssaiNumber', 'fssaiExpiry'].includes(f))) {
+            reason = 'Regulatory Documents Update';
         } else if (updatedFields.some(f => ['addressLine1', 'area', 'city', 'pincode'].includes(f))) {
             reason = 'Location/Address Update';
+        } else if (updatedFields.some(f => ['menuImages', 'menuPdf'].includes(f))) {
+            reason = 'Menu Update';
         } else if (updatedFields.some(f => ['openingTime', 'closingTime', 'openDays'].includes(f))) {
             reason = 'Timings Update';
         } else if (updatedFields.some(f => ['profileImage', 'coverImages'].includes(f))) {
@@ -960,17 +1068,30 @@ export const updateRestaurantProfile = async (restaurantId, body = {}) => {
                 'featuredPrice',
                 'profileImage',
                 'coverImages',
+                'menuImages',
                     'openingTime',
                     'closingTime',
                     'openDays',
                     'status',
                     'createdAt',
                     'updatedAt',
+                    'panNumber',
+                    'nameOnPan',
+                    'panImage',
+                    'gstRegistered',
+                    'gstNumber',
+                    'gstLegalName',
+                    'gstAddress',
+                    'gstImage',
+                    'fssaiNumber',
+                    'fssaiExpiry',
+                    'fssaiImage',
                     'accountNumber',
                     'ifscCode',
                     'accountHolderName',
                     'accountType',
                     'upiId',
+                    'upiQrImage',
                     'estimatedDeliveryTime',
                     'estimatedDeliveryTimeMinutes',
                     'zoneId'

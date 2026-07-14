@@ -1,6 +1,4 @@
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import './modules/food/restaurant/models/restaurant.model.js';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -38,7 +36,6 @@ app.get('/ready', (_req, res) => {
 
 // Security & parsing middlewares
 app.use(helmet({
-    crossOriginResourcePolicy: { policy: "cross-origin" },
     contentSecurityPolicy: { directives: { defaultSrc: ["'self'"] } },
     hsts: config.nodeEnv === 'production' ? { maxAge: 31536000, includeSubDomains: true, preload: true } : false,
     xssFilter: true,
@@ -71,12 +68,6 @@ app.use('/api', apiRateLimiter);
 
 // Optional: log API response time (method, path, status, duration) - no sensitive data
 app.use('/api', responseTimeLogger);
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Serve uploads folder statically (for local development)
-app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
 // API Routes
 app.use('/api', routes);

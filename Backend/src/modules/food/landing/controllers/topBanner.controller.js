@@ -1,5 +1,5 @@
 import TopBanner from '../models/topBanner.model.js';
-import { uploadImageBufferDetailed, deleteLocalFile } from '../../../../services/localUpload.service.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 export const listTopBannersController = async (req, res) => {
     try {
@@ -21,7 +21,16 @@ export const uploadTopBannersController = async (req, res) => {
 
         for (const file of req.files) {
             try {
-                const uploadResult = await uploadImageBufferDetailed(file.buffer, 'food/top-banners');
+                const uploadResult = await new Promise((resolve, reject) => {
+                    const stream = cloudinary.uploader.upload_stream(
+                        { folder: 'food/top-banners', resource_type: 'image' },
+                        (error, result) => {
+                            if (error) return reject(error);
+                            return resolve(result);
+                        }
+                    );
+                    stream.end(file.buffer);
+                });
 
                 // Find max order
                 const maxOrderBanner = await TopBanner.findOne().sort('-order');
@@ -58,11 +67,11 @@ export const deleteTopBannerController = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Banner not found' });
         }
 
-        if (banner.image) {
+        if (banner.publicId) {
             try {
-                await deleteLocalFile(banner.image);
+                await cloudinary.uploader.destroy(banner.publicId);
             } catch (err) {
-                console.error("Local file deletion failed:", err.message);
+                console.error("Cloudinary deletion failed:", err.message);
             }
         }
 

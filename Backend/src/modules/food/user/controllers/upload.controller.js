@@ -1,5 +1,5 @@
 import { sendResponse } from '../../../../utils/response.js';
-import { uploadImageBuffer } from '../../../../services/localUpload.service.js';
+import { uploadImageBuffer } from '../../../../services/cloudinary.service.js';
 import { ValidationError } from '../../../../core/auth/errors.js';
 
 export async function uploadGenericImageController(req, res, next) {

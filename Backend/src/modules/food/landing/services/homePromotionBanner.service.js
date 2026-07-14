@@ -1,5 +1,5 @@
 import { HomePromotionBanner } from '../models/homePromotionBanner.model.js';
-import { uploadImageBufferDetailed, deleteLocalFile } from '../../../../services/localUpload.service.js';
+import { v2 as cloudinary } from 'cloudinary';
 
 export const listHomePromotionBanners = async () => {
     return HomePromotionBanner.find().sort({ sortOrder: 1, createdAt: -1 }).lean();
@@ -42,7 +42,16 @@ export const createHomePromotionBanner = async (file, meta = {}) => {
     if (!file) return null;
 
     try {
-        const uploadResult = await uploadImageBufferDetailed(file.buffer, 'food/home-promotions');
+        const uploadResult = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                { folder: 'food/home-promotion-banners', resource_type: 'image' },
+                (error, result) => {
+                    if (error) return reject(error);
+                    return resolve(result);
+                }
+            );
+            stream.end(file.buffer);
+        });
 
         return await HomePromotionBanner.create({
             imageUrl: uploadResult.secure_url,
@@ -72,11 +81,11 @@ export const deleteHomePromotionBanner = async (id) => {
     const doc = await HomePromotionBanner.findById(id);
     if (!doc) return { deleted: false };
 
-    if (doc.imageUrl) {
+    if (doc.publicId) {
         try {
-            await deleteLocalFile(doc.imageUrl);
+            await cloudinary.uploader.destroy(doc.publicId);
         } catch {
-            // ignore deletion errors
+            // ignore cloudinary errors
         }
     }
 

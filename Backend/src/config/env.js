@@ -51,6 +51,11 @@ export const config = {
     // BullMQ
     bullmqEnabled: process.env.BULLMQ_ENABLED === 'true',
 
+    // Cloudinary
+    cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
+    cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
+
     // Firebase / FCM
     firebaseProjectId: process.env.FIREBASE_PROJECT_ID || process.env.VITE_FIREBASE_PROJECT_ID,
     firebaseDatabaseUrl: process.env.VITE_FIREBASE_DATABASE_URL,

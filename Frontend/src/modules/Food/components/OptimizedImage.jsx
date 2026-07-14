@@ -36,7 +36,6 @@ const OptimizedImage = React.memo(({
   const supportsOptimization = (imageSrc) => {
     if (!imageSrc || typeof imageSrc !== 'string' || imageSrc === '') return false
     if (imageSrc.startsWith('data:') || imageSrc.startsWith('/')) return false
-    if (imageSrc.includes('/uploads/')) return false // Local uploads are already optimized by sharp
     // Check if it's an external URL (http/https)
     return /^https?:\/\//.test(imageSrc)
   }
