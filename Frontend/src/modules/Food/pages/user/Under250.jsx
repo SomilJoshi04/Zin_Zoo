@@ -258,7 +258,7 @@ export default function GroceryPage() {
 
         <div className="max-w-7xl mx-auto px-0 md:px-6 lg:px-8 py-0 md:py-6">
           {/* Desktop Header */}
-          <div className="hidden md:flex items-center justify-between gap-4 mb-6 px-4 md:px-0">
+          <div className="hidden">
             <div>
               <h1 className="text-2xl font-bold font-poppins text-gray-900 dark:text-white">Zin Zoo X</h1>
               <p className="text-xs text-gray-500 font-medium">Grocery • Delivery in 10-15 mins</p>
@@ -316,7 +316,13 @@ export default function GroceryPage() {
 
         {/* Categories Section */}
         <div className="px-4 md:px-0 mb-6">
-          <h3 className="text-lg font-bold font-poppins mb-3">Shop by Category</h3>
+          <div className="flex items-center gap-2 min-w-0 mb-3">
+            <h3 className="text-lg font-bold font-poppins">Shop by Category</h3>
+            <div className="h-[1px] bg-gray-100 dark:bg-gray-800 flex-1"></div>
+            <Link to="/food/user/under-250/categories" className="text-sm font-bold text-gray-400 dark:text-gray-500 flex items-center gap-0.5 whitespace-nowrap shrink-0">
+              View All <ChevronLeft className="h-3 w-3 rotate-180" />
+            </Link>
+          </div>
           <div className="flex overflow-x-auto gap-4 pb-2 scrollbar-hide">
             {loadingCats ? (
               Array.from({ length: 5 }).map((_, i) => (

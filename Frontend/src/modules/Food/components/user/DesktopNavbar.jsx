@@ -161,9 +161,9 @@ export default function DesktopNavbar({ showLogo = true }) {
                                 <Link to="/food/user" className="flex items-center justify-center flex-shrink-0">
                                     {logoUrl || companyName ? (
                                         <img
-                                            src={logoUrl || quickSpicyLogo}
+                                            src={logoUrl || "/zinzoo-logo.png"}
                                             alt={companyName || "Company Logo"}
-                                            className="h-10 w-auto md:h-14 lg:h-16 object-contain"
+                                            className="h-16 w-auto md:h-20 lg:h-24 object-contain"
                                             onError={(e) => {
                                                 if (e.target.src !== quickSpicyLogo) {
                                                     e.target.src = quickSpicyLogo
@@ -171,7 +171,7 @@ export default function DesktopNavbar({ showLogo = true }) {
                                             }}
                                         />
                                     ) : (
-                                        <img src={quickSpicyLogo} alt={companyName || "Logo"} className="h-10 w-auto md:h-14 lg:h-16 object-contain" />
+                                        <img src={"/zinzoo-logo.png"} alt={companyName || "Logo"} className="h-16 w-auto md:h-20 lg:h-24 object-contain" />
                                     )}
                                 </Link>
                             )}
@@ -226,11 +226,27 @@ export default function DesktopNavbar({ showLogo = true }) {
                                             }}
                                             onKeyDown={(e) => {
                                                 if (e.key === "Enter" && heroSearch.trim()) {
-                                                    navigate(`/food/search?q=${encodeURIComponent(heroSearch.trim())}`)
+                                                    const q = heroSearch.trim().toLowerCase();
+                                                    const groceryKw = ["grocery", "groceries", "kirana", "supermarket", "milk", "bread", "egg", "vegetable", "fruit", "dairy", "staple"];
+                                                    const servicesKw = ["service", "services", "plumber", "electrician", "cleaning", "repair", "mechanic", "painter", "carpenter"];
+                                                    const accessoriesKw = ["accessory", "accessories", "gadget", "charger", "cable", "phone cover", "watch", "headphone", "earphone", "electronics"];
+                                                    const foodKw = ["food", "dining", "restaurant", "cafe", "hotel", "lunch", "dinner", "biryani", "pizza", "burger"];
+                                                    if (groceryKw.some(kw => q.includes(kw))) {
+                                                        navigate("/food/user/under-250");
+                                                    } else if (servicesKw.some(kw => q.includes(kw))) {
+                                                        navigate("/food/user/services");
+                                                    } else if (accessoriesKw.some(kw => q.includes(kw))) {
+                                                        navigate("/food/user/accessories");
+                                                    } else if (foodKw.some(kw => q.includes(kw))) {
+                                                        navigate("/food/user");
+                                                    } else {
+                                                        navigate(`/food/search?q=${encodeURIComponent(heroSearch.trim())}`);
+                                                    }
+                                                    setHeroSearch("");
                                                 }
                                             }}
                                             className="h-6 p-0 border-0 bg-transparent text-sm font-medium placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
-                                            placeholder="Search for restaurants, food..."
+                                            placeholder="Search food, grocery, accessories, services..."
                                         />
                                         {heroSearch && (
                                             <Button

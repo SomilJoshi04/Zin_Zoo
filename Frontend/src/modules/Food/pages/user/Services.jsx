@@ -97,15 +97,15 @@ export default function Services() {
   return (
     <div className="min-h-screen bg-gray-50/50 dark:bg-[#0a0a0a] pt-4 pb-24 md:pt-24 md:pb-12 px-4 max-w-7xl mx-auto relative">
       
-      {/* Back Button */}
+      {/* Back Button - hidden on desktop since DesktopNavbar handles navigation */}
       <button 
         onClick={() => navigate("/food")} 
-        className="absolute top-4 left-4 md:top-8 md:left-8 p-2.5 bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 rounded-full shadow-sm border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors z-50"
+        className="md:hidden absolute top-4 left-4 p-2.5 bg-white dark:bg-[#1a1a1a] text-gray-700 dark:text-gray-300 rounded-full shadow-sm border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors z-50"
       >
         <ArrowLeft className="w-5 h-5" />
       </button>
 
-      <div className="absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-2 z-50">
+      <div className="md:hidden absolute top-4 right-4 flex items-center gap-2 z-50">
         <HeaderNotificationBell className="w-5 h-5 text-gray-700 dark:text-gray-300" triggerClass="h-9 w-9 bg-white dark:bg-[#1a1a1a] shadow-sm border border-gray-100 dark:border-gray-800 rounded-full" />
       </div>
 

@@ -241,7 +241,17 @@ export default function UserLayout() {
     normalizedPath === "/offers" ||
     normalizedPath === "/user/offers" ||
     normalizedPath === "/food/user/offers"
-  const showDesktopNavbar = !isAuthPage && !isCartOrCheckoutPage && !isProfileSubpage && !isOffersPage
+  const isCategoriesPage =
+    normalizedPath === "/categories" ||
+    normalizedPath === "/user/categories" ||
+    normalizedPath === "/food/user/categories" ||
+    normalizedPath === "/under-250/categories" ||
+    normalizedPath === "/user/under-250/categories" ||
+    normalizedPath === "/food/user/under-250/categories" ||
+    normalizedPath === "/accessories/categories" ||
+    normalizedPath === "/user/accessories/categories" ||
+    normalizedPath === "/food/user/accessories/categories"
+  const showDesktopNavbar = !isAuthPage && !isCartOrCheckoutPage && !isProfileSubpage && !isOffersPage && !isCategoriesPage
 
   return (
     <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0a] transition-colors duration-200">
@@ -253,7 +263,7 @@ export default function UserLayout() {
                 {/* <Navbar /> */}
                 {/* Desktop Navbar - Hidden on mobile, visible on medium+ screens */}
                 <div className="hidden md:block">
-                  {showDesktopNavbar && <DesktopNavbar showLogo={!isUnder250} />}
+                  {showDesktopNavbar && <DesktopNavbar />}
                 </div>
                 {/* <LocationPrompt /> */}
                 <main className={showDesktopNavbar ? "md:pt-40" : ""}>
