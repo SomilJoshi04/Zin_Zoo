@@ -1,0 +1,88 @@
+module.exports = {
+  apps: [
+    {
+      name: 'zin-zoo-api',
+      script: './server.js',
+      instances: 'max',
+      exec_mode: 'cluster',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      merge_logs: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
+    {
+      name: 'zin-zoo-worker-otp',
+      script: './src/queues/workers/otp.worker.js',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      merge_logs: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
+    {
+      name: 'zin-zoo-worker-notification',
+      script: './src/queues/workers/notification.worker.js',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      merge_logs: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
+    {
+      name: 'zin-zoo-worker-order',
+      script: './src/queues/workers/order.worker.js',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      merge_logs: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
+    {
+      name: 'zin-zoo-worker-payment',
+      script: './src/queues/workers/payment.worker.js',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      merge_logs: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
+    {
+      name: 'zin-zoo-worker-maintenance',
+      script: './src/queues/workers/maintenance.worker.js',
+      instances: 1,
+      exec_mode: 'fork',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '500M',
+      merge_logs: true,
+      log_date_format: "YYYY-MM-DD HH:mm:ss Z",
+      env: {
+        NODE_ENV: 'production',
+      },
+    }
+  ],
+};
