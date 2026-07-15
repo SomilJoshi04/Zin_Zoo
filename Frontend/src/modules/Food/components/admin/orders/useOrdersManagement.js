@@ -2,7 +2,7 @@ import { useState, useMemo } from "react"
 import { exportToCSV, exportToExcel, exportToPDF, exportToJSON } from "./ordersExportUtils"
 import quickSpicyLogo from "@food/assets/switcheats-logo.png"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
-const debugError = () => {}
+const debugError = () => { }
 
 
 const toNumber = (value) => {
@@ -72,7 +72,7 @@ const blobToDataUrl = (blob) =>
 const imageUrlToDataUrl = async (url) => {
   if (!url) return null
   if (url.startsWith("data:")) return url
-  
+
   const u = String(url).trim()
   // Allow all valid URLs but handle errors gracefully
   if (!u.startsWith("http") && !u.startsWith("/")) return null
@@ -307,7 +307,7 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       const discountAmount = toNumber(order.couponDiscount ?? order.discountAmount ?? order.pricing?.discount ?? 0)
       const totalAmount = toNumber(order.totalAmount ?? order.pricing?.total ?? (subtotal + deliveryFee + taxAmount + platformFee - discountAmount))
       const paymentType = order.paymentType || order.payment?.method || order.paymentMethod || "UPI"
-      
+
       const totalItems = items.reduce((sum, item) => sum + toNumber(item.quantity || 1), 0)
 
       // Generate QR code
@@ -319,7 +319,7 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       // Load logo
       const logoDataUrl = await imageUrlToDataUrl("/zinzoo-logo.png").catch(() => null)
 
-      let estimatedHeight = 160 + (items.length * 5)
+      let estimatedHeight = 230 + (items.length * 5)
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [receiptWidth, estimatedHeight] })
 
       let y = 6
@@ -336,14 +336,16 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       // --- HEADER ---
       // Logo Box
       doc.setDrawColor(0); doc.setLineWidth(0.4);
-      doc.rect(centerX - 20, y, 40, 10)
+      const logoBoxW = 30; const logoBoxH = 12;
+      doc.rect(centerX - logoBoxW / 2, y, logoBoxW, logoBoxH)
       if (logoDataUrl) {
-        doc.addImage(logoDataUrl, "PNG", centerX - 18, y + 1, 36, 8, undefined, "FAST")
+        const imgW = logoBoxW - 4; const imgH = logoBoxH - 3;
+        doc.addImage(logoDataUrl, "PNG", centerX - imgW / 2, y + 1.5, imgW, imgH, undefined, "FAST")
       } else {
-        setFont(14, "bold")
-        center("ZIN ZOO X", y + 7)
+        setFont(10, "bold")
+        center("ZIN ZOO X", y + 8)
       }
-      y += 16
+      y += logoBoxH + 4
 
       setFont(12, "bold")
       center("ZIN ZOO X", y)
@@ -355,7 +357,7 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       else if (moduleType === "accessories") serviceSubText = "ACCESSORIES STORE SERVICE"
       else if (moduleType === "services" || moduleType === "service") serviceSubText = "HOME BOOKING SERVICE"
       else if (moduleType) serviceSubText = `${String(moduleType).toUpperCase()} SERVICE`
-      
+
       center(`--- ${serviceSubText} ---`, y)
       y += 5
 
@@ -370,22 +372,22 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       solidLine(y); y += 4;
 
       // --- ORDER INFO ---
-      setFont(7, "bold"); doc.text("Order ID", margin, y); 
+      setFont(7, "bold"); doc.text("Order ID", margin, y);
       setFont(7, "normal"); doc.text(`: ${orderId}`, margin + 15, y); y += 4;
-      setFont(7, "bold"); doc.text("Bill No.", margin, y); 
+      setFont(7, "bold"); doc.text("Bill No.", margin, y);
       setFont(7, "normal"); doc.text(`: ${billNo}`, margin + 15, y); y += 4;
-      
+
       dashLine(y); y += 4;
-      
+
       setFont(7, "normal")
       doc.text("Date", margin, y); doc.text(`: ${orderDate}`, margin + 15, y); y += 4;
       doc.text("Time", margin, y); doc.text(`: ${orderTime}`, margin + 15, y); y += 4;
-      
+
       solidLine(y); y += 4;
 
       doc.text("Customer", margin, y); doc.text(`: ${customerName}`, margin + 22, y); y += 4;
       doc.text("Delivery Partner", margin, y); doc.text(`: ZIN ZOO X Rider`, margin + 22, y); y += 4;
-      
+
       solidLine(y); y += 4;
 
       // --- ITEMS TABLE ---
