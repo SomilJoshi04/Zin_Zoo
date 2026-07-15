@@ -151,7 +151,15 @@ const orderEntityRatingSchema = new mongoose.Schema(
 const orderRatingsSchema = new mongoose.Schema(
     {
         restaurant: { type: orderEntityRatingSchema, default: undefined },
-        deliveryPartner: { type: orderEntityRatingSchema, default: undefined }
+        deliveryPartner: { type: orderEntityRatingSchema, default: undefined },
+        restaurants: [
+            {
+                restaurantId: { type: mongoose.Schema.Types.ObjectId, ref: 'FoodRestaurant', required: true },
+                rating: { type: Number, min: 1, max: 5, required: true },
+                comment: { type: String, default: '', trim: true },
+                ratedAt: { type: Date, default: Date.now }
+            }
+        ]
     },
     { _id: false }
 );

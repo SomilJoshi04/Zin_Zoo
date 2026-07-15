@@ -252,3 +252,15 @@ export async function processRefundAdminController(req, res, next) {
         next(err);
     }
 }
+
+export async function submitOrderRatingsController(req, res, next) {
+    try {
+        const userId = req.user?.userId;
+        const orderId = req.params.orderId;
+        const dto = validateOrderRatingsDto(req.body);
+        const order = await orderService.submitOrderRatings(orderId, userId, dto);
+        return sendResponse(res, 200, 'Rating submitted successfully', { order });
+    } catch (err) {
+        next(err);
+    }
+}

@@ -8,7 +8,8 @@ import {
     getOrderByIdUserController,
     cancelOrderController,
     getOrderDropOtpUserController,
-    updateOrderInstructionsController
+    updateOrderInstructionsController,
+    submitOrderRatingsController
 } from '../controllers/order.controller.js';
 
 const router = express.Router();
@@ -22,5 +23,6 @@ router.get('/:orderId/drop-otp', getOrderDropOtpUserController);
 router.get('/:orderId', getOrderByIdUserController);
 router.patch('/:orderId/cancel', cancelOrderController);
 router.patch('/:orderId/instructions', updateOrderInstructionsController);
+router.post('/:orderId/ratings', submitOrderRatingsController);
 
 export default router;

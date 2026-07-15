@@ -161,10 +161,9 @@ export function validateDispatchSettingsDto(body) {
 
 export function validateOrderRatingsDto(body) {
     const schema = z.object({
+        restaurantId: z.string().min(1, 'Restaurant ID is required'),
         restaurantRating: z.number().min(1).max(5),
-        deliveryPartnerRating: z.number().min(1).max(5).optional(),
-        restaurantComment: z.string().max(500).optional(),
-        deliveryPartnerComment: z.string().max(500).optional()
+        restaurantComment: z.string().max(500).optional()
     });
     const result = schema.safeParse(body || {});
     if (!result.success) {
