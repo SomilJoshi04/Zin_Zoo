@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = path.resolve(__dirname, '../../uploads');
+const UPLOADS_DIR = process.env.UPLOADS_DIR || path.resolve(__dirname, '../../uploads');
 
 if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
@@ -31,8 +31,22 @@ export const uploadImageBuffer = async (buffer, folder = 'misc') => {
     const filename = generateFilename('img', '.webp');
     const filePath = path.join(targetDir, filename);
 
+    let width = 800;
+    let height = 800;
+
+    if (folder.includes('restaurants')) {
+        width = 1200;
+        height = 800;
+    } else if (folder.includes('banners')) {
+        width = 1600;
+        height = 600;
+    } else if (folder.includes('users') || folder.includes('explore-icons')) {
+        width = 400;
+        height = 400;
+    }
+
     await sharp(buffer)
-        .resize({ width: 1200, height: 800, fit: 'inside', withoutEnlargement: true })
+        .resize({ width, height, fit: 'inside', withoutEnlargement: true })
         .webp({ quality: 80 })
         .toFile(filePath);
 

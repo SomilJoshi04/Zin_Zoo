@@ -21,7 +21,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Serve static files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Trust first proxy (essential for express-rate-limit if behind a proxy)
 app.set('trust proxy', 1);
