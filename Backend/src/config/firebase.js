@@ -16,7 +16,11 @@ const getServiceAccountFromEnv = () => {
     const rawJson = sanitizeString(config.firebaseServiceAccount);
     if (rawJson) {
         try {
-            cachedServiceAccount = JSON.parse(rawJson);
+            const parsed = JSON.parse(rawJson);
+            if (parsed && typeof parsed.private_key === 'string') {
+                parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
+            }
+            cachedServiceAccount = parsed;
             return cachedServiceAccount;
         } catch (err) {
             logger.error('Error parsing FIREBASE_SERVICE_ACCOUNT JSON:', err.message);
@@ -28,7 +32,11 @@ const getServiceAccountFromEnv = () => {
         const filePath = resolve(process.cwd(), pathValue);
         if (existsSync(filePath)) {
             try {
-                cachedServiceAccount = JSON.parse(readFileSync(filePath, 'utf8'));
+                const parsed = JSON.parse(readFileSync(filePath, 'utf8'));
+                if (parsed && typeof parsed.private_key === 'string') {
+                    parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
+                }
+                cachedServiceAccount = parsed;
                 return cachedServiceAccount;
             } catch (err) {
                 logger.error(`Error reading or parsing firebase service account file at ${filePath}:`, err.message);
