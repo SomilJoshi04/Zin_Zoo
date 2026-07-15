@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import AppRoutes from './routes'
 
+// Zin Zoo client-side entry point application container
 function App() {
   const [showSplash, setShowSplash] = useState(true)
 
@@ -36,5 +37,4 @@ function App() {
 
   return <AppRoutes />
 }
-
 export default App
