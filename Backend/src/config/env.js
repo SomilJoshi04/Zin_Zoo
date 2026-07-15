@@ -7,6 +7,7 @@ export const config = {
     port: process.env.PORT || 5000,
     host: process.env.HOST || '0.0.0.0',
     nodeEnv: process.env.NODE_ENV || 'development',
+    googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || process.env.VITE_GOOGLE_MAPS_API_KEY,
 
     // Database
     mongodbUri: process.env.MONGO_URI || process.env.MONGODB_URI,
