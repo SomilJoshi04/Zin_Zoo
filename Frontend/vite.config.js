@@ -16,5 +16,13 @@ export default defineConfig({
       '@delivery': path.resolve(__dirname, './src/modules/DeliveryV2'),
       '@': path.resolve(__dirname, './src')
     }
+  },
+  server: {
+    proxy: {
+      '/uploads': {
+        target: 'http://localhost:5000',
+        changeOrigin: true
+      }
+    }
   }
 })
