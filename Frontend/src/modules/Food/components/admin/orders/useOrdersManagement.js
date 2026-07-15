@@ -284,16 +284,16 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       const { default: jsPDF } = await import("jspdf")
       const { default: QRCode } = await import("qrcode")
 
-      // 58mm receipt width ≈ 48mm printable area, use generous height
-      const receiptWidth = 58
-      const margin = 6.5
+      const receiptWidth = 72 // slightly wider to fit the new layout better, standard 80mm printer paper has ~72mm printable area
+      const margin = 4
       const contentWidth = receiptWidth - margin * 2
       const centerX = receiptWidth / 2
 
       // Gather order data
       const orderId = order.orderId || order.id || "N/A"
-      const orderDate = order.date || new Date().toLocaleDateString()
-      const orderTime = order.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      const billNo = String(order.id || "").slice(-6).toUpperCase() || "N/A"
+      const orderDate = order.date || new Date().toLocaleDateString('en-IN')
+      const orderTime = order.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
       const customerName = formatDisplayText(order.customerName)
       const items = Array.isArray(order.items) ? order.items : []
 
@@ -306,213 +306,170 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       const platformFee = toNumber(order.platformFee ?? order.pricing?.platformFee ?? 0)
       const discountAmount = toNumber(order.couponDiscount ?? order.discountAmount ?? order.pricing?.discount ?? 0)
       const totalAmount = toNumber(order.totalAmount ?? order.pricing?.total ?? (subtotal + deliveryFee + taxAmount + platformFee - discountAmount))
-      const paymentType = order.paymentType || order.payment?.method || order.paymentMethod || "N/A"
-      const paymentStatus = formatDisplayText(
-        order.paymentStatus || order.paymentCollectionStatus || (paymentType === "Cash on Delivery" ? "Not Collected" : "Paid")
-      )
+      const paymentType = order.paymentType || order.payment?.method || order.paymentMethod || "UPI"
+      
+      const totalItems = items.reduce((sum, item) => sum + toNumber(item.quantity || 1), 0)
 
-      // Generate QR code as data URL
-      const feedbackUrl = `https://zin-zoo.vercel.app/feedback?orderId=${order.id || order.orderId || order._id || ""}`
+      // Generate QR code
+      const feedbackUrl = `https://zinzoox.com/feedback?orderId=${orderId}`
       const qrDataUrl = await QRCode.toDataURL(feedbackUrl, {
-        width: 200,
-        margin: 1,
-        color: { dark: "#000000", light: "#ffffff" }
+        width: 200, margin: 1, color: { dark: "#000000", light: "#ffffff" }
       })
 
-      // Load logo as data URL
-      const logoDataUrl = await imageUrlToDataUrl("/zinzoo-logo.png")
+      // Load logo
+      const logoDataUrl = await imageUrlToDataUrl("/zinzoo-logo.png").catch(() => null)
 
-      // Calculate height dynamically
-      let estimatedHeight = 40 // logo + header
-      estimatedHeight += 20 // customer info
-      estimatedHeight += items.length * 5 + 15 // items table
-      estimatedHeight += 30 // pricing summary
-      estimatedHeight += 18 // payment info
-      estimatedHeight += 12 // thank you message
-      estimatedHeight += 40 // QR code
-      estimatedHeight += 10 // padding
-      estimatedHeight = Math.max(estimatedHeight, 140)
+      let estimatedHeight = 160 + (items.length * 5)
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [receiptWidth, estimatedHeight] })
 
-      const doc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: [receiptWidth, estimatedHeight],
-      })
-
-      let y = 4
-      const fontSize = (size) => doc.setFontSize(size)
-      const bold = () => doc.setFont(undefined, "bold")
-      const normal = () => doc.setFont(undefined, "normal")
+      let y = 6
+      const setFont = (size, type = "normal") => { doc.setFontSize(size); doc.setFont("helvetica", type) }
       const center = (text, yPos) => doc.text(text, centerX, yPos, { align: "center" })
+      const right = (text, yPos) => doc.text(text, receiptWidth - margin, yPos, { align: "right" })
+      const solidLine = (yPos) => { doc.setDrawColor(0); doc.setLineWidth(0.3); doc.line(margin, yPos, receiptWidth - margin, yPos) }
       const dashLine = (yPos) => {
-        doc.setDrawColor(0)
-        doc.setLineDashPattern([0.5, 0.5], 0)
+        doc.setDrawColor(0); doc.setLineWidth(0.3); doc.setLineDashPattern([1, 1], 0)
         doc.line(margin, yPos, receiptWidth - margin, yPos)
         doc.setLineDashPattern([], 0)
       }
 
-      // === LOGO ===
+      // --- HEADER ---
+      // Logo Box
+      doc.setDrawColor(0); doc.setLineWidth(0.4);
+      doc.rect(centerX - 20, y, 40, 10)
       if (logoDataUrl) {
-        try {
-          const logoSize = 24
-          doc.addImage(logoDataUrl, "PNG", centerX - logoSize / 2, y, logoSize, logoSize, undefined, "FAST")
-          y += logoSize + 2
-        } catch {
-          y += 2
-        }
+        doc.addImage(logoDataUrl, "PNG", centerX - 18, y + 1, 36, 8, undefined, "FAST")
+      } else {
+        setFont(14, "bold")
+        center("ZIN ZOO X", y + 7)
       }
+      y += 16
 
-      // === HEADER ===
-      doc.setTextColor(0, 0, 0)
-      fontSize(9)
-      bold()
-      center("Zin Zoo", y)
-      y += 3.5
-      fontSize(6)
-      normal()
+      setFont(12, "bold")
+      center("ZIN ZOO X", y)
+      y += 4
+
+      setFont(7, "bold")
+      let serviceSubText = "FOOD DELIVERY SERVICE"
+      if (moduleType === "grocery") serviceSubText = "GROCERY DELIVERY SERVICE"
+      else if (moduleType === "accessories") serviceSubText = "ACCESSORIES STORE SERVICE"
+      else if (moduleType === "services" || moduleType === "service") serviceSubText = "HOME BOOKING SERVICE"
+      else if (moduleType) serviceSubText = `${String(moduleType).toUpperCase()} SERVICE`
       
-      let serviceSubText = "Food Delivery Service"
-      if (moduleType === "grocery") {
-        serviceSubText = "Grocery Delivery Service"
-      } else if (moduleType === "accessories") {
-        serviceSubText = "Accessories Store Service"
-      } else if (moduleType === "services" || moduleType === "service") {
-        serviceSubText = "Home Booking Service"
-      } else if (moduleType) {
-        const capitalized = String(moduleType).charAt(0).toUpperCase() + String(moduleType).slice(1)
-        serviceSubText = `${capitalized} Service`
-      }
-      center(serviceSubText, y)
+      center(`--- ${serviceSubText} ---`, y)
+      y += 5
+
+      setFont(6, "normal")
+      center("Maihar, Madhya Pradesh (MP)", y)
+      y += 3.5
+      center("8225874798", y)
+      y += 3.5
+      center("www.zinzoox.com", y)
       y += 4
 
-      dashLine(y)
-      y += 3
+      solidLine(y); y += 4;
 
-      // === ORDER INFO ===
-      fontSize(6.5)
-      normal()
-      doc.text(`Customer: ${customerName}`, margin, y)
-      y += 3.5
-      doc.text(`Date: ${orderDate}`, margin, y)
-      doc.text(orderTime, receiptWidth - margin, y, { align: "right" })
-      y += 3.5
-      doc.text(`Bill No: #${orderId}`, margin, y)
-      y += 4
+      // --- ORDER INFO ---
+      setFont(7, "bold"); doc.text("Order ID", margin, y); 
+      setFont(7, "normal"); doc.text(`: ${orderId}`, margin + 15, y); y += 4;
+      setFont(7, "bold"); doc.text("Bill No.", margin, y); 
+      setFont(7, "normal"); doc.text(`: ${billNo}`, margin + 15, y); y += 4;
+      
+      dashLine(y); y += 4;
+      
+      setFont(7, "normal")
+      doc.text("Date", margin, y); doc.text(`: ${orderDate}`, margin + 15, y); y += 4;
+      doc.text("Time", margin, y); doc.text(`: ${orderTime}`, margin + 15, y); y += 4;
+      
+      solidLine(y); y += 4;
 
-      dashLine(y)
-      y += 3
+      doc.text("Customer", margin, y); doc.text(`: ${customerName}`, margin + 22, y); y += 4;
+      doc.text("Delivery Partner", margin, y); doc.text(`: ZIN ZOO X Rider`, margin + 22, y); y += 4;
+      
+      solidLine(y); y += 4;
 
-      // === ITEMS TABLE HEADER ===
-      fontSize(6.5)
-      bold()
+      // --- ITEMS TABLE ---
+      setFont(6.5, "bold")
       doc.text("Item", margin, y)
-      doc.text("Qty", margin + 22, y, { align: "center" })
-      doc.text("Price", margin + 31, y, { align: "right" })
-      doc.text("Amt", receiptWidth - margin, y, { align: "right" })
-      y += 1.5
-      dashLine(y)
-      y += 3
+      doc.text("Qty", margin + 32, y, { align: "center" })
+      doc.text("Price", margin + 44, y, { align: "right" })
+      right("Amount", y)
+      y += 2
+      solidLine(y); y += 4;
 
-      // === ITEMS ===
-      fontSize(6)
-      normal()
+      setFont(6.5, "normal")
       if (items.length > 0) {
         items.forEach((item) => {
           const qty = toNumber(item.quantity || 1)
           const price = toNumber(item.price)
           const amount = qty * price
-          const name = String(item.name || item.itemName || item.title || "Item").substring(0, 18)
+          const name = String(item.name || item.itemName || item.title || "Item").substring(0, 20)
 
           doc.text(name, margin, y)
-          doc.text(String(qty), margin + 22, y, { align: "center" })
-          doc.text(price.toFixed(0), margin + 31, y, { align: "right" })
-          doc.text(amount.toFixed(0), receiptWidth - margin, y, { align: "right" })
-          y += 3.5
+          doc.text(String(qty), margin + 32, y, { align: "center" })
+          doc.text(price.toFixed(2), margin + 44, y, { align: "right" })
+          right(amount.toFixed(2), y)
+          y += 4
         })
-      } else {
-        doc.text("Order Total", margin, y)
-        doc.text(totalAmount.toFixed(2), receiptWidth - margin, y, { align: "right" })
-        y += 3.5
+      }
+      solidLine(y); y += 4;
+
+      // --- TOTALS ---
+      setFont(6.5, "normal")
+      doc.text(`Sub Total (${totalItems} Items)`, margin, y); right(`Rs. ${subtotal.toFixed(2)}`, y); y += 4;
+      if (deliveryFee > 0) { doc.text("Delivery Charge", margin, y); right(`Rs. ${deliveryFee.toFixed(2)}`, y); y += 4; }
+      if (platformFee > 0) { doc.text("Platform Fee", margin, y); right(`Rs. ${platformFee.toFixed(2)}`, y); y += 4; }
+      if (discountAmount > 0) { doc.text("Discount", margin, y); right(`-Rs. ${discountAmount.toFixed(2)}`, y); y += 4; }
+
+      dashLine(y); y += 4;
+
+      let taxable = subtotal + deliveryFee + platformFee - discountAmount;
+      if (taxAmount > 0) {
+        doc.text("Taxable Amount", margin, y); right(`Rs. ${taxable.toFixed(2)}`, y); y += 4;
+        const halfTax = (taxAmount / 2).toFixed(2);
+        doc.text("CGST @2.5%", margin, y); right(`Rs. ${halfTax}`, y); y += 4;
+        doc.text("SGST @2.5%", margin, y); right(`Rs. ${halfTax}`, y); y += 4;
       }
 
-      y += 1
-      dashLine(y)
-      y += 3
+      dashLine(y); y += 5;
 
-      // === PRICING SUMMARY ===
-      fontSize(6.5)
-      normal()
+      setFont(8.5, "bold")
+      doc.text("Grand Total", margin, y); right(`Rs. ${totalAmount.toFixed(2)}`, y); y += 5;
 
-      const addSummaryRow = (label, value, isBold = false) => {
-        if (isBold) bold(); else normal()
-        doc.text(label, margin, y)
-        doc.text(`Rs. ${value.toFixed(2)}`, receiptWidth - margin, y, { align: "right" })
-        y += 3.5
-      }
+      dashLine(y); y += 4;
 
-      addSummaryRow("Sub Total", subtotal)
-      if (deliveryFee > 0) addSummaryRow("Delivery Fee", deliveryFee)
-      if (platformFee > 0) addSummaryRow("Platform Fee", platformFee)
-      if (taxAmount > 0) addSummaryRow("Tax", taxAmount)
-      if (discountAmount > 0) {
-        normal()
-        doc.text("Discount", margin, y)
-        doc.text(`-Rs. ${discountAmount.toFixed(2)}`, receiptWidth - margin, y, { align: "right" })
-        y += 3.5
-      }
+      setFont(6.5, "normal")
+      doc.text("Payment Mode", margin, y); right(paymentType, y); y += 4;
+      doc.text("Amount Paid", margin, y); right(`Rs. ${totalAmount.toFixed(2)}`, y); y += 5;
 
-      y += 1
-      dashLine(y)
-      y += 3
+      dashLine(y); y += 5;
 
-      // === GRAND TOTAL ===
-      fontSize(7.5)
-      bold()
-      center(`Grand Total: Rs. ${totalAmount.toFixed(2)}`, y)
-      y += 4.5
+      // --- FOOTER ---
+      setFont(7, "bold")
+      center("Thank You!", y); y += 4;
+      center("Order Again with ZIN ZOO X", y); y += 5;
 
-      fontSize(6.5)
-      normal()
-      center(`Payment: ${paymentType}  |  ${paymentStatus}`, y)
-      y += 4
+      dashLine(y); y += 4;
 
-      dashLine(y)
-      y += 4
-
-      // === THANK YOU MESSAGE ===
-      fontSize(7)
-      bold()
-      center("Thank You!", y)
-      y += 3.5
-      fontSize(6)
-      normal()
-      center("We Look Forward to", y)
-      y += 3
-      center("Serving You Again.", y)
-      y += 5
-
-      dashLine(y)
-      y += 3
-
-      // === FEEDBACK QR CODE ===
-      fontSize(6)
-      normal()
-      center("Your feedback matters to us!", y)
-      y += 3
-      center("Scan to share your experience:", y)
-      y += 3
+      setFont(6, "normal")
+      center("We value your feedback!", y); y += 3;
+      center("Scan the QR code to share your experience.", y); y += 3;
 
       if (qrDataUrl) {
-        const qrSize = 22
+        const qrSize = 24
         doc.addImage(qrDataUrl, "PNG", centerX - qrSize / 2, y, qrSize, qrSize)
-        y += qrSize + 3
+        y += qrSize + 4
       }
 
-      fontSize(5)
-      center("Scan QR to give feedback", y)
-      y += 5
+      setFont(6, "bold")
+      center("FOLLOW US", y); y += 4;
+      setFont(6, "normal")
+      center("Instagram | Facebook | WhatsApp   @zinzoox._01", y); y += 5;
 
-      // Trim the page to actual content height
+      setFont(5.5, "normal")
+      center("Safe Delivery | Fresh Food | On Time", y); y += 3;
+      center("10:00 AM to 12:00 AM", y); y += 4;
+
       const filename = `Receipt_${orderId}_${new Date().toISOString().split("T")[0]}.pdf`
       doc.save(filename)
     } catch (error) {
