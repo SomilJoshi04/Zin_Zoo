@@ -157,65 +157,56 @@ export default function Restaurants() {
 
               return (
                 <ScrollReveal key={restaurant.id} delay={index * 0.05}>
-                  <Link to={`/restaurants/${restaurant.slug}`} className="h-full flex">
-                    <Card className="overflow-hidden cursor-pointer border border-gray-200 dark:border-gray-800 group bg-white dark:bg-[#1a1a1a] hover:shadow-lg dark:hover:shadow-xl dark:hover:shadow-gray-900/50 pb-1 sm:pb-2 lg:pb-3 flex flex-col h-full w-full transition-all duration-300">
-                      <div className="flex flex-row min-h-[120px] sm:min-h-[140px] md:min-h-[160px] lg:min-h-[180px] flex-1">
-                        <CardContent className="flex-1 flex flex-col justify-between p-3 sm:p-4 md:p-5 lg:p-6 min-w-0 overflow-hidden">
-                          <div className="flex-1 flex flex-col justify-between gap-2">
-                            <div className="flex-shrink-0">
-                              <div className="flex items-start justify-between gap-2 mb-2">
-                                <div className="flex-1 min-w-0 pr-2">
-                                  <CardTitle className="text-base sm:text-lg md:text-xl mb-1 line-clamp-2 text-gray-900 dark:text-white">
-                                    {restaurant.name}
-                                  </CardTitle>
-                                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 font-medium mb-2 line-clamp-1">
-                                    {restaurant.cuisine}
-                                  </p>
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <div className="flex items-center gap-1 bg-yellow-50 dark:bg-yellow-900/30 px-1.5 py-0.5 rounded-full">
-                                      <Star className="h-3 w-3 sm:h-3.5 sm:w-3.5 fill-yellow-400 text-yellow-400" />
-                                      <span className="font-bold text-xs sm:text-sm text-yellow-700 dark:text-yellow-400">{restaurant.rating.toFixed(1)}</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className={`h-7 w-7 sm:h-8 sm:w-8 rounded-full flex-shrink-0 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors ${favorite ? "text-red-500 dark:text-red-400" : "text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"}`}
-                                  onClick={handleToggleFavorite}
-                                >
-                                  <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${favorite ? "fill-red-500 dark:fill-red-400" : ""}`} />
-                                </Button>
-                              </div>
-                            </div>
-                            <div className="flex items-center justify-between gap-2 mt-auto pt-2 border-t border-gray-200 dark:border-gray-800 flex-shrink-0">
-                              <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600 dark:text-gray-400 flex-wrap">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-                                  <span className="font-medium whitespace-nowrap">{restaurant.deliveryTime}</span>
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex-shrink-0" />
-                                  <span className="font-medium whitespace-nowrap">{restaurant.distance}</span>
-                                </div>
-                              </div>
-                              <Button className="bg-primary-orange hover:opacity-90 dark:hover:opacity-80 text-white text-xs sm:text-sm h-7 sm:h-8 px-3 sm:px-4 flex-shrink-0 transition-opacity">
-                                Order Now
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
+                  <Link to={`/food/user/restaurants/${restaurant.slug}`} className="h-full flex">
+                    <div className="bg-white dark:bg-[#151515] rounded-[20px] overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 group hover:shadow-[0_12px_30px_-6px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col h-full w-full relative">
+                      {/* Restaurant Image */}
+                      <div className="relative h-36 sm:h-40 md:h-44 w-full overflow-hidden bg-gray-50 dark:bg-gray-900">
+                        <img
+                          src={restaurant.image || "https://via.placeholder.com/400x300?text=Restaurant"}
+                          alt={restaurant.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {/* Rating Badge */}
+                        <div className={`absolute bottom-2 left-2 px-2 py-0.5 rounded-lg ${Number(restaurant.rating) > 0 ? "bg-black/85 backdrop-blur-md text-white font-black" : "bg-gray-800/90 text-white font-bold"} text-[10px] xs:text-xs shadow-lg border border-white/10 flex items-center gap-1`}>
+                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                          {Number(restaurant.rating) > 0 ? Number(restaurant.rating).toFixed(1) : "NEW"}
+                        </div>
+                        
+                        {/* Favorite Button */}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`absolute top-2 right-2 h-7 w-7 sm:h-8 sm:w-8 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/40 dark:hover:bg-black/40 transition-colors ${favorite ? "text-red-500" : "text-white"}`}
+                          onClick={handleToggleFavorite}
+                        >
+                          <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${favorite ? "fill-red-500" : ""}`} />
+                        </Button>
+                      </div>
 
-                        <div className="w-36 sm:w-44 md:w-56 lg:w-64 xl:w-72 flex-shrink-0 relative overflow-hidden group/image">
-                          <img
-                            src={restaurant.image || "https://via.placeholder.com/400x300?text=Restaurant"}
-                            alt={restaurant.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-l from-black/20 dark:from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      {/* Details */}
+                      <div className="p-3.5 flex flex-col flex-grow">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <h3 className="text-sm sm:text-base font-extrabold text-gray-900 dark:text-white tracking-tight line-clamp-1 flex-1">
+                            {restaurant.name}
+                          </h3>
+                        </div>
+                        <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2.5 line-clamp-1 font-medium">
+                          {restaurant.cuisine}
+                        </p>
+
+                        <div className="mt-auto pt-2.5 border-t border-gray-100 dark:border-gray-800/60 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[10px] sm:text-[11px] font-medium">
+                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#F84E04]" />
+                            <span>{restaurant.deliveryTime}</span>
+                          </div>
+                          <div className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
+                          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[10px] sm:text-[11px] font-medium">
+                            <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#F84E04]" />
+                            <span>{restaurant.distance}</span>
+                          </div>
                         </div>
                       </div>
-                    </Card>
+                    </div>
                   </Link>
                 </ScrollReveal>
               )

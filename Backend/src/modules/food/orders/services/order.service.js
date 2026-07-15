@@ -2320,3 +2320,45 @@ async function deductStock(items, moduleType) {
     logger.error(`Failed to deduct inventory for module ${moduleType}: ${err.message}`);
   }
 }
+
+export async function submitOrderRatings(orderId, userId, dto) {
+  const filter = buildOrderIdentityFilter(orderId);
+  filter.userId = userId;
+  const order = await FoodOrder.findOne(filter);
+  if (!order) {
+    throw new NotFoundError('Order not found');
+  }
+  if (order.orderStatus !== 'delivered') {
+    throw new ValidationError('You can only rate a delivered order');
+  }
+
+  const { restaurantId, restaurantRating, restaurantComment } = dto;
+  
+  const existingRating = order.ratings?.restaurants?.find(
+    r => r.restaurantId?.toString() === restaurantId
+  );
+  if (existingRating) {
+    throw new ValidationError('You have already rated this restaurant for this order');
+  }
+
+  const updatedOrder = await FoodOrder.findOneAndUpdate(
+    filter,
+    { 
+      $push: { 
+        'ratings.restaurants': { 
+          restaurantId, 
+          rating: restaurantRating, 
+          comment: restaurantComment || '', 
+          ratedAt: new Date() 
+        } 
+      } 
+    },
+    { new: true, runValidators: true }
+  );
+
+  if (restaurantRating && restaurantId) {
+    await applyAggregateRating(FoodRestaurant, restaurantId, restaurantRating);
+  }
+
+  return normalizeOrderForClient(updatedOrder, 'user');
+}

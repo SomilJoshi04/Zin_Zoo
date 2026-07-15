@@ -13,9 +13,12 @@ import {
   MapPin,
   RotateCcw,
   FileText,
-  Coins
+  Coins,
+  Star,
+  Loader2
 } from "lucide-react"
 import { orderAPI, restaurantAPI } from "@food/api"
+import apiClient from "@/services/api/axios"
 import { useCart } from "@food/context/CartContext"
 import { toast } from "sonner"
 import { getCompanyNameAsync } from "@food/utils/businessSettings"
@@ -32,6 +35,38 @@ export default function UserOrderDetails() {
   const [order, setOrder] = useState(null)
   const [restaurant, setRestaurant] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false)
+  const [hoveredStars, setHoveredStars] = useState({})
+  const [submittedRatings, setSubmittedRatings] = useState({})
+
+  useEffect(() => {
+    if (order?.ratings?.restaurants && Array.isArray(order.ratings.restaurants)) {
+      const initialRatings = {};
+      order.ratings.restaurants.forEach(r => {
+        if (r.restaurantId) {
+          initialRatings[r.restaurantId] = r.rating;
+        }
+      });
+      setSubmittedRatings(initialRatings);
+    }
+  }, [order?.ratings?.restaurants])
+
+  const handleRateRestaurant = async (restaurantId, rating) => {
+    if (isSubmittingRating || submittedRatings[restaurantId]) return;
+    setIsSubmittingRating(true);
+    try {
+      const response = await apiClient.post(`/food/orders/${orderId}/ratings`, { restaurantId, restaurantRating: rating });
+      if (response.data.success) {
+        setSubmittedRatings(prev => ({ ...prev, [restaurantId]: rating }));
+        toast.success("Thank you for rating the restaurant!");
+      }
+    } catch (error) {
+      const errorMessage = error?.response?.data?.error || error?.response?.data?.message || "Failed to submit rating";
+      toast.error(errorMessage);
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  }
 
   useEffect(() => {
     const fetchOrderDetails = async () => {
@@ -365,6 +400,36 @@ export default function UserOrderDetails() {
     navigate("/food/user/cart")
   }
 
+  const orderRestaurants = (() => {
+    if (!order?.items || !Array.isArray(order.items)) {
+      // fallback for old orders
+      const rId = order?.restaurantId || (typeof order?.restaurant === 'object' ? order.restaurant?._id : order?.restaurant);
+      if (rId) return [{ restaurantId: rId, restaurantName: restaurantName || "Restaurant" }];
+      return [];
+    }
+    const map = new Map();
+    order.items.forEach(item => {
+      const rId = item.restaurantId;
+      if (rId && !map.has(rId.toString())) {
+        map.set(rId.toString(), {
+          restaurantId: rId,
+          restaurantName: item.restaurantName || "Restaurant"
+        });
+      }
+    });
+    // Fallback if no items have restaurantId but order does
+    if (map.size === 0) {
+      const mainRId = order?.restaurantId || (typeof order?.restaurant === 'object' ? order.restaurant?._id : order?.restaurant);
+      if (mainRId) {
+        map.set(mainRId.toString(), {
+          restaurantId: mainRId,
+          restaurantName: restaurantName || "Restaurant"
+        });
+      }
+    }
+    return Array.from(map.values());
+  })();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] pb-24 font-sans relative">
       {/* Header */}
@@ -384,30 +449,80 @@ export default function UserOrderDetails() {
       {/* Scrollable Content */}
       <div className="max-w-3xl mx-auto p-4 space-y-4">
         {/* Status Card */}
-        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl flex items-center gap-3 shadow-sm border border-gray-100 dark:border-zinc-800">
-          <div className="bg-gray-100 dark:bg-zinc-800 p-2 rounded-lg">
-            <ShoppingBag className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-          </div>
-          <div>
-            <h2 className="font-semibold text-gray-800 dark:text-white">
-              {order.status === "delivered"
-                ? "Order was delivered"
-                : "Order status: " + (order.status || "Processing")}
-            </h2>
-            {order.status === "delivered" && order.coinsEarned > 0 ? (
-              <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
-                <Coins className="w-3.5 h-3.5" />
-                <span>Earned {order.coinsEarned} Coins</span>
-              </div>
-            ) : (
-              order.status !== "delivered" && order.coinSettings?.minCoinsPerOrder != null && order.coinSettings?.maxCoinsPerOrder != null && (
+        <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl flex flex-col gap-3 shadow-sm border border-gray-100 dark:border-zinc-800">
+          <div className="flex items-center gap-3">
+            <div className="bg-gray-100 dark:bg-zinc-800 p-2 rounded-lg">
+              <ShoppingBag className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-gray-800 dark:text-white">
+                {order.status === "delivered"
+                  ? "Order was delivered"
+                  : "Order status: " + (order.status || "Processing")}
+              </h2>
+              {order.status === "delivered" && order.coinsEarned > 0 ? (
                 <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
                   <Coins className="w-3.5 h-3.5" />
-                  <span>Earn {order.coinSettings.minCoinsPerOrder}-{order.coinSettings.maxCoinsPerOrder} Coins</span>
+                  <span>Earned {order.coinsEarned} Coins</span>
                 </div>
-              )
-            )}
+              ) : (
+                order.status !== "delivered" && order.coinSettings?.minCoinsPerOrder != null && order.coinSettings?.maxCoinsPerOrder != null && (
+                  <div className="mt-1 flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
+                    <Coins className="w-3.5 h-3.5" />
+                    <span>Earn {order.coinSettings.minCoinsPerOrder}-{order.coinSettings.maxCoinsPerOrder} Coins</span>
+                  </div>
+                )
+              )}
+            </div>
           </div>
+          
+          {/* Rating Section - Multiple Restaurants */}
+          {order.status === "delivered" && orderRestaurants.length > 0 && (
+            <div className="border-t border-dashed border-gray-200 dark:border-zinc-800 pt-3 mt-1 flex flex-col gap-4">
+              {orderRestaurants.map((rest) => {
+                const rId = rest.restaurantId.toString();
+                const currentSubmitted = submittedRatings[rId];
+                const currentHovered = hoveredStars[rId] || 0;
+                
+                return (
+                  <div key={rId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-zinc-800/50 pb-2 last:border-0 last:pb-0">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                        {currentSubmitted ? `Rated ${rest.restaurantName}` : `Rate ${rest.restaurantName}`}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {currentSubmitted ? "Thanks for your feedback!" : "How was the food from here?"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => {
+                        const isActive = star <= (currentHovered || currentSubmitted);
+                        return (
+                          <button
+                            key={star}
+                            disabled={isSubmittingRating || !!currentSubmitted}
+                            onMouseEnter={() => !currentSubmitted && setHoveredStars(prev => ({ ...prev, [rId]: star }))}
+                            onMouseLeave={() => !currentSubmitted && setHoveredStars(prev => ({ ...prev, [rId]: 0 }))}
+                            onClick={() => handleRateRestaurant(rId, star)}
+                            className={`p-1 transition-all duration-200 ${currentSubmitted ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
+                          >
+                            <Star 
+                              className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors duration-200 ${
+                                isActive 
+                                  ? 'fill-amber-400 text-amber-400' 
+                                  : 'fill-gray-100 text-gray-200 dark:fill-zinc-800 dark:text-zinc-700'
+                              }`} 
+                            />
+                          </button>
+                        );
+                      })}
+                      {isSubmittingRating && <Loader2 className="w-4 h-4 ml-2 animate-spin text-amber-500" />}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Restaurant Info Card */}
