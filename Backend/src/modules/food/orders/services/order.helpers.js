@@ -5,6 +5,7 @@ import {
   sendNotificationToOwners,
 } from "../../../../core/notifications/firebase.service.js";
 import { createInboxNotifications } from "../../../../core/notifications/notification.service.js";
+import { createAdminNotification } from "../../admin/services/adminNotification.service.js";
 import { getIO, rooms } from '../../../../config/socket.js';
 import { addOrderJob } from '../../../../queues/producers/order.producer.js';
 
@@ -383,19 +384,39 @@ export function isStatusAdvance(current, next) {
   return nextPrio > currentPrio;
 }
 
-export function broadcastNewOrderToAdmin(order) {
+export async function broadcastNewOrderToAdmin(order) {
   try {
+    const payload = {
+      orderId: order.order_id || order.orderId || order._id?.toString() || "N/A",
+      orderMongoId: order._id?.toString() || "",
+      moduleType: order.moduleType || 'food',
+      restaurantName: order.restaurantName || (order.items?.[0]?.restaurantName) || "",
+      pricing: order.pricing
+    };
+    
+    const totalAmount = payload.pricing?.total ?? payload.pricing?.finalTotal ?? payload.pricing?.amount ?? 0;
+    let moduleName = 'Food';
+    let link = '/admin/food/orders';
+    if (payload.moduleType === 'grocery') {
+        moduleName = 'Grocery';
+        link = '/admin/food/grocery-orders';
+    } else if (payload.moduleType === 'accessories') {
+        moduleName = 'Accessories';
+        link = '/admin/food/accessories-orders';
+    }
+
+    await createAdminNotification({
+      title: `New ${moduleName} Order`,
+      message: `Order #${payload.orderId} was placed. Total: ₹${Number(totalAmount).toFixed(2)}.`,
+      type: 'order',
+      category: payload.moduleType || 'food',
+      link,
+      metaData: payload
+    });
+
     const io = getIO();
     if (io) {
-      const payload = {
-        orderId: order.order_id || order.orderId || order._id?.toString() || "N/A",
-        orderMongoId: order._id?.toString() || "",
-        moduleType: order.moduleType || 'food',
-        restaurantName: order.restaurantName || (order.items?.[0]?.restaurantName) || "",
-        pricing: order.pricing
-      };
       logger.info(`[Socket] Broadcasting new order ${payload.orderId} to admin-orders`);
-      io.to('admin-orders').emit("admin_new_order", payload);
       io.to('admin-orders').emit("play_notification_sound", payload);
     }
   } catch (err) {

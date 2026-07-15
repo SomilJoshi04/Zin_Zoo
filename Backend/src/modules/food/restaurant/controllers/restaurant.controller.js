@@ -78,6 +78,7 @@ export const updateRestaurantAcceptingOrdersController = async (req, res, next) 
 };
 
 
+
 export const uploadRestaurantProfileImageController = async (req, res, next) => {
     try {
         const restaurantId = req.user?.userId;

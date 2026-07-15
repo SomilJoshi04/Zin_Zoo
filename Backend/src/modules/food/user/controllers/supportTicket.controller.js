@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { FoodSupportTicket } from '../models/supportTicket.model.js';
 import { sendResponse, sendError } from '../../../../utils/response.js';
+import { createAdminNotification } from '../../admin/services/adminNotification.service.js';
 
 export async function createSupportTicketController(req, res, next) {
     try {
@@ -116,6 +117,16 @@ export async function createSupportTicketController(req, res, next) {
             };
 
             broadcastPublicUpdate('support:ticket:create', { ticket: mappedTicket });
+            
+            // Send Admin Notification
+            await createAdminNotification({
+                title: 'New Support Ticket',
+                message: `${user?.name || 'A user'} raised a support ticket regarding ${mappedTicket.issueType || 'an issue'}.`,
+                type: 'support',
+                category: 'support',
+                link: '/admin/food/support-tickets',
+                metaData: { ticketId: created._id }
+            });
         } catch (socketErr) {
             console.error('Failed to broadcast support:ticket:create', socketErr);
         }

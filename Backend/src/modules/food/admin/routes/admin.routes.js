@@ -7,6 +7,7 @@ import * as coinSettingsController from '../controllers/coinSettings.controller.
 import * as coinRedemptionController from '../controllers/coinRedemption.controller.js';
 import * as feedbackExperienceController from '../controllers/feedbackExperience.controller.js';
 import * as notificationBroadcastController from '../controllers/notificationBroadcast.controller.js';
+import * as adminNotificationController from '../controllers/adminNotification.controller.js';
 import * as orderController from '../../orders/controllers/order.controller.js';
 import { getAdminPageController, upsertAdminPageController } from '../controllers/pageContent.controller.js';
 import * as adminWalletController from '../controllers/adminWallet.controller.js';
@@ -112,6 +113,12 @@ router.patch('/sub-admins/:id', requireAdminPermission('sub_admin_management', '
 router.patch('/sub-admins/:id/permissions', requireAdminPermission('sub_admin_management', 'edit'), adminController.updateSubAdminPermissions);
 router.patch('/sub-admins/:id/status', requireAdminPermission('sub_admin_management', 'edit'), adminController.updateSubAdminStatus);
 router.delete('/sub-admins/:id', requireAdminPermission('sub_admin_management', 'delete'), adminController.deleteSubAdmin);
+
+// ----- Admin Real-time Notifications -----
+router.get('/notifications/history', adminNotificationController.getAdminNotificationsController);
+router.patch('/notifications/read-all', adminNotificationController.markAllNotificationsAsReadController);
+router.patch('/notifications/:id/read', adminNotificationController.markNotificationAsReadController);
+router.delete('/notifications/clear-all', adminNotificationController.clearAllNotificationsController);
 
 // ----- Broadcast Notifications -----
 router.post('/notifications/broadcast', notificationBroadcastController.createBroadcastNotificationController);

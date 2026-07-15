@@ -1,10 +1,18 @@
-import { Bell, Clock, Loader2, Trash2, X } from "lucide-react";
+import { Bell, Clock, Loader2, Trash2, X, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import useAdminNotifications from "@food/hooks/useAdminNotifications";
 
 export default function AdminNotifications() {
   const navigate = useNavigate();
-  const { items, loading, clearAll, dismissOne } = useAdminNotifications();
+  const { items, unreadCount, loading, clearAll, dismissOne } = useAdminNotifications();
+  
+  const handleMarkAllAsRead = async () => {
+    try {
+      const { adminAPI } = await import("@food/api");
+      await adminAPI.markAllAdminNotificationsAsRead();
+      window.dispatchEvent(new Event("adminNotificationsUpdated"));
+    } catch (err) {}
+  };
 
   return (
     <div className="p-6">
@@ -22,14 +30,26 @@ export default function AdminNotifications() {
             </div>
           </div>
           {items.length > 0 && (
-            <button
-              type="button"
-              onClick={clearAll}
-              className="inline-flex items-center gap-2 rounded-2xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4" />
-              Clear all
-            </button>
+            <div className="flex items-center gap-3">
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={handleMarkAllAsRead}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  Mark all as read
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={clearAll}
+                className="inline-flex items-center gap-2 rounded-2xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                Clear all
+              </button>
+            </div>
           )}
         </div>
 
@@ -45,18 +65,24 @@ export default function AdminNotifications() {
             {items.map((item) => (
               <div
                 key={item?.id}
-                className="rounded-2xl border border-slate-200 bg-slate-50/50 px-4 py-4"
+                className={`rounded-2xl border px-4 py-4 ${item.isRead ? 'border-slate-200 bg-slate-50/50' : 'border-amber-200 bg-amber-50/50'}`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <button
                     type="button"
-                    onClick={() => item?.path && navigate(item.path)}
+                    onClick={() => {
+                      if (!item.isRead) dismissOne(item?.id);
+                      if (item?.path) navigate(item.path);
+                    }}
                     className="min-w-0 flex-1 text-left"
                   >
-                    <p className="text-base font-semibold text-slate-900">
-                      {item?.title || "Notification"}
-                    </p>
-                    <p className="text-sm text-slate-600 mt-1">
+                    <div className="flex items-center gap-2">
+                      {!item.isRead && <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />}
+                      <p className={`text-base text-slate-900 ${item.isRead ? 'font-medium' : 'font-bold'}`}>
+                        {item?.title || "Notification"}
+                      </p>
+                    </div>
+                    <p className={`text-sm mt-1 ${item.isRead ? 'text-slate-600' : 'text-slate-700 font-medium'}`}>
                       {item?.message || "-"}
                     </p>
                     <div className="flex items-center gap-2 mt-3 text-xs text-slate-500">
@@ -70,14 +96,17 @@ export default function AdminNotifications() {
                       ) : null}
                     </div>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => dismissOne(item?.id)}
-                    className="shrink-0 rounded-full p-2 text-slate-400 hover:text-red-600 hover:bg-red-50"
-                    aria-label="Delete notification"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+                  {!item.isRead && (
+                    <button
+                      type="button"
+                      onClick={() => dismissOne(item?.id)}
+                      className="shrink-0 rounded-full p-2 text-slate-400 hover:text-green-600 hover:bg-green-50"
+                      aria-label="Mark as read"
+                      title="Mark as read"
+                    >
+                      <CheckCircle2 className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

@@ -1,5 +1,7 @@
+import mongoose from 'mongoose';
 import { FeedbackExperience } from '../modules/food/admin/models/feedbackExperience.model.js';
 import { sendResponse, sendError } from '../utils/response.js';
+import { createAdminNotification } from '../modules/food/admin/services/adminNotification.service.js';
 
 /**
  * Public feedback submission (no authentication required).
@@ -38,6 +40,15 @@ export async function submitPublicFeedback(req, res) {
         try {
             const { broadcastPublicUpdate } = await import('../config/socket.js');
             broadcastPublicUpdate('feedback:update', { action: 'create', data: feedback });
+            
+            await createAdminNotification({
+                title: 'New User Feedback',
+                message: `${customerName || 'A user'} submitted feedback (${rating}★). "${comment.length > 60 ? comment.slice(0, 60) + "…" : comment}"`,
+                type: 'feedback',
+                category: 'feedback',
+                link: '/admin/food/feedback-experiences',
+                metaData: { feedbackId: feedback._id }
+            });
         } catch (e) {
             console.error('Failed to broadcast feedback update:', e);
         }

@@ -238,6 +238,12 @@ const restaurantSchema = new mongoose.Schema(
       set: normalizeRatingValue,
     },
     totalRatings: { type: Number, default: 0, min: 0 },
+    diningSettings: {
+      isEnabled: { type: Boolean, default: false },
+      maxGuests: { type: Number, default: 6 },
+      diningType: { type: [String], default: ["family-dining"] },
+      mealPeriods: { type: [String], default: ["breakfast", "lunch", "dinner"] },
+    },
     menu: {
       sections: { type: Array, default: [] },
     },
@@ -417,4 +423,7 @@ restaurantSchema.index(
 );
 restaurantSchema.index({ status: 1, createdAt: -1 });
 
-export const FoodRestaurant = mongoose.models.FoodRestaurant || mongoose.model('FoodRestaurant', restaurantSchema);
+export const FoodRestaurant = mongoose.models.FoodRestaurant || mongoose.models.FoodRestaurant || mongoose.model('FoodRestaurant', restaurantSchema,
+);
+
+

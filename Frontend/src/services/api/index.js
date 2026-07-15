@@ -248,6 +248,16 @@ export const adminAPI = {
     const fcmToken = typeof localStorage !== "undefined" ? localStorage.getItem("fcm_web_registered_token_admin") : null;
     return authService.logout(token, fcmToken, "web");
   },
+  
+  // Real-time Admin Notifications
+  getAdminNotificationsHistory: (params = {}) => apiClient.get("/food/admin/notifications/history", { params, contextModule: "admin" }),
+  markAdminNotificationAsRead: (id) => apiClient.patch(`/food/admin/notifications/${id}/read`, {}, { contextModule: "admin" }),
+  markAllAdminNotificationsAsRead: () => apiClient.patch("/food/admin/notifications/read-all", {}, { contextModule: "admin" }),
+  clearAllAdminNotifications: () => apiClient.delete("/food/admin/notifications/clear-all", { contextModule: "admin" }),
+  
+  // ============================
+  // CUSTOMER MANAGEMENT
+  // ============================
   // Restaurant approvals and join requests
   getPendingRestaurants: () =>
     apiClient.get("/food/admin/restaurants/pending", {
