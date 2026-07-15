@@ -500,6 +500,394 @@ export const updateRestaurantAcceptingOrders = async (restaurantId, isAcceptingO
     return toRestaurantProfile(doc);
 };
 
+export const updateRestaurantProfile = async (restaurantId, body = {}) => {
+    if (!restaurantId) {
+        throw new ValidationError('Invalid restaurant id');
+    }
+
+    const currentRestaurant = await FoodRestaurant.findById(restaurantId)
+        .select('restaurantName restaurantNameNormalized ownerPhone ownerPhoneDigits ownerPhoneLast10 primaryContactNumber status')
+        .lean();
+
+    if (!currentRestaurant) {
+        throw new ValidationError('Restaurant not found');
+    }
+
+    const update = {};
+
+    // Owner/contact fields (used by restaurant Contact Details screens)
+    if (body.ownerName !== undefined) {
+        const ownerName = String(body.ownerName || '').trim();
+        if (!ownerName) {
+            throw new ValidationError('Owner name cannot be empty');
+        }
+        if (ownerName.length > 120) {
+            throw new ValidationError('Owner name is too long');
+        }
+        update.ownerName = ownerName;
+    }
+
+    if (body.ownerEmail !== undefined) {
+        const ownerEmail = String(body.ownerEmail || '').trim().toLowerCase();
+        if (ownerEmail) {
+            const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!EMAIL_REGEX.test(ownerEmail)) {
+                throw new ValidationError('Owner email is invalid');
+            }
+            if (ownerEmail.length > 254) {
+                throw new ValidationError('Owner email is too long');
+            }
+            update.ownerEmail = ownerEmail;
+        } else {
+            update.ownerEmail = '';
+        }
+    }
+
+    // Note: UI keeps phone read-only, but we accept it safely and normalize if sent.
+    if (body.ownerPhone !== undefined) {
+        const { digits, last10 } = normalizePhone(body.ownerPhone);
+        if (!digits || digits.length < 8) {
+            throw new ValidationError('Owner phone is invalid');
+        }
+
+        const currentOwnerPhoneDigits =
+            currentRestaurant.ownerPhoneDigits ||
+            normalizePhone(currentRestaurant.ownerPhone).digits ||
+            '';
+
+        if (digits !== currentOwnerPhoneDigits) {
+            update.ownerPhone = digits;
+            update.ownerPhoneDigits = digits;
+            update.ownerPhoneLast10 = last10 || undefined;
+        }
+    }
+
+    if (body.primaryContactNumber !== undefined) {
+        const { digits } = normalizePhone(body.primaryContactNumber);
+        const normalizedPrimaryContact =
+            digits || String(body.primaryContactNumber || '').trim();
+        const currentPrimaryContact =
+            currentRestaurant.primaryContactNumber != null
+                ? String(currentRestaurant.primaryContactNumber).trim()
+                : '';
+
+        if (normalizedPrimaryContact !== currentPrimaryContact) {
+            update.primaryContactNumber = normalizedPrimaryContact;
+        }
+    }
+
+    if (body.pureVegRestaurant !== undefined) {
+        if (typeof body.pureVegRestaurant === 'boolean') {
+            update.pureVegRestaurant = body.pureVegRestaurant;
+        } else if (typeof body.pureVegRestaurant === 'string') {
+            const normalized = body.pureVegRestaurant.trim().toLowerCase();
+            if (normalized === 'true' || normalized === '1' || normalized === 'yes') {
+                update.pureVegRestaurant = true;
+            } else if (normalized === 'false' || normalized === '0' || normalized === 'no') {
+                update.pureVegRestaurant = false;
+            } else {
+                throw new ValidationError('pureVegRestaurant must be a boolean');
+            }
+        } else {
+            throw new ValidationError('pureVegRestaurant must be a boolean');
+        }
+    }
+
+    if (body.zoneId !== undefined) {
+        const zoneId = String(body.zoneId || '').trim();
+        update.zoneId = zoneId && mongoose.Types.ObjectId.isValid(zoneId)
+            ? new mongoose.Types.ObjectId(zoneId)
+            : undefined;
+    }
+
+    // Bank + UPI fields (Explore -> Update Bank Details page)
+    if (body.accountHolderName !== undefined) {
+        update.accountHolderName = String(body.accountHolderName || '').trim();
+    }
+    if (body.accountNumber !== undefined) {
+        update.accountNumber = String(body.accountNumber || '').replace(/\s|-/g, '').trim();
+    }
+    if (body.ifscCode !== undefined) {
+        update.ifscCode = String(body.ifscCode || '').trim().toUpperCase();
+    }
+    if (body.accountType !== undefined) {
+        update.accountType = String(body.accountType || '').trim();
+    }
+    if (body.referralCode !== undefined) {
+        const code = String(body.referralCode || '')
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '')
+            .slice(0, 20);
+        update.referralCode = code;
+        update.externalReferralCode = code;
+    }
+    if (body.externalReferralCode !== undefined && body.referralCode === undefined) {
+        update.externalReferralCode = String(body.externalReferralCode || '')
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '')
+            .slice(0, 20);
+    }
+    if (body.upiId !== undefined) {
+        update.upiId = String(body.upiId || '').trim();
+    }
+    if (body.upiQrImage !== undefined || body.upiQrCode !== undefined) {
+        const qrImage = body.upiQrImage !== undefined ? body.upiQrImage : body.upiQrCode;
+        update.upiQrImage = String(qrImage || '').trim();
+    }
+
+    if (body.name !== undefined || body.restaurantName !== undefined) {
+        const raw = body.name !== undefined ? body.name : body.restaurantName;
+        const name = String(raw || '').trim();
+        if (!name) {
+            throw new ValidationError('Restaurant name cannot be empty');
+        }
+        const normalizedName = normalizeName(name) || undefined;
+        const currentName = String(currentRestaurant.restaurantName || '').trim();
+        const currentNormalizedName =
+            currentRestaurant.restaurantNameNormalized || normalizeName(currentName) || undefined;
+
+        if (name !== currentName || normalizedName !== currentNormalizedName) {
+            update.restaurantName = name;
+            update.restaurantNameNormalized = normalizedName;
+        }
+    }
+
+    if (body.cuisines !== undefined) {
+        if (!Array.isArray(body.cuisines)) {
+            throw new ValidationError('Cuisines must be an array of strings');
+        }
+        const cuisines = body.cuisines
+            .map((c) => String(c || '').trim())
+            .filter(Boolean)
+            .slice(0, 50);
+        update.cuisines = cuisines;
+    }
+
+    if (body.location !== undefined) {
+        const loc = body.location && typeof body.location === 'object' ? body.location : null;
+        if (!loc) {
+            throw new ValidationError('Location must be an object');
+        }
+        const toStr = (v) => (v != null ? String(v).trim() : '');
+        const formattedAddress = toStr(loc.formattedAddress || loc.address);
+        update.addressLine1 = toStr(loc.addressLine1);
+        update.addressLine2 = toStr(loc.addressLine2);
+        update.area = toStr(loc.area);
+        update.city = toStr(loc.city);
+        update.state = toStr(loc.state);
+        update.pincode = toStr(loc.pincode);
+        update.landmark = toStr(loc.landmark);
+
+        // Optional geo coords for server-side distance filtering.
+        const lat = toFiniteNumber(loc.latitude);
+        const lng = toFiniteNumber(loc.longitude);
+        update.location = {
+            type: 'Point',
+            coordinates: lat !== null && lng !== null ? [lng, lat] : undefined,
+            latitude: lat ?? undefined,
+            longitude: lng ?? undefined,
+            formattedAddress,
+            address: formattedAddress,
+            addressLine1: toStr(loc.addressLine1),
+            addressLine2: toStr(loc.addressLine2),
+            area: toStr(loc.area),
+            city: toStr(loc.city),
+            state: toStr(loc.state),
+            pincode: toStr(loc.pincode),
+            landmark: toStr(loc.landmark)
+        };
+    }
+
+    if (body.openingTime !== undefined) {
+        update.openingTime = normalizeRestaurantTime(body.openingTime) || '';
+    }
+    if (body.closingTime !== undefined) {
+        update.closingTime = normalizeRestaurantTime(body.closingTime) || '';
+    }
+    if (body.openDays !== undefined) {
+        if (!Array.isArray(body.openDays)) {
+            throw new ValidationError('openDays must be an array');
+        }
+        update.openDays = body.openDays
+            .map((day) => String(day || '').trim())
+            .filter(Boolean)
+            .slice(0, 7);
+    }
+    if (body.estimatedDeliveryTime !== undefined) {
+        const estimatedDeliveryTimeText = String(body.estimatedDeliveryTime || '').trim();
+        update.estimatedDeliveryTime = estimatedDeliveryTimeText;
+        update.estimatedDeliveryTimeMinutes = parseEstimatedDeliveryMinutes(estimatedDeliveryTimeText) ?? undefined;
+    }
+    if (body.featuredPrice !== undefined || body.costForTwo !== undefined) {
+        const rawFeaturedPrice = body.featuredPrice !== undefined ? body.featuredPrice : body.costForTwo;
+        const featuredPrice = toFiniteNumber(rawFeaturedPrice);
+        if (!Number.isFinite(featuredPrice) || featuredPrice < 0) {
+            throw new ValidationError('Featured price must be a number greater than or equal to 0');
+        }
+        update.featuredPrice = featuredPrice;
+    }
+
+    if (body.menuImages !== undefined) {
+        if (!Array.isArray(body.menuImages)) {
+            throw new ValidationError('menuImages must be an array');
+        }
+        const urls = body.menuImages
+            .map((m) => toUrl(m))
+            .filter(Boolean)
+            .slice(0, 10);
+        update.menuImages = urls;
+    }
+
+    if (body.menuPdf !== undefined) {
+        update.menuPdf = toUrl(body.menuPdf) || '';
+    }
+
+    if (body.coverImages !== undefined) {
+        if (!Array.isArray(body.coverImages)) {
+            throw new ValidationError('coverImages must be an array');
+        }
+        const urls = body.coverImages
+            .map((m) => toUrl(m))
+            .filter(Boolean)
+            .slice(0, 10);
+        update.coverImages = urls;
+    }
+
+    if (body.profileImage !== undefined) {
+        update.profileImage = toUrl(body.profileImage) || '';
+    }
+
+    if (!Object.keys(update).length) {
+        return getCurrentRestaurantProfile(restaurantId);
+    }
+
+    // Determine the reason for the update to show to the admin
+    const updatedFields = Object.keys(update);
+    
+    // Check if only allowed fields are updated (no approval needed)
+    const allowedFields = ['featuredPrice', 'coverImages', 'menuImages', 'profileImage'];
+    const onlyAllowedFields = updatedFields.every(field => allowedFields.includes(field));
+    
+    if (!onlyAllowedFields) {
+        let reason = 'Profile Update';
+
+        if (updatedFields.includes('zoneId')) {
+            reason = 'Zone Update';
+        } else if (updatedFields.some(f => ['accountNumber', 'ifscCode', 'accountHolderName', 'upiId'].includes(f))) {
+            reason = 'Financial Details Update';
+        } else if (updatedFields.some(f => ['addressLine1', 'area', 'city', 'pincode'].includes(f))) {
+            reason = 'Location/Address Update';
+        } else if (updatedFields.some(f => ['openingTime', 'closingTime', 'openDays'].includes(f))) {
+            reason = 'Timings Update';
+        } else if (updatedFields.some(f => ['profileImage', 'coverImages'].includes(f))) {
+            reason = 'Photo/Banner Update';
+        } else if (updatedFields.some(f => ['ownerName', 'ownerEmail', 'ownerPhone', 'primaryContactNumber'].includes(f))) {
+            reason = 'Owner Details Update';
+        } else if (updatedFields.includes('pureVegRestaurant')) {
+            reason = 'Dietary Category Update';
+        } else if (updatedFields.includes('restaurantName')) {
+            reason = 'Restaurant Name Change';
+        }
+
+        update.pendingUpdateReason = reason;
+        update.status = 'pending';
+    }
+
+    try {
+        const doc = await FoodRestaurant.findByIdAndUpdate(
+            restaurantId,
+            {
+                $set: update,
+                $unset: {
+                    rejectedAt: 1,
+                    rejectionReason: 1
+                }
+            },
+            {
+                new: true,
+                runValidators: true,
+                projection: [
+                    'restaurantName',
+                    'rating',
+                    'totalRatings',
+                    'cuisines',
+                    'location',
+                    'addressLine1',
+                    'addressLine2',
+                    'area',
+                    'city',
+                    'state',
+                    'pincode',
+                    'landmark',
+                    'ownerName',
+                    'ownerEmail',
+                    'ownerPhone',
+                    'primaryContactNumber',
+                'pureVegRestaurant',
+                'featuredPrice',
+                'profileImage',
+                'coverImages',
+                    'openingTime',
+                    'closingTime',
+                    'openDays',
+                    'status',
+                    'createdAt',
+                    'updatedAt',
+                    'accountNumber',
+                    'ifscCode',
+                    'accountHolderName',
+                    'accountType',
+                    'upiId',
+                    'estimatedDeliveryTime',
+                    'estimatedDeliveryTimeMinutes',
+                    'zoneId'
+                ].join(' ')
+            }
+        ).lean();
+
+        if (!onlyAllowedFields && currentRestaurant.status !== 'pending') {
+            const restaurantNameForNotification =
+                update.restaurantName || currentRestaurant.restaurantName || doc?.restaurantName;
+            void notifyAdminsAboutRestaurantProfileReview(restaurantId, restaurantNameForNotification);
+        }
+
+        return toRestaurantProfile(doc);
+    } catch (err) {
+        if (err && err.code === 11000) {
+            throw new ValidationError('A restaurant with this name and phone already exists');
+        }
+        throw err;
+    }
+};
+
+export const uploadRestaurantProfileImage = async (restaurantId, file) => {
+    if (!restaurantId) throw new ValidationError('Invalid restaurant id');
+    if (!file?.buffer) throw new ValidationError('Image file is required');
+
+    const currentRestaurant = await FoodRestaurant.findById(restaurantId)
+        .select('restaurantName status')
+        .lean();
+    if (!currentRestaurant) throw new ValidationError('Restaurant not found');
+
+    const url = await uploadImageBuffer(file.buffer, 'food/restaurants/profile');
+    const doc = await FoodRestaurant.findByIdAndUpdate(
+        restaurantId,
+        {
+            $set: {
+                profileImage: url
+            },
+            $unset: {
+                rejectedAt: 1,
+                rejectionReason: 1
+            }
+        },
+        { new: true, projection: 'profileImage coverImages restaurantName cuisines location menuImages addressLine1 addressLine2 area city state pincode landmark ownerName ownerEmail ownerPhone primaryContactNumber pureVegRestaurant openingTime closingTime openDays status approvedAt pendingUpdateReason createdAt updatedAt' }
+    ).lean();
+
+    if (!doc) throw new ValidationError('Restaurant not found');
+
+    return { profileImage: { url } };
+};
 
 export const uploadRestaurantMenuImage = async (file) => {
     if (!file?.buffer) throw new ValidationError('Image file is required');
@@ -834,6 +1222,9 @@ export const listApprovedRestaurants = async (query = {}) => {
 export const getApprovedRestaurantByIdOrSlug = async (idOrSlug) => {
     const value = String(idOrSlug || '').trim();
     if (!value) return null;
+
+        };
+
     // ObjectId path
     if (/^[0-9a-fA-F]{24}$/.test(value)) {
         const doc = await FoodRestaurant.findOne({ _id: value, status: 'approved' }).lean();
@@ -844,7 +1235,7 @@ export const getApprovedRestaurantByIdOrSlug = async (idOrSlug) => {
             ...doc,
             rating: normalizeRatingValue(doc.rating),
             totalRatings: normalizeTotalRatingsValue(doc.totalRatings),
-        };
+};
     }
 
     // Slug path: use normalized field for index-friendly exact match.
@@ -862,7 +1253,7 @@ export const getApprovedRestaurantByIdOrSlug = async (idOrSlug) => {
         ...doc,
         rating: normalizeRatingValue(doc.rating),
         totalRatings: normalizeTotalRatingsValue(doc.totalRatings),
-    };
+};
 };
 
 export const listPublicOffers = async () => {
