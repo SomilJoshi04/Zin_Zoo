@@ -56,8 +56,20 @@ const startServer = async () => {
         // 2. Create HTTP server from Express app
         const httpServer = http.createServer(app);
 
-        // 3. Initialize Socket.IO with the HTTP server (Redis adapter when Redis enabled)
-        await initSocket(httpServer);
+        // 3. Initialize Socket.IO with the HTTP server (or a separate server if port is different)
+        let socketHttpServer = httpServer;
+        const sPort = Number(config.socketPort || 5001);
+        const apiPort = Number(config.port || 5000);
+        
+        if (sPort && sPort !== apiPort) {
+            socketHttpServer = http.createServer();
+            await initSocket(socketHttpServer);
+            socketHttpServer.listen(sPort, config.host, () => {
+                logger.info(`Socket.io server running separately on ${config.host}:${sPort}`);
+            });
+        } else {
+            await initSocket(httpServer);
+        }
 
         if (config.redisEnabled) {
             await connectRedis();

@@ -26,7 +26,7 @@ export const useLocationSharing = (orderId, enabled = false) => {
       '',
   );
 
-  const backendUrl = API_BASE_URL ? API_BASE_URL.replace('/api', '') : '';
+  const backendUrl = import.meta.env?.VITE_SOCKET_URL || (API_BASE_URL ? API_BASE_URL.replace(/\/api(\/v\d+)?$/i, '') : '');
 
   const startSharing = () => {
     if (!orderId || isSharingRef.current) return;

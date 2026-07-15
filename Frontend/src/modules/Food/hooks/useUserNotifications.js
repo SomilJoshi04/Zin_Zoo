@@ -73,14 +73,17 @@ export const useUserNotifications = () => {
     }
 
     // Normalize backend URL
-    let backendUrl = API_BASE_URL;
-    try {
-      backendUrl = new URL(backendUrl).origin;
-    } catch {
-      backendUrl = String(backendUrl || "")
-        .replace(/\/api\/v\d+\/?$/i, "")
-        .replace(/\/api\/?$/i, "")
-        .replace(/\/+$/, "");
+    let backendUrl = import.meta.env.VITE_SOCKET_URL;
+    if (!backendUrl) {
+      backendUrl = API_BASE_URL;
+      try {
+        backendUrl = new URL(backendUrl).origin;
+      } catch {
+        backendUrl = String(backendUrl || "")
+          .replace(/\/api\/v\d+\/?$/i, "")
+          .replace(/\/api\/?$/i, "")
+          .replace(/\/+$/, "");
+      }
     }
 
     const socketUrl = `${backendUrl}`;

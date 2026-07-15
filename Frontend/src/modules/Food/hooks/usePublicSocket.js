@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
-const SOCKET_URL = (() => {
+const SOCKET_URL = import.meta.env?.VITE_SOCKET_URL || (() => {
     const base = import.meta.env?.VITE_API_BASE_URL || '';
     if (base) {
         // Remove /api/v1 or /api to get the root server URL
