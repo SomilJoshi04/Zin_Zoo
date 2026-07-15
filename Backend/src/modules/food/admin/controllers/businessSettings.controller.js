@@ -1,6 +1,6 @@
 import { FoodBusinessSettings } from '../models/businessSettings.model.js';
 import { sendResponse } from '../../../../utils/response.js';
-import { uploadImageBufferDetailed } from '../../../../services/cloudinary.service.js';
+import { uploadImageBufferDetailed } from '../../../../services/localUpload.service.js';
 import { broadcastPublicUpdate } from '../../../../config/socket.js';
 
 const POWER_SCANNING_DEFAULT = {
