@@ -54,8 +54,7 @@ import {
     getPublicHeroBannersController,
     getPublicUnder250BannersController,
     getPublicAccessoriesBannersController,
-    getPublicDiningBannersController,
-    getPublicExploreIconsController,
+getPublicExploreIconsController,
     getPublicHomePromotionBannersController,
     getPublicGourmetController,
     getPublicLandingSettingsController,
@@ -154,7 +153,8 @@ router.get('/hero-banners/public', getPublicHeroBannersController);
 router.get('/top-banners/public', getPublicTopBannersController);
 router.get('/hero-banners/under-250/public', getPublicUnder250BannersController);
 router.get('/hero-banners/accessories/public', getPublicAccessoriesBannersController);
-router.get('/hero-banners/dining/public', getPublicDiningBannersController);
+router.get('/hero-banners/dining/public',
+);
 router.get('/explore-icons/public', getPublicExploreIconsController);
 router.get('/hero-banners/home-promotion/public', getPublicHomePromotionBannersController);
 router.get('/hero-banners/gourmet/public', getPublicGourmetController);
