@@ -1223,8 +1223,6 @@ export const getApprovedRestaurantByIdOrSlug = async (idOrSlug) => {
     const value = String(idOrSlug || '').trim();
     if (!value) return null;
 
-        };
-
     // ObjectId path
     if (/^[0-9a-fA-F]{24}$/.test(value)) {
         const doc = await FoodRestaurant.findOne({ _id: value, status: 'approved' }).lean();
