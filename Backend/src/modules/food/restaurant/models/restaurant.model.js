@@ -417,7 +417,4 @@ restaurantSchema.index(
 );
 restaurantSchema.index({ status: 1, createdAt: -1 });
 
-export const FoodRestaurant = mongoose.models.FoodRestaurant || mongoose.models.FoodRestaurant || mongoose.model('FoodRestaurant', restaurantSchema,
-);
-
-
+export const FoodRestaurant = mongoose.models.FoodRestaurant || mongoose.model('FoodRestaurant', restaurantSchema);

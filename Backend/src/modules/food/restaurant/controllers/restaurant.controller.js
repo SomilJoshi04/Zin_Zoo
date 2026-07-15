@@ -77,15 +77,6 @@ export const updateRestaurantAcceptingOrdersController = async (req, res, next) 
     }
 };
 
-export constController = async (req, res, next) => {
-    try {
-        const restaurantId = req.user?.userId;
-        const restaurant = await(restaurantId, req.body || {});
-        return sendResponse(res, 200, 'Dining settings updated successfully', { restaurant });
-    } catch (error) {
-        next(error);
-    }
-};
 
 export const uploadRestaurantProfileImageController = async (req, res, next) => {
     try {
