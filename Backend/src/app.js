@@ -18,10 +18,43 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+import fs from 'fs';
+
 const app = express();
 
 // Serve static files from the uploads directory
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+const uploadsPath = path.join(__dirname, '../uploads');
+app.use('/uploads', express.static(uploadsPath));
+
+// Dynamically serve subfolders under /uploads (for legacy DB entries that only store the filename)
+if (fs.existsSync(uploadsPath)) {
+  const getSubdirs = (dirPath) => {
+    let results = [];
+    try {
+      const list = fs.readdirSync(dirPath);
+      list.forEach((file) => {
+        const filePath = path.join(dirPath, file);
+        const stat = fs.statSync(filePath);
+        if (stat && stat.isDirectory()) {
+          results.push(filePath);
+          results = results.concat(getSubdirs(filePath));
+        }
+      });
+    } catch (e) {
+      // Ignore directory read errors
+    }
+    return results;
+  };
+
+  try {
+    const subdirs = getSubdirs(uploadsPath);
+    subdirs.forEach((subdir) => {
+      app.use('/uploads', express.static(subdir));
+    });
+  } catch (err) {
+    console.error('Error registering static directories:', err);
+  }
+}
 
 // Trust first proxy (essential for express-rate-limit if behind a proxy)
 app.set('trust proxy', 1);
