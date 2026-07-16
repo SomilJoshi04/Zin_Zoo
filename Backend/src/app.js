@@ -23,7 +23,7 @@ import fs from 'fs';
 const app = express();
 
 // Serve static files from the uploads directory
-const uploadsPath = path.join(__dirname, '../uploads');
+const uploadsPath = process.env.UPLOADS_DIR || path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsPath));
 
 // Dynamically serve subfolders under /uploads (for legacy DB entries that only store the filename)
