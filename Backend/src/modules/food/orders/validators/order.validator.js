@@ -13,7 +13,8 @@ const orderItemSchema = z.object({
     image: z.string().optional(),
     notes: z.string().optional(),
     restaurantId: z.string().optional(),
-    restaurantName: z.string().optional()
+    restaurantName: z.string().optional(),
+    moduleType: z.string().optional()
 });
 
 const addressSchema = z.object({
