@@ -310,17 +310,24 @@ function toObjectId(id, fieldName = 'ID') {
 
 import { FoodItem } from '../../admin/models/food.model.js';
 import { GroceryProduct } from '../../admin/models/groceryProduct.model.js';
+import { AccessoriesProduct } from '../../../accessories/models/accessoriesProduct.model.js';
 
 
 async function createUnifiedOrder(userId, dto) {
   for (const item of dto.items) {
-    if (item.moduleType === 'food' || !item.moduleType) {
+    const mod = item.moduleType || 'food';
+    if (mod === 'food') {
       const dbItem = await FoodItem.findById(item.itemId);
       if (!dbItem || dbItem.isAvailable === false) {
         throw new Error(`Item Out of Stock: ${item.name}`);
       }
-    } else {
+    } else if (mod === 'grocery') {
       const dbItem = await GroceryProduct.findById(item.itemId);
+      if (!dbItem || dbItem.isActive === false) {
+        throw new Error(`Item Out of Stock: ${item.name}`);
+      }
+    } else if (mod === 'accessories') {
+      const dbItem = await AccessoriesProduct.findById(item.itemId);
       if (!dbItem || dbItem.isActive === false) {
         throw new Error(`Item Out of Stock: ${item.name}`);
       }
