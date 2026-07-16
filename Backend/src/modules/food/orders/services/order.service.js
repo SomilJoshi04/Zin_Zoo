@@ -314,6 +314,7 @@ import { AccessoriesProduct } from '../../../accessories/models/accessoriesProdu
 
 
 async function createUnifiedOrder(userId, dto) {
+  console.log('--- createUnifiedOrder backend payload ---', JSON.stringify(dto.items, null, 2));
   for (const item of dto.items) {
     const mod = item.moduleType || 'food';
     if (mod === 'food') {

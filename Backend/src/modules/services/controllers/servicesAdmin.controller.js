@@ -24,7 +24,7 @@ export async function getAllServices(req, res) {
 
 export async function createService(req, res) {
     try {
-        const { name, image, category, subCategory, basePrice, description, availableFrom, availableTo, provider, isActive, zoneId } = req.body;
+        const { name, image, category, subCategory, basePrice, visitingCharge, description, availableFrom, availableTo, provider, isActive, zoneId } = req.body;
         
         const newService = new VendorService({
             name,
@@ -32,6 +32,7 @@ export async function createService(req, res) {
             category,
             subCategory,
             basePrice,
+            visitingCharge: visitingCharge !== undefined ? Number(visitingCharge) : 0,
             description,
             availableFrom,
             availableTo,

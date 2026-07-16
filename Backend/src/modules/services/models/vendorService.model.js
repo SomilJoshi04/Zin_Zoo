@@ -45,6 +45,10 @@ const vendorServiceSchema = new mongoose.Schema(
             default: 'Admin', // Defaulting to Admin for now as per simple setup
             trim: true
         }, 
+        visitingCharge: {
+            type: Number,
+            default: 0
+        },
         zoneId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'FoodZone',

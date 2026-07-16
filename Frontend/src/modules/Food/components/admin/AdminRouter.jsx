@@ -228,6 +228,7 @@ export default function AdminRouter() {
             <Route path="global-orders/:status" element={<GlobalOrdersPage />} />
             
             {/* ORDER MANAGEMENT */}
+            <Route path="orders" element={<Navigate to="orders/all" replace />} />
             <Route path="orders/all" element={<OrdersPage statusKey="all" />} />
             <Route path="orders/scheduled" element={<OrdersPage statusKey="scheduled" />} />
             <Route path="orders/pending" element={<OrdersPage statusKey="pending" />} />
@@ -258,6 +259,7 @@ export default function AdminRouter() {
             {/* Accessories Routes */}
             <Route path="accessories-categories" element={<AccessoriesCategory />} />
             <Route path="accessories-products" element={<AccessoriesProductsList />} />
+            <Route path="accessories-orders" element={<Navigate to="accessories-orders/all" replace />} />
             <Route path="accessories-orders/:status" element={<AccessoriesOrdersPage />} />
 
             {/* Services Routes */}
@@ -269,6 +271,7 @@ export default function AdminRouter() {
 
             {/* GROCERY MANAGEMENT */}
             <Route path="grocery-product-approval" element={<AdminServicePlaceholder title="Product Approval" />} />
+            <Route path="grocery-orders" element={<Navigate to="grocery-orders/all" replace />} />
             <Route path="grocery-orders/all" element={<GroceryOrdersPage statusKey="all" />} />
             <Route path="grocery-orders/pending" element={<GroceryOrdersPage statusKey="pending" />} />
             <Route path="grocery-orders/accepted" element={<GroceryOrdersPage statusKey="accepted" />} />

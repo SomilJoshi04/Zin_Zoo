@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Eye, Pencil, Trash2, Plus, Loader2, X, Clock } from 'lucide-react';
 import { toast } from 'sonner';
-import { servicesAdminAPI, adminAPI } from '@food/api';
+import { servicesAdminAPI, adminAPI, userAPI } from '@food/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog"
 
 export default function ServicesList() {
@@ -12,12 +12,15 @@ export default function ServicesList() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    image: '',
     category: '',
     subCategory: '',
     basePrice: '',
+    visitingCharge: '0',
     description: '',
     availableFrom: '09:00',
     availableTo: '18:00',
@@ -60,9 +63,11 @@ export default function ServicesList() {
       setEditId(service._id);
       setFormData({
         name: service.name,
+        image: service.image || '',
         category: service.category,
         subCategory: service.subCategory || '',
         basePrice: service.basePrice,
+        visitingCharge: service.visitingCharge !== undefined ? String(service.visitingCharge) : '0',
         description: service.description || '',
         availableFrom: service.availableFrom,
         availableTo: service.availableTo,
@@ -72,9 +77,11 @@ export default function ServicesList() {
       setEditId(null);
       setFormData({
         name: '',
+        image: '',
         category: '',
         subCategory: '',
         basePrice: '',
+        visitingCharge: '0',
         description: '',
         availableFrom: '09:00',
         availableTo: '18:00',
@@ -84,6 +91,24 @@ export default function ServicesList() {
     setIsModalOpen(true);
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const res = await userAPI.uploadGenericImage(file);
+      const url = res?.data?.data?.url || res?.data?.url || '';
+      if (!url) throw new Error('No URL returned');
+      setFormData(prev => ({ ...prev, image: url }));
+      toast.success('Image uploaded');
+    } catch (err) {
+      toast.error('Failed to upload image');
+      console.error(err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -91,6 +116,7 @@ export default function ServicesList() {
       const payload = {
         ...formData,
         basePrice: Number(formData.basePrice),
+        visitingCharge: Number(formData.visitingCharge || 0),
         zoneId: null
       };
 
@@ -136,7 +162,7 @@ export default function ServicesList() {
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-500/10">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-500 to-red-650 flex items-center justify-center shadow-md shadow-orange-500/10">
               <span className="text-white font-bold">SV</span>
             </div>
             <div>
@@ -148,7 +174,7 @@ export default function ServicesList() {
           <div className="flex items-center gap-3">
             <button 
               onClick={() => handleOpenModal()}
-              className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 transition-colors flex items-center gap-1.5 shadow-sm"
+              className="px-4 py-2 text-xs font-bold text-white bg-[#F84E04] hover:bg-[#D40261] rounded-lg transition-colors flex items-center gap-1.5 shadow-sm shadow-[#F84E04]/20 hover:shadow-[#F84E04]/30"
             >
               <Plus className="w-4 h-4" /> Add Service
             </button>
@@ -158,7 +184,7 @@ export default function ServicesList() {
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 w-48 lg:w-60 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+                className="pl-9 pr-4 py-2 w-48 lg:w-60 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all"
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             </div>
@@ -176,7 +202,7 @@ export default function ServicesList() {
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Provider</th>
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Category</th>
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Time</th>
-                <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Hourly Rate</th>
+                <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Price Details</th>
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-4 text-center text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Action</th>
               </tr>
@@ -185,7 +211,7 @@ export default function ServicesList() {
               {loading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-emerald-600 mx-auto" />
+                    <Loader2 className="w-6 h-6 animate-spin text-orange-600 mx-auto" />
                     <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Loading services...</p>
                   </td>
                 </tr>
@@ -210,12 +236,17 @@ export default function ServicesList() {
                       <Clock className="w-3.5 h-3.5 text-slate-400" />
                       {service.availableFrom} - {service.availableTo}
                     </td>
-                    <td className="px-6 py-4 text-xs font-bold text-slate-800 dark:text-slate-200">₹{service.basePrice}</td>
+                    <td className="px-6 py-4 text-xs font-bold text-slate-800 dark:text-slate-200">
+                      <div>Base: ₹{service.basePrice}</div>
+                      {service.visitingCharge > 0 && <div className="text-[10px] text-orange-500">Visit: +₹{service.visitingCharge}</div>}
+                    </td>
                     <td className="px-6 py-4">
                       <button 
                         onClick={() => handleToggleStatus(service)}
-                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors ${
-                          service.isActive ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-colors ${
+                          service.isActive
+                            ? 'bg-green-50 dark:bg-green-950/30 text-green-600 dark:text-green-400 border border-green-200/50 dark:border-green-900/30'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700'
                         }`}
                       >
                         {service.isActive ? 'Active' : 'Inactive'}
@@ -290,8 +321,29 @@ export default function ServicesList() {
                 placeholder="e.g. AC Repair Service"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:border-emerald-500"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:border-[#F84E04]"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">Service Image</label>
+              <div className="flex items-center gap-3">
+                {formData.image ? (
+                  <img src={formData.image} className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700" alt="" />
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">No Img</div>
+                )}
+                <label className="cursor-pointer px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 rounded-xl transition-colors">
+                  {isUploading ? 'Uploading...' : 'Choose Image'}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={isUploading}
+                    onChange={handleImageUpload}
+                  />
+                </label>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -317,16 +369,29 @@ export default function ServicesList() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">Base Price (₹)</label>
-              <input
-                required
-                type="number"
-                min="0"
-                value={formData.basePrice}
-                onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:border-emerald-500"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">Base Price (₹)</label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  value={formData.basePrice}
+                  onChange={(e) => setFormData({ ...formData, basePrice: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:border-[#F84E04]"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">Visiting Charge (₹)</label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  value={formData.visitingCharge}
+                  onChange={(e) => setFormData({ ...formData, visitingCharge: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:border-[#F84E04]"
+                />
+              </div>
             </div>
 
             <div>
@@ -335,17 +400,17 @@ export default function ServicesList() {
                 rows="3"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:border-emerald-500 resize-none"
+                className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-sm focus:outline-none focus:border-[#F84E04] resize-none"
               ></textarea>
             </div>
 
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={isSubmitting}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-colors flex justify-center items-center gap-2"
+                disabled={isSubmitting || isUploading}
+                className="w-full py-3 bg-[#F84E04] hover:bg-[#D40261] text-white font-bold rounded-xl text-sm transition-colors flex justify-center items-center gap-2 shadow-sm shadow-[#F84E04]/20 hover:shadow-[#F84E04]/30"
               >
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {(isSubmitting || isUploading) && <Loader2 className="w-4 h-4 animate-spin" />}
                 {isSubmitting ? 'Saving...' : 'Save Service'}
               </button>
             </div>

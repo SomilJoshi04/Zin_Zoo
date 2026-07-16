@@ -44,6 +44,10 @@ const serviceBookingSchema = new mongoose.Schema(
             type: String,
             required: [true, 'Time slot is required (e.g., 10:00 - 11:00)']
         },
+        visitingCharge: {
+            type: Number,
+            default: 0
+        },
         totalAmount: {
             type: Number,
             required: [true, 'Total amount is required'],

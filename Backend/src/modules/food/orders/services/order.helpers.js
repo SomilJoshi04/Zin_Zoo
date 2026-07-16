@@ -396,13 +396,13 @@ export async function broadcastNewOrderToAdmin(order) {
     
     const totalAmount = payload.pricing?.total ?? payload.pricing?.finalTotal ?? payload.pricing?.amount ?? 0;
     let moduleName = 'Food';
-    let link = '/admin/food/orders';
+    let link = '/admin/food/orders/all';
     if (payload.moduleType === 'grocery') {
         moduleName = 'Grocery';
-        link = '/admin/food/grocery-orders';
+        link = '/admin/food/grocery-orders/all';
     } else if (payload.moduleType === 'accessories') {
         moduleName = 'Accessories';
-        link = '/admin/food/accessories-orders';
+        link = '/admin/food/accessories-orders/all';
     }
 
     await createAdminNotification({

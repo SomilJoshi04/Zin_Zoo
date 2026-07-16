@@ -50,6 +50,8 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
     }
     try {
       const price = Number(service.price || service.basePrice || 0)
+      const visiting = Number(service.visitingCharge || 0)
+      const totalAmount = price + visiting
       const res = await servicesUserAPI.createBooking({
         serviceName: service.name,
         category: categoryTitle,
@@ -58,7 +60,8 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
         serviceAddress: formData.address,
         bookingDate: formData.date,
         timeSlot: formData.timeSlot,
-        totalAmount: price,
+        totalAmount,
+        visitingCharge: visiting,
         paymentMode: formData.paymentMode
       })
 
@@ -270,11 +273,13 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-500">Visiting Charge</span>
-                      <span className="font-medium text-green-600">Free</span>
+                      <span className={`font-medium ${Number(service.visitingCharge || 0) === 0 ? 'text-green-600' : ''}`}>
+                        {Number(service.visitingCharge || 0) === 0 ? 'Free' : `₹${service.visitingCharge}`}
+                      </span>
                     </div>
                     <div className="flex justify-between font-bold text-lg pt-3 border-t border-gray-200 dark:border-gray-700">
                       <span>Total Amount</span>
-                      <span>₹{service.price || service.basePrice}</span>
+                      <span>₹{Number(service.price || service.basePrice || 0) + Number(service.visitingCharge || 0)}</span>
                     </div>
                   </div>
                 </motion.div>

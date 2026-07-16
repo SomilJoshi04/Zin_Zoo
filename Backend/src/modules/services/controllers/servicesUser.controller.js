@@ -6,7 +6,7 @@ import { createRazorpayOrder, getRazorpayKeyId, isRazorpayConfigured } from '../
 // @access  Private (User)
 export const createBooking = async (req, res, next) => {
     try {
-        const { serviceId, serviceName, category, customerName, customerPhone, serviceAddress, bookingDate, timeSlot, totalAmount, paymentMode } = req.body;
+        const { serviceId, serviceName, category, customerName, customerPhone, serviceAddress, bookingDate, timeSlot, totalAmount, visitingCharge, paymentMode } = req.body;
 
         if (!serviceName || !category || !bookingDate || !timeSlot || !totalAmount) {
             return res.status(400).json({ success: false, message: 'Missing required booking details' });
@@ -22,6 +22,7 @@ export const createBooking = async (req, res, next) => {
             serviceAddress,
             bookingDate,
             timeSlot,
+            visitingCharge: visitingCharge !== undefined ? Number(visitingCharge) : 0,
             totalAmount,
             paymentMode,
             status: 'pending'
