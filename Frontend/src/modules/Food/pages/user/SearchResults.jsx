@@ -307,9 +307,11 @@ export default function SearchResults() {
               // Use backend images only - no fallback placeholder
               const allImages = coverImages.length > 0
                 ? coverImages
-                : (fallbackImages.length > 0
-                  ? fallbackImages
-                  : (restaurant.profileImage?.url ? [restaurant.profileImage.url] : []))
+                : (restaurant.profileImage?.url
+                  ? [restaurant.profileImage.url]
+                  : (fallbackImages.length > 0
+                    ? fallbackImages
+                    : []))
 
               const image = allImages[0] || null // Will be handled in UI
               const restaurantId = restaurant.restaurantId || restaurant._id

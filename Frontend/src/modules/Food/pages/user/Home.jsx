@@ -511,6 +511,9 @@ export default function Home() {
   ] = useState([]);
   const [loadingLandingConfig, setLoadingLandingConfig] = useState(true);
   const [restaurantsData, setRestaurantsData] = useState(cachedState ? cachedState.restaurantsData : []);
+  const [restaurantsPage, setRestaurantsPage] = useState(1);
+  const [hasMoreRestaurantsBackend, setHasMoreRestaurantsBackend] = useState(true);
+  const [loadingMoreRestaurants, setLoadingMoreRestaurants] = useState(false);
   const [loadingRestaurants, setLoadingRestaurants] = useState(cachedState ? false : true);
   const [realCategories, setRealCategories] = useState([]);
   const [loadingRealCategories, setLoadingRealCategories] = useState(true);
@@ -1569,15 +1572,22 @@ export default function Home() {
 
   // Fetch restaurants from API with filters
   const fetchRestaurants = useCallback(
-    async (filters = {}) => {
+    async (filters = {}, pageNum = 1, append = false) => {
       const requestSeq = ++restaurantsRequestSeqRef.current;
       try {
-        setLoadingRestaurants(true);
+        if (append) {
+          setLoadingMoreRestaurants(true);
+        } else {
+          setLoadingRestaurants(true);
+        }
 
         // Backend disconnected - new backend in progress. Skip health check.
 
         // Build query parameters from filters
-        const params = {};
+        const params = {
+          limit: 10,
+          page: pageNum,
+        };
 
         // Always send user coordinates when available so backend can compute distance/sort.
         if (
@@ -1660,9 +1670,15 @@ export default function Home() {
           const restaurantsArray = response.data.data.restaurants;
           debugLog(`Fetched ${restaurantsArray.length} restaurants from API`);
 
+          const total = response.data.data.total || 0;
+          const hasMore = pageNum * 10 < total;
+          setHasMoreRestaurantsBackend(hasMore);
+
           if (restaurantsArray.length === 0) {
             debugWarn("No restaurants found in API response");
-            setRestaurantsData([]);
+            if (!append) {
+              setRestaurantsData([]);
+            }
             return;
           }
 
@@ -1861,7 +1877,15 @@ export default function Home() {
             transformedRestaurants,
           );
           startTransition(() => {
-            setRestaurantsData(sortRestaurantsForDisplay(transformedRestaurants));
+            if (append) {
+              setRestaurantsData((prev) => {
+                const existingIds = new Set(prev.map(r => r.id));
+                const uniqueNew = transformedRestaurants.filter(r => !existingIds.has(r.id));
+                return sortRestaurantsForDisplay([...prev, ...uniqueNew]);
+              });
+            } else {
+              setRestaurantsData(sortRestaurantsForDisplay(transformedRestaurants));
+            }
           });
 
           const restaurantsNeedingOutletTimings = transformedRestaurants.filter(
@@ -1921,17 +1945,22 @@ export default function Home() {
           }
         } else {
           debugWarn("Invalid API response structure:", response.data);
-          setRestaurantsData([]);
+          if (!append) {
+            setRestaurantsData([]);
+          }
         }
       } catch (error) {
         debugError("Error fetching restaurants:", error);
         debugError("Error details:", error.response?.data || error.message);
         // Don't set hardcoded data here - let the useMemo fallback handle it
         // This way, if API succeeds later, it will show the real data
-        setRestaurantsData([]);
+        if (!append) {
+          setRestaurantsData([]);
+        }
       } finally {
         if (requestSeq === restaurantsRequestSeqRef.current) {
           setLoadingRestaurants(false);
+          setLoadingMoreRestaurants(false);
         }
       }
     },
@@ -1956,11 +1985,12 @@ export default function Home() {
         selectedCuisine: nextSelectedCuisine,
       };
 
+      setRestaurantsPage(1);
       setAppliedFilters(nextFilterState);
       setIsLoadingFilterResults(true);
 
       try {
-        await fetchRestaurants(nextFilterState);
+        await fetchRestaurants(nextFilterState, 1, false);
       } catch (error) {
         debugError("Error applying filters:", error);
       } finally {
@@ -1973,18 +2003,19 @@ export default function Home() {
   const publicSocketListeners = useMemo(() => ({
     'food:product:update': () => {
       debugLog('Real-time socket update for food: refetching restaurants');
-      fetchRestaurants(appliedFilters);
+      fetchRestaurants(appliedFilters, 1, false);
     },
     'food:restaurant:update': () => {
       debugLog('Real-time socket update for restaurant: refetching restaurants');
-      fetchRestaurants(appliedFilters);
+      fetchRestaurants(appliedFilters, 1, false);
     }
   }), [fetchRestaurants, appliedFilters]);
   usePublicSocket(publicSocketListeners);
 
   // Fetch restaurants when appliedFilters change
   useEffect(() => {
-    fetchRestaurants(appliedFilters);
+    setRestaurantsPage(1);
+    fetchRestaurants(appliedFilters, 1, false);
   }, [appliedFilters, fetchRestaurants]);
 
   // Recalculate distances when user location updates
@@ -2269,61 +2300,22 @@ export default function Home() {
     return `${restaurantsData.length}:${activeFilterKey}:${selectedCuisine || ""}:${sortBy || ""}:${vegMode ? "1" : "0"}`;
   }, [activeFilters, restaurantsData.length, selectedCuisine, sortBy, vegMode]);
 
-  const visibleRestaurants = useMemo(
-    () => filteredRestaurants.slice(0, visibleRestaurantCount),
-    [filteredRestaurants, visibleRestaurantCount],
-  );
+  const visibleRestaurants = filteredRestaurants;
 
-  const hasMoreRestaurants =
-    visibleRestaurantCount < filteredRestaurants.length;
+  const hasMoreRestaurants = hasMoreRestaurantsBackend;
 
-  const loadMoreRestaurants = useCallback(() => {
-    setVisibleRestaurantCount((previous) =>
-      Math.min(previous + RESTAURANTS_BATCH_SIZE, filteredRestaurants.length),
-    );
-  }, [filteredRestaurants.length, RESTAURANTS_BATCH_SIZE]);
-
-  useEffect(() => {
-    setVisibleRestaurantCount(
-      Math.min(RESTAURANTS_BATCH_SIZE, filteredRestaurants.length),
-    );
-  }, [restaurantLazyLoadResetKey, filteredRestaurants.length, RESTAURANTS_BATCH_SIZE]);
-
-  useEffect(() => {
-    if (visibleRestaurantCount <= filteredRestaurants.length) return;
-    setVisibleRestaurantCount(filteredRestaurants.length);
-  }, [filteredRestaurants.length, visibleRestaurantCount]);
-
-  useEffect(() => {
-    if (!hasMoreRestaurants) return;
-    if (showRestaurantSkeleton || loadingRestaurants || isLoadingFilterResults) return;
-    const target = restaurantLoadMoreRef.current;
-    if (!target || typeof window === "undefined") return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (!entry?.isIntersecting) return;
-        startTransition(() => {
-          loadMoreRestaurants();
-        });
-      },
-      {
-        root: null,
-        rootMargin: "240px 0px",
-        threshold: 0.01,
-      },
-    );
-
-    observer.observe(target);
-    return () => observer.disconnect();
-  }, [
-    hasMoreRestaurants,
-    showRestaurantSkeleton,
-    loadingRestaurants,
-    isLoadingFilterResults,
-    loadMoreRestaurants,
-  ]);
+  const handleLoadMore = useCallback(async () => {
+    if (loadingMoreRestaurants || !hasMoreRestaurantsBackend) return;
+    const nextPage = restaurantsPage + 1;
+    setRestaurantsPage(nextPage);
+    setLoadingMoreRestaurants(true);
+    try {
+      await fetchRestaurants(appliedFilters, nextPage, true);
+    } catch (error) {
+      debugError("Error loading more restaurants:", error);
+      setLoadingMoreRestaurants(false);
+    }
+  }, [restaurantsPage, loadingMoreRestaurants, hasMoreRestaurantsBackend, fetchRestaurants, appliedFilters]);
 
   const recommendedForYouRestaurants = useMemo(() => {
     const idsInOrder = (recommendedRestaurantIds || []).map((id) => String(id));
@@ -3206,10 +3198,33 @@ export default function Home() {
             </div>
           )}
 
-          {/* Load More / Infinite Scroll Trigger */}
-          {hasMoreRestaurants && !showRestaurantSkeleton && !loadingRestaurants && (
-            <div ref={restaurantLoadMoreRef} className="flex justify-center py-6">
-              <Loader2 className="w-6 h-6 animate-spin text-[#F84E04]" />
+          {/* Load More Button & End of List Message */}
+          {!showRestaurantSkeleton && !loadingRestaurants && (
+            <div className="flex flex-col items-center justify-center mt-8 mb-12">
+              {hasMoreRestaurantsBackend ? (
+                <button
+                  onClick={handleLoadMore}
+                  disabled={loadingMoreRestaurants}
+                  className="px-8 py-3 rounded-full bg-[#F84E04] hover:bg-[#D94203] text-white font-bold text-sm transition-all duration-300 shadow-[0_4px_14px_rgba(248,78,4,0.3)] hover:shadow-[0_6px_20px_rgba(248,78,4,0.4)] disabled:opacity-50 flex items-center gap-2"
+                >
+                  {loadingMoreRestaurants ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>Loading...</span>
+                    </>
+                  ) : (
+                    <span>More</span>
+                  )}
+                </button>
+              ) : (
+                filteredRestaurants.length > 0 && (
+                  <div className="text-center py-4">
+                    <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
+                      You've reached the end of the list. No more restaurants available.
+                    </p>
+                  </div>
+                )
+              )}
             </div>
           )}
         </motion.section>

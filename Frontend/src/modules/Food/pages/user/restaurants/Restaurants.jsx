@@ -33,9 +33,9 @@ const pickRestaurantImage = (restaurant) => {
     restaurant?.coverImage?.url,
     restaurant?.coverImage,
     ...(Array.isArray(restaurant?.coverImages) ? restaurant.coverImages.map((img) => img?.url || img) : []),
-    ...(Array.isArray(restaurant?.menuImages) ? restaurant.menuImages.map((img) => img?.url || img) : []),
     restaurant?.profileImage?.url,
     restaurant?.profileImage,
+    ...(Array.isArray(restaurant?.menuImages) ? restaurant.menuImages.map((img) => img?.url || img) : []),
   ]
   const firstValid = candidates.find((value) => typeof value === "string" && value.trim())
   return normalizeImageUrl(firstValid || "")

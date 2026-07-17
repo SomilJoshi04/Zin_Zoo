@@ -140,6 +140,19 @@ export async function deleteRestaurantAccount(userId) {
         await FoodRestaurant.deleteOne({ _id: userId }, { session });
 
         await session.commitTransaction();
+
+        try {
+            const { invalidateCache } = await import('../../../../middleware/cache.js');
+            await invalidateCache('restaurants:*');
+            await invalidateCache(`restaurant_detail:${userId}`);
+            await invalidateCache(`restaurant_detail:*`);
+            await invalidateCache(`restaurant_menu:${userId}`);
+            await invalidateCache(`restaurant_timings:${userId}`);
+            await invalidateCache(`restaurant_addons:${userId}`);
+        } catch (cacheErr) {
+            console.error('Error invalidating deleted restaurant cache:', cacheErr);
+        }
+
         return { success: true, message: 'Account deleted successfully' };
     } catch (error) {
         await session.abortTransaction();

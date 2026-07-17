@@ -919,9 +919,11 @@ export default function CategoryPage() {
 
               const allImages = coverImages.length > 0
                 ? coverImages
-                : (fallbackImages.length > 0
-                  ? fallbackImages
-                  : (restaurant.profileImage?.url ? [normalizeImageUrl(restaurant.profileImage.url)] : []))
+                : (restaurant.profileImage?.url
+                  ? [normalizeImageUrl(restaurant.profileImage.url)]
+                  : (fallbackImages.length > 0
+                    ? fallbackImages
+                    : []))
 
               const image = allImages[0] || normalizeImageUrl(restaurant.coverImage || restaurant.profileImage?.url || restaurant.profileImage) || ""
 

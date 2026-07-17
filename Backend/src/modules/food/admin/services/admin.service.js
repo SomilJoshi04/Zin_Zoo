@@ -5697,6 +5697,18 @@ export async function deleteRestaurant(id) {
         await FoodUser.deleteOne({ phone: restaurant.ownerPhone, role: 'RESTAURANT' });
     }
 
+    try {
+        const { invalidateCache } = await import('../../../../middleware/cache.js');
+        await invalidateCache('restaurants:*');
+        await invalidateCache(`restaurant_detail:${id}`);
+        await invalidateCache(`restaurant_detail:*`);
+        await invalidateCache(`restaurant_menu:${id}`);
+        await invalidateCache(`restaurant_timings:${id}`);
+        await invalidateCache(`restaurant_addons:${id}`);
+    } catch (cacheErr) {
+        console.error('Error invalidating deleted restaurant cache:', cacheErr);
+    }
+
     return restaurant;
 }
 

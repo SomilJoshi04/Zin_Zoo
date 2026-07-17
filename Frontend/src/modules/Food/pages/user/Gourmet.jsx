@@ -248,9 +248,11 @@ export default function Gourmet() {
                   const rawRestaurantImage =
                     coverImages.length > 0
                       ? coverImages[0]
-                      : (menuImages.length > 0
-                        ? menuImages[0]
-                        : (restaurant.profileImage?.url || restaurant.profileImage || restaurant.image || ""))
+                      : (restaurant.profileImage?.url || restaurant.profileImage || restaurant.image
+                        ? (restaurant.profileImage?.url || restaurant.profileImage || restaurant.image)
+                        : (menuImages.length > 0
+                          ? menuImages[0]
+                          : ""))
 
                   const restaurantImage = resolveImageUrl(rawRestaurantImage)
 
