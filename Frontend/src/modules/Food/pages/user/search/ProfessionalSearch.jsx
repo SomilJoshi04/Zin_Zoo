@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { useSearchParams, Link, useNavigate } from "react-router-dom"
 import { 
   ArrowLeft, Star, Clock, Search, SlidersHorizontal, 
-  ChevronDown, Bookmark, BadgePercent, Mic, Grid2x2,
+  ChevronDown, ChevronRight, Bookmark, BadgePercent, Mic, Grid2x2,
   X, Utensils, Store, Loader2, History
 } from "lucide-react"
 import { Card, CardContent } from "@food/components/ui/card"
@@ -167,7 +167,16 @@ export default function ProfessionalSearch() {
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 px-4 py-3">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <button onClick={() => navigate("/food/user/services")} className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors">
+          <button 
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate("/food/user");
+              }
+            }} 
+            className="p-2 hover:bg-slate-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+          >
             <ArrowLeft className="w-5 h-5" />
           </button>
           
@@ -201,7 +210,7 @@ export default function ProfessionalSearch() {
           <div className="mb-8">
             <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4 px-1">Top Categories</h3>
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-4">
-              {categories.map((cat) => (
+              {(categories.length > 8 ? categories.slice(0, 8) : categories).map((cat) => (
                 <button 
                   key={cat._id} 
                   onClick={() => handleCategoryClick(cat._id)}
@@ -223,6 +232,19 @@ export default function ProfessionalSearch() {
                   </span>
                 </button>
               ))}
+              {categories.length > 8 && (
+                <button 
+                  onClick={() => navigate("/food/user/categories")}
+                  className="flex flex-col items-center group transition-all"
+                >
+                  <div className="w-14 h-14 rounded-2xl mb-2 flex items-center justify-center overflow-hidden border-2 border-transparent bg-rose-50 dark:bg-rose-950/20 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/30 transition-all">
+                    <ChevronRight className="w-6 h-6 text-rose-500 dark:text-rose-400 group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                  <span className="text-[11px] font-medium text-center line-clamp-1 text-slate-600 dark:text-slate-400 group-hover:text-rose-500 dark:group-hover:text-rose-400">
+                    More
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         )}

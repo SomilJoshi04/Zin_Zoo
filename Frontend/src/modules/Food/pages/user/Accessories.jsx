@@ -332,26 +332,41 @@ export default function AccessoriesPage() {
                 </div>
               ))
             ) : categories.length > 0 ? (
-              categories.map(cat => (
-                <div 
-                  key={cat._id} 
-                  className="flex flex-col items-center gap-2 min-w-[72px] cursor-pointer"
-                  onClick={() => handleCategoryClick(cat._id)}
-                >
-                  <div className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center p-1 transition-all ${activeCategory === cat._id ? 'ring-2 ring-[var(--module-theme-color)] ring-offset-2' : 'bg-white dark:bg-gray-800 shadow-sm border dark:border-gray-700'}`}>
-                    {cat.image ? (
-                      <img src={cat.image} alt={cat.name} className="w-full h-full object-cover rounded-full" />
-                    ) : (
-                      <div className="w-full h-full bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xs font-bold text-center leading-tight">
-                        {cat.name.substring(0,2).toUpperCase()}
-                      </div>
-                    )}
+              <>
+                {(categories.length > 8 ? categories.slice(0, 8) : categories).map(cat => (
+                  <div 
+                    key={cat._id} 
+                    className="flex flex-col items-center gap-2 min-w-[72px] cursor-pointer"
+                    onClick={() => handleCategoryClick(cat._id)}
+                  >
+                    <div className={`w-16 h-16 rounded-full overflow-hidden flex items-center justify-center p-1 transition-all ${activeCategory === cat._id ? 'ring-2 ring-[var(--module-theme-color)] ring-offset-2' : 'bg-white dark:bg-gray-800 shadow-sm border dark:border-gray-700'}`}>
+                      {cat.image ? (
+                        <img src={cat.image} alt={cat.name} className="w-full h-full object-cover rounded-full" />
+                      ) : (
+                        <div className="w-full h-full bg-orange-100 text-orange-600 rounded-full flex items-center justify-center text-xs font-bold text-center leading-tight">
+                          {cat.name.substring(0,2).toUpperCase()}
+                        </div>
+                      )}
+                    </div>
+                    <span className={`text-[11px] font-semibold text-center leading-tight ${activeCategory === cat._id ? 'text-[var(--module-theme-color)]' : 'text-gray-700 dark:text-gray-300'}`}>
+                      {cat.name}
+                    </span>
                   </div>
-                  <span className={`text-[11px] font-semibold text-center leading-tight ${activeCategory === cat._id ? 'text-[var(--module-theme-color)]' : 'text-gray-700 dark:text-gray-300'}`}>
-                    {cat.name}
-                  </span>
-                </div>
-              ))
+                ))}
+                {categories.length > 8 && (
+                  <div 
+                    className="flex flex-col items-center gap-2 min-w-[72px] cursor-pointer group"
+                    onClick={() => navigate("/food/user/accessories/categories")}
+                  >
+                    <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center p-1 transition-all bg-orange-50 dark:bg-orange-950/20 group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 border border-transparent">
+                      <Plus className="w-6 h-6 text-[#F84E04]" />
+                    </div>
+                    <span className="text-[11px] font-semibold text-center leading-tight text-gray-700 dark:text-gray-300 group-hover:text-[#F84E04]">
+                      More
+                    </span>
+                  </div>
+                )}
+              </>
             ) : (
               <p className="text-sm text-gray-500">No categories found.</p>
             )}

@@ -60,8 +60,6 @@ const restaurantRegisterSchema = z.object({
     ownerPhone: phoneSchema.optional(),
     primaryContactNumber: phoneSchema.optional(),
     pureVegRestaurant: requiredBooleanSchema,
-    addressLine1: z.string().optional(),
-    addressLine2: z.string().optional(),
     area: z.string().optional(),
     city: z.string().optional(),
     state: z.string().optional(),

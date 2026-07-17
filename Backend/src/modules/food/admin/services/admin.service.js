@@ -2578,15 +2578,19 @@ export async function updateRestaurantById(id, body = {}) {
     if (body.ownerPhone !== undefined) doc.ownerPhone = toStr(body.ownerPhone);
     if (body.primaryContactNumber !== undefined) doc.primaryContactNumber = toStr(body.primaryContactNumber);
 
-    // Address Flat Fields & Location Sub-document sync
-    if (body.addressLine1 !== undefined) {
-        doc.addressLine1 = toStr(body.addressLine1);
-        if (doc.location) doc.location.addressLine1 = toStr(body.addressLine1);
+    const addressVal = body.address !== undefined ? body.address : (body.location?.address !== undefined ? body.location.address : body.location?.formattedAddress);
+    if (addressVal !== undefined) {
+        const addrStr = toStr(addressVal);
+        if (!doc.location) {
+            doc.location = {
+                type: 'Point',
+                coordinates: [0, 0]
+            };
+        }
+        doc.location.address = addrStr;
+        doc.location.formattedAddress = addrStr;
     }
-    if (body.addressLine2 !== undefined) {
-        doc.addressLine2 = toStr(body.addressLine2);
-        if (doc.location) doc.location.addressLine2 = toStr(body.addressLine2);
-    }
+
     if (body.area !== undefined) {
         doc.area = toStr(body.area);
         if (doc.location) doc.location.area = toStr(body.area);
@@ -2770,14 +2774,12 @@ export async function updateRestaurantLocation(id, body = {}) {
     const latitude = toFiniteNumber(source.latitude ?? latFromCoordinates);
     const longitude = toFiniteNumber(source.longitude ?? lngFromCoordinates);
 
-    const addressLine1 = toStr(source.addressLine1 || source.formattedAddress || source.address);
-    const addressLine2 = toStr(source.addressLine2);
     const area = toStr(source.area);
     const city = toStr(source.city);
     const state = toStr(source.state);
     const pincode = toStr(source.pincode || source.zipCode || source.postalCode);
     const landmark = toStr(source.landmark);
-    const formattedAddress = toStr(source.formattedAddress || source.address || addressLine1);
+    const formattedAddress = toStr(source.formattedAddress || source.address);
 
     if (!doc.location || typeof doc.location !== 'object') {
         doc.location = { type: 'Point' };
@@ -2790,8 +2792,7 @@ export async function updateRestaurantLocation(id, body = {}) {
     }
     doc.location.formattedAddress = formattedAddress;
     doc.location.address = toStr(source.address || formattedAddress);
-    doc.location.addressLine1 = addressLine1;
-    doc.location.addressLine2 = addressLine2;
+
     doc.location.area = area;
     doc.location.city = city;
     doc.location.state = state;
@@ -2799,8 +2800,7 @@ export async function updateRestaurantLocation(id, body = {}) {
     doc.location.landmark = landmark;
 
     // Keep flat fields in sync for legacy readers.
-    doc.addressLine1 = addressLine1;
-    doc.addressLine2 = addressLine2;
+
     doc.area = area;
     doc.city = city;
     doc.state = state;
@@ -3293,6 +3293,9 @@ export async function getFoods(query) {
     if (query.restaurantId && mongoose.Types.ObjectId.isValid(query.restaurantId)) {
         filter.restaurantId = query.restaurantId;
     }
+    if (query.categoryId && query.categoryId !== 'all') {
+        filter.categoryId = query.categoryId;
+    }
     if (query.search && String(query.search).trim()) {
         const term = String(query.search).trim();
         filter.$or = [
@@ -3582,8 +3585,7 @@ export async function createRestaurantByAdmin(body) {
         restaurantType: body.restaurantType !== undefined
             ? toStr(body.restaurantType)
             : 'Both',
-        addressLine1: toStr(loc.addressLine1 || body.addressLine1),
-        addressLine2: toStr(loc.addressLine2 || body.addressLine2),
+
         area: toStr(loc.area || body.area),
         city: toStr(loc.city || body.city),
         state: toStr(loc.state || body.state),
@@ -3642,10 +3644,8 @@ export async function createRestaurantByAdmin(body) {
             coordinates: [longitude, latitude],
             latitude,
             longitude,
-            formattedAddress: toStr(loc.formattedAddress || loc.address || loc.addressLine1),
-            address: toStr(loc.address || loc.formattedAddress || loc.addressLine1),
-            addressLine1: toStr(loc.addressLine1 || loc.formattedAddress || loc.address),
-            addressLine2: toStr(loc.addressLine2),
+            formattedAddress: toStr(loc.formattedAddress || loc.address),
+            address: toStr(loc.address || loc.formattedAddress),
             area: toStr(loc.area),
             city: toStr(loc.city),
             state: toStr(loc.state),

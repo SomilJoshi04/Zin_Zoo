@@ -29,8 +29,6 @@ const geoPointSchema = new mongoose.Schema(
     longitude: { type: Number },
     formattedAddress: { type: String, trim: true },
     address: { type: String, trim: true },
-    addressLine1: { type: String, trim: true },
-    addressLine2: { type: String, trim: true },
     area: { type: String, trim: true },
     city: { type: String, trim: true },
     state: { type: String, trim: true },
@@ -88,12 +86,7 @@ const restaurantSchema = new mongoose.Schema(
       enum: ["Veg", "Non-Veg", "Both"],
       default: "Both",
     },
-    addressLine1: {
-      type: String,
-    },
-    addressLine2: {
-      type: String,
-    },
+
     area: {
       type: String,
     },
@@ -300,8 +293,6 @@ restaurantSchema.pre("validate", function normalizeDerivedFields(next) {
   // Keep `location` in sync when flat address fields exist (backward-compatible migration).
   // Prefer explicit location.* fields if provided.
   const hasAnyFlatAddress =
-    this.addressLine1 ||
-    this.addressLine2 ||
     this.area ||
     this.city ||
     this.state ||
@@ -322,10 +313,7 @@ restaurantSchema.pre("validate", function normalizeDerivedFields(next) {
       typeof this.location.longitude === "number" &&
       Number.isFinite(this.location.longitude);
     if (!hasCoordinates && !hasLatLng) {
-      if (!this.addressLine1 && this.location.addressLine1)
-        this.addressLine1 = this.location.addressLine1;
-      if (!this.addressLine2 && this.location.addressLine2)
-        this.addressLine2 = this.location.addressLine2;
+
       if (!this.area && this.location.area) this.area = this.location.area;
       if (!this.city && this.location.city) this.city = this.location.city;
       if (!this.state && this.location.state) this.state = this.location.state;
@@ -367,10 +355,7 @@ restaurantSchema.pre("validate", function normalizeDerivedFields(next) {
 
     // Sync flat -> location for address fields if location fields are empty.
     if (hasAnyFlatAddress) {
-      if (!this.location.addressLine1 && this.addressLine1)
-        this.location.addressLine1 = this.addressLine1;
-      if (!this.location.addressLine2 && this.addressLine2)
-        this.location.addressLine2 = this.addressLine2;
+
       if (!this.location.area && this.area) this.location.area = this.area;
       if (!this.location.city && this.city) this.location.city = this.city;
       if (!this.location.state && this.state) this.location.state = this.state;

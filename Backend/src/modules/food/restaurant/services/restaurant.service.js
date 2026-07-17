@@ -96,15 +96,11 @@ const toRestaurantProfile = (doc) => {
     const location =
         (loc?.formattedAddress ||
             loc?.address ||
-            loc?.addressLine1 ||
-            loc?.addressLine2 ||
             loc?.area ||
             loc?.city ||
             loc?.state ||
             loc?.pincode ||
             loc?.landmark ||
-            doc.addressLine1 ||
-            doc.addressLine2 ||
             doc.area ||
             doc.city ||
             doc.state ||
@@ -117,8 +113,6 @@ const toRestaurantProfile = (doc) => {
                 longitude: typeof loc?.longitude === 'number' ? loc.longitude : (Array.isArray(loc?.coordinates) ? loc.coordinates[0] : undefined),
                 formattedAddress: loc?.formattedAddress || loc?.address || '',
                 address: loc?.address || loc?.formattedAddress || '',
-                addressLine1: loc?.addressLine1 || doc.addressLine1 || '',
-                addressLine2: loc?.addressLine2 || doc.addressLine2 || '',
                 area: loc?.area || doc.area || '',
                 city: loc?.city || doc.city || '',
                 state: loc?.state || doc.state || '',
@@ -233,8 +227,6 @@ export const registerRestaurant = async (payload, files) => {
         ownerPhone,
         primaryContactNumber,
         pureVegRestaurant,
-        addressLine1,
-        addressLine2,
         area,
         city,
         state,
@@ -336,8 +328,6 @@ export const registerRestaurant = async (payload, files) => {
                 longitude: lngNum ?? undefined,
                 formattedAddress: typeof formattedAddress === 'string' ? formattedAddress.trim() : '',
                 address: typeof formattedAddress === 'string' ? formattedAddress.trim() : '',
-                addressLine1: addressLine1 || '',
-                addressLine2: addressLine2 || '',
                 area: area || '',
                 city: city || '',
                 state: state || '',
@@ -405,8 +395,6 @@ export const getCurrentRestaurantProfile = async (restaurantId) => {
                 'totalRatings',
                 'cuisines',
                 'location',
-                'addressLine1',
-                'addressLine2',
                 'area',
                 'city',
                 'state',
@@ -463,8 +451,6 @@ export const updateRestaurantAcceptingOrders = async (restaurantId, isAcceptingO
                 'totalRatings',
                 'cuisines',
                 'location',
-                'addressLine1',
-                'addressLine2',
                 'area',
                 'city',
                 'state',
@@ -670,8 +656,6 @@ export const updateRestaurantProfile = async (restaurantId, body = {}) => {
         }
         const toStr = (v) => (v != null ? String(v).trim() : '');
         const formattedAddress = toStr(loc.formattedAddress || loc.address);
-        update.addressLine1 = toStr(loc.addressLine1);
-        update.addressLine2 = toStr(loc.addressLine2);
         update.area = toStr(loc.area);
         update.city = toStr(loc.city);
         update.state = toStr(loc.state);
@@ -688,8 +672,6 @@ export const updateRestaurantProfile = async (restaurantId, body = {}) => {
             longitude: lng ?? undefined,
             formattedAddress,
             address: formattedAddress,
-            addressLine1: toStr(loc.addressLine1),
-            addressLine2: toStr(loc.addressLine2),
             area: toStr(loc.area),
             city: toStr(loc.city),
             state: toStr(loc.state),
@@ -881,7 +863,7 @@ export const uploadRestaurantProfileImage = async (restaurantId, file) => {
                 rejectionReason: 1
             }
         },
-        { new: true, projection: 'profileImage coverImages restaurantName cuisines location menuImages addressLine1 addressLine2 area city state pincode landmark ownerName ownerEmail ownerPhone primaryContactNumber pureVegRestaurant openingTime closingTime openDays status approvedAt pendingUpdateReason createdAt updatedAt' }
+        { new: true, projection: 'profileImage coverImages restaurantName cuisines location menuImages area city state pincode landmark ownerName ownerEmail ownerPhone primaryContactNumber pureVegRestaurant openingTime closingTime openDays status approvedAt pendingUpdateReason createdAt updatedAt' }
     ).lean();
 
     if (!doc) throw new ValidationError('Restaurant not found');

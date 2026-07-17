@@ -62,6 +62,8 @@ export default function FoodsList() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedRestaurant, setSelectedRestaurant] = useState("all")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [filterCategories, setFilterCategories] = useState([])
   const [foods, setFoods] = useState([])
   const [restaurantsForFilter, setRestaurantsForFilter] = useState([])
   const [loading, setLoading] = useState(true)
@@ -135,12 +137,33 @@ export default function FoodsList() {
     fetchRestaurantsForFilter()
   }, [fetchRestaurantsForFilter])
 
+  const fetchCategoriesForFilter = useCallback(async () => {
+    try {
+      const res = await adminAPI.getCategories({ limit: 1000 })
+      const list = res?.data?.data?.categories || []
+      const options = Array.isArray(list)
+        ? list
+            .map((c) => ({ id: String(c.id || c._id || c.name), name: String(c.name || "").trim() }))
+            .filter((c) => c.name)
+        : []
+      setFilterCategories(options)
+    } catch (error) {
+      debugError("Error fetching categories for filter:", error)
+      setFilterCategories([])
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCategoriesForFilter()
+  }, [fetchCategoriesForFilter])
+
   const fetchAllFoods = useCallback(async () => {
     try {
       setLoading(true)
 
       const params = { page: currentPage, limit: pageSize }
       if (selectedRestaurant !== "all") params.restaurantId = selectedRestaurant
+      if (selectedCategory !== "all") params.categoryId = selectedCategory
       if (debouncedSearchQuery) params.search = debouncedSearchQuery
 
       const foodsRes = await adminAPI.getFoods(params)
@@ -197,7 +220,7 @@ export default function FoodsList() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, pageSize, selectedRestaurant, debouncedSearchQuery])
+  }, [currentPage, pageSize, selectedRestaurant, selectedCategory, debouncedSearchQuery])
 
   useEffect(() => {
     fetchAllFoods()
@@ -548,11 +571,26 @@ export default function FoodsList() {
             <button
               type="button"
               onClick={openAddFoodModal}
-              className="px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 inline-flex items-center gap-2"
+              className="px-4 py-2.5 rounded-lg bg-[#F84E04] text-white text-sm font-medium hover:bg-[#D94203] transition-colors inline-flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
               <span>Add Food</span>
             </button>
+            <select
+              value={selectedCategory}
+              onChange={(e) => {
+                setSelectedCategory(e.target.value)
+                setCurrentPage(1)
+              }}
+              className="px-4 py-2.5 text-sm rounded-lg border border-transparent bg-[#F84E04] text-white font-medium focus:outline-none focus:ring-2 focus:ring-[#F84E04]/50 min-w-[150px] cursor-pointer hover:bg-[#D94203] transition-all"
+            >
+              <option value="all" className="bg-white text-slate-900 dark:bg-neutral-800 dark:text-white">All Categories</option>
+              {filterCategories.map((cat) => (
+                <option key={cat.id} value={cat.id} className="bg-white text-slate-900 dark:bg-neutral-800 dark:text-white">
+                  {cat.name}
+                </option>
+              ))}
+            </select>
             <div className="relative flex-1 sm:flex-initial min-w-[200px]">
               <input
                 type="text"
@@ -1074,7 +1112,7 @@ export default function FoodsList() {
                 type="button"
                 onClick={handleFoodFormSubmit}
                 disabled={submittingFood}
-                className="px-4 py-2.5 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60 inline-flex items-center gap-2"
+                className="px-4 py-2.5 rounded-lg bg-[#F84E04] text-white text-sm font-medium hover:bg-[#D94203] transition-colors disabled:opacity-60 inline-flex items-center gap-2"
               >
                 {submittingFood ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 <span>{submittingFood ? "Saving..." : foodFormMode === "edit" ? "Update Food" : "Add Food"}</span>

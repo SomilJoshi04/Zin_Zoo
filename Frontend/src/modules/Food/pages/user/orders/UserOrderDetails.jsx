@@ -21,7 +21,7 @@ import { orderAPI, restaurantAPI } from "@food/api"
 import apiClient from "@/services/api/axios"
 import { useCart } from "@food/context/CartContext"
 import { toast } from "sonner"
-import { getCompanyNameAsync } from "@food/utils/businessSettings"
+import { getCompanyNameAsync, getCachedSettings } from "@food/utils/businessSettings"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -182,11 +182,11 @@ export default function UserOrderDetails() {
       if (parts.length) return parts.join(", ")
     }
 
-    // Priority 4: addressLine1 / addressLine2 style
-    if (loc.addressLine1) {
+    // Priority 4: area/landmark fallback
+    if (loc.area || loc.landmark) {
       const parts = [
-        loc.addressLine1,
-        loc.addressLine2,
+        loc.landmark,
+        loc.area,
         loc.city,
         loc.state,
       ].filter(Boolean)
@@ -234,20 +234,40 @@ export default function UserOrderDetails() {
     (pricing.originalItemTotal || 0) -
     (pricing.subtotal || 0)
 
-  // Restaurant phone (multiple fallbacks) - use fetched restaurant data first
-  const restaurantPhone =
-    restaurantObj.primaryContactNumber ||
-    restaurantObj.phone ||
-    restaurantObj.contactNumber ||
-    order.restaurantPhone ||
-    ""
+  const isGroceryOrAccessories =
+    order?.moduleType === 'grocery' ||
+    order?.moduleType === 'accessories' ||
+    String(order?.orderId || order?.order_id || "").startsWith("GRO-") ||
+    String(order?.orderId || order?.order_id || "").startsWith("ACC-")
+
+  const getCallNumber = () => {
+    if (isGroceryOrAccessories) {
+      const settings = getCachedSettings()
+      if (settings?.phone?.number) {
+        const country = settings.phone.countryCode || ""
+        const num = settings.phone.number
+        return `${country}${num}`.replace(/[^\d+]/g, '')
+      }
+      return ""
+    }
+    return (
+      restaurantObj.primaryContactNumber ||
+      restaurantObj.phone ||
+      restaurantObj.ownerPhone ||
+      restaurantObj.contactNumber ||
+      order.restaurantPhone ||
+      ""
+    )
+  }
+
+  const callNumber = getCallNumber()
 
   const handleCallRestaurant = () => {
-    if (!restaurantPhone) {
-      toast.error("Restaurant phone number not available")
+    if (!callNumber) {
+      toast.error(isGroceryOrAccessories ? "Admin phone number not available" : "Restaurant phone number not available")
       return
     }
-    window.location.href = `tel:${restaurantPhone}`
+    window.location.href = `tel:${callNumber}`
   }
 
   const handleDownloadSummary = async () => {

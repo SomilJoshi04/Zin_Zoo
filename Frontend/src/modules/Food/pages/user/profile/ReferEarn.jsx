@@ -80,7 +80,7 @@ export default function ReferEarn() {
 
   const refId = userProfile?._id || userProfile?.id || userProfile?.referralCode || "";
   const referralLink = refId
-    ? `https://zin-zoo.vercel.app/food/user/auth/login?ref=${encodeURIComponent(String(refId))}`
+    ? `https://zinzoo.in/food/user/auth/login?ref=${encodeURIComponent(String(refId))}`
     : "";
 
   const shareText = useMemo(() => {

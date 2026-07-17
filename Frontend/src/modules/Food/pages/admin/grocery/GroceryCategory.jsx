@@ -568,7 +568,7 @@ export default function GroceryCategory() {
                           Manage category details and visibility.
                         </p>
                       </div>
-                      <button onClick={resetModal} className="rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-neutral-850">
+                      <button onClick={resetModal} className="rounded-lg p-1 hover:bg-slate-100 dark:hover:bg-neutral-800">
                         <X className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                       </button>
                     </div>
@@ -583,7 +583,7 @@ export default function GroceryCategory() {
                             type="text"
                             value={formData.type}
                             onChange={(event) => setFormData((prev) => ({ ...prev, type: event.target.value }))}
-                            className="w-full rounded-xl border border-slate-300 dark:border-neutral-700 px-4 py-3 outline-none focus:border-slate-900 dark:focus:border-neutral-400 text-slate-900 dark:text-white bg-white dark:bg-neutral-850 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                            className="w-full rounded-xl border border-slate-300 dark:border-neutral-700 px-4 py-3 outline-none focus:border-slate-900 dark:focus:border-neutral-400 text-slate-900 dark:text-white bg-white dark:bg-neutral-800 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             placeholder="Examples: Vegetables, Dairy, Snacks"
                           />
                         </div>
@@ -595,7 +595,7 @@ export default function GroceryCategory() {
                             required
                             value={formData.name}
                             onChange={(event) => setFormData((prev) => ({ ...prev, name: event.target.value }))}
-                            className="w-full rounded-xl border border-slate-300 dark:border-neutral-700 px-4 py-3 outline-none focus:border-slate-900 dark:focus:border-neutral-400 text-slate-900 dark:text-white bg-white dark:bg-neutral-850 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                            className="w-full rounded-xl border border-slate-300 dark:border-neutral-700 px-4 py-3 outline-none focus:border-slate-900 dark:focus:border-neutral-400 text-slate-900 dark:text-white bg-white dark:bg-neutral-800 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             placeholder="Enter category name"
                           />
                         </div>

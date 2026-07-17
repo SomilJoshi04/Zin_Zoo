@@ -248,7 +248,8 @@ export function buildDeliverySocketPayload(orderDoc, restaurantDoc = null) {
     restaurantAddress:
       restaurantLocation?.address ||
       restaurantLocation?.formattedAddress ||
-      restaurant?.addressLine1 ||
+      restaurant?.location?.address ||
+      restaurant?.location?.formattedAddress ||
       "",
     restaurantPhone: restaurant?.phone || "",
     restaurantLocation: {
@@ -257,7 +258,8 @@ export function buildDeliverySocketPayload(orderDoc, restaurantDoc = null) {
       address:
         restaurantLocation?.address ||
         restaurantLocation?.formattedAddress ||
-        restaurant?.addressLine1 ||
+        restaurant?.location?.address ||
+        restaurant?.location?.formattedAddress ||
         "",
       area: restaurantLocation?.area || restaurant?.area || "",
       city: restaurantLocation?.city || restaurant?.city || "",

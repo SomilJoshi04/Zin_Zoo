@@ -28,8 +28,7 @@ const formatOrderAddress = (address) => {
     address.street,
     address.additionalDetails,
     address.landmark,
-    address.addressLine1,
-    address.addressLine2,
+    address.address,
     address.area,
     address.city,
     address.state,
@@ -311,7 +310,7 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       const totalItems = items.reduce((sum, item) => sum + toNumber(item.quantity || 1), 0)
 
       // Generate QR code
-      const feedbackUrl = `https://zinzoox.com/feedback?orderId=${orderId}`
+      const feedbackUrl = `https://zinzoo.in/feedback?orderId=${orderId}`
       const qrDataUrl = await QRCode.toDataURL(feedbackUrl, {
         width: 200, margin: 1, color: { dark: "#000000", light: "#ffffff" }
       })
@@ -334,18 +333,15 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       }
 
       // --- HEADER ---
-      // Logo Box
-      doc.setDrawColor(0); doc.setLineWidth(0.4);
-      const logoBoxW = 30; const logoBoxH = 12;
-      doc.rect(centerX - logoBoxW / 2, y, logoBoxW, logoBoxH)
+      const imgW = 40; const imgH = 25;
       if (logoDataUrl) {
-        const imgW = logoBoxW - 4; const imgH = logoBoxH - 3;
-        doc.addImage(logoDataUrl, "PNG", centerX - imgW / 2, y + 1.5, imgW, imgH, undefined, "FAST")
+        doc.addImage(logoDataUrl, "PNG", centerX - imgW / 2, y, imgW, imgH, undefined, "FAST")
+        y += imgH + 4
       } else {
         setFont(10, "bold")
         center("ZIN ZOO X", y + 8)
+        y += 12
       }
-      y += logoBoxH + 4
 
       setFont(12, "bold")
       center("ZIN ZOO X", y)
@@ -366,7 +362,7 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       y += 3.5
       center("8225874798", y)
       y += 3.5
-      center("www.zinzoox.com", y)
+      center("www.zinzoo.in", y)
       y += 4
 
       solidLine(y); y += 4;
@@ -428,9 +424,10 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       let taxable = subtotal + deliveryFee + platformFee - discountAmount;
       if (taxAmount > 0) {
         doc.text("Taxable Amount", margin, y); right(`Rs. ${taxable.toFixed(2)}`, y); y += 4;
-        const halfTax = (taxAmount / 2).toFixed(2);
-        doc.text("CGST @2.5%", margin, y); right(`Rs. ${halfTax}`, y); y += 4;
-        doc.text("SGST @2.5%", margin, y); right(`Rs. ${halfTax}`, y); y += 4;
+        const halfTax = taxAmount / 2;
+        const halfGstRate = subtotal > 0 ? ((halfTax / subtotal) * 100).toFixed(1) : "0.0";
+        doc.text(`CGST @${halfGstRate}%`, margin, y); right(`Rs. ${halfTax.toFixed(2)}`, y); y += 4;
+        doc.text(`SGST @${halfGstRate}%`, margin, y); right(`Rs. ${halfTax.toFixed(2)}`, y); y += 4;
       }
 
       dashLine(y); y += 5;

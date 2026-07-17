@@ -29,6 +29,11 @@ function UserPathRedirect() {
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
+    const isFoodHome = pathname === "/food/user" || pathname === "/food/user/" || pathname === "/food" || pathname === "/food/";
+    const hasSavedScroll = sessionStorage.getItem("zinzoo_food_home_scroll");
+    if (isFoodHome && hasSavedScroll) {
+      return;
+    }
     window.scrollTo(0, 0);
   }, [pathname]);
   return null;

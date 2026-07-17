@@ -103,10 +103,9 @@ const buildOnboardingLikeDataFromRestaurant = (restaurant) => {
       primaryContactNumber: restaurant?.primaryContactNumber,
       location:
         restaurant?.location ||
-        (restaurant?.area || restaurant?.city || restaurant?.addressLine1
+        (restaurant?.area || restaurant?.city || restaurant?.address
           ? {
-              addressLine1: restaurant?.addressLine1,
-              addressLine2: restaurant?.addressLine2,
+              address: restaurant?.address,
               area: restaurant?.area,
               city: restaurant?.city,
               landmark: restaurant?.landmark,

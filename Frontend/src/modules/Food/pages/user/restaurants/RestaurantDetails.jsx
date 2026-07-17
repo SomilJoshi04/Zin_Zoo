@@ -341,74 +341,26 @@ function RestaurantDetailsContent() {
               return locationObj
             }
 
-            // PRIORITY 1: Use formattedAddress if it's complete and has pin code
-            // formattedAddress usually has the most complete information from Google Maps
-            if (locationObj.formattedAddress && locationObj.formattedAddress.trim() !== "" && locationObj.formattedAddress !== "Select location") {
-              const isCoordinates = /^-?\d+\.\d+,\s*-?\d+\.\d+$/.test(locationObj.formattedAddress.trim())
-              if (!isCoordinates) {
-                const formattedAddr = locationObj.formattedAddress.trim()
-                // Check if it contains a pin code (6 digit number)
-                const hasPinCode = /\b\d{6}\b/.test(formattedAddr)
-                // If it has pin code, it's complete - use it directly
-                if (hasPinCode) {
-                  // Clean up the address - remove Google Plus Code if present (e.g., "PV6X+JXX, ")
-                  const cleanedAddr = formattedAddr.replace(/^[A-Z0-9]+\+[A-Z0-9]+,\s*/i, '')
-                  return cleanedAddr
-                }
-                // If it has multiple parts (3+), it's likely complete
-                if (formattedAddr.split(',').length >= 3) {
-                  const cleanedAddr = formattedAddr.replace(/^[A-Z0-9]+\+[A-Z0-9]+,\s*/i, '')
-                  return cleanedAddr
-                }
-              }
-            }
-
-            // PRIORITY 2: Build address from location object components (with zone and pin code)
-            // This ensures we always show zone and pin code if available
+            // Build address from location object components (Address and Area only)
             const addressParts = []
 
-            // Add addressLine1 if available
-            if (locationObj.addressLine1 && locationObj.addressLine1.trim() !== "") {
-              addressParts.push(locationObj.addressLine1.trim())
+            // Add Address (address / formattedAddress)
+            const addr = locationObj.address || locationObj.formattedAddress || actualRestaurant?.address || apiRestaurant?.address
+            if (addr && addr.trim() !== "") {
+              addressParts.push(addr.trim())
             }
 
-            // Add addressLine2 if available
-            if (locationObj.addressLine2 && locationObj.addressLine2.trim() !== "") {
-              addressParts.push(locationObj.addressLine2.trim())
+            // Add area (zone/locality)
+            const area = locationObj.area || actualRestaurant?.area || apiRestaurant?.area
+            if (area && area.trim() !== "") {
+              addressParts.push(area.trim())
             }
 
-            // Add area (zone) if available
-            if (locationObj.area && locationObj.area.trim() !== "") {
-              addressParts.push(locationObj.area.trim())
-            }
-
-            // Add city if available
-            if (locationObj.city && locationObj.city.trim() !== "") {
-              addressParts.push(locationObj.city.trim())
-            }
-
-            // Add state if available
-            if (locationObj.state && locationObj.state.trim() !== "") {
-              addressParts.push(locationObj.state.trim())
-            }
-
-            // Add pin code (priority: pincode > zipCode > postalCode)
-            const pinCode = locationObj.pincode || locationObj.zipCode || locationObj.postalCode
-            if (pinCode && pinCode.toString().trim() !== "") {
-              addressParts.push(pinCode.toString().trim())
-            }
-
-            // If we have at least 3 parts (complete address), use it
-            if (addressParts.length >= 3) {
+            if (addressParts.length > 0) {
               return addressParts.join(', ')
             }
 
-            // If we have at least 2 parts, use it
-            if (addressParts.length >= 2) {
-              return addressParts.join(', ')
-            }
-
-            // PRIORITY 3: Fallback to formattedAddress (even if incomplete)
+            // Fallback: Use formattedAddress if it's complete
             if (locationObj.formattedAddress && locationObj.formattedAddress.trim() !== "" && locationObj.formattedAddress !== "Select location") {
               const isCoordinates = /^-?\d+\.\d+,\s*-?\d+\.\d+$/.test(locationObj.formattedAddress.trim())
               if (!isCoordinates) {
@@ -417,13 +369,14 @@ function RestaurantDetailsContent() {
               }
             }
 
-            // PRIORITY 4: Fallback to address field
+            // Fallback to address field
             if (locationObj.address && locationObj.address.trim() !== "") {
               return locationObj.address.trim()
             }
 
-            // PRIORITY 5: Last fallback - use area or city
-            return locationObj.area || locationObj.city || "Location"
+            // Last fallback - use area or city
+            const city = locationObj.city || actualRestaurant?.city || apiRestaurant?.city
+            return area || city || "Location"
           }
 
           // Get location object for address formatting
@@ -2134,14 +2087,7 @@ function RestaurantDetailsContent() {
                 </div>
               </div>
             )}
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full h-10 w-10 border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-[#1a1a1a]"
-              onClick={() => setShowMenuOptionsSheet(true)}
-            >
-              <MoreVertical className="h-5 w-5 text-gray-900 dark:text-white" />
-            </Button>
+            
           </div>
         </div>
       </div>
@@ -3653,19 +3599,19 @@ function RestaurantDetailsContent() {
                           }}
                           disabled={shouldShowGrayscale}
                         >
-                          <span>Add item</span>
-                          <div className="flex items-center gap-1">
-                            {selectedItem.originalPrice && selectedItem.originalPrice > selectedItem.price && (
-                              <span className="text-sm line-through text-red-200">
-                                {RUPEE_SYMBOL}{Math.round(selectedItem.originalPrice)}
-                              </span>
-                            )}
-                            <span className="text-base font-bold">
-                              {hasFoodVariants(selectedItem)
-                                ? `${getVariantForDish(selectedItem, selectedVariantId)?.name || "Default"} · ${RUPEE_SYMBOL}${Math.round(getVariantForDish(selectedItem, selectedVariantId)?.price || selectedItem.price)}`
-                                : `${RUPEE_SYMBOL}${Math.round(selectedItem.price)}`}
-                            </span>
-                          </div>
+                           <span>Add item</span>
+                           <div className="flex items-center gap-1">
+                             {selectedItem.originalPrice && selectedItem.originalPrice > selectedItem.price && (
+                               <span className="text-sm line-through text-red-200">
+                                 {RUPEE_SYMBOL}{Math.round(selectedItem.originalPrice)}
+                               </span>
+                             )}
+                             <span className="text-base font-bold">
+                               {hasFoodVariants(selectedItem)
+                                 ? `· ${RUPEE_SYMBOL}${Math.round(getVariantForDish(selectedItem, selectedVariantId)?.price || selectedItem.price)}`
+                                 : `· ${RUPEE_SYMBOL}${Math.round(selectedItem.price)}`}
+                             </span>
+                           </div>
                         </Button>
                       )}
                     </div>

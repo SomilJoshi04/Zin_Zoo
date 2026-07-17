@@ -423,6 +423,54 @@ export default function Home() {
   const [showStickySearch] = useState(true);
   const lastScrollY = useRef(0);
 
+  // Load cached state if it exists in sessionStorage
+  const cachedState = useMemo(() => {
+    try {
+      const cached = sessionStorage.getItem("zinzoo_food_home_state");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return {
+          restaurantsData: parsed.restaurantsData || [],
+          activeFilters: new Set(parsed.activeFilters || []),
+          sortBy: parsed.sortBy || null,
+          selectedCuisine: parsed.selectedCuisine || null,
+          appliedFilters: {
+            activeFilters: new Set(parsed.appliedFilters?.activeFilters || []),
+            sortBy: parsed.appliedFilters?.sortBy || null,
+            selectedCuisine: parsed.appliedFilters?.selectedCuisine || null,
+          },
+          visibleRestaurantCount: parsed.visibleRestaurantCount || 9,
+        };
+      }
+    } catch (e) {
+      console.error("Error reading cached home state:", e);
+    }
+    return null;
+  }, []);
+
+  const isFirstMountRef = useRef(true);
+
+  // Restore scroll position on mount
+  useEffect(() => {
+    const savedScroll = sessionStorage.getItem("zinzoo_food_home_scroll");
+    const hasCachedState = sessionStorage.getItem("zinzoo_food_home_state");
+    if (savedScroll && hasCachedState) {
+      const scrollY = parseInt(savedScroll, 10);
+      if (scrollY > 0) {
+        window.scrollTo(0, scrollY);
+        let count = 0;
+        const scrollFunc = () => {
+          window.scrollTo(0, scrollY);
+          count++;
+          if (count < 8) {
+            requestAnimationFrame(scrollFunc);
+          }
+        };
+        requestAnimationFrame(scrollFunc);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const handleScrollHeader = () => {
       const currentScrollY = window.scrollY;
@@ -435,11 +483,16 @@ export default function Home() {
       }
 
       lastScrollY.current = currentScrollY;
+
+      // Save scroll position
+      sessionStorage.setItem("zinzoo_food_home_scroll", String(currentScrollY));
     };
 
     window.addEventListener("scroll", handleScrollHeader, { passive: true });
     return () => window.removeEventListener("scroll", handleScrollHeader);
   }, []);
+
+
 
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [heroBannerImages, setHeroBannerImages] = useState([]);
@@ -457,8 +510,8 @@ export default function Home() {
     setRecommendedRestaurantsFromSettings,
   ] = useState([]);
   const [loadingLandingConfig, setLoadingLandingConfig] = useState(true);
-  const [restaurantsData, setRestaurantsData] = useState([]);
-  const [loadingRestaurants, setLoadingRestaurants] = useState(true);
+  const [restaurantsData, setRestaurantsData] = useState(cachedState ? cachedState.restaurantsData : []);
+  const [loadingRestaurants, setLoadingRestaurants] = useState(cachedState ? false : true);
   const [realCategories, setRealCategories] = useState([]);
   const [loadingRealCategories, setLoadingRealCategories] = useState(true);
   const [menuCategories, setMenuCategories] = useState([]);
@@ -469,7 +522,7 @@ export default function Home() {
   const [availabilityTick, setAvailabilityTick] = useState(Date.now());
   const RESTAURANTS_BATCH_SIZE = 9;
   const [visibleRestaurantCount, setVisibleRestaurantCount] = useState(
-    RESTAURANTS_BATCH_SIZE,
+    cachedState ? cachedState.visibleRestaurantCount : RESTAURANTS_BATCH_SIZE
   );
   const restaurantLoadMoreRef = useRef(null);
   const publicCategoriesCacheRef = useRef(new Map());
@@ -1075,12 +1128,12 @@ export default function Home() {
     touchEndX.current = 0;
     touchEndY.current = 0;
   };
-  const [activeFilters, setActiveFilters] = useState(new Set());
-  const [sortBy, setSortBy] = useState(null); // null, 'price-low', 'price-high', 'rating-high', 'rating-low'
-  const [selectedCuisine, setSelectedCuisine] = useState(null);
+  const [activeFilters, setActiveFilters] = useState(cachedState ? cachedState.activeFilters : new Set());
+  const [sortBy, setSortBy] = useState(cachedState ? cachedState.sortBy : null); // null, 'price-low', 'price-high', 'rating-high', 'rating-low'
+  const [selectedCuisine, setSelectedCuisine] = useState(cachedState ? cachedState.selectedCuisine : null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const [appliedFilters, setAppliedFilters] = useState({
+  const [appliedFilters, setAppliedFilters] = useState(cachedState ? cachedState.appliedFilters : {
     activeFilters: new Set(),
     sortBy: null,
     selectedCuisine: null,
@@ -1089,6 +1142,31 @@ export default function Home() {
   const [activeFilterTab, setActiveFilterTab] = useState("sort");
   const categoryScrollRef = useRef(null);
   const gsapAnimationsRef = useRef([]);
+
+  // Save home state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+    try {
+      const stateToSave = {
+        restaurantsData,
+        activeFilters: Array.from(activeFilters),
+        sortBy,
+        selectedCuisine,
+        appliedFilters: {
+          activeFilters: Array.from(appliedFilters.activeFilters),
+          sortBy: appliedFilters.sortBy,
+          selectedCuisine: appliedFilters.selectedCuisine,
+        },
+        visibleRestaurantCount,
+      };
+      sessionStorage.setItem("zinzoo_food_home_state", JSON.stringify(stateToSave));
+    } catch (e) {
+      console.error("Error saving home state to cache:", e);
+    }
+  }, [restaurantsData, activeFilters, sortBy, selectedCuisine, appliedFilters, visibleRestaurantCount]);
   // Show skeletons immediately while loading — delayed toggles caused visible layout swap (CLS).
   const showBannerSkeleton = loadingBanners;
   const showCategorySkeleton = loadingRealCategories || loadingMenuCategories;
@@ -2467,7 +2545,7 @@ export default function Home() {
           {showCategorySkeleton ? (
             <CategoryChipRowSkeleton className="py-1" />
           ) : (
-            displayCategories.slice(0, 12).map((category, index) => (
+            (displayCategories.length > 8 ? displayCategories.slice(0, 8) : displayCategories).map((category, index) => (
               <Link
                 key={category.id || index}
                 to={`/food/user/category/${category.slug || category.name.toLowerCase().replace(/\s+/g, "-")}`}
@@ -2489,7 +2567,7 @@ export default function Home() {
             ))
           )}
 
-          {displayCategories.length > 12 && !showCategorySkeleton && (
+          {displayCategories.length > 8 && !showCategorySkeleton && (
             <div
               className="flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer group"
               onClick={() => navigate("/food/user/categories")}
@@ -2497,7 +2575,7 @@ export default function Home() {
               <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-orange-50 dark:bg-orange-950 flex items-center justify-center border border-orange-100 group-hover:border-[#F84E04] transition-all">
                 <Plus className="w-6 h-6 text-[#F84E04]" />
               </div>
-              <span className="text-xs font-medium text-gray-700">See All</span>
+              <span className="text-xs font-medium text-gray-700 dark:text-gray-350">More</span>
             </div>
           )}
         </div>
@@ -2700,7 +2778,7 @@ export default function Home() {
                   </div>
                   {/* Categories Horizontal Slider */}
                   <div className="flex overflow-x-auto gap-2.5 pb-1.5 scrollbar-hide -mx-4 px-4 mask-edge-fade">
-                    {displayCategories.map((category, index) => (
+                    {(displayCategories.length > 8 ? displayCategories.slice(0, 8) : displayCategories).map((category, index) => (
                       <div
                         key={category.id || index}
                         onClick={() => {
@@ -2732,11 +2810,24 @@ export default function Home() {
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                           />
                         </div>
-                        <span className={`text-[10px] xs:text-[11px] sm:text-xs font-bold text-gray-550 dark:text-gray-400 group-hover:text-[#F84E04] text-center leading-tight line-clamp-2 w-full px-0.5`}>
+                        <span className={`text-[10px] xs:text-[11px] sm:text-xs font-bold text-gray-555 dark:text-gray-400 group-hover:text-[#F84E04] text-center leading-tight line-clamp-2 w-full px-0.5`}>
                           {category.name}
                         </span>
                       </div>
                     ))}
+                    {displayCategories.length > 8 && (
+                      <div
+                        onClick={() => navigate("/food/user/categories")}
+                        className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px] cursor-pointer"
+                      >
+                        <div className="relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 border-transparent bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 transition-all duration-300">
+                          <Plus className="w-6 h-6 text-[#F84E04]" />
+                        </div>
+                        <span className="text-[10px] xs:text-[11px] sm:text-xs font-bold text-gray-555 dark:text-gray-400 group-hover:text-[#F84E04] text-center leading-tight">
+                          More
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2792,7 +2883,7 @@ export default function Home() {
 
                       {/* Categories Slider (Sticky Mode) */}
                       <div className="flex overflow-x-auto gap-2.5 py-1.5 px-4 scrollbar-hide mask-edge-fade border-b border-gray-100 dark:border-gray-800">
-                        {displayCategories.map((category, index) => (
+                        {(displayCategories.length > 8 ? displayCategories.slice(0, 8) : displayCategories).map((category, index) => (
                           <div
                             key={`sticky-${category.id || index}`}
                             onClick={() => {
@@ -2829,6 +2920,19 @@ export default function Home() {
                             </span>
                           </div>
                         ))}
+                        {displayCategories.length > 8 && (
+                          <div
+                            onClick={() => navigate("/food/user/categories")}
+                            className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px] cursor-pointer"
+                          >
+                            <div className="relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 border-transparent bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 transition-all duration-300">
+                              <Plus className="w-6 h-6 text-[#F84E04]" />
+                            </div>
+                            <span className="text-[10px] xs:text-[11px] sm:text-xs font-bold text-gray-555 dark:text-gray-400 group-hover:text-[#F84E04] text-center leading-tight">
+                              More
+                            </span>
+                          </div>
+                        )}
                       </div>
 
 

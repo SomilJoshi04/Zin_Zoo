@@ -37,6 +37,7 @@ import { useProfile } from "@food/context/ProfileContext"
 import { useLocation as useUserLocation } from "@food/hooks/useLocation"
 import { orderAPI, restaurantAPI } from "@food/api"
 import { useCompanyName } from "@food/hooks/useCompanyName"
+import { getCachedSettings } from "@food/utils/businessSettings"
 import { useUserNotifications } from "@food/hooks/useUserNotifications"
 import circleIcon from "@food/assets/circleicon.png"
 import { RESTAURANT_PIN_SVG, CUSTOMER_PIN_SVG, RIDER_BIKE_SVG } from "@food/constants/mapIcons"
@@ -261,8 +262,8 @@ const getRestaurantAddressFromOrder = (apiOrder, previousOrder = null, explicitR
   if (location?.address && String(location.address).trim()) {
     return String(location.address).trim()
   }
-  if (location?.addressLine1 && String(location.addressLine1).trim()) {
-    return String(location.addressLine1).trim()
+  if (location?.landmark && String(location.landmark).trim()) {
+    return String(location.landmark).trim()
   }
 
   const parts = [location?.street, location?.area, location?.city, location?.state, location?.zipCode]
@@ -793,20 +794,36 @@ export default function OrderTracking() {
     // Prevent event bubbling if necessary
     if (e && e.stopPropagation) e.stopPropagation();
 
-    const rawPhone =
-      order?.restaurantPhone ||
-      order?.restaurantId?.phone ||
-      order?.restaurantId?.ownerPhone ||
-      order?.restaurantId?.contact?.phone ||
-      order?.restaurant?.phone ||
-      order?.restaurant?.ownerPhone ||
-      order?.restaurantId?.location?.phone ||
-      '';
+    const isGroceryOrAccessories =
+      order?.moduleType === 'grocery' ||
+      order?.moduleType === 'accessories' ||
+      String(order?.orderId || order?.order_id || "").startsWith("GRO-") ||
+      String(order?.orderId || order?.order_id || "").startsWith("ACC-");
+
+    let rawPhone = '';
+    if (isGroceryOrAccessories) {
+      const settings = getCachedSettings();
+      if (settings?.phone?.number) {
+        const country = settings.phone.countryCode || '';
+        const num = settings.phone.number;
+        rawPhone = `${country}${num}`;
+      }
+    } else {
+      rawPhone =
+        order?.restaurantPhone ||
+        order?.restaurantId?.phone ||
+        order?.restaurantId?.ownerPhone ||
+        order?.restaurantId?.contact?.phone ||
+        order?.restaurant?.phone ||
+        order?.restaurant?.ownerPhone ||
+        order?.restaurantId?.location?.phone ||
+        '';
+    }
 
     const cleanPhone = String(rawPhone).replace(/[^\d+]/g, '');
 
     if (!cleanPhone || cleanPhone.length < 5) {
-      toast.error('Restaurant phone number not available');
+      toast.error(isGroceryOrAccessories ? 'Admin phone number not available' : 'Restaurant phone number not available');
       return;
     }
 
