@@ -54,11 +54,12 @@ import {
     getPublicHeroBannersController,
     getPublicUnder250BannersController,
     getPublicAccessoriesBannersController,
-getPublicExploreIconsController,
+    getPublicExploreIconsController,
     getPublicHomePromotionBannersController,
     getPublicGourmetController,
     getPublicLandingSettingsController,
-    getPublicTopBannersController
+    getPublicTopBannersController,
+    validateStockController
 } from '../controllers/publicLanding.controller.js';
 import { detectZonePublicController, listZonesPublicController, listZonesNearbyPublicController } from '../controllers/zonePublic.controller.js';
 // Gourmet controller imports removed (module deleted)
@@ -162,6 +163,7 @@ router.get('/landing/settings/public', getPublicLandingSettingsController);
 router.get('/zones/detect', detectZonePublicController);
 router.get('/zones/nearby', listZonesNearbyPublicController);
 router.get('/zones/public', listZonesPublicController);
+router.get('/stock/validate', validateStockController);
 // Admin landing settings
 router.get('/hero-banners/landing/settings', getAdminLandingSettingsController);
 router.patch('/hero-banners/landing/settings', updateAdminLandingSettingsController);

@@ -130,17 +130,17 @@ export default function UserOrderDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-600 text-sm">Loading order details...</p>
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex items-center justify-center">
+        <p className="text-gray-600 dark:text-gray-400 text-sm">Loading order details...</p>
       </div>
     )
   }
 
   if (!order) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] flex items-center justify-center">
         <div className="text-center space-y-3">
-          <p className="text-gray-700 text-sm font-medium">Order not found</p>
+          <p className="text-gray-700 dark:text-gray-300 text-sm font-medium">Order not found</p>
           <button
             onClick={() => navigate("/user/orders")}
             className="px-4 py-2 rounded-lg bg-[#F84E04] text-white text-sm font-semibold"

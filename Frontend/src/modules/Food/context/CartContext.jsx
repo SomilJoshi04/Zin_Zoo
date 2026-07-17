@@ -1,6 +1,9 @@
 // src/context/cart-context.jsx
-import { createContext, useContext, useEffect, useMemo, useState } from "react"
+import { createContext, useContext, useEffect, useMemo, useState, useRef } from "react"
 import { buildCartLineId } from "@food/utils/foodVariants"
+import apiClient from "@food/api/axios"
+import { toast } from "sonner"
+
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -173,6 +176,37 @@ export function CartProvider({ children }) {
   // Track last remove event for animation
   const [lastRemoveEvent, setLastRemoveEvent] = useState(null)
 
+  const pendingQuantitiesRef = useRef({})
+  const activeStockChecks = useRef({})
+
+  const checkStock = async (itemId, moduleType) => {
+    const key = `${moduleType}:${itemId}`
+    if (activeStockChecks.current[key]) {
+      return activeStockChecks.current[key]
+    }
+
+    const promise = apiClient.get('/food/stock/validate', {
+      params: { itemId, moduleType }
+    }).then(res => {
+      delete activeStockChecks.current[key]
+      if (res.data && res.data.success) {
+        return {
+          stock: Number(res.data.stock) || 0,
+          isAvailable: res.data.isAvailable !== false
+        }
+      }
+      return { stock: 0, isAvailable: false }
+    }).catch(err => {
+      delete activeStockChecks.current[key]
+      console.error('Stock validation error:', err)
+      return null
+    })
+
+    activeStockChecks.current[key] = promise
+    return promise
+  }
+
+
   // Persist to localStorage whenever cart changes
   useEffect(() => {
     try {
@@ -202,7 +236,7 @@ export function CartProvider({ children }) {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, []);
 
-  const addToCart = (item, sourcePosition = null) => {
+  const addToCart = async (item, sourcePosition = null) => {
     const safeCart = normalizeCartData(cart)
     const isFood = (item?.moduleType || 'food') === 'food';
     
@@ -220,14 +254,55 @@ export function CartProvider({ children }) {
       }
     }
 
+    const itemId = item.id;
+    const baseItemId = item.itemId || item.productId || item.foodId || item.id || item._id;
+    const moduleType = item.moduleType || item.category || 'food';
 
+    const existing = safeCart.find((i) => i.id === itemId)
+    const currentQty = existing ? existing.quantity : 0
 
-    setCart((prev) => {
-      const safePrev = normalizeCartData(prev)
-      
-      const existing = safePrev.find((i) => i.id === item.id)
-      if (existing) {
-        // Set last add event for animation when incrementing existing item
+    const pendingKey = itemId
+    const currentPending = pendingQuantitiesRef.current[pendingKey] || 0
+    const nextPending = Math.max(currentQty, currentPending) + 1
+    pendingQuantitiesRef.current[pendingKey] = nextPending
+
+    try {
+      const stockInfo = await checkStock(baseItemId, moduleType)
+
+      if (!stockInfo || !stockInfo.isAvailable || stockInfo.stock <= 0) {
+        toast.error("❌ This item is currently out of stock.")
+        pendingQuantitiesRef.current[pendingKey] = currentQty
+        return { ok: false }
+      }
+
+      if (nextPending > stockInfo.stock) {
+        toast.warning(`⚠️ Only ${stockInfo.stock} items are available in stock.`)
+        pendingQuantitiesRef.current[pendingKey] = currentQty
+        return { ok: false }
+      }
+
+      setCart((prev) => {
+        const safePrev = normalizeCartData(prev)
+        const existingInState = safePrev.find((i) => i.id === itemId)
+        if (existingInState) {
+          if (sourcePosition) {
+            setLastAddEvent({
+              product: {
+                id: item.id,
+                name: item.name,
+                imageUrl: item.image || item.imageUrl,
+                moduleType: item.moduleType || 'food',
+              },
+              sourcePosition,
+            })
+            setTimeout(() => setLastAddEvent(null), 1500)
+          }
+          return safePrev.map((i) =>
+            i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          )
+        }
+        const newItem = { ...item, quantity: 1 }
+        
         if (sourcePosition) {
           setLastAddEvent({
             product: {
@@ -238,34 +313,18 @@ export function CartProvider({ children }) {
             },
             sourcePosition,
           })
-          // Clear after animation completes (increased delay)
           setTimeout(() => setLastAddEvent(null), 1500)
         }
-        return safePrev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
-        )
-      }
-      const newItem = { ...item, quantity: 1 }
-      
-      // Set last add event for animation if sourcePosition is provided
-      if (sourcePosition) {
-        setLastAddEvent({
-          product: {
-            id: item.id,
-            name: item.name,
-            imageUrl: item.image || item.imageUrl,
-            moduleType: item.moduleType || 'food',
-          },
-          sourcePosition,
-        })
-        // Clear after animation completes (increased delay to allow full animation)
-        setTimeout(() => setLastAddEvent(null), 1500)
-      }
-      
-      return [...safePrev, newItem]
-    })
+        
+        return [...safePrev, newItem]
+      })
 
-    return { ok: true }
+      return { ok: true }
+    } catch (err) {
+      console.error(err)
+      pendingQuantitiesRef.current[pendingKey] = currentQty
+      return { ok: false }
+    }
   }
 
   const removeFromCart = (itemId, sourcePosition = null, productInfo = null) => {
@@ -291,9 +350,13 @@ export function CartProvider({ children }) {
     })
   }
 
-  const updateQuantity = (itemId, quantity, sourcePosition = null, productInfo = null) => {
+  const updateQuantity = async (itemId, quantity, sourcePosition = null, productInfo = null) => {
     const safeCart = normalizeCartData(cart)
     const resolvedItemId = resolveCartEntryId(safeCart, itemId)
+    const existingItem = safeCart.find((i) => i.id === resolvedItemId)
+
+    if (!existingItem) return
+
     if (quantity <= 0) {
       setCart((prev) => {
         const safePrev = normalizeCartData(prev)
@@ -314,29 +377,68 @@ export function CartProvider({ children }) {
         }
         return safePrev.filter((i) => i.id !== resolvedItemId)
       })
+      if (pendingQuantitiesRef.current[resolvedItemId]) {
+        delete pendingQuantitiesRef.current[resolvedItemId]
+      }
       return
     }
-    
-    // When quantity decreases (but not to 0), also trigger removal animation
-    setCart((prev) => {
-      const safePrev = normalizeCartData(prev)
-      const existingItem = safePrev.find((i) => i.id === resolvedItemId)
-      if (existingItem && quantity < existingItem.quantity && sourcePosition && productInfo) {
-        // Set last remove event for animation when decreasing quantity
-        setLastRemoveEvent({
-          product: {
-            id: productInfo.id || existingItem.id,
-            name: productInfo.name || existingItem.name,
-            imageUrl: productInfo.imageUrl || productInfo.image || existingItem.image || existingItem.imageUrl,
-            moduleType: productInfo.moduleType || existingItem.moduleType || 'food',
-          },
-          sourcePosition,
-        })
-        // Clear after animation completes
-        setTimeout(() => setLastRemoveEvent(null), 1500)
+
+    if (quantity <= existingItem.quantity) {
+      setCart((prev) => {
+        const safePrev = normalizeCartData(prev)
+        const existing = safePrev.find((i) => i.id === resolvedItemId)
+        if (existing && quantity < existing.quantity && sourcePosition && productInfo) {
+          // Set last remove event for animation when decreasing quantity
+          setLastRemoveEvent({
+            product: {
+              id: productInfo.id || existing.id,
+              name: productInfo.name || existing.name,
+              imageUrl: productInfo.imageUrl || productInfo.image || existing.image || existing.imageUrl,
+              moduleType: productInfo.moduleType || existing.moduleType || 'food',
+            },
+            sourcePosition,
+          })
+          // Clear after animation completes
+          setTimeout(() => setLastRemoveEvent(null), 1500)
+        }
+        return safePrev.map((i) => (i.id === resolvedItemId ? { ...i, quantity } : i))
+      })
+      pendingQuantitiesRef.current[resolvedItemId] = quantity
+      return
+    }
+
+    // Increasing quantity!
+    const baseItemId = existingItem.itemId || existingItem.productId || existingItem.id
+    const moduleType = existingItem.moduleType || existingItem.category || 'food'
+
+    const pendingKey = resolvedItemId
+    const currentPending = pendingQuantitiesRef.current[pendingKey] || 0
+    const nextPending = Math.max(quantity, currentPending)
+    pendingQuantitiesRef.current[pendingKey] = nextPending
+
+    try {
+      const stockInfo = await checkStock(baseItemId, moduleType)
+
+      if (!stockInfo || !stockInfo.isAvailable || stockInfo.stock <= 0) {
+        toast.error("❌ This item is currently out of stock.")
+        pendingQuantitiesRef.current[pendingKey] = existingItem.quantity
+        return
       }
-      return safePrev.map((i) => (i.id === resolvedItemId ? { ...i, quantity } : i))
-    })
+
+      if (nextPending > stockInfo.stock) {
+        toast.warning(`⚠️ Only ${stockInfo.stock} items are available in stock.`)
+        pendingQuantitiesRef.current[pendingKey] = existingItem.quantity
+        return
+      }
+
+      setCart((prev) => {
+        const safePrev = normalizeCartData(prev)
+        return safePrev.map((i) => (i.id === resolvedItemId ? { ...i, quantity } : i))
+      })
+    } catch (err) {
+      console.error(err)
+      pendingQuantitiesRef.current[pendingKey] = existingItem.quantity
+    }
   }
 
   const getCartCount = () =>
@@ -354,7 +456,10 @@ export function CartProvider({ children }) {
     return safeCart.find((i) => i.id === resolvedItemId) || null
   }
 
-  const clearCart = () => setCart([])
+  const clearCart = () => {
+    setCart([])
+    pendingQuantitiesRef.current = {}
+  }
 
   const replaceCart = (items) => {
     const normalizedItems = normalizeCartData(items).filter((item) => {
@@ -363,6 +468,7 @@ export function CartProvider({ children }) {
     })
 
     setCart(normalizedItems)
+    pendingQuantitiesRef.current = {}
     return { ok: true, count: normalizedItems.length }
   }
 

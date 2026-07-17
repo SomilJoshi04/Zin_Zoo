@@ -589,8 +589,8 @@ export default function Orders() {
       {/* Orders List */}
       <div className="px-4 py-2 space-y-4">
         {filteredOrders.length === 0 ? (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-            <p className="text-gray-600">No orders found matching your search</p>
+          <div className="bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-gray-100 dark:border-slate-800 p-8 text-center">
+            <p className="text-gray-600 dark:text-gray-400">No orders found matching your search</p>
           </div>
         ) : (
           filteredOrders.map((order) => {
@@ -679,18 +679,18 @@ export default function Orders() {
 
                 {/* Three-dots dropdown menu */}
                 {activeMenuOrderId === order.id && (
-                  <div className="absolute right-3 top-10 z-20 w-40 rounded-xl bg-white shadow-lg border border-gray-100 py-1 text-xs">
+                  <div className="absolute right-3 top-10 z-20 w-40 rounded-xl bg-white dark:bg-slate-800 shadow-lg border border-gray-100 dark:border-slate-700 py-1 text-xs">
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); handleShareRestaurant(order); }}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-800"
+                      className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-800 dark:text-gray-200"
                     >
                       Share restaurant
                     </button>
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); handleViewOrderDetails(order); }}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-50 text-gray-800"
+                      className="w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 text-gray-800 dark:text-gray-200"
                     >
                       Order details
                     </button>

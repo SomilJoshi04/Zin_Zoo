@@ -2854,13 +2854,12 @@ function RestaurantDetailsContent() {
 
       {/* Menu Button - Sticky at page bottom right (hidden when filter or menu sheet open) */}
       {!showFilterSheet && !showMenuSheet && !showMenuOptionsSheet && (
-        <div className="sticky dark:bg-[#1a1a1a] bottom-4 flex justify-end px-4 z-50 mt-auto">
+        <div className="sticky bottom-4 flex justify-end px-4 z-50 mt-auto">
           <Button
-            className="bg-[#1a1a1a] dark:bg-[#F84E04] hover:bg-black dark:hover:bg-[#D94F0C] text-white flex items-center gap-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/10 dark:border-[#F84E04]/20 px-6 py-6 rounded-full font-bold transform transition-all duration-300 hover:scale-110 active:scale-95 group"
-            size="lg"
+            className="relative bg-[#1a1a1a] dark:bg-[#F84E04] hover:bg-black dark:hover:bg-[#D94F0C] text-white flex items-center justify-center shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/10 dark:border-[#F84E04]/20 w-32 h-14 rounded-full font-bold transform transition-all duration-300 hover:scale-110 active:scale-95 group"
             onClick={() => setShowMenuSheet(true)}
           >
-            <Utensils className="h-5 w-5 text-[#F84E04] dark:text-white group-hover:rotate-12 transition-transform" />
+            <Utensils className="absolute left-5 h-5 w-5 text-[#F84E04] dark:text-white group-hover:rotate-12 transition-transform" />
             <span className="tracking-wide">MENU</span>
           </Button>
         </div>

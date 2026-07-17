@@ -119,3 +119,53 @@ export const getPublicLandingSettingsController = async (req, res, next) => {
         next(error);
     }
 };
+
+/**
+ * Validate current stock for food item, grocery product, or accessory product in real-time
+ */
+export const validateStockController = async (req, res, next) => {
+    try {
+        const { itemId, moduleType } = req.query;
+        if (!itemId || !mongoose.Types.ObjectId.isValid(itemId)) {
+            return res.status(400).json({ success: false, message: 'Invalid item ID' });
+        }
+
+        const type = moduleType || 'food';
+        let stock = 0;
+        let isAvailable = false;
+
+        if (type === 'food') {
+            const { FoodItem } = await import('../../admin/models/food.model.js');
+            const item = await FoodItem.findById(itemId).lean();
+            if (item) {
+                stock = item.quantity || 0;
+                isAvailable = item.isAvailable !== false && item.approvalStatus === 'approved';
+            }
+        } else if (type === 'grocery') {
+            const { GroceryProduct } = await import('../../admin/models/groceryProduct.model.js');
+            const item = await GroceryProduct.findById(itemId).lean();
+            if (item) {
+                stock = item.quantity || 0;
+                isAvailable = item.isActive !== false;
+            }
+        } else if (type === 'accessories') {
+            const { AccessoriesProduct } = await import('../../../accessories/models/accessoriesProduct.model.js');
+            const item = await AccessoriesProduct.findById(itemId).lean();
+            if (item) {
+                stock = item.quantity || 0;
+                isAvailable = item.isActive !== false;
+            }
+        }
+
+        return res.status(200).json({
+            success: true,
+            itemId,
+            moduleType: type,
+            stock: isAvailable ? Math.max(0, stock) : 0,
+            isAvailable
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
