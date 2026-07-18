@@ -12,8 +12,6 @@ import {
   RestaurantGridSkeleton,
 } from "@food/components/ui/loading-skeletons"
 
-// Import shared food images - prevents duplication
-import { foodImages } from "@food/constants/images"
 import api from "@food/api"
 import { restaurantAPI, adminAPI } from "@food/api"
 import { API_BASE_URL } from "@food/api/config"
@@ -637,7 +635,7 @@ export default function CategoryPage() {
             ...categoriesArray.map((cat) => ({
               id: cat.slug || cat.id,
               name: cat.name,
-              image: cat.image || foodImages[0],
+              image: cat.image || "",
               slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
               type: cat.type,
             }))
@@ -1736,10 +1734,10 @@ export default function CategoryPage() {
                           <div className="relative flex-shrink-0 flex flex-col items-center">
                             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800">
                               <img
-                                src={food.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop"}
+                                src={food.image || ""}
                                 alt={food.name}
                                 className="w-full h-full object-cover"
-                                onError={(e) => { e.target.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&auto=format&fit=crop" }}
+                                onError={(e) => { e.target.src = "" }}
                               />
                             </div>
                             <button

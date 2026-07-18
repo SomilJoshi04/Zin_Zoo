@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, Grid2x2, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 import { adminAPI } from "@food/api";
-import { foodImages } from "@food/constants/images";
+
 import OptimizedImage from "@food/components/OptimizedImage";
 import { useLocation } from "@food/hooks/useLocation";
 import { useZone } from "@food/hooks/useZone";
@@ -54,7 +54,7 @@ export default function Categories() {
             id: String(cat?.id || cat?._id || cat?.slug || idx),
             name: cat?.name || "",
             slug: cat?.slug || String(cat?.name || "").toLowerCase().replace(/\s+/g, "-"),
-            image: normalizeImageUrl(cat?.image || cat?.imageUrl) || foodImages[idx % foodImages.length],
+            image: normalizeImageUrl(cat?.image || cat?.imageUrl) || "",
             type: cat?.type || "",
           }));
           setCategories(transformed);

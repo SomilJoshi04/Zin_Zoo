@@ -266,7 +266,7 @@ export default function UserLayout() {
                   {showDesktopNavbar && <DesktopNavbar />}
                 </div>
                 {/* <LocationPrompt /> */}
-                <main className={showDesktopNavbar ? "md:pt-40" : ""}>
+                <main className={showDesktopNavbar ? "md:pt-32" : ""}>
                   <Outlet />
                 </main>
                 {showBottomNav && <BottomNavigation />}

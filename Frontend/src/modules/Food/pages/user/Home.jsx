@@ -80,7 +80,7 @@ const debugWarn = (...args) => { };
 const debugError = (...args) => { };
 
 // Import shared food images - prevents duplication
-import { foodImages } from "@food/constants/images";
+
 
 import { Avatar, AvatarFallback } from "@food/components/ui/avatar";
 import {
@@ -804,10 +804,7 @@ export default function Home() {
     return (landingCategories || []).map((category, index) => ({
       id: category.id || category._id || `landing-category-${index}`,
       name: category.label || category.name || "Category",
-      image:
-        normalizeImageUrl(category.imageUrl || category.image) ||
-        foodImages[index % foodImages.length] ||
-        foodImages[0],
+      image: normalizeImageUrl(category.imageUrl || category.image) || "",
       slug:
         category.slug || slugifyCategory(category.label || category.name || ""),
       label: category.label || category.name || "Category",
@@ -1266,10 +1263,7 @@ export default function Home() {
               id: String(cat?.id || cat?._id || cat?.slug || idx),
               name: cat?.name || "",
               slug: cat?.slug || String(cat?.name || "").toLowerCase().replace(/\s+/g, "-"),
-              image:
-                normalizeImageUrl(cat?.image || cat?.imageUrl) ||
-                foodImages[idx % foodImages.length] ||
-                foodImages[0],
+              image: normalizeImageUrl(cat?.image || cat?.imageUrl) || "",
               type: cat?.type || "",
             }))
             : []
@@ -2250,10 +2244,7 @@ export default function Home() {
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((category, index) => ({
             ...category,
-            image:
-              category.image ||
-              foodImages[index % foodImages.length] ||
-              foodImages[0],
+            image: category.image || "",
           }));
 
         setMenuCategories(categories);
@@ -2337,7 +2328,7 @@ export default function Home() {
         ).filter(Boolean),
         restaurant?.profileImage,
       ]);
-      const image = imageCandidates[0] || foodImages[0];
+      const image = imageCandidates[0] || "";
 
       return {
         id: restaurant?.restaurantId || restaurantId,
@@ -2347,8 +2338,8 @@ export default function Home() {
         rating: Number(restaurant?.rating) || 0,
         distance: "",
         deliveryTime: "",
-        image: normalizeImageUrl(image) || foodImages[0],
-        images: imageCandidates.length > 0 ? imageCandidates : [foodImages[0]],
+        image: normalizeImageUrl(image) || "",
+        images: imageCandidates.length > 0 ? imageCandidates : [],
         slug: restaurant?.slug || restaurant?.restaurantId || restaurantId,
         offer: null,
         pureVegRestaurant: restaurant?.pureVegRestaurant === true,

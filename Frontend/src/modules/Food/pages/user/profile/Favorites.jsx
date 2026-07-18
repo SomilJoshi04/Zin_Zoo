@@ -162,12 +162,12 @@ export default function Favorites() {
 
                       <div className="h-32 w-full relative overflow-hidden bg-gray-50 dark:bg-gray-900">
                         <img
-                          src={dish.image || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop&q=80"}
+                          src={dish.image || ""}
                           alt={dish.name}
                           className="w-full h-full object-cover"
                           loading="lazy"
                           onError={(e) => {
-                            e.target.src = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=600&fit=crop&q=80"
+                            e.target.src = ""
                           }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />

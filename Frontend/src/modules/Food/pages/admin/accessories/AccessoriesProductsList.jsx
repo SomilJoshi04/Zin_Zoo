@@ -48,15 +48,7 @@ const createVariantDraft = (variant = {}) => ({
   price: variant?.price != null ? String(variant.price) : "",
 })
 
-const FOOD_FALLBACK_IMAGE =
-  "data:image/svg+xml;utf8," +
-  encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
-      <rect width="80" height="80" rx="12" fill="#F1F5F9"/>
-      <circle cx="40" cy="30" r="12" fill="#CBD5E1"/>
-      <rect x="20" y="48" width="40" height="8" rx="4" fill="#CBD5E1"/>
-    </svg>`
-  )
+const FOOD_FALLBACK_IMAGE = ""
 
 export default function AccessoriesProductsList() {
   const navigate = useNavigate()
