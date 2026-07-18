@@ -407,10 +407,9 @@ export default function Home() {
   const { openLocationSelector } = useLocationSelector();
   const {
     vegMode,
-    setVegMode: setVegModeContext,
-    vegModeOption,
-    setVegModeOption
+    setVegMode: setVegModeContext
   } = useProfile();
+  const [vegModeOption, setVegModeOption] = useState("all");
   const [prevVegMode, setPrevVegMode] = useState(vegMode);
   const [showVegModePopup, setShowVegModePopup] = useState(false);
   const [showSwitchOffPopup, setShowSwitchOffPopup] = useState(false);

@@ -147,19 +147,22 @@ export default function AccessoriesPage() {
     }, 500);
   };
 
-  const handleAdd = (e, product) => {
+  const handleAdd = async (e, product) => {
     e.stopPropagation(); // prevent modal opening
     
     const btnRect = e.target.getBoundingClientRect();
     const sourcePosition = { x: btnRect.left, y: btnRect.top };
     
-    addToCart({
+    const result = await addToCart({
       id: product._id,
       name: product.name,
       price: product.price,
       image: product.image,
       moduleType: 'accessories',
     }, sourcePosition);
+    
+    // Only animate if successfully added to cart (stock available)
+    if (result && result.ok === false) return;
     
     // Fly to cart animation
     if (cartIconRef.current && product.image) {
@@ -202,7 +205,7 @@ export default function AccessoriesPage() {
   const handleRemove = (e, product) => {
     e.stopPropagation();
     
-    const currentQty = cart.find(i => i.id === product._id)?.quantity || 0;
+    const currentQty = cart.find(i => (i.itemId || i.id) === product._id)?.quantity || 0;
     const btnRect = e.target.getBoundingClientRect();
     const sourcePosition = { x: btnRect.left, y: btnRect.top };
     
@@ -393,7 +396,7 @@ export default function AccessoriesPage() {
               ))
             ) : products.length > 0 ? (
               products.map(product => {
-                const qty = cart.find(i => i.id === product._id)?.quantity || 0;
+                const qty = cart.find(i => (i.itemId || i.id) === product._id)?.quantity || 0;
                 return (
                   <Card 
                     key={product._id} 
@@ -546,9 +549,9 @@ export default function AccessoriesPage() {
                 </div>
 
                 <div className="mt-2 flex items-center gap-2 text-xs font-bold">
-                  {selectedProduct.quantity > 0 ? (
+                  {selectedProduct.quantity > 0 && selectedProduct.quantity - (cart.find(i => (i.itemId || i.id) === (selectedProduct.id || selectedProduct._id))?.quantity || 0) > 0 ? (
                     <span className="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 px-2.5 py-1 rounded">
-                      In Stock ({selectedProduct.quantity} items left)
+                      In Stock ({selectedProduct.quantity - (cart.find(i => (i.itemId || i.id) === (selectedProduct.id || selectedProduct._id))?.quantity || 0)} items left)
                     </span>
                   ) : (
                     <span className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 px-2.5 py-1 rounded">
@@ -559,13 +562,9 @@ export default function AccessoriesPage() {
                 
                 {/* Info Cards */}
                 <div className="mt-2 flex gap-3">
-                   <div className="flex flex-col items-center justify-center p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30 flex-1">
+                   <div className="flex flex-col items-center justify-center p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30 w-full">
                       <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold mb-0.5">Delivery</span>
-                      <span className="text-sm font-black text-blue-700 dark:text-blue-300">10 mins</span>
-                   </div>
-                   <div className="flex flex-col items-center justify-center p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-2xl border border-purple-100 dark:border-purple-900/30 flex-1">
-                      <span className="text-xs text-purple-600 dark:text-purple-400 font-semibold mb-0.5">Quality</span>
-                      <span className="text-sm font-black text-purple-700 dark:text-purple-300">Guaranteed</span>
+                      <span className="text-sm font-black text-blue-700 dark:text-blue-300">{selectedProduct.preparationTime || "10 mins"}</span>
                    </div>
                 </div>
               </div>
@@ -573,7 +572,7 @@ export default function AccessoriesPage() {
               {/* Bottom Sticky Add to Cart Section */}
               <div className="p-4 border-t dark:border-gray-800 bg-white dark:bg-[#1a1a1a] pb-6 md:pb-4 shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
                 {(() => {
-                  const qty = cart.find(i => i.id === selectedProduct._id)?.quantity || 0;
+                  const qty = cart.find(i => (i.itemId || i.id) === selectedProduct._id)?.quantity || 0;
                   if (selectedProduct.quantity === 0) {
                     return (
                       <Button 

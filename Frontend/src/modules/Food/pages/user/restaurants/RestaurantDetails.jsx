@@ -1131,6 +1131,11 @@ function RestaurantDetailsContent() {
       return
     }
 
+    if (item.quantity !== undefined && newQuantity > item.quantity) {
+      toast.error(`Only ${item.quantity} items left in stock`)
+      return
+    }
+
     const resolvedVariant = preferredVariant || getDefaultFoodVariant(item)
     const lineItemId = getLineItemIdForDish(item, resolvedVariant)
 
@@ -3464,9 +3469,9 @@ function RestaurantDetailsContent() {
                     </p>
 
                     <div className="mt-2 mb-4 flex items-center gap-2 text-xs font-bold">
-                      {selectedItem.quantity > 0 ? (
+                      {selectedItem.quantity > 0 && selectedItem.quantity - getDishQuantity(selectedItem, selectedVariantId) > 0 ? (
                         <span className="text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/20 px-2.5 py-1 rounded">
-                          In Stock ({selectedItem.quantity} items left)
+                          In Stock ({selectedItem.quantity - getDishQuantity(selectedItem, selectedVariantId)} items left)
                         </span>
                       ) : (
                         <span className="text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 px-2.5 py-1 rounded">

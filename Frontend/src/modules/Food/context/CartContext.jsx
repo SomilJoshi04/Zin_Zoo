@@ -46,7 +46,7 @@ const CartContext = createContext(defaultCartContext)
 const normalizeCartData = (rawCart) => {
   if (!Array.isArray(rawCart)) return []
 
-  return rawCart
+  const normalized = rawCart
     .filter((item) => item && typeof item === "object")
     .map((item, index) => {
       const parsedQuantity = Number(item.quantity)
@@ -133,6 +133,30 @@ const normalizeCartData = (rawCart) => {
           imageUrl: normalizedImage,
         }
       })
+      
+  // Deduplicate and merge corrupted grocery/accessories items from local storage
+  const mergedCart = [];
+  for (const item of normalized) {
+    if (item.moduleType === 'grocery' || item.moduleType === 'accessories') {
+      const existing = mergedCart.find(i => 
+        (i.moduleType === 'grocery' || i.moduleType === 'accessories') &&
+        i.itemId === item.itemId &&
+        String(i.storeId || i.restaurantId || "") === String(item.storeId || item.restaurantId || "") &&
+        String(i.variant || i.size || "") === String(item.variant || item.size || "")
+      );
+
+      if (existing) {
+        existing.quantity += item.quantity;
+      } else {
+        mergedCart.push(item);
+      }
+    } else {
+      mergedCart.push(item);
+    }
+    
+  }
+
+  return mergedCart;
 }
 
 const resolveCartEntryId = (items, itemId, variantId = "") => {
@@ -254,14 +278,38 @@ export function CartProvider({ children }) {
       }
     }
 
-    const itemId = item.id;
     const baseItemId = item.itemId || item.productId || item.foodId || item.id || item._id;
     const moduleType = item.moduleType || item.category || 'food';
 
-    const existing = safeCart.find((i) => i.id === itemId)
+    let itemIdToUse = item.id;
+    let existing = null;
+
+    if (moduleType === 'grocery' || moduleType === 'accessories') {
+      const baseId = String(baseItemId);
+      const storeId = String(item.storeId || item.restaurantId || "");
+      const variantStr = String(item.variant || item.size || "");
+
+      existing = safeCart.find(i => {
+        const iModule = i.moduleType || i.category || 'food';
+        if (iModule !== moduleType) return false;
+        
+        const iBaseId = String(i.itemId || i.productId || i.foodId || i.id || i._id || "");
+        const iStoreId = String(i.storeId || i.restaurantId || "");
+        const iVariantStr = String(i.variant || i.size || "");
+
+        return iBaseId === baseId && iStoreId === storeId && iVariantStr === variantStr;
+      });
+
+      if (existing) {
+        itemIdToUse = existing.id;
+      }
+    } else {
+      existing = safeCart.find((i) => i.id === item.id);
+    }
+
     const currentQty = existing ? existing.quantity : 0
 
-    const pendingKey = itemId
+    const pendingKey = itemIdToUse
     const currentPending = pendingQuantitiesRef.current[pendingKey] || 0
     const nextPending = Math.max(currentQty, currentPending) + 1
     pendingQuantitiesRef.current[pendingKey] = nextPending
@@ -283,12 +331,12 @@ export function CartProvider({ children }) {
 
       setCart((prev) => {
         const safePrev = normalizeCartData(prev)
-        const existingInState = safePrev.find((i) => i.id === itemId)
+        const existingInState = safePrev.find((i) => i.id === itemIdToUse)
         if (existingInState) {
           if (sourcePosition) {
             setLastAddEvent({
               product: {
-                id: item.id,
+                id: itemIdToUse,
                 name: item.name,
                 imageUrl: item.image || item.imageUrl,
                 moduleType: item.moduleType || 'food',
@@ -298,7 +346,7 @@ export function CartProvider({ children }) {
             setTimeout(() => setLastAddEvent(null), 1500)
           }
           return safePrev.map((i) =>
-            i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+            i.id === itemIdToUse ? { ...i, quantity: i.quantity + 1 } : i
           )
         }
         const newItem = { ...item, quantity: 1 }

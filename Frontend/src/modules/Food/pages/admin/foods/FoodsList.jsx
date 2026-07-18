@@ -954,7 +954,11 @@ export default function FoodsList() {
                   min="0"
                   step="0.01"
                   value={foodForm.price}
-                  onChange={(e) => setFoodForm((prev) => ({ ...prev, price: e.target.value }))}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val !== "" && Number(val) < 0) val = "0";
+                    setFoodForm((prev) => ({ ...prev, price: val }));
+                  }}
                   disabled={(foodForm.variants || []).length > 0}
                   className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white disabled:bg-slate-100 disabled:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
                 />
@@ -1014,7 +1018,11 @@ export default function FoodsList() {
                   min="0"
                   placeholder="Ex: 100"
                   value={foodForm.quantity}
-                  onChange={(e) => setFoodForm((prev) => ({ ...prev, quantity: e.target.value }))}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    if (val !== "" && Number(val) < 0) val = "0";
+                    setFoodForm((prev) => ({ ...prev, quantity: val }));
+                  }}
                   className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
               </div>
@@ -1087,7 +1095,11 @@ export default function FoodsList() {
                             min="0"
                             step="0.01"
                             value={variant.price}
-                            onChange={(e) => handleVariantChange(variant.id, "price", e.target.value)}
+                            onChange={(e) => {
+                              let val = e.target.value;
+                              if (val !== "" && Number(val) < 0) val = "0";
+                              handleVariantChange(variant.id, "price", val);
+                            }}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-900 dark:border-slate-800 dark:text-white"
                           />
                         </div>

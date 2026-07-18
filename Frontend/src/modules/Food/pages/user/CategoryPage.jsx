@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, startTransition, useDeferredValue } from "react"
+import { useState, useMemo, useRef, useEffect, startTransition, useDeferredValue, useCallback } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
@@ -69,6 +69,10 @@ export default function CategoryPage() {
 
   const [restaurantsData, setRestaurantsData] = useState([])
   const [loadingRestaurants, setLoadingRestaurants] = useState(true)
+  const [restaurantsPage, setRestaurantsPage] = useState(1)
+  const [hasMoreRestaurantsBackend, setHasMoreRestaurantsBackend] = useState(true)
+  const [loadingMoreRestaurants, setLoadingMoreRestaurants] = useState(false)
+  const restaurantsRequestSeqRef = useRef(0)
   const [isEnrichingMenus, setIsEnrichingMenus] = useState(false)
   const [approvedFoodsData, setApprovedFoodsData] = useState([])
   const [foodRefreshKey, setFoodRefreshKey] = useState(0)
@@ -855,22 +859,32 @@ export default function CategoryPage() {
   }
 
   // Fetch restaurants from API
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
+  const fetchRestaurants = useCallback(async (pageNum = 1, append = false) => {
+    const requestSeq = ++restaurantsRequestSeqRef.current
+    try {
+      if (append) {
+        setLoadingMoreRestaurants(true)
+      } else {
         setLoadingRestaurants(true)
-        // Strict zone check: if no zoneId, don't fetch/show anything
-        if (!zoneId) {
-          setRestaurantsData([])
-          setLoadingRestaurants(false)
-          return
-        }
-        
-        const params = { zoneId }
-        const response = await restaurantAPI.getRestaurants(params)
+      }
+      
+      // Strict zone check: if no zoneId, don't fetch/show anything
+      if (!zoneId) {
+        if (!append) setRestaurantsData([])
+        setLoadingRestaurants(false)
+        setLoadingMoreRestaurants(false)
+        return
+      }
 
-        if (response.data && response.data.success && response.data.data && response.data.data.restaurants) {
-          const restaurantsArray = response.data.data.restaurants
+      const params = { zoneId, limit: 10, page: pageNum }
+      const response = await restaurantAPI.getRestaurants(params)
+      
+      if (requestSeq !== restaurantsRequestSeqRef.current) return
+
+      if (response.data && response.data.success && response.data.data && response.data.data.restaurants) {
+        const restaurantsArray = response.data.data.restaurants
+        const total = response.data.data.total || 0
+        setHasMoreRestaurantsBackend(pageNum * 10 < total)
 
           // Helper function to check if value is a default/mock value
           const isDefaultValue = (value, fieldName) => {
@@ -957,7 +971,15 @@ export default function CategoryPage() {
             })
 
           startTransition(() => {
-            setRestaurantsData(restaurantsWithIds)
+            if (append) {
+              setRestaurantsData(prev => {
+                const existingMap = new Map(prev.map(r => [r.id, r]))
+                restaurantsWithIds.forEach(r => existingMap.set(r.id, r))
+                return Array.from(existingMap.values())
+              })
+            } else {
+              setRestaurantsData(restaurantsWithIds)
+            }
           })
 
           setIsEnrichingMenus(true)
@@ -1054,7 +1076,15 @@ export default function CategoryPage() {
 
               if (enrichmentRequestId === menuEnrichmentRequestRef.current) {
                 startTransition(() => {
-                  setRestaurantsData(transformedRestaurants)
+                  if (append) {
+                    setRestaurantsData(prev => {
+                      const existingMap = new Map(prev.map(r => [r.id, r]))
+                      transformedRestaurants.forEach(r => existingMap.set(r.id, r))
+                      return Array.from(existingMap.values())
+                    })
+                  } else {
+                    setRestaurantsData(transformedRestaurants)
+                  }
                 })
               }
             } finally {
@@ -1064,18 +1094,30 @@ export default function CategoryPage() {
             }
           })()
         } else {
-          setRestaurantsData([])
+          if (!append) setRestaurantsData([])
+          setHasMoreRestaurantsBackend(false)
         }
       } catch (error) {
         console.error("Error fetching restaurants:", error)
-        setRestaurantsData([])
+        if (!append) setRestaurantsData([])
       } finally {
         setLoadingRestaurants(false)
+        setLoadingMoreRestaurants(false)
       }
-    }
-
-    fetchRestaurants()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoneId, isOutOfService])
+
+  useEffect(() => {
+    setRestaurantsPage(1)
+    fetchRestaurants(1, false)
+  }, [fetchRestaurants])
+
+  const handleLoadMoreRestaurants = useCallback(async () => {
+    if (loadingMoreRestaurants || !hasMoreRestaurantsBackend) return
+    const nextPage = restaurantsPage + 1
+    setRestaurantsPage(nextPage)
+    await fetchRestaurants(nextPage, true)
+  }, [restaurantsPage, loadingMoreRestaurants, hasMoreRestaurantsBackend, fetchRestaurants])
 
   // Update selected category when URL changes
   useEffect(() => {
@@ -1327,8 +1369,8 @@ export default function CategoryPage() {
     let result = foods
     if (deferredSearchQuery) {
       const q = deferredSearchQuery.toLowerCase()
-      result = result.filter(f => 
-        (f.name || "").toLowerCase().includes(q) || 
+      result = result.filter(f =>
+        (f.name || "").toLowerCase().includes(q) ||
         (f.restaurantName || "").toLowerCase().includes(q)
       )
     }
@@ -1354,9 +1396,9 @@ export default function CategoryPage() {
   const handleCategorySelect = (category) => {
     const categorySlug = category.slug || category.id
     if (categorySlug === selectedCategory) return;
-    
+
     setIsSwitchingCategory(true)
-    
+
     // Simulate a brief loading state for better UX
     setTimeout(() => {
       startTransition(() => {
@@ -1872,6 +1914,29 @@ export default function CategoryPage() {
                   )
                 })}
               </div>
+
+              {/* Load More Button */}
+              {selectedCategory === 'all' && (
+                <div className="flex justify-center mt-8 md:mt-10 mb-6">
+                  {hasMoreRestaurantsBackend ? (
+                    <Button
+                      onClick={handleLoadMoreRestaurants}
+                      disabled={loadingMoreRestaurants}
+                      variant="outline"
+                      className="rounded-full px-8 py-6 text-sm font-bold text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-all duration-300 shadow-sm flex items-center gap-2"
+                    >
+                      {loadingMoreRestaurants && <Loader2 className="w-4 h-4 animate-spin" />}
+                      View More Restaurants
+                    </Button>
+                  ) : (
+                    filteredAllRestaurants.length > 0 && (
+                      <p className="text-gray-500 dark:text-gray-400 text-sm italic py-4">
+                        🎉 You've reached the end of the restaurant list.
+                      </p>
+                    )
+                  )}
+                </div>
+              )}
 
               {/* Empty State */}
               {filteredAllRestaurants.length === 0 && (

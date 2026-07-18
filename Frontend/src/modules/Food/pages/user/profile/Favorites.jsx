@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useState, useMemo } from "react"
 
 import { Heart, ArrowRight, ArrowLeft, Bookmark, X, ShoppingCart } from "lucide-react"
@@ -12,6 +12,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { toast } from "sonner"
 
 export default function Favorites() {
+  const navigate = useNavigate()
   const { getDishFavorites, removeDishFavorite } = useProfile()
   const { addToCart } = useCart()
   const dishFavorites = getDishFavorites()
@@ -43,11 +44,9 @@ export default function Favorites() {
         <div className="max-w-4xl mx-auto space-y-6">
           <ScrollReveal>
             <div className="flex items-center gap-3 sm:gap-4">
-              <Link to="/user/profile">
-                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
-                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </Link>
+              <Button onClick={() => navigate(-1)} variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
               <h1 className="text-lg sm:text-xl md:text-2xl font-bold">My Collections</h1>
             </div>
           </ScrollReveal>
@@ -82,11 +81,9 @@ export default function Favorites() {
         <ScrollReveal>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3 sm:gap-4">
-              <Link to="/user/profile">
-                <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
-                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-              </Link>
+              <Button onClick={() => navigate(-1)} variant="ghost" size="icon" className="rounded-full h-8 w-8 sm:h-10 sm:w-10">
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
               <div>
                 <h1 className="text-lg sm:text-xl md:text-2xl font-bold">My Collections</h1>
                 <p className="text-gray-700 dark:text-gray-300 mt-1 text-sm font-semibold">
@@ -110,11 +107,10 @@ export default function Favorites() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 font-semibold text-xs whitespace-nowrap transition-colors rounded-lg ${
-                  isSelected
+                className={`px-4 py-2 font-semibold text-xs whitespace-nowrap transition-colors rounded-lg ${isSelected
                     ? "bg-[#F84E04] text-white shadow-sm"
                     : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-855"
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>

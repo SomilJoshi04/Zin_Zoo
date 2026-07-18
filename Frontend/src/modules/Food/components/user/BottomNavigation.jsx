@@ -1,10 +1,86 @@
 import { Link, useLocation } from "react-router-dom"
 import { Home, LayoutGrid, ClipboardList, User } from "lucide-react"
 import { useActiveModule, MODULES } from "@food/hooks/useActiveModule"
+import { useEffect, useState } from "react"
 
 export default function BottomNavigation() {
   const location = useLocation()
   const pathname = location.pathname
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false)
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+
+    let portraitHeight = window.innerHeight;
+    let landscapeHeight = window.innerHeight;
+    let isPortrait = window.innerHeight > window.innerWidth;
+
+    const handleFocusIn = (e) => {
+      const tag = e.target?.tagName?.toLowerCase();
+      const type = e.target?.type;
+      const isTextInput = tag === "textarea" || (tag === "input" && ["text", "password", "email", "number", "search", "tel", "url"].includes(type));
+      
+      if (isTextInput) {
+        // Instantly hide the navbar before the keyboard even starts opening
+        setIsKeyboardVisible(true);
+      }
+    };
+
+    const handleFocusOut = () => {
+      // We rely primarily on resize to show it again, but as a fallback:
+      setTimeout(() => {
+        setIsKeyboardVisible(false);
+      }, 200);
+    };
+
+    const handleResize = () => {
+      const currentIsPortrait = window.innerHeight > window.innerWidth;
+      
+      if (currentIsPortrait !== isPortrait) {
+        isPortrait = currentIsPortrait;
+        if (currentIsPortrait) {
+          portraitHeight = Math.max(portraitHeight, window.innerHeight);
+        } else {
+          landscapeHeight = Math.max(landscapeHeight, window.innerHeight);
+        }
+      }
+
+      const maxHeight = currentIsPortrait ? portraitHeight : landscapeHeight;
+      const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      
+      const shrinkAmount = maxHeight - currentHeight;
+
+      if (shrinkAmount > 150) {
+        // Keyboard is definitely open
+        setIsKeyboardVisible(true);
+      } else if (shrinkAmount < 50) {
+        // Keyboard is definitely closed
+        setIsKeyboardVisible(false);
+      }
+      // If it's between 50 and 150, it is animating, so we DO NOTHING. 
+      // This prevents the bug where it flashes back into view.
+    };
+
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("focusout", handleFocusOut);
+    
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", handleResize);
+    } else {
+      window.addEventListener("resize", handleResize);
+    }
+
+    return () => {
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("focusout", handleFocusOut);
+      
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener("resize", handleResize);
+      } else {
+        window.removeEventListener("resize", handleResize);
+      }
+    };
+  }, []);
   const activeModuleId = useActiveModule()
   
   const activeModule = MODULES.find(m => m.id === activeModuleId) || MODULES[0];
@@ -40,7 +116,7 @@ export default function BottomNavigation() {
   const activeFill = "rgba(var(--module-theme-rgb, 248,78,4), 0.2)"
 
   return (
-    <div className="md:hidden fixed bottom-6 left-5 right-5 z-50 pointer-events-none">
+    <div className={`md:hidden fixed bottom-6 left-5 right-5 z-50 pointer-events-none ${isKeyboardVisible ? 'hidden' : ''}`}>
       <div className="flex items-center justify-around h-auto px-4 py-2 bg-white/85 dark:bg-[#1a1a1a]/85 backdrop-blur-[20px] border border-white/50 dark:border-white/10 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.15)] pointer-events-auto">
         
         {/* Home Tab */}
