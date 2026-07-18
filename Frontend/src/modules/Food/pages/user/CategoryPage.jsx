@@ -1922,8 +1922,7 @@ export default function CategoryPage() {
                     <Button
                       onClick={handleLoadMoreRestaurants}
                       disabled={loadingMoreRestaurants}
-                      variant="outline"
-                      className="rounded-full px-8 py-6 text-sm font-bold text-gray-700 dark:text-gray-300 border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-[#2a2a2a] transition-all duration-300 shadow-sm flex items-center gap-2"
+                      className="rounded-full px-8 py-6 text-sm font-bold text-white bg-[#F84E04] hover:bg-[#D94F0C] transition-all duration-300 shadow-sm flex items-center gap-2 border-none"
                     >
                       {loadingMoreRestaurants && <Loader2 className="w-4 h-4 animate-spin" />}
                       View More Restaurants

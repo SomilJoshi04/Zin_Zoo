@@ -12,7 +12,6 @@ const accessoriesProductSchema = new mongoose.Schema(
         image: { type: String, trim: true, default: '' },
         isActive: { type: Boolean, default: true, index: true },
         isRecommended: { type: Boolean, default: false, index: true },
-        preparationTime: { type: String, trim: true, default: '' },
         zoneId: { type: mongoose.Schema.Types.ObjectId, ref: 'FoodZone', index: true, default: undefined },
         quantity: { type: Number, default: 0 }
     },

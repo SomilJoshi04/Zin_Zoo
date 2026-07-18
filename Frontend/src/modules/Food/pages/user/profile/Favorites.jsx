@@ -22,10 +22,8 @@ export default function Favorites() {
   const handleRemoveDishFavorite = (e, dishId, restaurantId, type = "food") => {
     e.preventDefault()
     e.stopPropagation()
-    if (window.confirm("Remove this item from collections?")) {
-      removeDishFavorite(dishId, restaurantId, type)
-      toast.success("Item removed from collections")
-    }
+    removeDishFavorite(dishId, restaurantId, type)
+    toast.success("Item removed from collections")
   }
 
   const totalFavorites = dishFavorites.length

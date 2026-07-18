@@ -560,13 +560,6 @@ export default function AccessoriesPage() {
                   )}
                 </div>
                 
-                {/* Info Cards */}
-                <div className="mt-2 flex gap-3">
-                   <div className="flex flex-col items-center justify-center p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-2xl border border-blue-100 dark:border-blue-900/30 w-full">
-                      <span className="text-xs text-blue-600 dark:text-blue-400 font-semibold mb-0.5">Delivery</span>
-                      <span className="text-sm font-black text-blue-700 dark:text-blue-300">{selectedProduct.preparationTime || "10 mins"}</span>
-                   </div>
-                </div>
               </div>
 
               {/* Bottom Sticky Add to Cart Section */}
