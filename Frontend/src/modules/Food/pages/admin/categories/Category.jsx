@@ -22,7 +22,7 @@ const defaultFormData = {
   name: "",
   image: "",
   status: true,
-  type: "",
+
   zoneId: "global",
   foodTypeScope: "Both",
 }
@@ -186,7 +186,7 @@ export default function Category() {
       name: category?.name || "",
       image: category?.image || "",
       status: category?.status !== false,
-      type: category?.type || "",
+
       zoneId: zoneIdValue || "global",
       foodTypeScope: category?.foodTypeScope || "Both",
     })
@@ -362,10 +362,10 @@ export default function Category() {
 
       const payload = {
         name: String(formData.name || "").trim(),
-        type: String(formData.type || "").trim(),
+
         status: Boolean(formData.status),
         image: imageUrl || undefined,
-        zoneId: (!formData.zoneId || formData.zoneId === "global") ? null : formData.zoneId,
+        zoneId: (!formData.zoneId || formData.zoneId === "global") ? undefined : formData.zoneId,
         foodTypeScope: formData.foodTypeScope,
       }
 
@@ -570,16 +570,6 @@ export default function Category() {
                         
 
 
-                        <div>
-                          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Category Type</label>
-                          <input
-                            type="text"
-                            value={formData.type}
-                            onChange={(event) => setFormData((prev) => ({ ...prev, type: event.target.value }))}
-                            className="w-full rounded-xl border border-slate-300 dark:border-neutral-700 px-4 py-3 outline-none focus:border-slate-900 dark:focus:border-neutral-400 text-slate-900 dark:text-white bg-white dark:bg-neutral-800 placeholder:text-slate-400 dark:placeholder:text-slate-500"
-                            placeholder="Examples: Starters, Desserts, Drinks"
-                          />
-                        </div>
 
                         <div>
                           <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Category Name</label>

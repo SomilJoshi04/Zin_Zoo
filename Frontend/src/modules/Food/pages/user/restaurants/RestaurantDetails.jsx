@@ -60,9 +60,9 @@ import {
 import fssaiLogo from "@food/assets/fssai.png"
 import { RestaurantDetailSkeleton } from "@food/components/ui/loading-skeletons"
 
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 
 
@@ -285,36 +285,36 @@ function RestaurantDetailsContent() {
               // Fallback without zoneId so missing live location never blocks this page.
               debugLog('? Direct lookup failed, trying search by name...')
 
-                const searchVariants = zoneId
-                  ? [{ limit: 100, zoneId: zoneId, _ts: Date.now() }, { limit: 100, _ts: Date.now() }]
-                  : [{ limit: 100, _ts: Date.now() }]
+              const searchVariants = zoneId
+                ? [{ limit: 100, zoneId: zoneId, _ts: Date.now() }, { limit: 100, _ts: Date.now() }]
+                : [{ limit: 100, _ts: Date.now() }]
 
-                for (const searchParams of searchVariants) {
-                  try {
-                    const searchResponse = await restaurantAPI.getRestaurants(searchParams, { noCache: true })
-                    const restaurants = searchResponse?.data?.data?.restaurants || searchResponse?.data?.data || []
+              for (const searchParams of searchVariants) {
+                try {
+                  const searchResponse = await restaurantAPI.getRestaurants(searchParams, { noCache: true })
+                  const restaurants = searchResponse?.data?.data?.restaurants || searchResponse?.data?.data || []
 
-                    // Try to find by slug match or name match
-                    const restaurantName = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-                    const matchingRestaurant = restaurants.find(r =>
-                      r.slug === slug ||
-                      r.name?.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase() ||
-                      r.name?.toLowerCase() === restaurantName.toLowerCase()
-                    )
+                  // Try to find by slug match or name match
+                  const restaurantName = slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                  const matchingRestaurant = restaurants.find(r =>
+                    r.slug === slug ||
+                    r.name?.toLowerCase().replace(/\s+/g, '-') === slug.toLowerCase() ||
+                    r.name?.toLowerCase() === restaurantName.toLowerCase()
+                  )
 
-                    if (matchingRestaurant) {
-                      // Get full restaurant details by ID
-                      const fullResponse = await restaurantAPI.getRestaurantById(matchingRestaurant._id || matchingRestaurant.restaurantId)
-                      if (fullResponse.data && fullResponse.data.success && fullResponse.data.data) {
-                        apiRestaurant = fullResponse.data.data
-                        debugLog('? Found restaurant in restaurant API by name search:', apiRestaurant)
-                        break
-                      }
+                  if (matchingRestaurant) {
+                    // Get full restaurant details by ID
+                    const fullResponse = await restaurantAPI.getRestaurantById(matchingRestaurant._id || matchingRestaurant.restaurantId)
+                    if (fullResponse.data && fullResponse.data.success && fullResponse.data.data) {
+                      apiRestaurant = fullResponse.data.data
+                      debugLog('? Found restaurant in restaurant API by name search:', apiRestaurant)
+                      break
                     }
-                  } catch (searchError) {
-                    debugWarn('? Search fallback failed for params:', searchParams, searchError?.message)
                   }
+                } catch (searchError) {
+                  debugWarn('? Search fallback failed for params:', searchParams, searchError?.message)
                 }
+              }
             }
           } catch (restaurantError) {
             debugError('? Restaurant not found in restaurant API either:', restaurantError)
@@ -747,27 +747,27 @@ function RestaurantDetailsContent() {
                   return Object.values(value).filter((entry) => entry && typeof entry === "object")
                 }
                 const normalizeItem = (item = {}) => {
-                   const isRecommended = item.isRecommended === true || item.isRecommended === 1 || String(item.isRecommended) === "true"
-                   const isSpicy = item.isSpicy === true || item.isSpicy === 1 || String(item.isSpicy) === "true"
-                   let foodType = item.foodType || "Non-Veg"
-                   if (typeof foodType === 'string') {
-                     if (foodType.toLowerCase() === 'veg') foodType = 'Veg'
-                     else if (foodType.toLowerCase() === 'non-veg' || foodType.toLowerCase() === 'nonveg') foodType = 'Non-Veg'
-                   }
-                   return {
-                     ...item,
-                      id: String(item.id || item._id || `${Date.now()}-${Math.random()}`),
-                      name: item.name || "Unnamed Item",
-                      foodType,
-                      price: getFoodDisplayPrice(item),
-                      variants: getFoodVariants(item),
-                      variations: getFoodVariants(item),
-                      isAvailable: item.isAvailable !== false,
-                      isRecommended,
-                      isSpicy,
-                     description: typeof item.description === "string" ? item.description : "",
-                   }
-                 }
+                  const isRecommended = item.isRecommended === true || item.isRecommended === 1 || String(item.isRecommended) === "true"
+                  const isSpicy = item.isSpicy === true || item.isSpicy === 1 || String(item.isSpicy) === "true"
+                  let foodType = item.foodType || "Non-Veg"
+                  if (typeof foodType === 'string') {
+                    if (foodType.toLowerCase() === 'veg') foodType = 'Veg'
+                    else if (foodType.toLowerCase() === 'non-veg' || foodType.toLowerCase() === 'nonveg') foodType = 'Non-Veg'
+                  }
+                  return {
+                    ...item,
+                    id: String(item.id || item._id || `${Date.now()}-${Math.random()}`),
+                    name: item.name || "Unnamed Item",
+                    foodType,
+                    price: getFoodDisplayPrice(item),
+                    variants: getFoodVariants(item),
+                    variations: getFoodVariants(item),
+                    isAvailable: item.isAvailable !== false,
+                    isRecommended,
+                    isSpicy,
+                    description: typeof item.description === "string" ? item.description : "",
+                  }
+                }
                 const menuSections = toArray(rawSections).map((section, sectionIndex) => ({
                   ...section,
                   id: String(section.id || section._id || `section-${sectionIndex}`),
@@ -842,11 +842,11 @@ function RestaurantDetailsContent() {
                   })
                   const matchedItem = allItemsInMenu.find(item => String(item.id || item._id || "").trim() === targetDishId)
                   if (matchedItem) {
-                    searchedDishSection = { 
-                      name: "Result for your search", 
-                      items: [matchedItem], 
+                    searchedDishSection = {
+                      name: "Result for your search",
+                      items: [matchedItem],
                       subsections: [],
-                      isSearchResult: true 
+                      isSearchResult: true
                     }
                   }
                 }
@@ -2092,7 +2092,7 @@ function RestaurantDetailsContent() {
                 </div>
               </div>
             )}
-            
+
           </div>
         </div>
       </div>
@@ -2120,7 +2120,7 @@ function RestaurantDetailsContent() {
             </div>
           </div>
 
-          {/* Top Category */} 
+          {/* Top Category */}
           <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             <Utensils className="h-4 w-4" />
             <span>{restaurant?.topCategory || restaurant?.cuisine || "Multi-cuisine"}</span>
@@ -2129,7 +2129,7 @@ function RestaurantDetailsContent() {
           {/* Location */}
           <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
             <MapPin className="h-4 w-4" />
-            <span>{restaurant?.distance || "1.2 km"} • {restaurant?.location || "Location"}</span>
+            <span>{restaurant?.location || "Location"}</span>
           </div>
 
           {/* Delivery Time */}
@@ -2250,11 +2250,10 @@ function RestaurantDetailsContent() {
                   <button
                     type="button"
                     onClick={() => setSelectedMenuCategory("all")}
-                    className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                      selectedMenuCategory === "all"
+                    className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${selectedMenuCategory === "all"
                         ? "border-[#F84E04] bg-[#FFF1E8] text-[#F84E04]"
                         : "border-gray-300 bg-white text-gray-700"
-                    }`}
+                      }`}
                   >
                     All
                   </button>
@@ -2263,11 +2262,10 @@ function RestaurantDetailsContent() {
                       key={category.id}
                       type="button"
                       onClick={() => setSelectedMenuCategory(category.id)}
-                      className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-                        selectedMenuCategory === category.id
+                      className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${selectedMenuCategory === category.id
                           ? "border-[#F84E04] bg-[#FFF1E8] text-[#F84E04]"
                           : "border-gray-300 bg-white text-gray-700"
-                      }`}
+                        }`}
                     >
                       {category.image ? (
                         <img
@@ -2425,10 +2423,10 @@ function RestaurantDetailsContent() {
                                 delete dishCardRefs.current[item.id]
                               }
                             }}
-                            className={`flex gap-4 p-4 border-b border-gray-100 last:border-none relative cursor-pointer transition-all duration-500 ${highlightedDishId === item.id 
-                                ? "bg-gradient-to-r from-pink-50/80 to-white dark:from-pink-950/20 dark:to-[#1a1a1a] border-l-4 border-l-[#F84E04] shadow-[0_20px_50px_-12px_rgba(248,78,4,0.5)] scale-[1.02] z-20 rounded-3xl" 
-                                : ""
-                            }`}
+                            className={`flex gap-4 p-4 border-b border-gray-100 last:border-none relative cursor-pointer transition-all duration-500 ${highlightedDishId === item.id
+                              ? "bg-gradient-to-r from-pink-50/80 to-white dark:from-pink-950/20 dark:to-[#1a1a1a] border-l-4 border-l-[#F84E04] shadow-[0_20px_50px_-12px_rgba(248,78,4,0.5)] scale-[1.02] z-20 rounded-3xl"
+                              : ""
+                              }`}
                             onClick={() => handleItemClick(item)}
                           >
                             {highlightedDishId === item.id && (
@@ -2656,10 +2654,10 @@ function RestaurantDetailsContent() {
                                           delete dishCardRefs.current[item.id]
                                         }
                                       }}
-                                      className={`flex gap-4 p-4 border-b border-gray-100 last:border-none relative cursor-pointer transition-all duration-500 ${highlightedDishId === item.id 
-                                        ? "bg-gradient-to-r from-pink-50/80 to-white dark:from-pink-950/20 dark:to-[#1a1a1a] border-l-4 border-l-[#F84E04] shadow-[0_20px_50px_-12px_rgba(248,78,4,0.5)] scale-[1.02] z-20 rounded-3xl" 
+                                      className={`flex gap-4 p-4 border-b border-gray-100 last:border-none relative cursor-pointer transition-all duration-500 ${highlightedDishId === item.id
+                                        ? "bg-gradient-to-r from-pink-50/80 to-white dark:from-pink-950/20 dark:to-[#1a1a1a] border-l-4 border-l-[#F84E04] shadow-[0_20px_50px_-12px_rgba(248,78,4,0.5)] scale-[1.02] z-20 rounded-3xl"
                                         : ""
-                                    }`}
+                                        }`}
                                       onClick={() => handleItemClick(item)}
                                     >
                                       {highlightedDishId === item.id && (
@@ -3508,11 +3506,10 @@ function RestaurantDetailsContent() {
                               key={variant.id}
                               type="button"
                               onClick={() => setSelectedVariantId(variant.id)}
-                              className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
-                                String(selectedVariantId || "") === String(variant.id)
+                              className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${String(selectedVariantId || "") === String(variant.id)
                                   ? "border-red-500 bg-red-50 text-red-600 dark:border-red-400 dark:bg-red-900/30 dark:text-red-200"
                                   : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-[#2a2a2a] dark:text-gray-300"
-                              }`}
+                                }`}
                             >
                               {variant.name} · {RUPEE_SYMBOL}{Math.round(variant.price)}
                             </button>
@@ -3603,19 +3600,19 @@ function RestaurantDetailsContent() {
                           }}
                           disabled={shouldShowGrayscale}
                         >
-                           <span>Add item</span>
-                           <div className="flex items-center gap-1">
-                             {selectedItem.originalPrice && selectedItem.originalPrice > selectedItem.price && (
-                               <span className="text-sm line-through text-red-200">
-                                 {RUPEE_SYMBOL}{Math.round(selectedItem.originalPrice)}
-                               </span>
-                             )}
-                             <span className="text-base font-bold">
-                               {hasFoodVariants(selectedItem)
-                                 ? `· ${RUPEE_SYMBOL}${Math.round(getVariantForDish(selectedItem, selectedVariantId)?.price || selectedItem.price)}`
-                                 : `· ${RUPEE_SYMBOL}${Math.round(selectedItem.price)}`}
-                             </span>
-                           </div>
+                          <span>Add item</span>
+                          <div className="flex items-center gap-1">
+                            {selectedItem.originalPrice && selectedItem.originalPrice > selectedItem.price && (
+                              <span className="text-sm line-through text-red-200">
+                                {RUPEE_SYMBOL}{Math.round(selectedItem.originalPrice)}
+                              </span>
+                            )}
+                            <span className="text-base font-bold">
+                              {hasFoodVariants(selectedItem)
+                                ? `· ${RUPEE_SYMBOL}${Math.round(getVariantForDish(selectedItem, selectedVariantId)?.price || selectedItem.price)}`
+                                : `· ${RUPEE_SYMBOL}${Math.round(selectedItem.price)}`}
+                            </span>
+                          </div>
                         </Button>
                       )}
                     </div>
