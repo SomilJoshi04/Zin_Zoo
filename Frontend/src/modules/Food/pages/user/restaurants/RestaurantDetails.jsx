@@ -2034,7 +2034,7 @@ function RestaurantDetailsContent() {
   return (
     <AnimatedPage
       id="scrollingelement"
-      className={`min-h-screen bg-white dark:bg-[#0a0a0a] flex flex-col transition-all duration-300 ${shouldShowGrayscale ? 'grayscale opacity-75' : ''
+      className={`min-h-screen bg-white dark:bg-[#1a1a1a] flex flex-col transition-all duration-300 ${shouldShowGrayscale ? 'grayscale opacity-75' : ''
         }`}
     >
       {/* Header - Back, Search, Menu (like reference image) */}
@@ -2098,7 +2098,7 @@ function RestaurantDetailsContent() {
       </div>
 
       {/* Main Content Card */}
-      <div className="bg-white dark:bg-[#1a1a1a] rounded-t-3xl relative z-10 min-h-[40vh]">
+      <div className="bg-white dark:bg-[#1a1a1a] rounded-t-3xl relative z-10 min-h-[40vh] flex-1">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 py-4 sm:py-5 md:py-6 lg:py-8 space-y-3 md:space-y-4 lg:space-y-5 pb-0">
           {/* Restaurant Name and Rating */}
           <div className="flex items-start justify-between">
@@ -2322,25 +2322,24 @@ function RestaurantDetailsContent() {
                 <div key={sectionIndex} id={sectionId} className="space-y-1 scroll-mt-20">
                   {/* Section Header */}
                   {isRecommended && (
-                    <div className="flex items-center justify-between">
+                    <div 
+                      className="flex items-center justify-between cursor-pointer py-2"
+                      onClick={() => {
+                        setExpandedSections(prev => {
+                          const newSet = new Set(prev)
+                          if (newSet.has(originalIndex)) {
+                            newSet.delete(originalIndex)
+                          } else {
+                            newSet.add(originalIndex)
+                          }
+                          return newSet
+                        })
+                      }}
+                    >
                       <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                         Recommended for you
                       </h2>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setExpandedSections(prev => {
-                            const newSet = new Set(prev)
-                            if (newSet.has(originalIndex)) {
-                              newSet.delete(originalIndex)
-                            } else {
-                              newSet.add(originalIndex)
-                            }
-                            return newSet
-                          })
-                        }}
-                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                      >
+                      <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors pointer-events-none">
                         <ChevronDown
                           className={`h-5 w-5 text-gray-600 dark:text-gray-400 transition-transform duration-200 ${isExpanded ? '' : '-rotate-90'
                             }`}
@@ -2349,7 +2348,20 @@ function RestaurantDetailsContent() {
                     </div>
                   )}
                   {!isRecommended && (
-                    <div className="flex items-center justify-between">
+                    <div 
+                      className="flex items-center justify-between cursor-pointer py-2"
+                      onClick={() => {
+                        setExpandedSections(prev => {
+                          const newSet = new Set(prev)
+                          if (newSet.has(originalIndex)) {
+                            newSet.delete(originalIndex)
+                          } else {
+                            newSet.add(originalIndex)
+                          }
+                          return newSet
+                        })
+                      }}
+                    >
                       <div className="space-y-1">
                         <h2 className="text-lg font-bold text-gray-900 dark:text-white">
                           {(section?.name && typeof section.name === 'string' && section.name.trim())
@@ -2359,26 +2371,15 @@ function RestaurantDetailsContent() {
                               : "Unnamed Section"}
                         </h2>
                         {section.subtitle && (
-                          <button className="text-sm text-blue-600 dark:text-blue-400 underline">
+                          <button 
+                            className="text-sm text-blue-600 dark:text-blue-400 underline"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             {section.subtitle}
                           </button>
                         )}
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setExpandedSections(prev => {
-                            const newSet = new Set(prev)
-                            if (newSet.has(originalIndex)) {
-                              newSet.delete(originalIndex)
-                            } else {
-                              newSet.add(originalIndex)
-                            }
-                            return newSet
-                          })
-                        }}
-                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                      >
+                      <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors pointer-events-none">
                         <ChevronDown
                           className={`h-5 w-5 text-gray-600 dark:text-gray-400 transition-transform duration-200 ${isExpanded ? '' : '-rotate-90'
                             }`}
@@ -2605,25 +2606,24 @@ function RestaurantDetailsContent() {
                         return (
                           <div key={subIndex} className="space-y-4">
                             {/* Subsection Header */}
-                            <div className="flex items-center justify-between">
+                            <div 
+                              className="flex items-center justify-between cursor-pointer py-1"
+                              onClick={() => {
+                                setExpandedSections(prev => {
+                                  const newSet = new Set(prev)
+                                  if (newSet.has(subsectionKey)) {
+                                    newSet.delete(subsectionKey)
+                                  } else {
+                                    newSet.add(subsectionKey)
+                                  }
+                                  return newSet
+                                })
+                              }}
+                            >
                               <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                                 {subsection?.name || subsection?.title || "Subsection"}
                               </h3>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  setExpandedSections(prev => {
-                                    const newSet = new Set(prev)
-                                    if (newSet.has(subsectionKey)) {
-                                      newSet.delete(subsectionKey)
-                                    } else {
-                                      newSet.add(subsectionKey)
-                                    }
-                                    return newSet
-                                  })
-                                }}
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                              >
+                              <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors pointer-events-none">
                                 <ChevronDown
                                   className={`h-4 w-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isSubsectionExpanded ? '' : '-rotate-90'
                                     }`}
