@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, Grid2x2, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 import { accessoriesPublicAPI } from "@food/api";
-import { getCategoryName, getCategoryDescription } from "@food/utils/categoryHelpers";
+
 import OptimizedImage from "@food/components/OptimizedImage";
 import { useLocation } from "@food/hooks/useLocation";
 import { useZone } from "@food/hooks/useZone";
