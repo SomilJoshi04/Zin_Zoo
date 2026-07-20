@@ -1716,21 +1716,9 @@ export default function CategoryPage() {
                             <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed mb-3">
                               {food.description || "Fresh and delicious preparation using quality ingredients."}
                             </p>
-
-                            {/* Share and Bookmark icons */}
-                            <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
-                              <button type="button" className="p-1 hover:text-[#F84E04] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                <Bookmark className="w-4 h-4" strokeWidth={2} />
-                              </button>
-                              <button type="button" className="p-1 hover:text-[#F84E04] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 10.742L12.02 12m0 0l3.336-1.258M12.02 12l-3.336 1.258M12.02 12v4.062M12 3a9 9 0 100 18 9 9 0 000-18z" />
-                                </svg>
-                              </button>
-                            </div>
                           </div>
 
-                          {/* Right image + button */}
+                          {/* Right image */}
                           <div className="relative flex-shrink-0 flex flex-col items-center">
                             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800">
                               <img
@@ -1740,12 +1728,6 @@ export default function CategoryPage() {
                                 onError={(e) => { e.target.src = "" }}
                               />
                             </div>
-                            <button
-                              type="button"
-                              className="absolute -bottom-2.5 px-6 py-1.5 text-xs font-bold text-[#F84E04] bg-white border border-[#F84E04] rounded-lg shadow-sm hover:bg-orange-50 active:scale-95 transition-all uppercase tracking-wider"
-                            >
-                              ADD
-                            </button>
                           </div>
                         </div>
                       </Link>

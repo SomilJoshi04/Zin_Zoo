@@ -455,8 +455,8 @@ export default function GroceryPage() {
                           {product.unit || '1 pc'}
                         </span>
                         {product.foodType && (
-                          <div className={`w-3 h-3 border shrink-0 flex items-center justify-center p-[1px] ml-1 ${product.foodType === 'Veg' ? 'border-green-600' : 'border-red-600'}`}>
-                            <div className={`w-full h-full rounded-full ${product.foodType === 'Veg' ? 'bg-green-600' : 'bg-red-600'}`} />
+                          <div className={`w-3 h-3 border shrink-0 flex items-center justify-center p-[1px] ml-1 ${product.foodType?.toLowerCase() === 'veg' ? 'border-green-600' : 'border-red-600'}`}>
+                            <div className={`w-full h-full rounded-full ${product.foodType?.toLowerCase() === 'veg' ? 'bg-green-600' : 'bg-red-600'}`} />
                           </div>
                         )}
                       </div>
@@ -537,9 +537,9 @@ export default function GroceryPage() {
                       {selectedProduct.unit || '1 pc'}
                     </span>
                     {selectedProduct.foodType && (
-                      <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider flex items-center gap-1.5 ${selectedProduct.foodType === 'Veg' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                        <div className={`w-2.5 h-2.5 border shrink-0 flex items-center justify-center p-[1px] ${selectedProduct.foodType === 'Veg' ? 'border-green-600' : 'border-red-600'}`}>
-                          <div className={`w-full h-full rounded-full ${selectedProduct.foodType === 'Veg' ? 'bg-green-600' : 'bg-red-600'}`} />
+                      <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider flex items-center gap-1.5 ${selectedProduct.foodType?.toLowerCase() === 'veg' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        <div className={`w-2.5 h-2.5 border shrink-0 flex items-center justify-center p-[1px] ${selectedProduct.foodType?.toLowerCase() === 'veg' ? 'border-green-600' : 'border-red-600'}`}>
+                          <div className={`w-full h-full rounded-full ${selectedProduct.foodType?.toLowerCase() === 'veg' ? 'bg-green-600' : 'bg-red-600'}`} />
                         </div>
                         {selectedProduct.foodType}
                       </span>
