@@ -22,9 +22,9 @@ import apiClient from "@/services/api/axios"
 import { useCart } from "@food/context/CartContext"
 import { toast } from "sonner"
 import { getCompanyNameAsync, getCachedSettings } from "@food/utils/businessSettings"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 
 export default function UserOrderDetails() {
@@ -250,7 +250,15 @@ export default function UserOrderDetails() {
       }
       return ""
     }
+    
+    // Check if order has a populated restaurantIds array (from backend)
+    const orderRestaurant = Array.isArray(order?.restaurantIds) && order.restaurantIds.length > 0 
+      ? order.restaurantIds[0] 
+      : null;
+
     return (
+      orderRestaurant?.primaryContactNumber ||
+      orderRestaurant?.phone ||
       restaurantObj.primaryContactNumber ||
       restaurantObj.phone ||
       restaurantObj.ownerPhone ||
@@ -495,7 +503,7 @@ export default function UserOrderDetails() {
               )}
             </div>
           </div>
-          
+
           {/* Rating Section - Multiple Restaurants */}
           {order.status === "delivered" && orderRestaurants.length > 0 && (
             <div className="border-t border-dashed border-gray-200 dark:border-zinc-800 pt-3 mt-1 flex flex-col gap-4">
@@ -503,7 +511,7 @@ export default function UserOrderDetails() {
                 const rId = rest.restaurantId.toString();
                 const currentSubmitted = submittedRatings[rId];
                 const currentHovered = hoveredStars[rId] || 0;
-                
+
                 return (
                   <div key={rId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 dark:border-zinc-800/50 pb-2 last:border-0 last:pb-0">
                     <div>
@@ -526,12 +534,11 @@ export default function UserOrderDetails() {
                             onClick={() => handleRateRestaurant(rId, star)}
                             className={`p-1 transition-all duration-200 ${currentSubmitted ? 'cursor-default' : 'cursor-pointer hover:scale-110'}`}
                           >
-                            <Star 
-                              className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors duration-200 ${
-                                isActive 
-                                  ? 'fill-amber-400 text-amber-400' 
-                                  : 'fill-gray-100 text-gray-200 dark:fill-zinc-800 dark:text-zinc-700'
-                              }`} 
+                            <Star
+                              className={`w-6 h-6 sm:w-7 sm:h-7 transition-colors duration-200 ${isActive
+                                ? 'fill-amber-400 text-amber-400'
+                                : 'fill-gray-100 text-gray-200 dark:fill-zinc-800 dark:text-zinc-700'
+                                }`}
                             />
                           </button>
                         );
@@ -589,8 +596,8 @@ export default function UserOrderDetails() {
             <div className="flex items-center gap-2 mb-4">
               <span
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${sendsCutlery
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
-                    : "bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800"
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800"
+                  : "bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800"
                   }`}
               >
                 {sendsCutlery ? "Send cutlery" : "Don't send cutlery"}
