@@ -271,7 +271,7 @@ export default function UserLayout() {
                 <div className="hidden md:block">
                   {showDesktopNavbar && <DesktopNavbar />}
                 </div>
-                {/* <LocationPrompt /> */}
+                <LocationPrompt />
                 <main className={showDesktopNavbar ? "md:pt-32" : ""}>
                   <Outlet />
                 </main>

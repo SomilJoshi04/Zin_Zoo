@@ -5,7 +5,6 @@ import { Button } from "@food/components/ui/button"
 import { useLocation } from "@food/hooks/useLocation"
 
 export default function LocationPrompt() {
-  return null;
   const { location, loading, permissionGranted, requestLocation } = useLocation()
   const [showPrompt, setShowPrompt] = useState(false)
   const cardRef = useRef(null)
@@ -13,15 +12,11 @@ export default function LocationPrompt() {
   useEffect(() => {
     // Check if location permission was already granted
     const storedLocation = localStorage.getItem("userLocation")
-    const promptDismissed = localStorage.getItem("locationPromptDismissed")
 
-    // The useLocation hook will automatically try to get location on app start
-    // We only show the prompt if:
-    // 1. No location is stored (first time user)
-    // 2. Prompt hasn't been dismissed
-    // 3. Location permission was denied (we'll detect this after a delay)
-    
-    if (!storedLocation && !promptDismissed) {
+    // Show prompt if:
+    // 1. No stored location AND
+    // 2. Permission not already granted
+    if (!storedLocation && !permissionGranted) {
       // Wait a bit to let the hook try to get location automatically
       // If it fails, we'll show the prompt
       const timer = setTimeout(() => {
@@ -43,7 +38,7 @@ export default function LocationPrompt() {
             })
           }
         }
-      }, 2000) // Wait 2 seconds for automatic location request to complete
+      }, 1500) // Wait 1.5 seconds for automatic location request to complete
 
       return () => {
         clearTimeout(timer)
@@ -58,7 +53,6 @@ export default function LocationPrompt() {
       const timer = setTimeout(() => {
         setShowPrompt(false)
         document.body.style.overflow = ""
-        localStorage.setItem("locationPromptDismissed", "true")
       }, 1000)
       return () => clearTimeout(timer)
     }
@@ -70,14 +64,12 @@ export default function LocationPrompt() {
     setTimeout(() => {
       setShowPrompt(false)
       document.body.style.overflow = ""
-      localStorage.setItem("locationPromptDismissed", "true")
     }, 500)
   }
 
   const handleDismiss = () => {
     setShowPrompt(false)
     document.body.style.overflow = ""
-    localStorage.setItem("locationPromptDismissed", "true")
   }
 
   // Cleanup on unmount
