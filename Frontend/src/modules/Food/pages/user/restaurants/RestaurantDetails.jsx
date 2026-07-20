@@ -1112,12 +1112,8 @@ function RestaurantDetailsContent() {
 
   // Helper function to update item quantity in both local state and cart
   const updateItemQuantity = (item, newQuantity, event = null, preferredVariant = null) => {
-    // Check authentication
-    if (!isModuleAuthenticated('user')) {
-      toast.error("Please login to add items to cart")
-      navigate('/food/user/auth/login', { state: { from: location.pathname } })
-      return
-    }
+    // No auth check here - guests can add to cart
+    // Auth will be checked when placing an order
 
     // CRITICAL: Check if user is in service zone or restaurant is available
     if (isOutOfService) {
