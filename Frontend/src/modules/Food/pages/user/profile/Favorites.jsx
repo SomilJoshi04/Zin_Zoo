@@ -265,13 +265,21 @@ export default function Favorites() {
 
                 {/* Details Section */}
                 <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="bg-orange-100 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">
                       {badgeText}
                     </span>
                     <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2.5 py-1 rounded-md font-bold">
                       {categoryName}
                     </span>
+                    {selectedProduct.foodType && (
+                      <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider flex items-center gap-1.5 ${selectedProduct.foodType === 'Veg' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        <div className={`w-2.5 h-2.5 border shrink-0 flex items-center justify-center p-[1px] ${selectedProduct.foodType === 'Veg' ? 'border-green-600' : 'border-red-600'}`}>
+                          <div className={`w-full h-full rounded-full ${selectedProduct.foodType === 'Veg' ? 'bg-green-600' : 'bg-red-600'}`} />
+                        </div>
+                        {selectedProduct.foodType}
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">

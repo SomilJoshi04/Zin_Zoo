@@ -454,6 +454,11 @@ export default function GroceryPage() {
                         <span className="bg-gray-100 dark:bg-gray-800 text-[10px] px-1.5 py-0.5 rounded text-gray-600 dark:text-gray-300 font-medium">
                           {product.unit || '1 pc'}
                         </span>
+                        {product.foodType && (
+                          <div className={`w-3 h-3 border shrink-0 flex items-center justify-center p-[1px] ml-1 ${product.foodType === 'Veg' ? 'border-green-600' : 'border-red-600'}`}>
+                            <div className={`w-full h-full rounded-full ${product.foodType === 'Veg' ? 'bg-green-600' : 'bg-red-600'}`} />
+                          </div>
+                        )}
                       </div>
                       
                       <h4 className="font-semibold text-sm leading-tight line-clamp-2 text-gray-900 dark:text-gray-100 mb-1 flex-grow">
@@ -524,14 +529,22 @@ export default function GroceryPage() {
               
               {/* Details Section */}
               <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">
-                    {selectedProduct.category?.name || "Grocery"}
-                  </span>
-                  <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2.5 py-1 rounded-md font-bold">
-                    {selectedProduct.unit || '1 pc'}
-                  </span>
-                </div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider">
+                      {selectedProduct.category?.name || "Grocery"}
+                    </span>
+                    <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2.5 py-1 rounded-md font-bold">
+                      {selectedProduct.unit || '1 pc'}
+                    </span>
+                    {selectedProduct.foodType && (
+                      <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider flex items-center gap-1.5 ${selectedProduct.foodType === 'Veg' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        <div className={`w-2.5 h-2.5 border shrink-0 flex items-center justify-center p-[1px] ${selectedProduct.foodType === 'Veg' ? 'border-green-600' : 'border-red-600'}`}>
+                          <div className={`w-full h-full rounded-full ${selectedProduct.foodType === 'Veg' ? 'bg-green-600' : 'bg-red-600'}`} />
+                        </div>
+                        {selectedProduct.foodType}
+                      </span>
+                    )}
+                  </div>
                 
                 <div>
                   <SheetTitle className="text-2xl font-black text-gray-900 dark:text-white leading-tight font-poppins mb-1.5">

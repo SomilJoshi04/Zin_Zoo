@@ -606,12 +606,12 @@ export default function UserOrderDetails() {
               <div className="flex items-center gap-2">
                 {(!order?.moduleType || order.moduleType !== 'accessories') && !String(order?.orderId || order?.order_id || "").startsWith("ACC-") && (
                   <div
-                    className={`w-3 h-3 border ${item.isVeg !== false && item.foodType !== 'Non-Veg' ? "border-green-600" : "border-red-600"
-                      } flex items-center justify-center p-[1px]`}
+                    className="w-3 h-3 md:w-4 md:h-4 border shrink-0 flex items-center justify-center"
+                    style={{ borderColor: item.isVeg !== false && item.foodType !== 'Non-Veg' ? "#16a34a" : "#F84E04" }}
                   >
                     <div
-                      className={`w-full h-full rounded-full ${item.isVeg !== false && item.foodType !== 'Non-Veg' ? "bg-green-600" : "bg-red-600"
-                        }`}
+                      className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full"
+                      style={{ backgroundColor: item.isVeg !== false && item.foodType !== 'Non-Veg' ? "#16a34a" : "#F84E04" }}
                     />
                   </div>
                 )}
