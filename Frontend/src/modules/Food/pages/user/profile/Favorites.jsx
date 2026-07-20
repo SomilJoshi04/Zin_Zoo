@@ -272,14 +272,50 @@ export default function Favorites() {
                     <span className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs px-2.5 py-1 rounded-md font-bold">
                       {categoryName}
                     </span>
-                    {selectedProduct.foodType && (
-                      <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider flex items-center gap-1.5 ${(/veg/i.test(selectedProduct.foodType) && !/non/i.test(selectedProduct.foodType)) ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                        <div className={`w-2.5 h-2.5 border shrink-0 flex items-center justify-center p-[1px] ${(/veg/i.test(selectedProduct.foodType) && !/non/i.test(selectedProduct.foodType)) ? 'border-green-600' : 'border-red-600'}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${(/veg/i.test(selectedProduct.foodType) && !/non/i.test(selectedProduct.foodType)) ? 'bg-green-600' : 'bg-red-600'}`} />
-                        </div>
-                        {selectedProduct.foodType}
-                      </span>
-                    )}
+                    {(() => {
+                      const ft = selectedProduct.foodType || 'Veg';
+                      const isVeg = /veg/i.test(ft) && !/non/i.test(ft);
+                      return (
+                        <span
+                          style={{
+                            backgroundColor: isVeg ? '#f0fdf4' : '#fff1f2',
+                            color: isVeg ? '#15803d' : '#be123c',
+                            fontSize: '0.75rem',
+                            padding: '0.25rem 0.625rem',
+                            borderRadius: '0.375rem',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.375rem'
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '10px',
+                              height: '10px',
+                              border: `2px solid ${isVeg ? '#16a34a' : '#dc2626'}`,
+                              borderRadius: '2px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              flexShrink: 0
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: '5px',
+                                height: '5px',
+                                borderRadius: '50%',
+                                backgroundColor: isVeg ? '#16a34a' : '#dc2626'
+                              }}
+                            />
+                          </div>
+                          {ft}
+                        </span>
+                      );
+                    })()}
                   </div>
 
                   <h3 className="text-2xl font-black text-gray-900 dark:text-white leading-tight">
