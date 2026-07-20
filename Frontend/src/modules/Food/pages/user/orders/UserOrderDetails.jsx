@@ -385,7 +385,7 @@ export default function UserOrderDetails() {
       restaurantObj.restaurantId ||
       (typeof currentOrder?.restaurantId === "string" ? currentOrder.restaurantId : currentOrder?.restaurantId?._id)
 
-    if (!restaurantTarget || !items.length) {
+    if ((!isGroceryOrAccessories && !restaurantTarget) || !items.length) {
       toast.error("Order items or restaurant information not available")
       return
     }
@@ -563,7 +563,7 @@ export default function UserOrderDetails() {
               />
               <div>
                 <h3 className="font-semibold text-gray-800 dark:text-white">{restaurantName}</h3>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{restaurantLocation}</p>
+                {/* <p className="text-xs text-gray-500 dark:text-gray-400">{restaurantLocation}</p> */}
               </div>
             </div>
 
@@ -604,15 +604,17 @@ export default function UserOrderDetails() {
           {items.map((item, idx) => (
             <div key={idx} className="flex justify-between items-start mt-2">
               <div className="flex items-center gap-2">
-                <div
-                  className={`w-3 h-3 border ${item.isVeg ? "border-green-600" : "border-red-600"
-                    } flex items-center justify-center p-[1px]`}
-                >
+                {(!order?.moduleType || order.moduleType !== 'accessories') && !String(order?.orderId || order?.order_id || "").startsWith("ACC-") && (
                   <div
-                    className={`w-full h-full rounded-full ${item.isVeg ? "bg-green-600" : "bg-red-600"
-                      }`}
-                  />
-                </div>
+                    className={`w-3 h-3 border ${item.isVeg !== false && item.foodType !== 'Non-Veg' ? "border-green-600" : "border-red-600"
+                      } flex items-center justify-center p-[1px]`}
+                  >
+                    <div
+                      className={`w-full h-full rounded-full ${item.isVeg !== false && item.foodType !== 'Non-Veg' ? "bg-green-600" : "bg-red-600"
+                        }`}
+                    />
+                  </div>
+                )}
                 <div className="flex flex-col">
                   <span className="text-sm text-gray-700 dark:text-gray-300 font-medium">
                     {item.quantity || item.qty || 1} x {item.name}{item.variantName ? ` (${item.variantName})` : ""}
@@ -638,13 +640,6 @@ export default function UserOrderDetails() {
               <FileText className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               <h3 className="font-semibold text-gray-800 dark:text-white">Bill Summary</h3>
             </div>
-            <button
-              type="button"
-              onClick={handleDownloadSummary}
-              className="w-7 h-7 rounded-full bg-orange-50 dark:bg-orange-950/30 flex items-center justify-center text-[#F84E04] hover:bg-orange-100 dark:hover:bg-orange-900/40"
-            >
-              <Download className="w-4 h-4" />
-            </button>
           </div>
 
           <div className="p-4 space-y-2 text-sm">

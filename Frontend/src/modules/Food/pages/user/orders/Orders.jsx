@@ -348,9 +348,15 @@ export default function Orders() {
 
   // Handle reorder
   const handleReorder = (order) => {
+    const isGroceryOrAccessories = 
+      order?.moduleType === 'grocery' || 
+      order?.moduleType === 'accessories' || 
+      String(order?.orderId || order?.order_id || "").startsWith("GRO-") || 
+      String(order?.orderId || order?.order_id || "").startsWith("ACC-")
+
     const restaurantTarget = order.restaurantSlug || order.restaurantId
 
-    if (!restaurantTarget || !order.items?.length) {
+    if ((!isGroceryOrAccessories && !restaurantTarget) || !order.items?.length) {
       toast.info('Order items or restaurant information not available')
       return
     }

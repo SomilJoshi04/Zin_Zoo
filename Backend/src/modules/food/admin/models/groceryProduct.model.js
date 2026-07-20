@@ -12,6 +12,7 @@ const groceryProductSchema = new mongoose.Schema(
         image: { type: String, trim: true, default: '' },
         isActive: { type: Boolean, default: true, index: true },
         isRecommended: { type: Boolean, default: false, index: true },
+        foodType: { type: String, enum: ['Veg', 'Non-Veg'], default: 'Veg' },
         preparationTime: { type: String, trim: true, default: '' },
         /**
          * Optional zone binding.

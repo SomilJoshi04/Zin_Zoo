@@ -159,6 +159,8 @@ export default function GroceryPage() {
       price: product.price,
       image: product.image,
       moduleType: 'grocery',
+      foodType: product.foodType,
+      isVeg: product.isVeg !== undefined ? product.isVeg : product.foodType === 'Veg',
     }, sourcePosition);
     
     // Only animate if successfully added to cart (stock available)

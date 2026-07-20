@@ -1123,7 +1123,7 @@ export default function AccessoriesProductsList() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-500 dark:text-slate-400">No variants added. This food will use the single base price.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">No variants added. This accessory item will use the single base price.</p>
               )}
             </div>
             <div className="flex justify-end">

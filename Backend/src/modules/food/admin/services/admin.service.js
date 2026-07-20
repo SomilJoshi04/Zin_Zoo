@@ -3455,6 +3455,7 @@ export async function createFood(body) {
     if (!name) throw new ValidationError('Food name is required');
 
     const duplicate = await FoodItem.findOne({
+        restaurantId: body.restaurantId,
         name: { $regex: new RegExp(`^${name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') }
     });
     if (duplicate) {
@@ -3502,6 +3503,7 @@ export async function updateFood(id, body) {
         if (!nextName) throw new ValidationError('Food name is required');
         const duplicate = await FoodItem.findOne({
             _id: { $ne: doc._id },
+            restaurantId: doc.restaurantId,
             name: { $regex: new RegExp(`^${nextName.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')}$`, 'i') }
         });
         if (duplicate) {

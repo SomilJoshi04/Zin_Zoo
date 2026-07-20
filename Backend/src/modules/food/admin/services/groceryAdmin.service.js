@@ -84,6 +84,7 @@ export async function getGroceryProducts(query = {}) {
         products: products.map(p => ({
             ...p,
             id: p._id.toString(),
+            foodType: p.foodType || 'Veg',
             categoryName: p.categoryId?.name || p.categoryName || 'Unknown'
         })),
         total,

@@ -58,6 +58,7 @@ const createEmptyForm = () => ({
   restaurantName: "",
   ownerName: "",
   ownerPhone: "",
+  primaryContactNumber: "",
   ownerEmail: "",
   address: "",
   area: "",
@@ -251,6 +252,7 @@ export default function RestaurantsList() {
         restaurantName: fullRes.restaurantName || "",
         ownerName: fullRes.ownerName || "",
         ownerPhone: fullRes.ownerPhone || fullRes.primaryContactNumber || "",
+        primaryContactNumber: fullRes.primaryContactNumber || "",
         ownerEmail: fullRes.ownerEmail || "",
         address: fullRes.address || fullRes.location?.address || fullRes.location?.formattedAddress || "",
         area: fullRes.area || fullRes.location?.area || "",
@@ -943,6 +945,12 @@ const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile,
         <input type="text" value={form.ownerPhone} onChange={(e) => setForm((p) => ({ ...p, ownerPhone: e.target.value }))}
           className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Enter phone number" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Primary Contact Number (App Call)</label>
+        <input type="text" value={form.primaryContactNumber} onChange={(e) => setForm((p) => ({ ...p, primaryContactNumber: e.target.value }))}
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+          placeholder="Enter primary contact number" />
       </div>
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Email</label>

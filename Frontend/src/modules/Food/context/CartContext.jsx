@@ -106,7 +106,7 @@ const normalizeCartData = (rawCart) => {
           currentFoodType = "Non-Veg";
         }
         
-        const finalFoodType = currentFoodType || (item.isVeg === true ? "Veg" : "Non-Veg");
+        const finalFoodType = currentFoodType || (item.isVeg !== false ? "Veg" : "Non-Veg");
 
         return {
           ...item,
