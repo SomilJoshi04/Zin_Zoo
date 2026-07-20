@@ -55,6 +55,8 @@ export default function FoodsList() {
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedRestaurant, setSelectedRestaurant] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState("all")
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
+  const [categorySearchQuery, setCategorySearchQuery] = useState("")
   const [filterCategories, setFilterCategories] = useState([])
   const [foods, setFoods] = useState([])
   const [restaurantsForFilter, setRestaurantsForFilter] = useState([])
@@ -568,21 +570,62 @@ export default function FoodsList() {
               <Plus className="w-4 h-4" />
               <span>Add Food</span>
             </button>
-            <select
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value)
-                setCurrentPage(1)
-              }}
-              className="px-4 py-2.5 text-sm rounded-lg border border-transparent bg-[#F84E04] text-white font-medium focus:outline-none focus:ring-2 focus:ring-[#F84E04]/50 min-w-[150px] cursor-pointer hover:bg-[#D94203] transition-all"
-            >
-              <option value="all" className="bg-white text-slate-900 dark:bg-neutral-800 dark:text-white">All Categories</option>
-              {filterCategories.map((cat) => (
-                <option key={cat.id} value={cat.id} className="bg-white text-slate-900 dark:bg-neutral-800 dark:text-white">
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+              <Popover open={isCategoryDropdownOpen} onOpenChange={setIsCategoryDropdownOpen}>
+                <PopoverTrigger asChild>
+                  <button
+                    type="button"
+                    className="px-4 py-2.5 text-sm rounded-lg border border-transparent bg-[#F84E04] text-white font-medium focus:outline-none focus:ring-2 focus:ring-[#F84E04]/50 min-w-[150px] cursor-pointer hover:bg-[#D94203] transition-all flex items-center justify-between gap-2"
+                  >
+                    <span className="truncate max-w-[140px]">
+                      {selectedCategory === "all" ? "All Categories" : filterCategories.find(c => String(c.id) === String(selectedCategory))?.name || "All Categories"}
+                    </span>
+                    <ChevronDown className="w-4 h-4 shrink-0" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[240px] p-0" align="start">
+                  <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Search category..."
+                        value={categorySearchQuery}
+                        onChange={(e) => setCategorySearchQuery(e.target.value)}
+                        className="w-full rounded-md border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] dark:bg-slate-900 dark:border-slate-700 dark:text-white placeholder:text-slate-400"
+                      />
+                    </div>
+                  </div>
+                  <div className="max-h-[300px] overflow-y-auto p-1">
+                    <button
+                      onClick={() => {
+                        setSelectedCategory("all")
+                        setCurrentPage(1)
+                        setIsCategoryDropdownOpen(false)
+                        setCategorySearchQuery("")
+                      }}
+                      className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors ${selectedCategory === "all" ? "bg-orange-50 text-[#F84E04] font-medium dark:bg-orange-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+                    >
+                      All Categories
+                    </button>
+                    {filterCategories
+                      .filter(cat => cat.name?.toLowerCase().includes(categorySearchQuery.toLowerCase()))
+                      .map((cat) => (
+                        <button
+                          key={cat.id}
+                          onClick={() => {
+                            setSelectedCategory(cat.id)
+                            setCurrentPage(1)
+                            setIsCategoryDropdownOpen(false)
+                            setCategorySearchQuery("")
+                          }}
+                          className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors truncate ${selectedCategory === cat.id ? "bg-orange-50 text-[#F84E04] font-medium dark:bg-orange-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+                        >
+                          {cat.name}
+                        </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
             <div className="relative flex-1 sm:flex-initial min-w-[200px]">
               <input
                 type="text"
@@ -612,6 +655,9 @@ export default function FoodsList() {
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Title
                 </th>
+                <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  Price
+                </th>
 
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Category
@@ -633,7 +679,7 @@ export default function FoodsList() {
             <tbody className="bg-white divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-20 text-center">
+                  <td colSpan={9} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
                       <p className="text-sm text-slate-500">Loading foods...</p>
@@ -642,7 +688,7 @@ export default function FoodsList() {
                 </tr>
               ) : foods.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-20 text-center">
+                  <td colSpan={9} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <p className="text-lg font-semibold text-slate-700 mb-1">No Data Found</p>
                       <p className="text-sm text-slate-500">No food items match your search or restaurant filter</p>
@@ -675,6 +721,11 @@ export default function FoodsList() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-900">{food.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-slate-900">₹{getFoodDisplayPrice(food)}</span>
                       </div>
                     </td>
 

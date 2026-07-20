@@ -492,7 +492,7 @@ export default function Category() {
                           <div className="min-w-0">
                             <p className="truncate text-lg font-semibold leading-6 text-slate-900">{category?.name || "-"}</p>
                             <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                              <span>{category?.type || "No type"}</span>
+                              <span>{category?.foodTypeScope || "No type"}</span>
                               <span className="text-slate-300">•</span>
                               <span>Items linked: {category?.itemCount || 0}</span>
                             </div>
@@ -581,6 +581,19 @@ export default function Category() {
                             className="w-full rounded-xl border border-slate-300 dark:border-neutral-700 px-4 py-3 outline-none focus:border-slate-900 dark:focus:border-neutral-400 text-slate-900 dark:text-white bg-white dark:bg-neutral-800 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                             placeholder="Enter category name"
                           />
+                        </div>
+
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Category Type</label>
+                          <select
+                            value={formData.foodTypeScope}
+                            onChange={(event) => setFormData((prev) => ({ ...prev, foodTypeScope: event.target.value }))}
+                            className="w-full rounded-xl border border-slate-300 dark:border-neutral-700 px-4 py-3 outline-none focus:border-slate-900 dark:focus:border-neutral-400 text-slate-900 dark:text-white bg-white dark:bg-neutral-800"
+                          >
+                            <option value="Both">Both (Veg & Non-Veg)</option>
+                            <option value="Veg">Veg Only</option>
+                            <option value="Non-Veg">Non-Veg Only</option>
+                          </select>
                         </div>
 
                         <div>

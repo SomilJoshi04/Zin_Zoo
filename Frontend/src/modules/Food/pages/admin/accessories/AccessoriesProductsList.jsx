@@ -54,6 +54,10 @@ export default function AccessoriesProductsList() {
   const navigate = useNavigate()
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedRestaurant, setSelectedRestaurant] = useState("all")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
+  const [categoryFilterSearch, setCategoryFilterSearch] = useState("")
+  const [filterCategories, setFilterCategories] = useState([])
   const [foods, setFoods] = useState([])
   const [restaurantsForFilter, setRestaurantsForFilter] = useState([])
   const [loading, setLoading] = useState(true)
@@ -123,15 +127,33 @@ export default function AccessoriesProductsList() {
     }
   }, [])
 
+  const fetchCategoriesForFilter = useCallback(async () => {
+    try {
+      const res = await accessoriesAdminAPI.getCategories({ limit: 1000 })
+      const list = res?.data?.data?.categories || res?.data?.categories || []
+      const options = Array.isArray(list)
+        ? list
+            .map((c) => ({ id: String(c.id || c._id || c.name), name: String(c.name || "").trim() }))
+            .filter((c) => c.name)
+        : []
+      setFilterCategories(options)
+    } catch (error) {
+      debugError("Error fetching categories for filter:", error)
+      setFilterCategories([])
+    }
+  }, [])
+
   useEffect(() => {
     fetchRestaurantsForFilter()
-  }, [fetchRestaurantsForFilter])
+    fetchCategoriesForFilter()
+  }, [fetchRestaurantsForFilter, fetchCategoriesForFilter])
 
   const fetchAllFoods = useCallback(async () => {
     try {
       setLoading(true)
 
       const params = { page: currentPage, limit: pageSize }
+      if (selectedCategory !== "all") params.categoryId = selectedCategory
       if (debouncedSearchQuery) params.search = debouncedSearchQuery
 
       const foodsRes = await accessoriesAdminAPI.getProducts(params)
@@ -179,7 +201,7 @@ export default function AccessoriesProductsList() {
     } finally {
       setLoading(false)
     }
-  }, [currentPage, pageSize, debouncedSearchQuery])
+  }, [currentPage, pageSize, debouncedSearchQuery, selectedCategory])
 
   useEffect(() => {
     fetchAllFoods()
@@ -262,7 +284,7 @@ export default function AccessoriesProductsList() {
 
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchQuery, selectedRestaurant, pageSize])
+  }, [searchQuery, selectedRestaurant, selectedCategory, pageSize])
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -532,6 +554,64 @@ export default function AccessoriesProductsList() {
             >
               <Plus className="h-4 w-4 mr-2" /> Add Product
             </button>
+
+            <Popover open={isCategoryDropdownOpen} onOpenChange={setIsCategoryDropdownOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="px-4 py-2.5 text-sm rounded-lg border border-transparent bg-blue-600 text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-600/50 min-w-[150px] cursor-pointer hover:bg-blue-700 transition-all flex items-center justify-between gap-2"
+                >
+                  <span className="truncate max-w-[140px]">
+                    {selectedCategory === "all" ? "All Categories" : filterCategories.find(c => String(c.id) === String(selectedCategory))?.name || "All Categories"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 shrink-0" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px] p-0" align="start">
+                <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search category..."
+                      value={categoryFilterSearch}
+                      onChange={(e) => setCategoryFilterSearch(e.target.value)}
+                      className="w-full rounded-md border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-white placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto p-1">
+                  <button
+                    onClick={() => {
+                      setSelectedCategory("all")
+                      setCurrentPage(1)
+                      setIsCategoryDropdownOpen(false)
+                      setCategoryFilterSearch("")
+                    }}
+                    className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors ${selectedCategory === "all" ? "bg-blue-50 text-blue-600 font-medium dark:bg-blue-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+                  >
+                    All Categories
+                  </button>
+                  {filterCategories
+                    .filter(cat => cat.name?.toLowerCase().includes(categoryFilterSearch.toLowerCase()))
+                    .map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setSelectedCategory(cat.id)
+                          setCurrentPage(1)
+                          setIsCategoryDropdownOpen(false)
+                          setCategoryFilterSearch("")
+                        }}
+                        className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors truncate ${selectedCategory === cat.id ? "bg-blue-50 text-blue-600 font-medium dark:bg-blue-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+                      >
+                        {cat.name}
+                      </button>
+                  ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <div className="relative flex-1 sm:flex-initial min-w-[200px]">
               <input
                 type="text"
@@ -561,6 +641,9 @@ export default function AccessoriesProductsList() {
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Title
                 </th>
+                <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                  Price
+                </th>
 
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Category
@@ -579,7 +662,7 @@ export default function AccessoriesProductsList() {
             <tbody className="bg-white divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-20 text-center">
+                  <td colSpan={8} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
                       <p className="text-sm text-slate-500">Loading foods...</p>
@@ -588,7 +671,7 @@ export default function AccessoriesProductsList() {
                 </tr>
               ) : foods.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-20 text-center">
+                  <td colSpan={8} className="px-6 py-20 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <p className="text-lg font-semibold text-slate-700 mb-1">No Data Found</p>
                       <p className="text-sm text-slate-500">No products match your search or restaurant filter</p>
@@ -621,6 +704,11 @@ export default function AccessoriesProductsList() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-sm font-medium text-slate-900">{food.name}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium text-slate-900">₹{getFoodDisplayPrice(food)}</span>
                       </div>
                     </td>
 
