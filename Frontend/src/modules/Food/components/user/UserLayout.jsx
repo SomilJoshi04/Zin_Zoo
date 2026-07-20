@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import { Outlet, useLocation } from "react-router-dom"
 import { useEffect, useState, createContext, useContext, useRef, useCallback } from "react"
 import { ProfileProvider } from "@food/context/ProfileContext"
 import LocationPrompt from "./LocationPrompt"
@@ -11,6 +11,7 @@ const debugError = (...args) => {}
 import SearchOverlay from "./SearchOverlay"
 import BottomNavigation from "./BottomNavigation"
 import DesktopNavbar from "./DesktopNavbar"
+import LocationSelectorOverlay from "./LocationSelectorOverlay"
 import { useUserNotifications } from "../../hooks/useUserNotifications"
 
 // Create SearchOverlay context with default value
@@ -140,19 +141,18 @@ export function useLocationSelector() {
 }
 
 function LocationSelectorProvider({ children }) {
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [isLocationSelectorOpen, setIsLocationSelectorOpen] = useState(false)
 
   const openLocationSelector = () => {
-    // Navigate to the standalone address selector page
-    // Provide current pathname to state so back button returns here accurately
-    navigate("/food/user/cart/address-selector", { state: { backTo: location.pathname } })
+    setIsLocationSelectorOpen(true)
   }
 
-  const closeLocationSelector = () => { }
+  const closeLocationSelector = () => {
+    setIsLocationSelectorOpen(false)
+  }
 
   const value = {
-    isLocationSelectorOpen: false,
+    isLocationSelectorOpen,
     openLocationSelector,
     closeLocationSelector
   }
@@ -160,6 +160,12 @@ function LocationSelectorProvider({ children }) {
   return (
     <LocationSelectorContext.Provider value={value}>
       {children}
+      {isLocationSelectorOpen && (
+        <LocationSelectorOverlay
+          isOpen={isLocationSelectorOpen}
+          onClose={closeLocationSelector}
+        />
+      )}
     </LocationSelectorContext.Provider>
   )
 }
