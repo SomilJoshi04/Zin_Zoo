@@ -31,23 +31,8 @@ export const uploadImageBuffer = async (buffer, folder = 'misc') => {
     const filename = generateFilename('img', '.webp');
     const filePath = path.join(targetDir, filename);
 
-    let width = 800;
-    let height = 800;
-
-    if (folder.includes('restaurants')) {
-        width = 1200;
-        height = 800;
-    } else if (folder.includes('banners')) {
-        width = 1600;
-        height = 600;
-    } else if (folder.includes('users') || folder.includes('explore-icons')) {
-        width = 400;
-        height = 400;
-    }
-
     await sharp(buffer)
-        .resize({ width, height, fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 80 })
+        .webp({ quality: 80 }) // Keep lightweight WebP conversion, frontend already resized
         .toFile(filePath);
 
     return `/uploads/${folder}/${filename}`.replace(/\\/g, '/');

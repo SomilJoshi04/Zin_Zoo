@@ -1,5 +1,5 @@
-import { toast } from "sonner"
-
+import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
 const openTransientImageInput = ({
   onSelectFile,
   accept = "image/*",
@@ -32,9 +32,22 @@ const openTransientImageInput = ({
     }
   }
 
-  input.onchange = (event) => {
+  input.onchange = async (event) => {
     const file = event?.target?.files?.[0] || null
-    if (file) onSelectFile(file)
+    if (file) {
+      try {
+        const options = {
+          maxSizeMB: 1, // Compress to max 1MB
+          maxWidthOrHeight: 1600,
+          useWebWorker: true,
+        };
+        const compressedFile = await imageCompression(file, options);
+        onSelectFile(compressedFile);
+      } catch (err) {
+        console.error("Image compression failed, using original file:", err);
+        onSelectFile(file); // fallback to original file if compression fails
+      }
+    }
     cleanup()
   }
 
@@ -164,7 +177,14 @@ export const openCamera = async ({ onSelectFile, fileNamePrefix = "camera-photo"
       return
     }
 
-    onSelectFile(selectedFile)
+    try {
+      const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: true };
+      const compressedFile = await imageCompression(selectedFile, options);
+      onSelectFile(compressedFile);
+    } catch (err) {
+      console.error("Camera compression failed:", err);
+      onSelectFile(selectedFile);
+    }
   } catch (error) {
     console.error("Camera capture failed:", error)
     // Try fallback on bridge failure
@@ -206,7 +226,14 @@ export const openGallery = async ({ onSelectFile, fileNamePrefix = "gallery-phot
         }
 
         if (selectedFile && String(selectedFile.type || "").startsWith("image/")) {
-          onSelectFile(selectedFile)
+          try {
+            const options = { maxSizeMB: 1, maxWidthOrHeight: 1600, useWebWorker: true };
+            const compressedFile = await imageCompression(selectedFile, options);
+            onSelectFile(compressedFile);
+          } catch (err) {
+            console.error("Gallery compression failed:", err);
+            onSelectFile(selectedFile);
+          }
         }
 
         // In Flutter app mode, do not fallback to browser picker.
