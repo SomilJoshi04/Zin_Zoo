@@ -1220,6 +1220,25 @@ export default function Home() {
   const [showManageCollections, setShowManageCollections] = useState(false);
   const [selectedRestaurantSlug, setSelectedRestaurantSlug] = useState(null);
 
+  // Auto-open location selector if user has no location on home page load
+  useEffect(() => {
+    // Wait until location loading is done
+    if (loading) return;
+    // Check if we have a valid GPS/saved location
+    const hasValidLocation =
+      Number.isFinite(location?.latitude) && Number.isFinite(location?.longitude);
+    // Check if there is a saved address in localStorage as fallback
+    const hasSavedZone = !!localStorage.getItem('userZoneId');
+    if (!hasValidLocation && !hasSavedZone) {
+      // Small delay so the page renders first, then prompt for location
+      const timer = setTimeout(() => {
+        openLocationSelector();
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
+
   useEffect(() => {
     if (isFilterOpen) {
       document.body.style.overflow = "hidden";

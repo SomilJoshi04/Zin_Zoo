@@ -2247,8 +2247,8 @@ function RestaurantDetailsContent() {
                     type="button"
                     onClick={() => setSelectedMenuCategory("all")}
                     className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${selectedMenuCategory === "all"
-                        ? "border-[#F84E04] bg-[#FFF1E8] text-[#F84E04]"
-                        : "border-gray-300 bg-white text-gray-700"
+                      ? "border-[#F84E04] bg-[#FFF1E8] text-[#F84E04]"
+                      : "border-gray-300 bg-white text-gray-700"
                       }`}
                   >
                     All
@@ -2259,8 +2259,8 @@ function RestaurantDetailsContent() {
                       type="button"
                       onClick={() => setSelectedMenuCategory(category.id)}
                       className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${selectedMenuCategory === category.id
-                          ? "border-[#F84E04] bg-[#FFF1E8] text-[#F84E04]"
-                          : "border-gray-300 bg-white text-gray-700"
+                        ? "border-[#F84E04] bg-[#FFF1E8] text-[#F84E04]"
+                        : "border-gray-300 bg-white text-gray-700"
                         }`}
                     >
                       {category.image ? (
@@ -2318,7 +2318,7 @@ function RestaurantDetailsContent() {
                 <div key={sectionIndex} id={sectionId} className="space-y-1 scroll-mt-20">
                   {/* Section Header */}
                   {isRecommended && (
-                    <div 
+                    <div
                       className="flex items-center justify-between cursor-pointer py-2"
                       onClick={() => {
                         setExpandedSections(prev => {
@@ -2344,7 +2344,7 @@ function RestaurantDetailsContent() {
                     </div>
                   )}
                   {!isRecommended && (
-                    <div 
+                    <div
                       className="flex items-center justify-between cursor-pointer py-2"
                       onClick={() => {
                         setExpandedSections(prev => {
@@ -2367,7 +2367,7 @@ function RestaurantDetailsContent() {
                               : "Unnamed Section"}
                         </h2>
                         {section.subtitle && (
-                          <button 
+                          <button
                             className="text-sm text-blue-600 dark:text-blue-400 underline"
                             onClick={(e) => e.stopPropagation()}
                           >
@@ -2602,7 +2602,7 @@ function RestaurantDetailsContent() {
                         return (
                           <div key={subIndex} className="space-y-4">
                             {/* Subsection Header */}
-                            <div 
+                            <div
                               className="flex items-center justify-between cursor-pointer py-1"
                               onClick={() => {
                                 setExpandedSections(prev => {
@@ -3503,8 +3503,8 @@ function RestaurantDetailsContent() {
                               type="button"
                               onClick={() => setSelectedVariantId(variant.id)}
                               className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${String(selectedVariantId || "") === String(variant.id)
-                                  ? "border-red-500 bg-red-50 text-red-600 dark:border-red-400 dark:bg-red-900/30 dark:text-red-200"
-                                  : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-[#2a2a2a] dark:text-gray-300"
+                                ? "border-red-500 bg-red-50 text-red-600 dark:border-red-400 dark:bg-red-900/30 dark:text-red-200"
+                                : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-[#2a2a2a] dark:text-gray-300"
                                 }`}
                             >
                               {variant.name} · {RUPEE_SYMBOL}{Math.round(variant.price)}
