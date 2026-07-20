@@ -5,8 +5,6 @@ import { adminAPI } from "@food/api";
 const TARGET_OPTIONS = [
   { value: "ALL", label: "All" },
   { value: "USER", label: "Users" },
-  { value: "RESTAURANT", label: "Restaurants" },
-  { value: "DELIVERY", label: "Delivery Partners" },
   { value: "CUSTOM", label: "Particular Persons" },
 ];
 
