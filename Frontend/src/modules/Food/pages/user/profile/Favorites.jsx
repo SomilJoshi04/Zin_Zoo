@@ -273,9 +273,9 @@ export default function Favorites() {
                       {categoryName}
                     </span>
                     {selectedProduct.foodType && (
-                      <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider flex items-center gap-1.5 ${selectedProduct.foodType?.trim().toLowerCase() === 'veg' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                        <div className={`w-2.5 h-2.5 border shrink-0 flex items-center justify-center p-[1px] ${selectedProduct.foodType?.trim().toLowerCase() === 'veg' ? 'border-green-600' : 'border-red-600'}`}>
-                          <div className={`w-1.5 h-1.5 rounded-full ${selectedProduct.foodType?.trim().toLowerCase() === 'veg' ? 'bg-green-600' : 'bg-red-600'}`} />
+                      <span className={`text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider flex items-center gap-1.5 ${(/veg/i.test(selectedProduct.foodType) && !/non/i.test(selectedProduct.foodType)) ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
+                        <div className={`w-2.5 h-2.5 border shrink-0 flex items-center justify-center p-[1px] ${(/veg/i.test(selectedProduct.foodType) && !/non/i.test(selectedProduct.foodType)) ? 'border-green-600' : 'border-red-600'}`}>
+                          <div className={`w-1.5 h-1.5 rounded-full ${(/veg/i.test(selectedProduct.foodType) && !/non/i.test(selectedProduct.foodType)) ? 'bg-green-600' : 'bg-red-600'}`} />
                         </div>
                         {selectedProduct.foodType}
                       </span>
