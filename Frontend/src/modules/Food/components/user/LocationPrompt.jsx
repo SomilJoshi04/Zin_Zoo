@@ -58,13 +58,25 @@ export default function LocationPrompt() {
     }
   }, [location, showPrompt])
 
+  const [fetchingLocation, setFetchingLocation] = useState(false)
+
   const handleAllow = async () => {
-    await requestLocation()
-    // Wait a bit for location to be set
-    setTimeout(() => {
+    setFetchingLocation(true)
+    try {
+      const loc = await requestLocation()
+      // Store location in localStorage so the prompt won't show next time
+      if (loc) {
+        localStorage.setItem("userLocation", JSON.stringify(loc))
+      }
       setShowPrompt(false)
       document.body.style.overflow = ""
-    }, 500)
+    } catch (err) {
+      // Permission denied or error - just close modal
+      setShowPrompt(false)
+      document.body.style.overflow = ""
+    } finally {
+      setFetchingLocation(false)
+    }
   }
 
   const handleDismiss = () => {
@@ -125,9 +137,9 @@ export default function LocationPrompt() {
             <Button
               onClick={handleAllow}
               className="flex-1 bg-primary-orange hover:opacity-90 text-white"
-              disabled={loading}
+              disabled={fetchingLocation}
             >
-              {loading ? "Getting location..." : "Allow Location"}
+              {fetchingLocation ? "Getting location..." : "Allow Location"}
             </Button>
           </div>
         </CardContent>
