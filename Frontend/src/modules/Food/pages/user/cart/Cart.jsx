@@ -1362,13 +1362,15 @@ export default function Cart() {
   }
 
   const handleBack = () => {
-    const lastPage = sessionStorage.getItem("food_last_browsed_page")
-    if (lastPage) {
-      navigate(lastPage)
-    } else if (window.history.state && window.history.state.idx > 0) {
+    if (window.history.state && window.history.state.idx > 0) {
       navigate(-1)
     } else {
-      navigate('/food/user', { replace: true })
+      const lastPage = sessionStorage.getItem("food_last_browsed_page")
+      if (lastPage) {
+        navigate(lastPage, { replace: true })
+      } else {
+        navigate('/food/user', { replace: true })
+      }
     }
   }
 
