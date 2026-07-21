@@ -6,7 +6,11 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const UPLOADS_DIR = process.env.UPLOADS_DIR || path.resolve(__dirname, '../../uploads');
+const rawUploadsDir = process.env.UPLOADS_DIR || path.resolve(__dirname, '../../uploads');
+// Resolve relative paths (like ./uploads) to absolute from project root
+const UPLOADS_DIR = path.isAbsolute(rawUploadsDir)
+    ? rawUploadsDir
+    : path.resolve(process.cwd(), rawUploadsDir);
 
 if (!fs.existsSync(UPLOADS_DIR)) {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });

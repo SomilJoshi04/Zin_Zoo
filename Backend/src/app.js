@@ -23,7 +23,15 @@ import fs from 'fs';
 const app = express();
 
 // Serve static files from the uploads directory
-const uploadsPath = process.env.UPLOADS_DIR || path.join(__dirname, '../uploads');
+const rawUploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, '../uploads');
+// Resolve relative paths (like ./uploads) relative to the project root (process.cwd())
+const uploadsPath = path.isAbsolute(rawUploadsDir)
+  ? rawUploadsDir
+  : path.resolve(process.cwd(), rawUploadsDir);
+// Ensure the uploads directory exists
+if (!fs.existsSync(uploadsPath)) {
+  fs.mkdirSync(uploadsPath, { recursive: true });
+}
 app.use('/uploads', express.static(uploadsPath));
 
 // Dynamically serve subfolders under /uploads (for legacy DB entries that only store the filename)

@@ -46,11 +46,22 @@ export async function createGroceryCategory(data) {
 }
 
 export async function updateGroceryCategory(id, data) {
-    return await GroceryCategory.findByIdAndUpdate(
-        id,
-        { $set: data },
-        { new: true, runValidators: true }
-    );
+    const doc = await GroceryCategory.findById(id);
+    if (!doc) return null;
+    // Delete old local image if being replaced
+    if (data.image !== undefined) {
+        const newImg = String(data.image || '').trim();
+        const oldImg = doc.image || '';
+        if (oldImg && newImg !== oldImg && oldImg.startsWith('/uploads/')) {
+            try {
+                const { deleteLocalFile } = await import('../../../services/localUpload.service.js');
+                await deleteLocalFile(oldImg);
+            } catch (e) { console.warn('Could not delete old grocery category image:', e.message); }
+        }
+    }
+    Object.assign(doc, data);
+    await doc.save();
+    return doc;
 }
 
 export async function deleteGroceryCategory(id) {
@@ -109,11 +120,22 @@ export async function updateGroceryProduct(id, data) {
         const category = await GroceryCategory.findById(data.categoryId);
         if (category) data.categoryName = category.name;
     }
-    return await GroceryProduct.findByIdAndUpdate(
-        id,
-        { $set: data },
-        { new: true, runValidators: true }
-    );
+    const doc = await GroceryProduct.findById(id);
+    if (!doc) return null;
+    // Delete old local image if being replaced
+    if (data.image !== undefined) {
+        const newImg = String(data.image || '').trim();
+        const oldImg = doc.image || '';
+        if (oldImg && newImg !== oldImg && oldImg.startsWith('/uploads/')) {
+            try {
+                const { deleteLocalFile } = await import('../../../services/localUpload.service.js');
+                await deleteLocalFile(oldImg);
+            } catch (e) { console.warn('Could not delete old grocery product image:', e.message); }
+        }
+    }
+    Object.assign(doc, data);
+    await doc.save();
+    return doc;
 }
 
 export async function deleteGroceryProduct(id) {

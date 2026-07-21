@@ -3021,7 +3021,21 @@ export async function updateCategory(id, body) {
     }
 
     if (body.name !== undefined) doc.name = String(body.name || '').trim();
-    if (body.image !== undefined) doc.image = String(body.image || '').trim();
+    if (body.image !== undefined) {
+        const newImage = String(body.image || '').trim();
+        // Delete old local file when image is being replaced
+        const oldImage = doc.image || '';
+        if (oldImage && newImage !== oldImage && oldImage.startsWith('/uploads/')) {
+            try {
+                const { deleteLocalFile } = await import('../../../services/localUpload.service.js');
+                await deleteLocalFile(oldImage);
+            } catch (e) {
+                // Non-fatal: log but continue
+                console.warn('Could not delete old category image:', e.message);
+            }
+        }
+        doc.image = newImage;
+    }
 
     if (body.foodTypeScope !== undefined) doc.foodTypeScope = nextFoodTypeScope;
     if (!doc.restaurantId && doc.createdByRestaurantId) {
@@ -3516,7 +3530,18 @@ export async function updateFood(id, body) {
     const pricingUpdate = getAdminFoodUpdatedPricing(doc.toObject(), body);
     if (pricingUpdate.price !== undefined) doc.price = pricingUpdate.price;
     if (pricingUpdate.variants !== undefined) doc.variants = pricingUpdate.variants;
-    if (body.image !== undefined) doc.image = String(body.image || '').trim();
+    if (body.image !== undefined) {
+        const newImg = String(body.image || '').trim();
+        const oldImg = doc.image || '';
+        if (oldImg && newImg !== oldImg && oldImg.startsWith('/uploads/')) {
+            try {
+                const { deleteLocalFile } = await import('../../../services/localUpload.service.js');
+                await deleteLocalFile(oldImg);
+            } catch (e) { console.warn('Could not delete old food image:', e.message); }
+        }
+        doc.image = newImg;
+    }
+
     if (body.foodType !== undefined) doc.foodType = targetFoodType;
     if (body.isAvailable !== undefined) doc.isAvailable = body.isAvailable !== false;
     if (body.preparationTime !== undefined) doc.preparationTime = String(body.preparationTime || '').trim();

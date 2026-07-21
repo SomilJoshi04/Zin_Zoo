@@ -3,12 +3,38 @@
  */
 
 /**
- * Normalizes an image URL to handle relative paths and backend origins
+ * Derive backend origin (e.g. http://localhost:5000) from VITE_API_BASE_URL
+ * by stripping the /api/v1 path suffix.
+ */
+const getDefaultBackendOrigin = () => {
+  try {
+    const apiBase =
+      typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL
+        ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
+        : "";
+    if (!apiBase) return "";
+    // Strip /api/v1 (or /api) suffix to get the server root
+    const url = new URL(apiBase);
+    return `${url.protocol}//${url.host}`;
+  } catch {
+    return "";
+  }
+};
+
+const DEFAULT_BACKEND_ORIGIN = getDefaultBackendOrigin();
+
+/**
+ * Normalizes an image URL to handle relative paths and backend origins.
+ * If the image path starts with /uploads/, the backend origin is automatically
+ * prepended so the image loads from the local server instead of Cloudinary.
  */
 export const normalizeImageUrl = (imageUrl, backendOrigin = "") => {
   if (typeof imageUrl !== "string") return "";
   const trimmed = imageUrl.trim();
   if (!trimmed || /^data:/i.test(trimmed) || /^blob:/i.test(trimmed)) return trimmed;
+
+  // Use DEFAULT_BACKEND_ORIGIN (derived from VITE_API_BASE_URL) as fallback
+  const resolvedOrigin = backendOrigin || DEFAULT_BACKEND_ORIGIN;
 
   const appProtocol = typeof window !== "undefined" ? window.location?.protocol : "";
   const appHost = typeof window !== "undefined" ? window.location?.hostname : "";
@@ -24,7 +50,7 @@ export const normalizeImageUrl = (imageUrl, backendOrigin = "") => {
     try {
       const parsed = new URL(normalized, window.location.origin);
       if (appHost && !/^(localhost|127\.0\.0\.1)$/i.test(appHost) && /^(localhost|127\.0\.0\.1)$/i.test(parsed.hostname)) {
-        const backendUrl = new URL(backendOrigin || window.location.origin);
+        const backendUrl = new URL(resolvedOrigin || window.location.origin);
         parsed.protocol = backendUrl.protocol;
         parsed.hostname = backendUrl.hostname;
         parsed.port = backendUrl.port;
@@ -38,11 +64,13 @@ export const normalizeImageUrl = (imageUrl, backendOrigin = "") => {
     }
   }
 
+  // Relative path like /uploads/foods/img.webp → prepend backend origin
   const absolutePath = normalized.startsWith("/")
-    ? `${backendOrigin}${normalized}`
-    : `${backendOrigin}/${normalized.replace(/^\.?\/*/, "")}`;
+    ? `${resolvedOrigin}${normalized}`
+    : `${resolvedOrigin}/${normalized.replace(/^\.?\/*/, "")}`;
   return absolutePath;
 };
+
 
 /**
  * Extracts a list of image URLs from a source (string, array of strings, or object with image properties)

@@ -958,6 +958,7 @@ const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile,
           className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Enter email" />
       </div>
+      {/* Address and Area commented out as per user request
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
         <input type="text" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
@@ -970,6 +971,7 @@ const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile,
           className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Area / locality" />
       </div>
+      */}
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">City</label>
         <input type="text" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}

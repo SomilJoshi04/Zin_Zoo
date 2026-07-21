@@ -298,8 +298,8 @@ export default function AccessoriesCategory() {
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
-          error?.response?.data?.error ||
-          "Failed to delete category"
+        error?.response?.data?.error ||
+        "Failed to delete category"
       )
     }
   }
@@ -360,7 +360,7 @@ export default function AccessoriesCategory() {
       let imageUrl = String(formData.image || "").trim()
 
       if (selectedImageFile) {
-        const uploadRes = await uploadAPI.uploadMedia(selectedImageFile, { folder: "switcheats/categories" })
+        const uploadRes = await uploadAPI.uploadMedia(selectedImageFile, { folder: "accessories-categories" })
         const payload = uploadRes?.data?.data || uploadRes?.data
         imageUrl = payload?.url || imageUrl
       }
@@ -412,13 +412,13 @@ export default function AccessoriesCategory() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setShowPendingOnly(false)}
-                className={`rounded-full px-3 py-2 text-xs font-semibold ${!showPendingOnly ? "bg-[#F84E04] text-white" : "text-slate-600"}`}
-              >
-                All
-              </button>
+            <button
+              type="button"
+              onClick={() => setShowPendingOnly(false)}
+              className={`rounded-full px-3 py-2 text-xs font-semibold ${!showPendingOnly ? "bg-[#F84E04] text-white" : "text-slate-600"}`}
+            >
+              All
+            </button>
 
             <div className="relative min-w-[220px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -574,7 +574,7 @@ export default function AccessoriesCategory() {
 
                     <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
                       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-5 dark:bg-neutral-900">
-                        
+
 
                         <div>
                           <div>

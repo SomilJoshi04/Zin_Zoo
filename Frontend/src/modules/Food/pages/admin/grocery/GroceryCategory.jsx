@@ -360,7 +360,7 @@ export default function GroceryCategory() {
       let imageUrl = String(formData.image || "").trim()
 
       if (selectedImageFile) {
-        const uploadRes = await uploadAPI.uploadMedia(selectedImageFile, { folder: "switcheats/categories" })
+        const uploadRes = await uploadAPI.uploadMedia(selectedImageFile, { folder: "grocery-categories" })
         const payload = uploadRes?.data?.data || uploadRes?.data
         imageUrl = payload?.url || imageUrl
       }

@@ -563,7 +563,7 @@ export default function UserOrderDetails() {
                   restaurantObj.profileImage?.url ||
                   restaurantObj.profileImage ||
                   order.restaurantImage ||
-                  "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=100&q=80"
+                  ""
                 }
                 alt={restaurantName}
                 className="w-10 h-10 rounded-lg object-cover"
@@ -574,13 +574,16 @@ export default function UserOrderDetails() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={handleCallRestaurant}
-              className="w-8 h-8 rounded-full border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-[#F84E04] hover:bg-orange-50 dark:hover:bg-orange-950/30"
-            >
-              <Phone className="w-4 h-4" />
-            </button>
+            {/* Call button hidden for food orders as per user request, visible for grocery/accessories */}
+            {isGroceryOrAccessories && (
+              <button
+                type="button"
+                onClick={handleCallRestaurant}
+                className="w-8 h-8 rounded-full border border-gray-200 dark:border-zinc-700 flex items-center justify-center text-[#F84E04] hover:bg-orange-50 dark:hover:bg-orange-950/30"
+              >
+                <Phone className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 mb-4">

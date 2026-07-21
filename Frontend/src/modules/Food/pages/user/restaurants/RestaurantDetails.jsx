@@ -2122,11 +2122,12 @@ function RestaurantDetailsContent() {
             <span>{restaurant?.topCategory || restaurant?.cuisine || "Multi-cuisine"}</span>
           </div>
 
-          {/* Location */}
+          {/* Location - commented out as per user request
           <div className="flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
             <MapPin className="h-4 w-4" />
             <span>{restaurant?.location || "Location"}</span>
           </div>
+          */}
 
           {/* Delivery Time */}
           <div className="flex items-center justify-between">

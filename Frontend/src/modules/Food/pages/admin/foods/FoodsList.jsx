@@ -26,10 +26,14 @@ const getRestaurantName = (value) => {
   return String(value.name || value.restaurantName || "")
 }
 
+let lastSelectedRestaurantForAdd = ""
+let lastSelectedCategoryForAdd = ""
+let lastSelectedCategoryNameForAdd = ""
+
 const createFoodForm = () => ({
-  restaurantId: "",
-  categoryId: "",
-  categoryName: "",
+  restaurantId: lastSelectedRestaurantForAdd,
+  categoryId: lastSelectedCategoryForAdd,
+  categoryName: lastSelectedCategoryNameForAdd,
   name: "",
   price: "",
   variants: [],
@@ -91,6 +95,14 @@ export default function FoodsList() {
     if (!url || typeof url !== "string") return FOOD_FALLBACK_IMAGE
     return `${url}${url.includes("?") ? "&" : "?"}v=${imageVersion}`
   }
+
+  useEffect(() => {
+    if (foodFormMode === "add") {
+      lastSelectedRestaurantForAdd = foodForm.restaurantId
+      lastSelectedCategoryForAdd = foodForm.categoryId
+      lastSelectedCategoryNameForAdd = foodForm.categoryName
+    }
+  }, [foodForm.restaurantId, foodForm.categoryId, foodForm.categoryName, foodFormMode])
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -420,10 +432,6 @@ export default function FoodsList() {
     }
     if (!foodForm.name.trim()) {
       toast.error("Food name is required")
-      return
-    }
-    if (!selectedImageFile && !foodForm.image) {
-      toast.error("Food image is required")
       return
     }
 

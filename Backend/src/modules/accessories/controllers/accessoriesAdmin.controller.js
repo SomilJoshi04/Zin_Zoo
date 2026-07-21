@@ -45,8 +45,21 @@ export async function updateCategory(req, res, next) {
         if (!id || !mongoose.Types.ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: 'Invalid category ID' });
         }
-        const category = await AccessoriesCategory.findByIdAndUpdate(id, req.body, { new: true });
+        const category = await AccessoriesCategory.findById(id);
         if (!category) return res.status(404).json({ success: false, message: 'Category not found' });
+        // Delete old local image if being replaced
+        if (req.body.image !== undefined) {
+            const newImg = String(req.body.image || '').trim();
+            const oldImg = category.image || '';
+            if (oldImg && newImg !== oldImg && oldImg.startsWith('/uploads/')) {
+                try {
+                    const { deleteLocalFile } = await import('../../../services/localUpload.service.js');
+                    await deleteLocalFile(oldImg);
+                } catch (e) { console.warn('Could not delete old accessories category image:', e.message); }
+            }
+        }
+        Object.assign(category, req.body);
+        await category.save();
         broadcastPublicUpdate('accessories:category:update', { action: 'update', data: category });
         res.status(200).json({ success: true, message: 'Category updated successfully', data: { category } });
     } catch (error) {
@@ -131,8 +144,22 @@ export async function updateProduct(req, res, next) {
             const cat = await AccessoriesCategory.findById(req.body.categoryId);
             if (cat) req.body.categoryName = cat.name;
         }
-        const product = await AccessoriesProduct.findByIdAndUpdate(id, req.body, { new: true }).populate('categoryId', 'name');
+        const product = await AccessoriesProduct.findById(id);
         if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+        // Delete old local image if being replaced
+        if (req.body.image !== undefined) {
+            const newImg = String(req.body.image || '').trim();
+            const oldImg = product.image || '';
+            if (oldImg && newImg !== oldImg && oldImg.startsWith('/uploads/')) {
+                try {
+                    const { deleteLocalFile } = await import('../../../services/localUpload.service.js');
+                    await deleteLocalFile(oldImg);
+                } catch (e) { console.warn('Could not delete old accessories product image:', e.message); }
+            }
+        }
+        Object.assign(product, req.body);
+        await product.save();
+        await product.populate('categoryId', 'name');
         broadcastPublicUpdate('accessories:product:update', { action: 'update', data: product });
         res.status(200).json({ success: true, message: 'Product updated successfully', data: { product } });
     } catch (error) {

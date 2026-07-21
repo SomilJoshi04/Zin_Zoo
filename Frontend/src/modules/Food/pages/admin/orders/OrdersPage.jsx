@@ -404,8 +404,10 @@ export default function OrdersPage({ statusKey = "all" }) {
       }
 
       let displayStatus = order.orderStatus
-      if (!backendStatus || backendStatus === "created" || backendStatus === "pending_payment") {
+      if (!backendStatus || backendStatus === "created") {
         displayStatus = "Pending"
+      } else if (backendStatus === "pending_payment") {
+        displayStatus = "Payment Pending"
       } else if (backendStatus === "confirmed") {
         displayStatus = "Accepted"
       } else if (backendStatus === "preparing") {

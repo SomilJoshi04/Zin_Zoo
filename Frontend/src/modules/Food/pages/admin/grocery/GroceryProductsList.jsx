@@ -405,10 +405,7 @@ export default function GroceryProductsList() {
       toast.error("Grocery name is required")
       return false
     }
-    if (!selectedImageFile && !foodForm.image) {
-      toast.error("Grocery image is required")
-      return false
-    }
+
 
     const normalizedVariants = (Array.isArray(foodForm.variants) ? foodForm.variants : [])
       .map((variant) => ({

@@ -732,21 +732,19 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
         logger.error(`Failed to resolve restaurant display string: ${err.message}`);
       }
 
-      await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
-        title: isAwaitingOnlinePayment
-          ? "Complete Payment to Confirm Order"
-          : "Order Confirmed! 🍔",
-        body: isAwaitingOnlinePayment
-          ? `Order #${order.order_id || order._id} is created. Please complete payment to send it to ${restaurantDisplayString}.`
-          : `Your order #${order.order_id || order._id} from ${restaurantDisplayString} has been placed successfully.`,
-        image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
-        data: {
-          type: isAwaitingOnlinePayment ? "order_created_pending_payment" : "order_created",
-          orderId: String(order._id),
-          orderMongoId: order._id.toString(),
-          link: `/food/user/orders/${order._id.toString()}`,
-        },
-      });
+      if (!isAwaitingOnlinePayment) {
+        await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
+          title: "Order Confirmed! 🍔",
+          body: `Your order #${order.order_id || order._id} from ${restaurantDisplayString} has been placed successfully.`,
+          image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+          data: {
+            type: "order_created",
+            orderId: String(order._id),
+            orderMongoId: order._id.toString(),
+            link: `/food/user/orders/${order._id.toString()}`,
+          },
+        });
+      }
 
       // Restaurant gets new-order request only when payment flow is eligible.
       await notifyRestaurantNewOrder(order);
@@ -1049,21 +1047,19 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
       String(paymentMethod || "").toLowerCase() === "razorpay" &&
       String(payment?.status || "").toLowerCase() !== "paid";
 
-    await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
-      title: isAwaitingOnlinePayment
-        ? "Complete Payment to Confirm Grocery Order"
-        : "Grocery Order Confirmed! 🛒",
-      body: isAwaitingOnlinePayment
-        ? `Order #${order.order_id || order._id} is created. Please complete payment.`
-        : `Your grocery order #${order.order_id || order._id} has been placed successfully.`,
-      image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
-      data: {
-        type: isAwaitingOnlinePayment ? "order_created_pending_payment" : "order_created",
-        orderId: String(order._id),
-        orderMongoId: order._id.toString(),
-        link: `/food/user/orders/${order._id.toString()}`,
-      },
-    });
+    if (!isAwaitingOnlinePayment) {
+      await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
+        title: "Grocery Order Confirmed! 🛒",
+        body: `Your grocery order #${order.order_id || order._id} has been placed successfully.`,
+        image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+        data: {
+          type: "order_created",
+          orderId: String(order._id),
+          orderMongoId: order._id.toString(),
+          link: `/food/user/orders/${order._id.toString()}`,
+        },
+      });
+    }
     if (initialStatus === "confirmed") {
       broadcastNewOrderToAdmin(order);
     }
@@ -1850,7 +1846,7 @@ export async function listOrdersAdmin(query) {
     if (rawStatus && rawStatus !== "all") {
       switch (rawStatus) {
         case "pending":
-          filter.orderStatus = { $in: ["created", "confirmed", "pending_payment", "pending"] };
+          filter.orderStatus = { $in: ["created", "confirmed", "pending"] };
           break;
         case "accepted":
           filter.orderStatus = { $in: ["accepted", "confirmed"] };
