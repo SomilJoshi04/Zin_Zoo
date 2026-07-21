@@ -788,6 +788,82 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
 
 // ----- Verify payment -----
 export async function verifyPayment(userId, dto) {
+  if (dto.isUnified) {
+    const valid = verifyPaymentSignature(
+      dto.razorpayOrderId,
+      dto.razorpayPaymentId,
+      dto.razorpaySignature,
+    );
+    if (!valid) throw new ValidationError("Payment verification failed");
+
+    // Unified order: find all sub-orders with this razorpayOrderId
+    const foodOrders = await FoodOrder.find({
+      "payment.razorpay.orderId": dto.razorpayOrderId,
+      userId: new mongoose.Types.ObjectId(userId)
+    });
+    
+    const groceryOrders = await GroceryOrder.find({
+      "payment.razorpay.orderId": dto.razorpayOrderId,
+      userId: new mongoose.Types.ObjectId(userId)
+    });
+
+    const allOrders = [...foodOrders, ...groceryOrders];
+    if (allOrders.length === 0) throw new NotFoundError("Unified orders not found for this payment");
+
+    let anyUpdated = false;
+    let totalAmount = 0;
+
+    for (const order of allOrders) {
+      if (order.payment.status === "paid") continue;
+
+      order.payment.status = "paid";
+      order.payment.razorpay.paymentId = dto.razorpayPaymentId;
+      order.payment.razorpay.signature = dto.razorpaySignature;
+
+      const from = order.orderStatus;
+      order.orderStatus = "confirmed";
+
+      pushStatusHistory(order, {
+        byRole: "USER",
+        byId: userId,
+        from: from,
+        to: "confirmed",
+        note: "Payment verified, order confirmed",
+      });
+      await order.save();
+      anyUpdated = true;
+      totalAmount += (order.payment.amountDue || 0);
+
+      await foodTransactionService.updateTransactionStatus(order._id, 'captured', {
+        status: 'captured',
+        razorpayPaymentId: dto.razorpayPaymentId,
+        razorpaySignature: dto.razorpaySignature,
+        recordedByRole: "USER",
+        recordedById: new mongoose.Types.ObjectId(userId)
+      });
+
+      // Notify relevant restaurant/admin
+      await notifyRestaurantNewOrder(order);
+      broadcastNewOrderToAdmin(order);
+    }
+
+    if (anyUpdated) {
+      // Notify Customer about payment success
+      await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
+        title: "Payment Successful! ✅",
+        body: `We have received your payment of ₹${totalAmount} for your Unified Order.`,
+        image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+        data: {
+          type: "payment_success",
+          orderId: "unified"
+        },
+      });
+    }
+
+    return { order: { isUnified: true }, payment: { status: 'paid' } };
+  }
+
+  // --- Normal Single Order Flow ---
   const identity = buildOrderIdentityFilter(dto.orderId);
   if (!identity) throw new ValidationError("Order id required");
 
@@ -853,7 +929,6 @@ export async function verifyPayment(userId, dto) {
       orderMongoId: String(order._id),
     },
   });
-
 
   return { order: normalizeOrderForClient(order), payment: order.payment };
 }
