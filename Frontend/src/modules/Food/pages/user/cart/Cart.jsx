@@ -258,7 +258,7 @@ export default function Cart() {
 
   useEffect(() => {
     if (!isModuleAuthenticated("food")) {
-      toast.error("Please login to access your cart")
+      toast.error("Please login to access your cart", { id: "cart-auth-error" })
       navigate("/food/user/auth/login?redirect=/food/user/cart", { replace: true })
     }
   }, [navigate])
