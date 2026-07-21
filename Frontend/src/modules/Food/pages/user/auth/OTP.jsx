@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useLocation } from "react-router-dom"
 import { ArrowLeft, Loader2, AlertCircle, Smartphone, Shield, Lock } from "lucide-react"
 import AnimatedPage from "@food/components/user/AnimatedPage"
 import { Input } from "@food/components/ui/input"
@@ -13,6 +13,10 @@ const FULL_NAME_REGEX = /^[A-Za-z ]+$/
 
 export default function OTP() {
   const navigate = useNavigate()
+  const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const redirectTo = searchParams.get("redirect") || "/food/user"
+  
   const [otp, setOtp] = useState(["", "", "", ""]) // exactly 4 digits
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
@@ -204,7 +208,7 @@ export default function OTP() {
       setUserAuthData("user", accessToken, user, refreshToken)
       window.dispatchEvent(new Event("userAuthChanged"))
       setSuccess(true)
-      setTimeout(() => navigate("/food/user"), 600)
+      setTimeout(() => navigate(redirectTo), 600)
     } catch (err) {
       const status = err?.response?.status
       let message = err?.response?.data?.message || err?.response?.data?.error || err?.message || "Verification failed."
@@ -248,7 +252,7 @@ export default function OTP() {
       setUserAuthData("user", accessToken, { ...user, name: normalizedName }, refreshToken)
       window.dispatchEvent(new Event("userAuthChanged"))
       setSuccess(true)
-      setTimeout(() => navigate("/food/user"), 600)
+      setTimeout(() => navigate(redirectTo), 600)
     } catch (err) {
       setError("Failed to complete registration. Please try again.")
     } finally {
