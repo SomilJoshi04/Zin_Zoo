@@ -257,6 +257,13 @@ export default function Cart() {
   const [coinSettings, setCoinSettings] = useState(null)
 
   useEffect(() => {
+    if (!isModuleAuthenticated("food")) {
+      toast.error("Please login to access your cart")
+      navigate("/food/user/auth/login?redirect=/food/user/cart", { replace: true })
+    }
+  }, [navigate])
+
+  useEffect(() => {
     const fetchCoinSettings = async () => {
       try {
         const response = await userAPI.getCoinsInfo()
