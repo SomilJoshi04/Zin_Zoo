@@ -1770,7 +1770,9 @@ export default function Cart() {
 
       debugLog("? Order created successfully:", orderResponse.data)
 
-      const { order, razorpay } = orderResponse.data.data
+      const responseData = orderResponse?.data?.data || orderResponse?.data || {}
+      const order = responseData.order || responseData
+      const razorpay = responseData.razorpay || responseData.payment?.razorpay || null
 
       // Cash flow: order placed without online payment
       if (selectedPaymentMethod === "cash") {
@@ -1854,14 +1856,14 @@ export default function Cart() {
         currency: razorpay.currency || 'INR',
         order_id: razorpay.orderId,
         name: companyName,
-        description: `Order ${order._id || order.orderId} - ${RUPEE_SYMBOL}${(razorpay.amount / 100).toFixed(2)}`,
+        description: `Order ${order?._id || order?.orderId || 'unknown'} - ${RUPEE_SYMBOL}${(razorpay.amount / 100).toFixed(2)}`,
         prefill: {
           name: userName,
           email: userEmail,
           contact: formattedPhone
         },
         notes: {
-          orderId: order._id || order.orderId,
+          orderId: order?._id || order?.orderId || 'unknown',
           userId: userInfo.id || "",
           restaurantId: restaurantId || "unknown"
         },
@@ -1890,10 +1892,10 @@ export default function Cart() {
             if (verifyResponse.data.success) {
               // Payment successful
               debugLog("?? Order placed successfully:", {
-                orderId: order._id || order.orderId,
+                orderId: order?._id || order?.orderId || 'unknown',
                 paymentId: verifyResponse.data.data?.payment?.paymentId
               })
-              setPlacedOrderId(order._id || order.orderId)
+              setPlacedOrderId(order?._id || order?.orderId)
               setShowOrderSuccess(true)
               window.dispatchEvent(new CustomEvent('order-placed', { detail: { order } }))
               clearCart()
