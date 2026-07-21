@@ -76,6 +76,7 @@ export default function CategoryPage() {
   const [foodRefreshKey, setFoodRefreshKey] = useState(0)
   const [categoryKeywords, setCategoryKeywords] = useState({})
   const [availabilityTick, setAvailabilityTick] = useState(Date.now())
+  const [refetchTrigger, setRefetchTrigger] = useState(0)
 
   useEffect(() => {
     const tickAvailability = () => {
@@ -218,6 +219,15 @@ export default function CategoryPage() {
     'food:product:update': () => {
       console.log('[CategoryPage] Food updated via socket, refreshing...');
       setFoodRefreshKey(prev => prev + 1)
+      setRefetchTrigger(prev => prev + 1)
+    },
+    'food:restaurant:update': () => {
+      console.log('[CategoryPage] Restaurant updated via socket, refreshing...');
+      setRefetchTrigger(prev => prev + 1)
+    },
+    'food:category:update': () => {
+      console.log('[CategoryPage] Category updated via socket, refreshing...');
+      setRefetchTrigger(prev => prev + 1)
     }
   }), [])
   usePublicSocket(socketListeners)
@@ -1108,7 +1118,7 @@ export default function CategoryPage() {
   useEffect(() => {
     setRestaurantsPage(1)
     fetchRestaurants(1, false)
-  }, [fetchRestaurants])
+  }, [fetchRestaurants, refetchTrigger])
 
   const handleLoadMoreRestaurants = useCallback(async () => {
     if (loadingMoreRestaurants || !hasMoreRestaurantsBackend) return

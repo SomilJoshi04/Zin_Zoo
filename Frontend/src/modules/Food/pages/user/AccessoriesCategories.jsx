@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Search, Grid2x2, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 import { accessoriesPublicAPI } from "@food/api";
+import { usePublicSocket } from "@food/hooks/usePublicSocket";
 
 import OptimizedImage from "@food/components/OptimizedImage";
 import { useLocation } from "@food/hooks/useLocation";
@@ -40,34 +41,44 @@ export default function AccessoriesCategories() {
       : `${BACKEND_ORIGIN}/${normalizedInput.replace(/^\.?\/*/, "")}`;
   };
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        setLoading(true);
-        const response = await accessoriesPublicAPI.getCategories();
-        const list =
-          response?.data?.data?.categories ||
-          response?.data?.categories ||
-          [];
+  const fetchCategories = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await accessoriesPublicAPI.getCategories();
+      const list =
+        response?.data?.data?.categories ||
+        response?.data?.categories ||
+        [];
 
-        if (Array.isArray(list)) {
-          const transformed = list.map((cat, idx) => ({
-            id: String(cat?.id || cat?._id || cat?.slug || idx),
-            name: cat?.name || "",
-            slug: cat?.slug || String(cat?.name || "").toLowerCase().replace(/\s+/g, "-"),
-            image: normalizeImageUrl(cat?.image || cat?.imageUrl) || "",
-            type: cat?.type || "",
-          }));
-          setCategories(transformed);
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      } finally {
-        setLoading(false);
+      if (Array.isArray(list)) {
+        const transformed = list.map((cat, idx) => ({
+          id: String(cat?.id || cat?._id || cat?.slug || idx),
+          name: cat?.name || "",
+          slug: cat?.slug || String(cat?.name || "").toLowerCase().replace(/\s+/g, "-"),
+          image: normalizeImageUrl(cat?.image || cat?.imageUrl) || "",
+          type: cat?.type || "",
+        }));
+        setCategories(transformed);
       }
-    };
-    fetchCategories();
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [zoneId, BACKEND_ORIGIN]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  // Real-time updates from admin panel
+  const socketListeners = useMemo(() => ({
+    'accessories:category:update': () => {
+      console.log('[AccessoriesCategories] Category updated via socket, refetching...');
+      fetchCategories();
+    },
+  }), [fetchCategories]);
+  usePublicSocket(socketListeners);
 
   const filteredCategories = categories.filter((cat) =>
     (cat.name || "").toLowerCase().includes(searchQuery.toLowerCase())

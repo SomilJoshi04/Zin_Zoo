@@ -12,6 +12,7 @@ import { useZone } from "@food/hooks/useZone"
 import { restaurantAPI, adminAPI } from "@food/api"
 import { useDelayedLoading } from "@food/hooks/useDelayedLoading"
 import { getRestaurantAvailabilityStatus } from "@food/utils/restaurantAvailability"
+import { usePublicSocket } from "@food/hooks/usePublicSocket"
 
 const debugLog = (...args) => { }
 const debugWarn = (...args) => { }
@@ -51,6 +52,32 @@ export default function SearchResults() {
   const showRestaurantSkeleton = useDelayedLoading(loadingRestaurants)
   const deferredQuery = useDeferredValue(query)
   const [availabilityTick, setAvailabilityTick] = useState(Date.now())
+  const [refetchTrigger, setRefetchTrigger] = useState(0)
+
+  // Real-time updates from admin panel
+  const socketListeners = useMemo(() => ({
+    'food:product:update': () => {
+      console.log('[SearchResults] Food updated via socket, refetching...');
+      setRefetchTrigger(prev => prev + 1);
+    },
+    'food:restaurant:update': () => {
+      console.log('[SearchResults] Restaurant updated via socket, refetching...');
+      setRefetchTrigger(prev => prev + 1);
+    },
+    'grocery:product:update': () => {
+      console.log('[SearchResults] Grocery product updated via socket, refetching...');
+      setRefetchTrigger(prev => prev + 1);
+    },
+    'accessories:product:update': () => {
+      console.log('[SearchResults] Accessories product updated via socket, refetching...');
+      setRefetchTrigger(prev => prev + 1);
+    },
+    'services:item:update': () => {
+      console.log('[SearchResults] Services item updated via socket, refetching...');
+      setRefetchTrigger(prev => prev + 1);
+    },
+  }), []);
+  usePublicSocket(socketListeners);
 
   useEffect(() => {
     const tickAvailability = () => {
@@ -127,7 +154,7 @@ export default function SearchResults() {
     }
 
     fetchCategories()
-  }, [zoneId])
+  }, [zoneId, refetchTrigger])
 
   // Helper function to check if menu has dishes matching category keywords
   const checkCategoryInMenu = (menu, categoryId) => {
@@ -508,7 +535,7 @@ export default function SearchResults() {
     }
 
     fetchRestaurants()
-  }, [zoneId, isOutOfService])
+  }, [zoneId, refetchTrigger, isOutOfService])
 
   // Update search query when URL changes
   useEffect(() => {

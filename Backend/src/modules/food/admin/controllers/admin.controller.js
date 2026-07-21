@@ -437,6 +437,7 @@ export async function updateRestaurantMenuById(req, res, next) {
         if (!menu) {
             return res.status(404).json({ success: false, message: 'Restaurant not found' });
         }
+        broadcastPublicUpdate('food:restaurant:update', { action: 'menu-update', data: { _id: id } });
         res.status(200).json({ success: true, message: 'Menu updated successfully', data: { menu } });
     } catch (error) {
         next(error);
@@ -632,6 +633,7 @@ export async function toggleCategoryStatus(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Category not found' });
         }
+        broadcastPublicUpdate('food:category:update', { action: 'toggle', data: updated });
         res.status(200).json({ success: true, message: 'Category status updated successfully', data: { category: updated } });
     } catch (error) {
         next(error);
@@ -648,6 +650,7 @@ export async function approveCategory(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Category not found or already approved' });
         }
+        broadcastPublicUpdate('food:category:update', { action: 'approve', data: updated });
         res.status(200).json({ success: true, message: 'Category approved successfully', data: { category: updated } });
     } catch (error) {
         next(error);
@@ -665,6 +668,7 @@ export async function rejectCategory(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Category not found' });
         }
+        broadcastPublicUpdate('food:category:update', { action: 'reject', data: { _id: id } });
         res.status(200).json({ success: true, message: 'Category rejected successfully', data: { category: updated } });
     } catch (error) {
         next(error);
@@ -681,6 +685,7 @@ export async function makeCategoryGlobal(req, res, next) {
         if (!updated) {
             return res.status(404).json({ success: false, message: 'Category not found' });
         }
+        broadcastPublicUpdate('food:category:update', { action: 'update', data: updated });
         res.status(200).json({ success: true, message: 'Category is now global', data: { category: updated } });
     } catch (error) {
         next(error);

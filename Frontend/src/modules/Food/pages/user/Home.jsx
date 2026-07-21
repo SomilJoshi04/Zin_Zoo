@@ -1219,6 +1219,7 @@ export default function Home() {
   const [showToast, setShowToast] = useState(false);
   const [showManageCollections, setShowManageCollections] = useState(false);
   const [selectedRestaurantSlug, setSelectedRestaurantSlug] = useState(null);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
     if (isFilterOpen) {
@@ -1288,7 +1289,7 @@ export default function Home() {
     return () => {
       cancelled = true
     }
-  }, [zoneId, normalizeImageUrl])
+  }, [zoneId, normalizeImageUrl, refetchTrigger])
 
   // Memoize cartCount to prevent recalculation on every render - use cart directly
   const cartCount = useMemo(
@@ -2001,6 +2002,24 @@ export default function Home() {
     'food:restaurant:update': () => {
       debugLog('Real-time socket update for restaurant: refetching restaurants');
       fetchRestaurants(appliedFilters, 1, false);
+    },
+    'food:category:update': () => {
+      debugLog('Real-time socket update for category: refetching...');
+      setRefetchTrigger(prev => prev + 1);
+    },
+    'banner:update': (data) => {
+      if (data?.section === 'hero' || data?.section === 'home-promotion' || data?.section === 'home') {
+        debugLog('Real-time socket update for banners: refetching...');
+        setRefetchTrigger(prev => prev + 1);
+      }
+    },
+    'offer:update': () => {
+      debugLog('Real-time socket update for offers: refetching...');
+      setRefetchTrigger(prev => prev + 1);
+    },
+    'settings:update': () => {
+      debugLog('Real-time socket update for settings: refetching...');
+      setRefetchTrigger(prev => prev + 1);
     }
   }), [fetchRestaurants, appliedFilters]);
   usePublicSocket(publicSocketListeners);

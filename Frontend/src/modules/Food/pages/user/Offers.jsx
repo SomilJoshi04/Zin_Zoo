@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { ArrowLeft, Star, Clock, Copy, Ticket, Calendar } from "lucide-react"
 import { Button } from "@food/components/ui/button"
@@ -8,6 +8,7 @@ import useAppBackNavigation from "@food/hooks/useAppBackNavigation"
 import { toast } from "sonner"
 import { RestaurantGridSkeleton } from "@food/components/ui/loading-skeletons"
 import { useDelayedLoading } from "@food/hooks/useDelayedLoading"
+import { usePublicSocket } from "@food/hooks/usePublicSocket"
 
 // Import banner image
 import offerBanner from "@food/assets/offerpagebanner.png"
@@ -32,31 +33,48 @@ export default function Offers() {
   }
 
   // Fetch offers from API
-  useEffect(() => {
-    const fetchOffers = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-        const response = await restaurantAPI.getPublicOffers()
-        const data = response?.data?.data
-        
-        if (data) {
-          setOffers(data.allOffers || [])
-          setGroupedOffers(data.groupedByOffer || {})
-        }
-      } catch (err) {
-        debugError('Error fetching offers:', err)
-        debugError('Error details:', err?.response?.data || err?.message)
-        const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load offers'
-        setError(errorMessage)
-        toast.error(errorMessage)
-      } finally {
-        setLoading(false)
+  const fetchOffers = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const response = await restaurantAPI.getPublicOffers()
+      const data = response?.data?.data
+      
+      if (data) {
+        setOffers(data.allOffers || [])
+        setGroupedOffers(data.groupedByOffer || {})
       }
+    } catch (err) {
+      debugError('Error fetching offers:', err)
+      debugError('Error details:', err?.response?.data || err?.message)
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load offers'
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
     }
-
-    fetchOffers()
   }, [])
+
+  useEffect(() => {
+    fetchOffers()
+  }, [fetchOffers])
+
+  // Real-time updates from admin panel
+  const socketListeners = useMemo(() => ({
+    'offer:update': () => {
+      console.log('[Offers] Offer updated via socket, refetching...');
+      fetchOffers();
+    },
+    'campaign:update': () => {
+      console.log('[Offers] Campaign updated via socket, refetching...');
+      fetchOffers();
+    },
+    'cashback:update': () => {
+      console.log('[Offers] Cashback updated via socket, refetching...');
+      fetchOffers();
+    }
+  }), [fetchOffers]);
+  usePublicSocket(socketListeners);
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">

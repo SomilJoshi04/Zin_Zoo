@@ -1,6 +1,7 @@
 import Campaign from '../models/campaign.model.js';
 import Cashback from '../models/cashback.model.js';
 import Advertisement from '../models/advertisement.model.js';
+import { broadcastPublicUpdate } from '../../../../config/socket.js';
 
 // ========================
 // CAMPAIGNS
@@ -10,6 +11,7 @@ export const createCampaign = async (req, res) => {
   try {
     const campaign = new Campaign(req.body);
     await campaign.save();
+    broadcastPublicUpdate('campaign:update', { action: 'create', data: campaign });
     res.status(201).json({ success: true, data: campaign });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -29,6 +31,7 @@ export const updateCampaign = async (req, res) => {
   try {
     const campaign = await Campaign.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!campaign) return res.status(404).json({ success: false, message: 'Campaign not found' });
+    broadcastPublicUpdate('campaign:update', { action: 'update', data: campaign });
     res.status(200).json({ success: true, data: campaign });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -39,6 +42,7 @@ export const deleteCampaign = async (req, res) => {
   try {
     const campaign = await Campaign.findByIdAndDelete(req.params.id);
     if (!campaign) return res.status(404).json({ success: false, message: 'Campaign not found' });
+    broadcastPublicUpdate('campaign:update', { action: 'delete', data: { _id: req.params.id } });
     res.status(200).json({ success: true, message: 'Campaign deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -51,6 +55,7 @@ export const toggleCampaignStatus = async (req, res) => {
     if (!campaign) return res.status(404).json({ success: false, message: 'Campaign not found' });
     campaign.status = !campaign.status;
     await campaign.save();
+    broadcastPublicUpdate('campaign:update', { action: 'toggle', data: campaign });
     res.status(200).json({ success: true, data: campaign });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -65,6 +70,7 @@ export const createCashback = async (req, res) => {
   try {
     const cashback = new Cashback(req.body);
     await cashback.save();
+    broadcastPublicUpdate('cashback:update', { action: 'create', data: cashback });
     res.status(201).json({ success: true, data: cashback });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -84,6 +90,7 @@ export const updateCashback = async (req, res) => {
   try {
     const cashback = await Cashback.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!cashback) return res.status(404).json({ success: false, message: 'Cashback not found' });
+    broadcastPublicUpdate('cashback:update', { action: 'update', data: cashback });
     res.status(200).json({ success: true, data: cashback });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -94,6 +101,7 @@ export const deleteCashback = async (req, res) => {
   try {
     const cashback = await Cashback.findByIdAndDelete(req.params.id);
     if (!cashback) return res.status(404).json({ success: false, message: 'Cashback not found' });
+    broadcastPublicUpdate('cashback:update', { action: 'delete', data: { _id: req.params.id } });
     res.status(200).json({ success: true, message: 'Cashback deleted' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -106,6 +114,7 @@ export const toggleCashbackStatus = async (req, res) => {
     if (!cashback) return res.status(404).json({ success: false, message: 'Cashback not found' });
     cashback.status = !cashback.status;
     await cashback.save();
+    broadcastPublicUpdate('cashback:update', { action: 'toggle', data: cashback });
     res.status(200).json({ success: true, data: cashback });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

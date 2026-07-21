@@ -203,6 +203,16 @@ function RestaurantDetailsContent() {
       console.log('[FoodDetails] Food items updated via socket, refetching...');
       fetchedRestaurantRef.current = false;
       setRefetchTrigger(prev => prev + 1);
+    },
+    'food:restaurant:update': () => {
+      console.log('[FoodDetails] Restaurant updated via socket, refetching...');
+      fetchedRestaurantRef.current = false;
+      setRefetchTrigger(prev => prev + 1);
+    },
+    'food:category:update': () => {
+      console.log('[FoodDetails] Category updated via socket, refetching...');
+      fetchedRestaurantRef.current = false;
+      setRefetchTrigger(prev => prev + 1);
     }
   }), []);
   usePublicSocket(socketListeners);

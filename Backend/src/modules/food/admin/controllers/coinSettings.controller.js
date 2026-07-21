@@ -1,5 +1,6 @@
 import { FoodBusinessSettings } from '../models/businessSettings.model.js';
 import { sendResponse } from '../../../../utils/response.js';
+import { broadcastPublicUpdate } from '../../../../config/socket.js';
 
 const COIN_SETTINGS_DEFAULT = {
     isActive: true,
@@ -49,6 +50,7 @@ export async function updateCoinSettings(req, res, next) {
         settings.coinSettings = buildCoinSettingsPayload(payload, settings.coinSettings || COIN_SETTINGS_DEFAULT);
         await settings.save();
 
+        broadcastPublicUpdate('settings:update', { action: 'coin-settings', data: settings.coinSettings });
         return sendResponse(res, 200, 'Coin settings updated successfully', settings.coinSettings);
     } catch (error) {
         next(error);

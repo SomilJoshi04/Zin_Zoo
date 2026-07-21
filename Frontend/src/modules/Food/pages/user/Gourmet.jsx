@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { ArrowLeft, Star, Clock, Bookmark, BadgePercent } from "lucide-react"
 import { Button } from "@food/components/ui/button"
@@ -10,6 +10,7 @@ import { API_BASE_URL } from "@food/api/config"
 import OptimizedImage from "@food/components/OptimizedImage"
 import { RestaurantGridSkeleton } from "@food/components/ui/loading-skeletons"
 import { useDelayedLoading } from "@food/hooks/useDelayedLoading"
+import { usePublicSocket } from "@food/hooks/usePublicSocket"
 import { useLocation } from "@food/hooks/useLocation"
 import { useZone } from "@food/hooks/useZone"
 import { useProfile } from "@food/context/ProfileContext"
@@ -95,47 +96,61 @@ export default function Gourmet() {
     return `${backendOrigin.replace(/\/$/, "")}${trimmed.startsWith("/") ? trimmed : `/${trimmed}`}`
   }
 
+  const cancelRef = useRef(false);
+
+  const fetchGourmetRestaurants = useCallback(async () => {
+    if (!zoneId) {
+      if (zoneStatus !== 'loading' && !zoneLoading) {
+        setGourmetRestaurants([]);
+        setLoading(false);
+      }
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null)
+      const response = await api.get('/food/hero-banners/gourmet/public', {
+        params: { zoneId }
+      })
+      
+      if (cancelRef.current) return;
+      
+      const data = response?.data?.data
+      const list = data?.restaurants ?? (Array.isArray(data) ? data : [])
+      setGourmetRestaurants(list);
+    } catch (err) {
+      if (cancelRef.current) return;
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load Gourmet restaurants'
+      setError(errorMessage)
+      setGourmetRestaurants([])
+    } finally {
+      if (!cancelRef.current) setLoading(false)
+    }
+  }, [zoneId, zoneStatus, zoneLoading]);
+
   // Fetch Gourmet restaurants from public API
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-
-    const fetchGourmetRestaurants = async () => {
-      if (!zoneId) {
-        if (zoneStatus !== 'loading' && !zoneLoading) {
-          setGourmetRestaurants([]);
-          setLoading(false);
-        }
-        return;
-      }
-
-      try {
-        setError(null)
-        const response = await api.get('/food/hero-banners/gourmet/public', {
-          params: { zoneId }
-        })
-        
-        if (cancelled) return;
-        
-        const data = response?.data?.data
-        const list = data?.restaurants ?? (Array.isArray(data) ? data : [])
-        setGourmetRestaurants(list);
-      } catch (err) {
-        if (cancelled) return;
-        const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load Gourmet restaurants'
-        setError(errorMessage)
-        setGourmetRestaurants([])
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-
-    fetchGourmetRestaurants()
+    cancelRef.current = false;
+    fetchGourmetRestaurants();
     
     return () => {
-      cancelled = true;
+      cancelRef.current = true;
     }
-  }, [zoneId, zoneStatus, zoneLoading])
+  }, [fetchGourmetRestaurants])
+
+  // Real-time updates from admin panel
+  const socketListeners = useMemo(() => ({
+    'food:product:update': () => {
+      console.log('[Gourmet] Food updated via socket, refetching...');
+      fetchGourmetRestaurants();
+    },
+    'food:restaurant:update': () => {
+      console.log('[Gourmet] Restaurant updated via socket, refetching...');
+      fetchGourmetRestaurants();
+    }
+  }), [fetchGourmetRestaurants]);
+  usePublicSocket(socketListeners);
 
   const toggleFavorite = (id) => {
     setFavorites(prev => {
