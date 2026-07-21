@@ -3153,8 +3153,14 @@ export default function Home() {
                               {restaurant.name}
                             </h3>
                             {restaurant.pureVegRestaurant && (
-                              <span className="flex-shrink-0 w-4 h-4 rounded-sm border-2 border-green-500 flex items-center justify-center">
-                                <span className="w-2 h-2 rounded-full bg-green-500" />
+                              <span 
+                                className="flex-shrink-0 w-4 h-4 rounded-sm border flex items-center justify-center"
+                                style={{ borderColor: "#16a34a" }}
+                              >
+                                <span 
+                                  className="w-2 h-2 rounded-full" 
+                                  style={{ backgroundColor: "#16a34a" }}
+                                />
                               </span>
                             )}
                           </div>
