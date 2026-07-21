@@ -3152,17 +3152,6 @@ export default function Home() {
                             <h3 className="text-sm sm:text-base font-extrabold text-gray-900 dark:text-white tracking-tight line-clamp-1 flex-1">
                               {restaurant.name}
                             </h3>
-                            {restaurant.pureVegRestaurant && (
-                              <span 
-                                className="flex-shrink-0 w-4 h-4 rounded-sm border flex items-center justify-center"
-                                style={{ borderColor: "#16a34a" }}
-                              >
-                                <span 
-                                  className="w-2 h-2 rounded-full" 
-                                  style={{ backgroundColor: "#16a34a" }}
-                                />
-                              </span>
-                            )}
                           </div>
                           <p className="text-[11px] text-gray-500 dark:text-gray-400 mb-2.5 line-clamp-1 font-medium">
                             {Array.isArray(restaurant.cuisines) && restaurant.cuisines.length > 0
@@ -4086,7 +4075,7 @@ export default function Home() {
 
 
 
-      
+
 
 
       <StickyCartCard />
