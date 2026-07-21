@@ -953,7 +953,7 @@ export default function CategoryPage() {
                 id: restaurant._id || restaurant.id,
                 restaurantId: restaurant.restaurantId || restaurant.id,
                 mongoId: restaurant._id || restaurant.id,
-                slug: restaurant.slug || slugify(restaurant.restaurantName || restaurant.name || ""),
+                slug: restaurant.slug || (restaurant.restaurantName || restaurant.name || "").toLowerCase().replace(/\s+/g, "-"),
                 name: restaurant.restaurantName || restaurant.name || "Unknown Restaurant",
                 image: image,
                 images: allImages,
@@ -962,7 +962,7 @@ export default function CategoryPage() {
                 deliveryTime: deliveryTime || (restaurant.estimatedDeliveryTimeMinutes ? `${restaurant.estimatedDeliveryTimeMinutes} mins` : "25-30 mins"),
                 distance: distance || (restaurant.distance ? (typeof restaurant.distance === 'number' ? `${restaurant.distance.toFixed(1)} km` : restaurant.distance) : "1.2 km"),
                 priceRange: restaurant.priceRange || "$$",
-                offer: offer || "Flat 50% OFF",
+                offer: offer ,
                 featuredDish: restaurant.featuredDish || "Special Dish",
                 featuredPrice: Number(restaurant.featuredPrice || 249),
                 // Critical timing fields for availability utility

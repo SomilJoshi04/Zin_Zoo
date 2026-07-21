@@ -253,6 +253,9 @@ export default function Cart() {
   const [orderProgress, setOrderProgress] = useState(0)
   const [showOrderSuccess, setShowOrderSuccess] = useState(false)
   const [placedOrderId, setPlacedOrderId] = useState(null)
+  // paymentStage: null | 'proceeding' | 'razorpay_open' | 'verifying' | 'success' | 'failed' | 'cancelled'
+  const [paymentStage, setPaymentStage] = useState(null)
+  const [completedPaymentMethod, setCompletedPaymentMethod] = useState(null)
   const [selectedAddressId, setSelectedAddressId] = useState(null)
   const [coinSettings, setCoinSettings] = useState(null)
 
@@ -1647,6 +1650,7 @@ export default function Cart() {
     }
 
     setIsPlacingOrder(true)
+    setPaymentStage(null)
 
     // Use API_BASE_URL from config (supports both dev and production)
 
@@ -1767,8 +1771,17 @@ export default function Cart() {
         return
       }
 
+      // Show placing order modal while we talk to backend
+      if (selectedPaymentMethod === 'razorpay') {
+        setShowPlacingOrder(true)
+        setPaymentStage('proceeding')
+      }
+
       // Create order in backend
       const orderResponse = await orderAPI.createOrder(orderPayload)
+
+      // Hide placing order modal now that backend responded
+      setShowPlacingOrder(false)
 
       debugLog("? Order created successfully:", orderResponse.data)
 
@@ -1780,6 +1793,7 @@ export default function Cart() {
       if (selectedPaymentMethod === "cash") {
         toast.success("Order placed with Cash on Delivery")
         setPlacedOrderId(order?._id || order?.orderId || order?.id || null)
+        setCompletedPaymentMethod('cash')
         setShowOrderSuccess(true)
         window.dispatchEvent(new CustomEvent('order-placed', { detail: { order } }))
         clearCart()
@@ -1798,6 +1812,7 @@ export default function Cart() {
       if (selectedPaymentMethod === "wallet") {
         toast.success("Order placed with Wallet payment")
         setPlacedOrderId(order?._id || order?.orderId || order?.id || null)
+        setCompletedPaymentMethod('wallet')
         setShowOrderSuccess(true)
         window.dispatchEvent(new CustomEvent('order-placed', { detail: { order } }))
         clearCart()
@@ -1851,6 +1866,10 @@ export default function Cart() {
       // Get company name for Razorpay
       const companyName = await getCompanyNameAsync()
 
+      // Inform user that Razorpay is about to open
+      toast.info("Complete your payment to place your order.", { id: 'razorpay-info', duration: 8000 })
+      setPaymentStage('razorpay_open')
+
       // Initialize Razorpay payment
       await initRazorpayPayment({
         key: razorpay.key,
@@ -1876,6 +1895,11 @@ export default function Cart() {
               razorpay_payment_id: response.razorpay_payment_id
             })
 
+            // Dismiss the razorpay-info toast and show verifying
+            toast.dismiss('razorpay-info')
+            toast.loading("Verifying your payment. Please wait...", { id: 'razorpay-verifying' })
+            setPaymentStage('verifying')
+
             // Verify payment with backend
             const verifyOrderId = order?._id || order?.id || order?.orderMongoId
             if (!verifyOrderId) {
@@ -1892,42 +1916,66 @@ export default function Cart() {
             debugLog("? Payment verification response:", verifyResponse.data)
 
             if (verifyResponse.data.success) {
-              // Payment successful
+              // Payment successfully verified
               debugLog("?? Order placed successfully:", {
                 orderId: order?._id || order?.orderId || 'unknown',
                 paymentId: verifyResponse.data.data?.payment?.paymentId
               })
+              toast.dismiss('razorpay-verifying')
+              toast.success("Your order has been placed successfully.")
+              setPaymentStage('success')
               setPlacedOrderId(order?._id || order?.orderId)
+              setCompletedPaymentMethod('razorpay')
               setShowOrderSuccess(true)
               window.dispatchEvent(new CustomEvent('order-placed', { detail: { order } }))
               clearCart()
+              setNote("")
+              setShowNoteInput(false)
+              try {
+                window.localStorage.removeItem(CART_ORDER_NOTE_STORAGE_KEY)
+              } catch {
+                // ignore
+              }
               setIsPlacingOrder(false)
             } else {
               throw new Error(verifyResponse.data.message || "Payment verification failed")
             }
           } catch (error) {
             debugError("? Payment verification error:", error)
+            toast.dismiss('razorpay-verifying')
             const errorMessage =
               error?.response?.data?.message ||
               error?.response?.data?.error?.message ||
               error?.response?.data?.errors?.[0]?.message ||
               error?.message ||
               "Payment verification failed. Please contact support."
-            alert(errorMessage)
+            toast.error(errorMessage)
+            setPaymentStage('failed')
             setIsPlacingOrder(false)
           }
         },
         onError: (error) => {
           debugError("? Razorpay payment error:", error)
-          // Don't show alert for user cancellation
+          toast.dismiss('razorpay-info')
           if (error?.code !== 'PAYMENT_CANCELLED' && error?.message !== 'PAYMENT_CANCELLED') {
             const errorMessage = error?.description || error?.message || "Payment failed. Please try again."
-            alert(errorMessage)
+            toast.error(`Payment failed. ${errorMessage}`)
+            setPaymentStage('failed')
+          } else {
+            // This is a cancellation via the error handler (shouldn't normally happen, onClose handles it)
+            toast.info("Payment was cancelled. Your order has not been placed.")
+            setPaymentStage('cancelled')
           }
           setIsPlacingOrder(false)
         },
         onClose: () => {
           debugLog("?? Payment modal closed by user")
+          toast.dismiss('razorpay-info')
+          // Only show cancel message if payment wasn't already successful
+          if (paymentStage !== 'success' && paymentStage !== 'verifying') {
+            toast.info("Payment was cancelled. Your order has not been placed.")
+            setPaymentStage('cancelled')
+          }
           setIsPlacingOrder(false)
         }
       })
@@ -1977,7 +2025,10 @@ export default function Cart() {
         errorMessage = error.message
       }
 
-      alert(errorMessage)
+      toast.dismiss('razorpay-info')
+      toast.dismiss('razorpay-verifying')
+      setShowPlacingOrder(false)
+      toast.error(errorMessage)
       setIsPlacingOrder(false)
     }
   }
@@ -2842,7 +2893,12 @@ export default function Cart() {
           >
             <div className="px-6 py-8">
               {/* Title */}
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Placing your order</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                {paymentStage === 'proceeding' ? 'Preparing secure payment...' : 'Placing your order'}
+              </h2>
+              {paymentStage === 'proceeding' && (
+                <p className="text-sm text-gray-500 mb-6">Setting up your Razorpay payment session. Please wait...</p>
+              )}
 
               {/* Payment Info */}
               <div className="flex items-center gap-4 mb-5">
@@ -3014,6 +3070,20 @@ export default function Cart() {
             >
               <h3 className="text-3xl font-bold text-[#F84E04] dark:text-orange-400 mb-2">Order Placed!</h3>
               <p className="text-gray-600 dark:text-gray-300">Your delicious food is on its way</p>
+              {/* Payment status badge */}
+              <div className="mt-3 inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold"
+                style={{ background: completedPaymentMethod === 'cash' ? '#f3f4f6' : '#dcfce7', color: completedPaymentMethod === 'cash' ? '#374151' : '#166534' }}>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12l5 5L19 7" />
+                </svg>
+                {completedPaymentMethod === 'cash'
+                  ? 'Cash on Delivery'
+                  : completedPaymentMethod === 'wallet'
+                  ? 'Paid via Wallet'
+                  : completedPaymentMethod === 'razorpay'
+                  ? 'Payment Successful'
+                  : 'Order Confirmed'}
+              </div>
             </div>
 
             {/* Action Button */}
