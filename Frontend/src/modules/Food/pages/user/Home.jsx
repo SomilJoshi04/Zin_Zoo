@@ -3170,10 +3170,10 @@ export default function Home() {
                                 <Clock className="w-3 h-3 flex-shrink-0" />
                                 <span>{restaurant.deliveryTime || "25-30 mins"}</span>
                               </div>
-                              <div className="flex items-center gap-0.5">
+                              {/* <div className="flex items-center gap-0.5">
                                 <MapPin className="w-3 h-3 flex-shrink-0" />
                                 <span>{restaurant.distance || ""}</span>
-                              </div>
+                              </div> */}
                             </div>
                             <span className="bg-[#F84E04] text-white text-[9px] sm:text-[10px] font-extrabold px-2.5 py-1 rounded-lg uppercase tracking-wider shadow-sm hover:bg-[#D94203] transition-colors whitespace-nowrap flex-shrink-0">
                               Order Now

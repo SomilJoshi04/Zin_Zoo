@@ -250,10 +250,10 @@ export default function UserOrderDetails() {
       }
       return ""
     }
-    
+
     // Check if order has a populated restaurantIds array (from backend)
-    const orderRestaurant = Array.isArray(order?.restaurantIds) && order.restaurantIds.length > 0 
-      ? order.restaurantIds[0] 
+    const orderRestaurant = Array.isArray(order?.restaurantIds) && order.restaurantIds.length > 0
+      ? order.restaurantIds[0]
       : null;
 
     return (
