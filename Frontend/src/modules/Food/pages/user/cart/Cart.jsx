@@ -1618,7 +1618,7 @@ export default function Cart() {
   const handlePlaceOrder = async () => {
     if (!isModuleAuthenticated('user')) {
       toast.error("Please login to place your order")
-      navigate("/food/user/auth/login", { state: { returnTo: "/food/user/cart" } })
+      navigate("/food/user/auth/login?redirect=/food/user/cart", { replace: true })
       return
     }
 

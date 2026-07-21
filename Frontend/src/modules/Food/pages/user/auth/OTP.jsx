@@ -208,7 +208,7 @@ export default function OTP() {
       setUserAuthData("user", accessToken, user, refreshToken)
       window.dispatchEvent(new Event("userAuthChanged"))
       setSuccess(true)
-      setTimeout(() => navigate(redirectTo), 600)
+      setTimeout(() => navigate(redirectTo, { replace: true }), 600)
     } catch (err) {
       const status = err?.response?.status
       let message = err?.response?.data?.message || err?.response?.data?.error || err?.message || "Verification failed."
@@ -252,7 +252,7 @@ export default function OTP() {
       setUserAuthData("user", accessToken, { ...user, name: normalizedName }, refreshToken)
       window.dispatchEvent(new Event("userAuthChanged"))
       setSuccess(true)
-      setTimeout(() => navigate(redirectTo), 600)
+      setTimeout(() => navigate(redirectTo, { replace: true }), 600)
     } catch (err) {
       setError("Failed to complete registration. Please try again.")
     } finally {
