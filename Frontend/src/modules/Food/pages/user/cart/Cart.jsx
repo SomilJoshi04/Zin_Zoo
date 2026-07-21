@@ -257,7 +257,7 @@ export default function Cart() {
   const [coinSettings, setCoinSettings] = useState(null)
 
   useEffect(() => {
-    if (!isModuleAuthenticated("food")) {
+    if (!isModuleAuthenticated("user")) {
       toast.error("Please login to access your cart", { id: "cart-auth-error" })
       navigate("/food/user/auth/login?redirect=/food/user/cart", { replace: true })
     }
