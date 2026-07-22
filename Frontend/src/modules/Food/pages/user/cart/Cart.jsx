@@ -3097,7 +3097,7 @@ export default function Cart() {
                   className="bg-white dark:bg-zinc-800 hover:bg-orange-50 dark:hover:bg-zinc-700 text-[#F84E04] font-semibold py-4 px-4 rounded-xl border-2 border-[#F84E04] transition-all w-full shadow-sm"
                   style={{ animation: 'slideUp 0.5s ease-out 1s both' }}
                 >
-                   Cancel Order
+                   Track Order
                 </button>
               )}
               
