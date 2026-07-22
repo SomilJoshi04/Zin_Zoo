@@ -15,7 +15,8 @@ import {
   FileText,
   Coins,
   Star,
-  Loader2
+  Loader2,
+  X
 } from "lucide-react"
 import { orderAPI, restaurantAPI } from "@food/api"
 import apiClient from "@/services/api/axios"
@@ -38,6 +39,10 @@ export default function UserOrderDetails() {
   const [isSubmittingRating, setIsSubmittingRating] = useState(false)
   const [hoveredStars, setHoveredStars] = useState({})
   const [submittedRatings, setSubmittedRatings] = useState({})
+  
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [cancellationReason, setCancellationReason] = useState('')
+  const [isCancelling, setIsCancelling] = useState(false)
 
   useEffect(() => {
     if (order?.ratings?.restaurants && Array.isArray(order.ratings.restaurants)) {
@@ -386,6 +391,45 @@ export default function UserOrderDetails() {
     }
   }
 
+  const handleCancelOrder = () => {
+    if (!order) return;
+    if (order?.status !== 'confirmed') {
+      toast.error('Order processing has started and it cannot be cancelled.');
+      return;
+    }
+    setShowCancelDialog(true);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancellationReason.trim()) {
+      toast.error('Please provide a reason for cancellation');
+      return;
+    }
+
+    setIsCancelling(true);
+    try {
+      const response = await orderAPI.cancelOrder(order._id || order.id || orderId, { reason: cancellationReason.trim() });
+      if (response.data?.success) {
+        toast.success('Order cancelled successfully');
+        setShowCancelDialog(false);
+        setCancellationReason('');
+        
+        // Update local state to reflect cancellation instantly
+        setOrder(prev => ({
+          ...prev,
+          status: 'cancelled_by_user',
+          orderStatus: 'cancelled_by_user'
+        }));
+      } else {
+        toast.error(response.data?.message || 'Failed to cancel order');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to cancel order');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const handleReorder = (currentOrder) => {
     const restaurantTarget =
       restaurantObj.slug ||
@@ -555,24 +599,7 @@ export default function UserOrderDetails() {
         {/* Restaurant Info Card */}
         <div className="bg-white dark:bg-zinc-900 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-800">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <img
-                src={
-                  // Prefer the food image from the first ordered item
-                  (Array.isArray(items) && items[0]?.image) ||
-                  restaurantObj.profileImage?.url ||
-                  restaurantObj.profileImage ||
-                  order.restaurantImage ||
-                  ""
-                }
-                alt={restaurantName}
-                className="w-10 h-10 rounded-lg object-cover"
-              />
-              <div>
-                <h3 className="font-semibold text-gray-800 dark:text-white">{restaurantName}</h3>
-                {/* <p className="text-xs text-gray-500 dark:text-gray-400">{restaurantLocation}</p> */}
-              </div>
-            </div>
+            <h3 className="font-semibold text-gray-800 dark:text-white">{restaurantName}</h3>
 
             {/* Call button hidden for food orders as per user request, visible for grocery/accessories */}
             {isGroceryOrAccessories && (
@@ -790,6 +817,18 @@ export default function UserOrderDetails() {
       {/* Fixed Bottom Buttons */}
       <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-gray-200 dark:border-zinc-800 p-4 z-20">
         <div className="max-w-3xl mx-auto flex gap-3">
+          {/* CANCELLATION BUTTON (Only visible before processing) */}
+          {order?.status === 'confirmed' && (
+            <button
+              type="button"
+              onClick={handleCancelOrder}
+              className="flex-1 bg-white dark:bg-zinc-800 border border-red-500 text-red-500 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            >
+              <X className="w-4 h-4" />
+              Cancel
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => handleReorder(order)}
@@ -809,9 +848,43 @@ export default function UserOrderDetails() {
         </div>
       </div>
 
+      {/* Cancel Confirmation Dialog */}
+      {showCancelDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl w-full max-w-sm p-6 shadow-xl relative overflow-hidden animate-in zoom-in-95 duration-200">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Cancel Order?</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
+              Are you sure you want to cancel this order? This action cannot be undone.
+              {(order?.payment?.method === 'razorpay' || order?.payment?.method === 'wallet') && order?.payment?.status === 'paid' && 
+                " Your refund will be processed automatically."}
+            </p>
 
+            <textarea
+              value={cancellationReason}
+              onChange={(e) => setCancellationReason(e.target.value)}
+              placeholder="Please tell us why you are cancelling..."
+              className="w-full bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-3 text-sm text-gray-900 dark:text-white mb-5 focus:outline-none focus:ring-2 focus:ring-red-500/50 resize-none h-24"
+            />
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowCancelDialog(false)}
+                disabled={isCancelling}
+                className="flex-1 px-4 py-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-gray-300 rounded-xl font-semibold transition-colors disabled:opacity-50"
+              >
+                No, Keep it
+              </button>
+              <button
+                onClick={handleConfirmCancel}
+                disabled={isCancelling || !cancellationReason.trim()}
+                className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+              >
+                {isCancelling ? <Loader2 className="w-5 h-5 animate-spin" /> : "Yes, Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
-

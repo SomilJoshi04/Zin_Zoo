@@ -1376,9 +1376,9 @@ export async function cancelOrder(orderId, userId, reason) {
 
   if (!order) throw new NotFoundError("Order not found");
 
-  const allowed = ["created"];
+  const allowed = ["confirmed"];
   if (!allowed.includes(order.orderStatus))
-    throw new ValidationError("Order cannot be cancelled");
+    throw new ValidationError("Order cannot be cancelled after processing has started.");
 
   const from = order.orderStatus;
   order.orderStatus = "cancelled_by_user";
@@ -1413,7 +1413,7 @@ export async function cancelOrder(orderId, userId, reason) {
     const finalPaymentMethod = String(order.payment?.method || paymentMethod || "cash").toLowerCase();
     const finalPaymentStatus = String(order.payment?.status || paymentStatus || "cod_pending").toLowerCase();
     const isOnlinePaid =
-      finalPaymentMethod === "razorpay" &&
+      (finalPaymentMethod === "razorpay" || finalPaymentMethod === "wallet") &&
       (finalPaymentStatus === "paid" || finalPaymentStatus === "refunded");
     await foodTransactionService.updateTransactionStatus(order._id, 'cancelled_by_user', {
       status: isOnlinePaid ? 'refunded' : 'failed',
@@ -1428,10 +1428,15 @@ export async function cancelOrder(orderId, userId, reason) {
   // Notify User and Restaurant about the cancellation
   const finalPaymentMethod = String(order.payment?.method || paymentMethod || "cash").toLowerCase();
   const finalPaymentStatus = String(order.payment?.status || paymentStatus || "cod_pending").toLowerCase();
-  const isOnlinePaid =
-    finalPaymentMethod === "razorpay" &&
-    (finalPaymentStatus === "paid" || finalPaymentStatus === "refunded");
-  const refundDetail = isOnlinePaid ? ` Your refund of ₹${order.pricing.total} is being processed and will be credited to your original payment method within 5-7 working days.` : "";
+  
+  let refundDetail = "";
+  if (finalPaymentStatus === "paid" || finalPaymentStatus === "refunded") {
+    if (finalPaymentMethod === "wallet") {
+      refundDetail = ` Your refund of ₹${order.pricing.total} has been credited to your wallet.`;
+    } else if (finalPaymentMethod === "razorpay") {
+      refundDetail = ` Your refund of ₹${order.pricing.total} is being processed and will be credited to your original payment method.`;
+    }
+  }
 
   await notifyOwnersSafely(
     [

@@ -3086,14 +3086,29 @@ export default function Cart() {
               </div>
             </div>
 
-            {/* Action Button */}
-            <button
-              onClick={handleContinueShopping}
-              className="mt-10 bg-[#F84E04] hover:bg-[#D94F0C] text-white font-semibold py-4 px-12 rounded-xl shadow-lg shadow-orange-200/70 dark:shadow-orange-950/40 transition-all hover:shadow-xl hover:scale-105"
-              style={{ animation: 'slideUp 0.5s ease-out 1s both' }}
-            >
-              Continue Shopping
-            </button>
+            {/* Action Buttons */}
+            <div className="mt-10 flex flex-col gap-4 w-full max-w-[280px]">
+              {placedOrderId && (
+                <button
+                  onClick={() => {
+                    setShowOrderSuccess(false);
+                    navigate(`/food/user/orders/${placedOrderId}`);
+                  }}
+                  className="bg-white dark:bg-zinc-800 hover:bg-orange-50 dark:hover:bg-zinc-700 text-[#F84E04] font-semibold py-4 px-4 rounded-xl border-2 border-[#F84E04] transition-all w-full shadow-sm"
+                  style={{ animation: 'slideUp 0.5s ease-out 1s both' }}
+                >
+                   Cancel Order
+                </button>
+              )}
+              
+              <button
+                onClick={handleContinueShopping}
+                className="bg-[#F84E04] hover:bg-[#D94F0C] text-white font-semibold py-4 px-4 rounded-xl shadow-lg shadow-orange-200/70 dark:shadow-orange-950/40 transition-all hover:shadow-xl hover:scale-105 w-full"
+                style={{ animation: 'slideUp 0.5s ease-out 1.1s both' }}
+              >
+                Continue Shopping
+              </button>
+            </div>
           </div>
         </div>
       )}

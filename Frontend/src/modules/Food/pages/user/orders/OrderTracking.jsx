@@ -1126,16 +1126,12 @@ export default function OrderTracking() {
   }, [orderId])
 
   const handleCancelOrder = () => {
-    // Check if order can be cancelled (only Razorpay orders that aren't delivered/cancelled)
     if (!order) return;
 
-    if (isAdminAccepted) {
-      toast.error('Order has already been accepted by the restaurant and cannot be cancelled.');
+    if (order?.status !== 'confirmed') {
+      toast.error('Order processing has started and it cannot be cancelled.');
       return;
     }
-
-    // Allow cancellation for all payment methods (Razorpay, COD, Wallet)
-    // Only restrict if order is already cancelled or delivered (checked above)
 
     setShowCancelDialog(true);
   };
@@ -1505,8 +1501,8 @@ export default function OrderTracking() {
           </div>
         </div>
 
-        {/* Cancel button visible ONLY until restaurant accepts (confirmed) */}
-        {!isAdminAccepted && !isCancelledOrder && !isDeliveredOrder && (
+        {/* Cancel button visible ONLY while order is confirmed (before processing starts) */}
+        {order?.status === 'confirmed' && (
           <motion.div
             className="bg-white dark:bg-zinc-900 rounded-xl p-4 shadow-sm border border-red-50 dark:border-zinc-800"
             initial={{ opacity: 0, y: 20 }}
@@ -1515,7 +1511,7 @@ export default function OrderTracking() {
             <div className="flex items-center justify-between gap-3 mb-3">
               <p className="text-sm font-semibold text-gray-900 dark:text-white">Need to cancel?</p>
               <span className="text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400">
-                Available until accepted
+                Available until processed
               </span>
             </div>
             <Button 
