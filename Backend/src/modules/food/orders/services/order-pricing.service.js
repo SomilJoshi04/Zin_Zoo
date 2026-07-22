@@ -233,6 +233,7 @@ export async function calculateOrderPricing(userId, dto) {
       total,
       currency: "INR",
       couponCode: appliedCoupon?.code || codeRaw || null,
+      platformGstNumber: feeSettings.gstNumber || null,
       appliedCoupon,
       distanceKm: Number.isFinite(distanceKm) ? Number(distanceKm.toFixed(2)) : null,
       deliveryFeeBreakdown: Number.isFinite(distanceKm) ? {

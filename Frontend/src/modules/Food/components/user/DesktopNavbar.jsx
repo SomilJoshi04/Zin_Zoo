@@ -158,12 +158,12 @@ export default function DesktopNavbar({ showLogo = true }) {
                         <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0">
                             {/* Logo */}
                             {showLogo && (
-                                <Link to="/food/user" className="flex items-center justify-center flex-shrink-0">
+                                <Link to="/food/user" className="flex items-center justify-center flex-shrink-0 mr-4 md:mr-10 lg:mr-16">
                                     {logoUrl || companyName ? (
                                         <img
                                             src={logoUrl || "/zinzoo-logo.png"}
                                             alt={companyName || "Company Logo"}
-                                            className="h-16 w-auto md:h-20 lg:h-24 object-contain"
+                                            className="h-16 w-auto md:h-20 lg:h-24 object-contain scale-110 md:scale-[1.6] lg:scale-[1.8] origin-left"
                                             onError={(e) => {
                                                 if (e.target.src !== quickSpicyLogo) {
                                                     e.target.src = quickSpicyLogo
@@ -171,7 +171,7 @@ export default function DesktopNavbar({ showLogo = true }) {
                                             }}
                                         />
                                     ) : (
-                                        <img src={"/zinzoo-logo.png"} alt={companyName || "Logo"} className="h-16 w-auto md:h-20 lg:h-24 object-contain" />
+                                        <img src={"/zinzoo-logo.png"} alt={companyName || "Logo"} className="h-16 w-auto md:h-20 lg:h-24 object-contain scale-110 md:scale-[1.6] lg:scale-[1.8] origin-left" />
                                     )}
                                 </Link>
                             )}

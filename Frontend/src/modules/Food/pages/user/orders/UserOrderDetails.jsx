@@ -39,7 +39,7 @@ export default function UserOrderDetails() {
   const [isSubmittingRating, setIsSubmittingRating] = useState(false)
   const [hoveredStars, setHoveredStars] = useState({})
   const [submittedRatings, setSubmittedRatings] = useState({})
-  
+
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [cancellationReason, setCancellationReason] = useState('')
   const [isCancelling, setIsCancelling] = useState(false)
@@ -333,20 +333,32 @@ export default function UserOrderDetails() {
       doc.text(addressLines, 60, yPos)
       yPos += addressLines.length * 7
 
-      // Restaurant Name
-      doc.setFont('helvetica', 'bold')
-      doc.text('Restaurant Name:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      doc.text(restaurantName, 60, yPos)
-      yPos += 7
+      // Restaurant details (Food only)
+      if (!order.moduleType || order.moduleType === 'food') {
+        // Restaurant Name
+        doc.setFont('helvetica', 'bold')
+        doc.text('Restaurant Name:', 20, yPos)
+        doc.setFont('helvetica', 'normal')
+        doc.text(restaurantName, 60, yPos)
+        yPos += 7
 
-      // Restaurant Address
-      doc.setFont('helvetica', 'bold')
-      doc.text('Restaurant Address:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      const restaurantAddressLines = doc.splitTextToSize(restaurantLocation || 'N/A', 130)
-      doc.text(restaurantAddressLines, 60, yPos)
-      yPos += restaurantAddressLines.length * 7 + 5
+        // Restaurant Address
+        doc.setFont('helvetica', 'bold')
+        doc.text('Restaurant Address:', 20, yPos)
+        doc.setFont('helvetica', 'normal')
+        const restaurantAddressLines = doc.splitTextToSize(restaurantLocation || 'N/A', 130)
+        doc.text(restaurantAddressLines, 60, yPos)
+        yPos += restaurantAddressLines.length * 7 + 5
+      }
+
+      // Platform GST Number
+      if (pricing?.platformGstNumber) {
+        doc.setFont('helvetica', 'bold')
+        doc.text('GST Number:', 20, yPos)
+        doc.setFont('helvetica', 'normal')
+        doc.text(pricing.platformGstNumber, 60, yPos)
+        yPos += 7
+      }
 
       // Items table
       const tableData = items.map(item => [
@@ -413,7 +425,7 @@ export default function UserOrderDetails() {
         toast.success('Order cancelled successfully');
         setShowCancelDialog(false);
         setCancellationReason('');
-        
+
         // Update local state to reflect cancellation instantly
         setOrder(prev => ({
           ...prev,
@@ -699,6 +711,14 @@ export default function UserOrderDetails() {
                 ₹{Number(pricing.tax || 0).toFixed(2)}
               </span>
             </div>
+            {pricing.platformGstNumber && (
+              <div className="flex justify-between">
+                <span className="text-xs text-gray-400 dark:text-gray-500">GST Number</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                  {pricing.platformGstNumber}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-gray-400 dark:text-gray-500 font-medium">Delivery fee</span>
               {pricing.deliveryFee === 0 && (
@@ -855,7 +875,7 @@ export default function UserOrderDetails() {
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Cancel Order?</h3>
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
               Are you sure you want to cancel this order? This action cannot be undone.
-              {(order?.payment?.method === 'razorpay' || order?.payment?.method === 'wallet') && order?.payment?.status === 'paid' && 
+              {(order?.payment?.method === 'razorpay' || order?.payment?.method === 'wallet') && order?.payment?.status === 'paid' &&
                 " Your refund will be processed automatically."}
             </p>
 

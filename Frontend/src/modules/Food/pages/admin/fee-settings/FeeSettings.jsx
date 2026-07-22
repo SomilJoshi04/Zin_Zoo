@@ -18,6 +18,7 @@ export default function FeeSettings() {
     freeDeliveryThreshold: "",
     platformFee: "",
     gstRate: "",
+    gstNumber: "",
   })
   const [loadingFeeSettings, setLoadingFeeSettings] = useState(false)
   const [savingFeeSettings, setSavingFeeSettings] = useState(false)
@@ -42,6 +43,7 @@ export default function FeeSettings() {
           freeDeliveryThreshold: response.data.data.feeSettings.freeDeliveryThreshold ?? "",
           platformFee: response.data.data.feeSettings.platformFee ?? "",
           gstRate: response.data.data.feeSettings.gstRate ?? "",
+          gstNumber: response.data.data.feeSettings.gstNumber ?? "",
         })
       } else if (response.data.success && response.data.data.feeSettings === null) {
         // Not configured yet - keep empty fields (no defaults).
@@ -51,6 +53,7 @@ export default function FeeSettings() {
           freeDeliveryThreshold: "",
           platformFee: "",
           gstRate: "",
+          gstNumber: "",
         })
       }
     } catch (error) {
@@ -80,6 +83,7 @@ export default function FeeSettings() {
         freeDeliveryThreshold: settingsToSave.freeDeliveryThreshold === "" ? undefined : Number(settingsToSave.freeDeliveryThreshold),
         platformFee: settingsToSave.platformFee === "" ? undefined : Number(settingsToSave.platformFee),
         gstRate: settingsToSave.gstRate === "" ? undefined : Number(settingsToSave.gstRate),
+        gstNumber: settingsToSave.gstNumber === "" ? undefined : settingsToSave.gstNumber,
         isActive: true,
       }
 
@@ -97,6 +101,7 @@ export default function FeeSettings() {
             freeDeliveryThreshold: saved.freeDeliveryThreshold ?? "",
             platformFee: saved.platformFee ?? "",
             gstRate: saved.gstRate ?? "",
+            gstNumber: saved.gstNumber ?? "",
           })
         }
         return true
@@ -373,6 +378,23 @@ export default function FeeSettings() {
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Delivery Fee by Distance Range</h3>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                       Set different delivery fees based on distance ranges (in km)
+                    </p>
+                  </div>
+
+                  {/* GST Number */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      GST Number
+                    </label>
+                    <input
+                      type="text"
+                      value={feeSettings.gstNumber}
+                      onChange={(e) => setFeeSettings({ ...feeSettings, gstNumber: e.target.value })}
+                      className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
+                      placeholder="e.g. 22AAAAA0000A1Z5"
+                    />
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Platform GST Number displayed on invoices
                     </p>
                   </div>
                 </div>

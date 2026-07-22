@@ -2,6 +2,7 @@ import { useState, useMemo } from "react"
 import { exportToCSV, exportToExcel, exportToPDF, exportToJSON } from "./ordersExportUtils"
 import quickSpicyLogo from "@food/assets/switcheats-logo.png"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
+import { adminAPI } from "@food/api"
 const debugError = () => { }
 
 
@@ -283,6 +284,25 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       const { default: jsPDF } = await import("jspdf")
       const { default: QRCode } = await import("qrcode")
 
+      const orderCreatedAt = order.createdAt || new Date().toISOString()
+      const orderDate = new Date(orderCreatedAt).toLocaleDateString("en-IN", {
+        day: "2-digit", month: "short", year: "numeric",
+      }).toUpperCase()
+      const orderTime = new Date(orderCreatedAt).toLocaleTimeString("en-IN", {
+        hour: "2-digit", minute: "2-digit", hour12: true,
+      }).toUpperCase()
+
+      // Calculate and gather info
+      let platformGstNumber = order?.pricing?.platformGstNumber;
+      if (!platformGstNumber) {
+        try {
+          const res = await adminAPI.getFeeSettings()
+          platformGstNumber = res?.data?.data?.feeSettings?.gstNumber || null
+        } catch (err) {
+          debugError("Failed to fetch GST number for receipt", err)
+        }
+      }
+
       const receiptWidth = 72 // slightly wider to fit the new layout better, standard 80mm printer paper has ~72mm printable area
       const margin = 4
       const contentWidth = receiptWidth - margin * 2
@@ -291,8 +311,6 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       // Gather order data
       const orderId = order.orderId || order.id || "N/A"
       const billNo = String(order.id || "").slice(-6).toUpperCase() || "N/A"
-      const orderDate = order.date || new Date().toLocaleDateString('en-IN')
-      const orderTime = order.time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
       const customerName = formatDisplayText(order.customerName)
       const items = Array.isArray(order.items) ? order.items : []
 
@@ -365,6 +383,11 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       center("www.zinzoo.in", y)
       y += 4
 
+      if (platformGstNumber) {
+        center(`GST No: ${platformGstNumber}`, y)
+        y += 4
+      }
+
       solidLine(y); y += 4;
 
       // --- ORDER INFO ---
@@ -372,6 +395,10 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       setFont(7, "normal"); doc.text(`: ${orderId}`, margin + 15, y); y += 4;
       setFont(7, "bold"); doc.text("Bill No.", margin, y);
       setFont(7, "normal"); doc.text(`: ${billNo}`, margin + 15, y); y += 4;
+      
+      const displayStatus = (order?.status || order?.orderStatus || 'Pending').toUpperCase()
+      setFont(7, "bold"); doc.text("Status", margin, y);
+      setFont(7, "normal"); doc.text(`: ${displayStatus}`, margin + 15, y); y += 4;
 
       dashLine(y); y += 4;
 
@@ -446,7 +473,7 @@ export function useOrdersManagement(orders, statusKey, title, moduleType = "food
       // --- FOOTER ---
       setFont(7, "bold")
       center("Thank You!", y); y += 4;
-      center("Order Again with ZIN ZOO X", y); y += 5;
+      center("We Look Forward to Serving You Again.", y); y += 5;
 
       dashLine(y); y += 4;
 

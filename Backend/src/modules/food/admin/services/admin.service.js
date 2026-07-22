@@ -1968,6 +1968,9 @@ export async function upsertFeeSettings(body) {
         if (body.gstRate === null) $unset.gstRate = 1;
         else if (body.gstRate !== undefined) $set.gstRate = body.gstRate;
 
+        if (body.gstNumber === null) $unset.gstNumber = 1;
+        else if (body.gstNumber !== undefined) $set.gstNumber = body.gstNumber;
+
         if (body.isActive !== undefined) $set.isActive = body.isActive;
 
         const update = {};
@@ -1987,6 +1990,7 @@ export async function upsertFeeSettings(body) {
     if (body.freeDeliveryThreshold !== undefined && body.freeDeliveryThreshold !== null) payload.freeDeliveryThreshold = body.freeDeliveryThreshold;
     if (body.platformFee !== undefined && body.platformFee !== null) payload.platformFee = body.platformFee;
     if (body.gstRate !== undefined && body.gstRate !== null) payload.gstRate = body.gstRate;
+    if (body.gstNumber !== undefined && body.gstNumber !== null) payload.gstNumber = body.gstNumber;
 
     console.log('[DEBUG] Creating NEW settings with payload:', JSON.stringify(payload, null, 2));
     const created = await FoodFeeSettings.create(payload);

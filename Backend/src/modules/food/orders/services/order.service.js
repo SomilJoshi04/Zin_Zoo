@@ -1241,6 +1241,20 @@ export async function getOrderById(
 
   if (userId) {
     const out = normalizeOrderForClient(order);
+    
+    // Fallback for older orders without platformGstNumber
+    if (out.pricing && !out.pricing.platformGstNumber) {
+      try {
+        const { FoodFeeSettings } = await import('../../admin/models/feeSettings.model.js');
+        const feeSettings = await FoodFeeSettings.findOne().select('gstNumber').lean();
+        if (feeSettings && feeSettings.gstNumber) {
+          out.pricing.platformGstNumber = feeSettings.gstNumber;
+        }
+      } catch (err) {
+        console.error('Failed to attach fallback platformGstNumber:', err);
+      }
+    }
+
     out.deliveryVerification = {
       dropOtp: {
         required: false,
@@ -1444,7 +1458,7 @@ export async function cancelOrder(orderId, userId, reason) {
       { ownerType: "RESTAURANT", ownerId: order.restaurantId },
     ],
     {
-      title: "Order Cancelled ❌",
+      title: "Order Cancelled ",
       body: `Order #${order.order_id || order._id} has been cancelled successfully.${refundDetail}`,
       image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
       data: {
