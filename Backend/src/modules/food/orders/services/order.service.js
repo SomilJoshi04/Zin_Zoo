@@ -376,7 +376,7 @@ async function createUnifiedOrder(userId, dto) {
       moduleType: mod,
       items: items,
       pricing: subPricing,
-      paymentMethod: originalPaymentMethod === "razorpay" ? "cash" : originalPaymentMethod
+      paymentMethod: originalPaymentMethod
     };
 
     let orderObj;

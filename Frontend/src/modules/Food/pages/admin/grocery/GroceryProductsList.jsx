@@ -26,10 +26,14 @@ const getRestaurantName = (value) => {
   return String(value.name || value.restaurantName || "")
 }
 
+let lastSelectedCategoryForAdd = ""
+let lastSelectedCategoryNameForAdd = ""
+let lastSelectedTimingForAdd = ""
+
 const createFoodForm = () => ({
   restaurantId: "",
-  categoryId: "",
-  categoryName: "",
+  categoryId: lastSelectedCategoryForAdd,
+  categoryName: lastSelectedCategoryNameForAdd,
   name: "",
   price: "",
   variants: [],
@@ -37,7 +41,7 @@ const createFoodForm = () => ({
   image: "",
   foodType: "Non-Veg",
   isAvailable: true,
-  preparationTime: "",
+  preparationTime: lastSelectedTimingForAdd,
   zoneId: "global",
   quantity: "",
 })
@@ -470,6 +474,9 @@ export default function GroceryProductsList() {
       if (foodFormMode === "edit") {
         res = await groceryAdminAPI.updateProduct(editingFood.id, payload)
       } else {
+        lastSelectedCategoryForAdd = payload.categoryId || ""
+        lastSelectedCategoryNameForAdd = payload.categoryName || ""
+        lastSelectedTimingForAdd = payload.preparationTime || ""
         res = await groceryAdminAPI.createProduct(payload)
       }
       toast.success(foodFormMode === "edit" ? "Grocery updated successfully" : "Grocery added successfully")

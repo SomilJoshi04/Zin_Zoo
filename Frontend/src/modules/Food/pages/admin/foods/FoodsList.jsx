@@ -29,6 +29,7 @@ const getRestaurantName = (value) => {
 let lastSelectedRestaurantForAdd = ""
 let lastSelectedCategoryForAdd = ""
 let lastSelectedCategoryNameForAdd = ""
+let lastSelectedTimingForAdd = ""
 
 const createFoodForm = () => ({
   restaurantId: lastSelectedRestaurantForAdd,
@@ -41,7 +42,7 @@ const createFoodForm = () => ({
   image: "",
   foodType: "Non-Veg",
   isAvailable: true,
-  preparationTime: "",
+  preparationTime: lastSelectedTimingForAdd,
   zoneId: "global",
   quantity: "",
 })
@@ -499,6 +500,9 @@ export default function FoodsList() {
       if (foodFormMode === "edit") {
         await adminAPI.updateFood(editingFood?._id || editingFood?.id, payload)
       } else {
+        lastSelectedCategoryForAdd = payload.categoryId || ""
+        lastSelectedCategoryNameForAdd = payload.categoryName || ""
+        lastSelectedTimingForAdd = payload.preparationTime || ""
         await adminAPI.createFood(payload)
       }
       toast.success(foodFormMode === "edit" ? "Food updated successfully" : "Food added successfully")
