@@ -3925,7 +3925,6 @@ export async function createAdminOffer(body) {
 
 export async function updateAdminOfferCartVisibility(offerId, itemId, showInCart) {
     if (!offerId || !mongoose.Types.ObjectId.isValid(offerId)) return null;
-    if (!itemId) return null;
     const updated = await FoodOffer.findByIdAndUpdate(
         offerId,
         { $set: { showInCart: Boolean(showInCart) } },

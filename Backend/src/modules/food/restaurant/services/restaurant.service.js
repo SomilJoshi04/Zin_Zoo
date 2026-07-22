@@ -1258,7 +1258,8 @@ export const listPublicOffers = async () => {
         const isFood = !o.moduleType || o.moduleType === 'food';
         if (isFood && o.restaurantScope === 'selected') {
             const rId = o.restaurantId && typeof o.restaurantId === 'object' ? o.restaurantId._id : o.restaurantId;
-            return rId && activeRestaurantSet.has(rId.toString());
+            const rIds = Array.isArray(o.restaurantIds) && o.restaurantIds.length > 0 ? o.restaurantIds : [rId].filter(Boolean);
+            return rIds.some(id => activeRestaurantSet.has(id.toString()));
         }
         return true;
     });
@@ -1287,6 +1288,7 @@ export const listPublicOffers = async () => {
             customerScope: o.customerScope,
             restaurantScope: o.restaurantScope,
             restaurantId: restaurant?._id ? String(restaurant._id) : (o.restaurantScope === 'selected' ? String(o.restaurantId) : null),
+            restaurantIds: Array.isArray(o.restaurantIds) ? o.restaurantIds.map(id => String(id)) : [],
             restaurantName,
             restaurantSlug,
             restaurantImage: restaurant?.profileImage || null,

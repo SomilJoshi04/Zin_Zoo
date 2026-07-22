@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { Check, ChevronDown, Search, X, Eye } from "lucide-react"
 import { adminAPI, groceryAdminAPI, accessoriesAdminAPI } from "@food/api"
 import { usePublicSocket } from "@food/hooks/usePublicSocket"
+import { toast } from "sonner"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -662,8 +663,10 @@ export default function Coupons() {
             : offer,
         ),
       )
+      toast.success(`Coupon status turned ${nextValue ? "ON" : "OFF"} successfully`)
     } catch (err) {
       debugError("Error updating cart visibility:", err)
+      toast.error(err?.response?.data?.message || "Failed to update status")
     } finally {
       setUpdatingCartVisibility((prev) => ({ ...prev, [key]: false }))
     }
@@ -671,6 +674,7 @@ export default function Coupons() {
 
   const handleDeleteOffer = async (offerId) => {
     if (!offerId) return
+    if (!window.confirm("Are you sure you want to delete this coupon? This action cannot be undone.")) return;
     if (deletingOffer[offerId]) return
     try {
       setDeletingOffer((prev) => ({ ...prev, [offerId]: true }))

@@ -253,6 +253,7 @@ export default function Cart() {
   const [orderProgress, setOrderProgress] = useState(0)
   const [showOrderSuccess, setShowOrderSuccess] = useState(false)
   const [placedOrderId, setPlacedOrderId] = useState(null)
+  const [placedOrderIsUnified, setPlacedOrderIsUnified] = useState(false)
   // paymentStage: null | 'proceeding' | 'razorpay_open' | 'verifying' | 'success' | 'failed' | 'cancelled'
   const [paymentStage, setPaymentStage] = useState(null)
   const [completedPaymentMethod, setCompletedPaymentMethod] = useState(null)
@@ -1793,6 +1794,7 @@ export default function Cart() {
       if (selectedPaymentMethod === "cash") {
         toast.success("Order placed with Cash on Delivery")
         setPlacedOrderId(order?._id || order?.orderId || order?.id || null)
+        setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
         setCompletedPaymentMethod('cash')
         setShowOrderSuccess(true)
         window.dispatchEvent(new CustomEvent('order-placed', { detail: { order } }))
@@ -1812,6 +1814,7 @@ export default function Cart() {
       if (selectedPaymentMethod === "wallet") {
         toast.success("Order placed with Wallet payment")
         setPlacedOrderId(order?._id || order?.orderId || order?.id || null)
+        setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
         setCompletedPaymentMethod('wallet')
         setShowOrderSuccess(true)
         window.dispatchEvent(new CustomEvent('order-placed', { detail: { order } }))
@@ -1925,6 +1928,7 @@ export default function Cart() {
               toast.success("Your order has been placed successfully.")
               setPaymentStage('success')
               setPlacedOrderId(order?._id || order?.orderId)
+              setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
               setCompletedPaymentMethod('razorpay')
               setShowOrderSuccess(true)
               window.dispatchEvent(new CustomEvent('order-placed', { detail: { order } }))
@@ -3091,8 +3095,11 @@ export default function Cart() {
               {placedOrderId && (
                 <button
                   onClick={() => {
-                    setShowOrderSuccess(false);
-                    navigate(`/food/user/orders/${placedOrderId}`);
+                    if (placedOrderIsUnified) {
+                      navigate('/food/user/orders');
+                    } else {
+                      navigate(`/food/user/orders/${placedOrderId}`);
+                    }
                   }}
                   className="bg-white dark:bg-zinc-800 hover:bg-orange-50 dark:hover:bg-zinc-700 text-[#F84E04] font-semibold py-4 px-4 rounded-xl border-2 border-[#F84E04] transition-all w-full shadow-sm"
                   style={{ animation: 'slideUp 0.5s ease-out 1s both' }}
