@@ -3481,6 +3481,12 @@ export async function createFood(body) {
     }
 
     const foodType = body.foodType === 'Veg' ? 'Veg' : 'Non-Veg';
+    if (restaurant.restaurantType === 'Veg' && foodType === 'Non-Veg') {
+        throw new ValidationError('Non-Veg items cannot be added to a Veg restaurant.');
+    }
+    if (restaurant.restaurantType === 'Non-Veg' && foodType === 'Veg') {
+        throw new ValidationError('Veg items cannot be added to a Non-Veg restaurant.');
+    }
     const { price, variants } = getAdminFoodCreatePricing(body);
 
     let categoryName = typeof body.categoryName === 'string' ? body.categoryName.trim() : '';
@@ -3516,6 +3522,8 @@ export async function updateFood(id, body) {
     if (!id || !mongoose.Types.ObjectId.isValid(id)) return null;
     const doc = await FoodItem.findById(id);
     if (!doc) return null;
+    const restaurant = await FoodRestaurant.findById(doc.restaurantId);
+    if (!restaurant) throw new ValidationError('Restaurant not found');
     if (body.name !== undefined) {
         const nextName = String(body.name || '').trim();
         if (!nextName) throw new ValidationError('Food name is required');
@@ -3531,6 +3539,12 @@ export async function updateFood(id, body) {
     }
     if (body.description !== undefined) doc.description = String(body.description || '').trim();
     const targetFoodType = body.foodType !== undefined ? (body.foodType === 'Veg' ? 'Veg' : 'Non-Veg') : (doc.foodType === 'Veg' ? 'Veg' : 'Non-Veg');
+        if (restaurant.restaurantType === 'Veg' && targetFoodType === 'Non-Veg') {
+        throw new ValidationError('Non-Veg items cannot be added to a Veg restaurant.');
+    }
+    if (restaurant.restaurantType === 'Non-Veg' && targetFoodType === 'Veg') {
+        throw new ValidationError('Veg items cannot be added to a Non-Veg restaurant.');
+    }
     const pricingUpdate = getAdminFoodUpdatedPricing(doc.toObject(), body);
     if (pricingUpdate.price !== undefined) doc.price = pricingUpdate.price;
     if (pricingUpdate.variants !== undefined) doc.variants = pricingUpdate.variants;
@@ -3552,7 +3566,6 @@ export async function updateFood(id, body) {
     if (body.quantity !== undefined) doc.quantity = Number(body.quantity);
 
     // Sync zoneId with parent restaurant
-    const restaurant = await FoodRestaurant.findById(doc.restaurantId);
     if (restaurant) {
         doc.zoneId = restaurant.zoneId || null;
     }
@@ -5893,3 +5906,10 @@ export function getAdminPermissionCatalog() {
 // force restart update 5
 
 // force restart update 6
+
+
+
+
+
+
+

@@ -43,7 +43,31 @@ const defaultCartContext = {
 
 const CartContext = createContext(defaultCartContext)
 
+// Helper to validate a MongoDB ObjectId string (24-char hex)
+function isValidObjectId(id) {
+  if (!id) return false;
+  if (typeof id !== 'string') return false;
+  return /^[0-9a-fA-F]{24}$/.test(id);
+}
+
+// Helper to extract a clean, validated restaurantId string from any value
+// (handles populated Mongoose objects, ObjectId instances, corrupted "[object Object]" strings)
+function extractRestaurantId(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'object') {
+    const candidate =
+      raw._id?.toString() ||
+      raw.restaurantId?.toString() ||
+      raw.id?.toString() ||
+      null;
+    return isValidObjectId(candidate) ? candidate : null;
+  }
+  const str = String(raw);
+  return isValidObjectId(str) ? str : null;
+}
+
 const normalizeCartData = (rawCart) => {
+
   if (!Array.isArray(rawCart)) return []
 
   const normalized = rawCart
@@ -58,12 +82,16 @@ const normalizeCartData = (rawCart) => {
             ? item.restaurant.name
             : ""
 
-      const normalizedRestaurantId =
+      // Safely extract restaurantId — it may be a populated Mongoose object from reorder flow,
+      // OR a corrupted "[object Object]" string from old localStorage data.
+      const rawRestaurantId =
         item.restaurantId ||
         item.restaurant_id ||
         item.restaurant?._id ||
         item.restaurant?.restaurantId ||
-        null
+        null;
+      // Only accept valid 24-char hex ObjectId strings — reject everything else
+      const normalizedRestaurantId = extractRestaurantId(rawRestaurantId);
 
       const normalizedImage =
         item.image ||
@@ -512,7 +540,12 @@ export function CartProvider({ children }) {
   const replaceCart = (items) => {
     const normalizedItems = normalizeCartData(items).filter((item) => {
       const quantity = Number(item?.quantity)
-      return item?.id && (item?.restaurantId || item?.restaurant) && Number.isFinite(quantity) && quantity > 0
+      if (!item?.id || !Number.isFinite(quantity) || quantity <= 0) return false;
+      // Grocery and accessories items don't need a restaurantId
+      const moduleType = item?.moduleType || item?.category || 'food';
+      if (moduleType === 'grocery' || moduleType === 'accessories') return true;
+      // Food items need at least a restaurantId or restaurant name
+      return !!(item?.restaurantId || item?.restaurant);
     })
 
     setCart(normalizedItems)

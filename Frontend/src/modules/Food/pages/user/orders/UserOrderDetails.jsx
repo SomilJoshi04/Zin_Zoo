@@ -108,13 +108,14 @@ export default function UserOrderDetails() {
             // Don't show error toast, just log it - order details can still be shown
           }
         }
-      } catch (error) {
-        debugError("Error fetching order details:", error)
-        toast.error(
-          error?.response?.data?.message || "Failed to load order details"
-        )
-        navigate("/user/orders")
-      } finally {
+        } catch (error) {
+          debugError("Error fetching order details:", error)
+          const errMsg = error?.response?.data?.error || error?.response?.data?.message
+          toast.error(
+            errMsg || "Failed to load order details"
+          )
+          navigate("/user/orders")
+        } finally {
         setLoading(false)
       }
     }
@@ -443,32 +444,51 @@ export default function UserOrderDetails() {
   };
 
   const handleReorder = (currentOrder) => {
-    const restaurantTarget =
-      restaurantObj.slug ||
-      restaurantObj._id ||
-      restaurantObj.restaurantId ||
-      (typeof currentOrder?.restaurantId === "string" ? currentOrder.restaurantId : currentOrder?.restaurantId?._id)
+    // Safely extract string restaurantId — restaurantObj/_id may be a populated Mongoose object
+    const rawId = restaurantObj._id || restaurantObj.restaurantId ||
+      (typeof currentOrder?.restaurantId === "object" && currentOrder?.restaurantId !== null
+        ? (currentOrder.restaurantId._id || currentOrder.restaurantId.restaurantId)
+        : currentOrder?.restaurantId);
+    
+    const restaurantIdStr = rawId
+      ? (typeof rawId === 'object' && rawId !== null
+          ? (rawId._id?.toString() || rawId.restaurantId?.toString() || rawId.id?.toString() || null)
+          : String(rawId))
+      : null;
+
+    const restaurantTarget = restaurantObj.slug || restaurantIdStr;
 
     if ((!isGroceryOrAccessories && !restaurantTarget) || !items.length) {
       toast.error("Order items or restaurant information not available")
       return
     }
 
+    // Detect order-level moduleType
+    const orderModuleType = currentOrder?.moduleType || order?.moduleType ||
+      (String(currentOrder?.orderId || '').startsWith('GRO-') ? 'grocery' :
+       String(currentOrder?.orderId || '').startsWith('ACC-') ? 'accessories' : 'food');
+
     const reorderItems = items
       .map((item, index) => {
-        const itemId = item.id || item.itemId || item._id
+        const itemId = item.itemId || item.id || item._id
         if (!itemId) return null
 
+        // Per-item moduleType (for combined orders), fall back to order-level
+        const itemModuleType = item.moduleType || orderModuleType;
+
         return {
-          id: itemId,
+          id: String(itemId),
+          itemId: String(itemId),
           name: item.name || item.foodName || "Item",
           price: Number(item.price) || 0,
           image: item.image || "",
           restaurant: restaurantName,
-          restaurantId: restaurantObj._id || restaurantObj.restaurantId || currentOrder?.restaurantId,
+          restaurantId: itemModuleType === 'food' ? restaurantIdStr : undefined,
           description: item.description || "",
           isVeg: item.isVeg !== false,
           quantity: Math.max(1, Number(item.quantity || item.qty) || 1),
+          moduleType: itemModuleType,
+          category: itemModuleType,
           reorderIndex: index,
         }
       })
@@ -483,6 +503,7 @@ export default function UserOrderDetails() {
     toast.success("Items added to cart")
     navigate("/food/user/cart")
   }
+
 
   const orderRestaurants = (() => {
     if (!order?.items || !Array.isArray(order.items)) {

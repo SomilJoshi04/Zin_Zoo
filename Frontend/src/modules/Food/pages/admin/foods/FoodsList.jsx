@@ -8,9 +8,9 @@ import { usePublicSocket } from "@food/hooks/usePublicSocket"
 import { Popover, PopoverContent, PopoverTrigger } from "@food/components/ui/popover"
 import { getFoodDisplayPrice, getFoodVariants } from "@food/utils/foodVariants"
 import { canCurrentAdminAction } from "@food/utils/adminRbac"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 const getEntityId = (value) => {
   if (!value) return ""
@@ -122,14 +122,15 @@ export default function FoodsList() {
         []
 
       const restaurantsMap = new Map()
-      ;(Array.isArray(list) ? list : []).forEach((restaurant) => {
-        const restaurantId = getEntityId(restaurant)
-        if (!restaurantId || restaurantsMap.has(restaurantId)) return
-        restaurantsMap.set(restaurantId, {
-          id: restaurantId,
-          name: getRestaurantName(restaurant) || "Unknown Restaurant",
+        ; (Array.isArray(list) ? list : []).forEach((restaurant) => {
+          const restaurantId = getEntityId(restaurant)
+          if (!restaurantId || restaurantsMap.has(restaurantId)) return
+          restaurantsMap.set(restaurantId, {
+            id: restaurantId,
+            name: getRestaurantName(restaurant) || "Unknown Restaurant",
+            type: restaurant.restaurantType || "Both",
+          })
         })
-      })
 
       setRestaurantsForFilter(
         Array.from(restaurantsMap.values()).sort((a, b) => a.name.localeCompare(b.name))
@@ -150,8 +151,8 @@ export default function FoodsList() {
       const list = res?.data?.data?.categories || []
       const options = Array.isArray(list)
         ? list
-            .map((c) => ({ id: String(c.id || c._id || c.name), name: String(c.name || "").trim() }))
-            .filter((c) => c.name)
+          .map((c) => ({ id: String(c.id || c._id || c.name), name: String(c.name || "").trim() }))
+          .filter((c) => c.name)
         : []
       setFilterCategories(options)
     } catch (error) {
@@ -178,30 +179,30 @@ export default function FoodsList() {
       const total = Number(foodsRes?.data?.data?.total ?? foodsRes?.data?.total ?? 0)
       const normalizedFoods = Array.isArray(list)
         ? list.map((f) => ({
-            id: String(f.id || f._id || ""),
-            _id: f._id || f.id,
-            name: f.name || "Unnamed Item",
-            image: f.image || FOOD_FALLBACK_IMAGE,
-            status: f.isAvailable !== false && String(f.approvalStatus || "").toLowerCase() !== "rejected",
-            restaurantId: getEntityId(f.restaurantId || f.restaurant?._id || f.restaurant),
-            restaurantName:
-              f.restaurantName ||
-              getRestaurantName(f.restaurant) ||
-              "Unknown Restaurant",
-            categoryId: String(f.categoryId || ""),
-            categoryName: f.categoryName || "",
-            price: getFoodDisplayPrice(f),
-            variants: getFoodVariants(f),
-            foodType: f.foodType || "Non-Veg",
-            approvalStatus: f.approvalStatus || "approved",
-            description: f.description || "",
-            preparationTime: f.preparationTime || "",
-            isAvailable: f.isAvailable !== false,
-            quantity: f.quantity || 0,
-            zoneId: f.zoneId || null,
-            createdAt: f.createdAt,
-            updatedAt: f.updatedAt,
-          }))
+          id: String(f.id || f._id || ""),
+          _id: f._id || f.id,
+          name: f.name || "Unnamed Item",
+          image: f.image || FOOD_FALLBACK_IMAGE,
+          status: f.isAvailable !== false && String(f.approvalStatus || "").toLowerCase() !== "rejected",
+          restaurantId: getEntityId(f.restaurantId || f.restaurant?._id || f.restaurant),
+          restaurantName:
+            f.restaurantName ||
+            getRestaurantName(f.restaurant) ||
+            "Unknown Restaurant",
+          categoryId: String(f.categoryId || ""),
+          categoryName: f.categoryName || "",
+          price: getFoodDisplayPrice(f),
+          variants: getFoodVariants(f),
+          foodType: f.foodType || "Non-Veg",
+          approvalStatus: f.approvalStatus || "approved",
+          description: f.description || "",
+          preparationTime: f.preparationTime || "",
+          isAvailable: f.isAvailable !== false,
+          quantity: f.quantity || 0,
+          zoneId: f.zoneId || null,
+          createdAt: f.createdAt,
+          updatedAt: f.updatedAt,
+        }))
         : []
 
       setFoods(normalizedFoods)
@@ -215,6 +216,7 @@ export default function FoodsList() {
           restaurantsMap.set(restaurantId, {
             id: restaurantId,
             name: food.restaurantName || "Unknown Restaurant",
+            type: food.restaurant?.restaurantType || "Both",
           })
         })
         return Array.from(restaurantsMap.values()).sort((a, b) => a.name.localeCompare(b.name))
@@ -273,13 +275,13 @@ export default function FoodsList() {
   // Format ID to FOOD format (e.g., FOOD519399)
   const formatFoodId = (id) => {
     if (!id) return "FOOD000000"
-    
+
     const idString = String(id)
     // Extract last 6 digits from the ID
     // Handle formats like "1768285554154-0.703896654519399" or "item-1768285554154-0.703896654519399"
     const parts = idString.split(/[-.]/)
     let lastDigits = ""
-    
+
     // Get the last part and extract digits
     if (parts.length > 0) {
       const lastPart = parts[parts.length - 1]
@@ -291,7 +293,7 @@ export default function FoodsList() {
         lastDigits = allDigits.slice(-6).padStart(6, "0")
       }
     }
-    
+
     // If no digits found, use a hash of the ID
     if (!lastDigits) {
       const hash = idString.split("").reduce((acc, char) => {
@@ -299,7 +301,7 @@ export default function FoodsList() {
       }, 0)
       lastDigits = Math.abs(hash).toString().slice(-6).padStart(6, "0")
     }
-    
+
     return `FOOD${lastDigits}`
   }
 
@@ -377,8 +379,8 @@ export default function FoodsList() {
         const list = res?.data?.data?.categories || []
         const options = Array.isArray(list)
           ? list
-              .map((c) => ({ id: String(c.id || c._id || c.name), name: String(c.name || "").trim() }))
-              .filter((c) => c.name)
+            .map((c) => ({ id: String(c.id || c._id || c.name), name: String(c.name || "").trim() }))
+            .filter((c) => c.name)
           : []
         if (!cancelled) setCategoryOptions(options)
       } catch (error) {
@@ -446,6 +448,21 @@ export default function FoodsList() {
       .filter((variant) => variant.id || variant.name || variant.price)
 
     const hasVariants = normalizedVariants.length > 0
+
+    const selectedRestaurantObj = restaurantsForFilter.find(r => r.id === foodForm.restaurantId);
+    if (selectedRestaurantObj) {
+      const rType = selectedRestaurantObj.type;
+      const fType = foodForm.foodType === "Veg" ? "Veg" : "Non-Veg";
+      if (rType === "Veg" && fType === "Non-Veg") {
+        toast.error("Non-Veg items cannot be added to a Veg restaurant.");
+        return;
+      }
+      if (rType === "Non-Veg" && fType === "Veg") {
+        toast.error("Veg items cannot be added to a Non-Veg restaurant.");
+        return;
+      }
+    }
+
     const parsedPrice = Number(foodForm.price)
 
     if (normalizedVariants.some((variant) => !variant.name)) {
@@ -587,62 +604,62 @@ export default function FoodsList() {
               <Plus className="w-4 h-4" />
               <span>Add Food</span>
             </button>
-              <Popover open={isCategoryDropdownOpen} onOpenChange={setIsCategoryDropdownOpen}>
-                <PopoverTrigger asChild>
+            <Popover open={isCategoryDropdownOpen} onOpenChange={setIsCategoryDropdownOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="px-4 py-2.5 text-sm rounded-lg border border-transparent bg-[#F84E04] text-white font-medium focus:outline-none focus:ring-2 focus:ring-[#F84E04]/50 min-w-[150px] cursor-pointer hover:bg-[#D94203] transition-all flex items-center justify-between gap-2"
+                >
+                  <span className="truncate max-w-[140px]">
+                    {selectedCategory === "all" ? "All Categories" : filterCategories.find(c => String(c.id) === String(selectedCategory))?.name || "All Categories"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 shrink-0" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px] p-0" align="start">
+                <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search category..."
+                      value={categorySearchQuery}
+                      onChange={(e) => setCategorySearchQuery(e.target.value)}
+                      className="w-full rounded-md border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] dark:bg-slate-900 dark:border-slate-700 dark:text-white placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto p-1">
                   <button
-                    type="button"
-                    className="px-4 py-2.5 text-sm rounded-lg border border-transparent bg-[#F84E04] text-white font-medium focus:outline-none focus:ring-2 focus:ring-[#F84E04]/50 min-w-[150px] cursor-pointer hover:bg-[#D94203] transition-all flex items-center justify-between gap-2"
+                    onClick={() => {
+                      setSelectedCategory("all")
+                      setCurrentPage(1)
+                      setIsCategoryDropdownOpen(false)
+                      setCategorySearchQuery("")
+                    }}
+                    className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors ${selectedCategory === "all" ? "bg-orange-50 text-[#F84E04] font-medium dark:bg-orange-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
                   >
-                    <span className="truncate max-w-[140px]">
-                      {selectedCategory === "all" ? "All Categories" : filterCategories.find(c => String(c.id) === String(selectedCategory))?.name || "All Categories"}
-                    </span>
-                    <ChevronDown className="w-4 h-4 shrink-0" />
+                    All Categories
                   </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[240px] p-0" align="start">
-                  <div className="p-2 border-b border-slate-100 dark:border-slate-800">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <input
-                        type="text"
-                        placeholder="Search category..."
-                        value={categorySearchQuery}
-                        onChange={(e) => setCategorySearchQuery(e.target.value)}
-                        className="w-full rounded-md border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] dark:bg-slate-900 dark:border-slate-700 dark:text-white placeholder:text-slate-400"
-                      />
-                    </div>
-                  </div>
-                  <div className="max-h-[300px] overflow-y-auto p-1">
-                    <button
-                      onClick={() => {
-                        setSelectedCategory("all")
-                        setCurrentPage(1)
-                        setIsCategoryDropdownOpen(false)
-                        setCategorySearchQuery("")
-                      }}
-                      className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors ${selectedCategory === "all" ? "bg-orange-50 text-[#F84E04] font-medium dark:bg-orange-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
-                    >
-                      All Categories
-                    </button>
-                    {filterCategories
-                      .filter(cat => cat.name?.toLowerCase().includes(categorySearchQuery.toLowerCase()))
-                      .map((cat) => (
-                        <button
-                          key={cat.id}
-                          onClick={() => {
-                            setSelectedCategory(cat.id)
-                            setCurrentPage(1)
-                            setIsCategoryDropdownOpen(false)
-                            setCategorySearchQuery("")
-                          }}
-                          className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors truncate ${selectedCategory === cat.id ? "bg-orange-50 text-[#F84E04] font-medium dark:bg-orange-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
-                        >
-                          {cat.name}
-                        </button>
+                  {filterCategories
+                    .filter(cat => cat.name?.toLowerCase().includes(categorySearchQuery.toLowerCase()))
+                    .map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setSelectedCategory(cat.id)
+                          setCurrentPage(1)
+                          setIsCategoryDropdownOpen(false)
+                          setCategorySearchQuery("")
+                        }}
+                        className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors truncate ${selectedCategory === cat.id ? "bg-orange-50 text-[#F84E04] font-medium dark:bg-orange-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+                      >
+                        {cat.name}
+                      </button>
                     ))}
-                  </div>
-                </PopoverContent>
-              </Popover>
+                </div>
+              </PopoverContent>
+            </Popover>
             <div className="relative flex-1 sm:flex-initial min-w-[200px]">
               <input
                 type="text"
@@ -682,7 +699,7 @@ export default function FoodsList() {
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Zone
                 </th>
-                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   Quantity
                 </th>
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
@@ -866,9 +883,9 @@ export default function FoodsList() {
             <div className="p-6 space-y-5">
               <div className="flex items-center gap-4">
                 <img
-                          src={withImageVersion(selectedFood.image)}
-                          alt={selectedFood.name}
-                          className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-slate-800"
+                  src={withImageVersion(selectedFood.image)}
+                  alt={selectedFood.name}
+                  className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-slate-800"
                   onError={(e) => {
                     e.target.src = FOOD_FALLBACK_IMAGE
                   }}
@@ -938,9 +955,9 @@ export default function FoodsList() {
                   className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg text-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-white disabled:bg-slate-100 dark:disabled:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-500"
                 >
                   <option value="">Select restaurant</option>
-                  {restaurantOptions.map(({ id, name }) => (
+                  {restaurantOptions.map(({ id, name, type }) => (
                     <option key={id} value={id}>
-                      {name}
+                      {name}{type ? ` (${type})` : ""}
                     </option>
                   ))}
                 </select>
@@ -983,9 +1000,8 @@ export default function FoodsList() {
                               setFoodForm((prev) => ({ ...prev, categoryId: c.id, categoryName: c.name }))
                               setCategoryPopoverOpen(false)
                             }}
-                            className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-white ${
-                              String(foodForm.categoryName || "") === String(c.name) ? "bg-slate-100 dark:bg-slate-800 font-medium" : ""
-                            }`}
+                            className={`w-full text-left px-3 py-2 rounded-md text-sm hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-white ${String(foodForm.categoryName || "") === String(c.name) ? "bg-slate-100 dark:bg-slate-800 font-medium" : ""
+                              }`}
                           >
                             {c.name}
                           </button>
@@ -1058,8 +1074,8 @@ export default function FoodsList() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Timing</label>
                 <div className="relative">
                   <select
-                  value={foodForm.preparationTime}
-                  onChange={(e) => setFoodForm((prev) => ({ ...prev, preparationTime: e.target.value }))}
+                    value={foodForm.preparationTime}
+                    onChange={(e) => setFoodForm((prev) => ({ ...prev, preparationTime: e.target.value }))}
                     className="w-full px-3 py-2.5 pr-10 border border-slate-300 rounded-lg text-sm bg-white appearance-none dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                   >
                     <option value="">Select timing</option>

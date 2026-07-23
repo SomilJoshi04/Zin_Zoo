@@ -52,6 +52,7 @@ export const searchUnified = async (query = {}, options = {}) => {
 
     let restaurantIds = new Set();
     let restaurantDetailsMap = new Map();
+    let matchedDishesResult = [];
 
     // 2. Handle Category Filtering (Restaurants don't have categoryId, FoodItems do)
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
@@ -99,24 +100,30 @@ export const searchUnified = async (query = {}, options = {}) => {
         const foodRestaurantIds = matchedFoods.map(f => f.restaurantId.toString());
         
         if (foodRestaurantIds.length > 0) {
-            const unmatchedIds = foodRestaurantIds.filter(id => !restaurantIds.has(id));
-            if (unmatchedIds.length > 0) {
-                const rsForFoods = await FoodRestaurant.find({
-                    ...restaurantFilter,
-                    _id: { $in: unmatchedIds.map(id => new mongoose.Types.ObjectId(id)) }
-                }).lean();
-
-                rsForFoods.forEach(r => {
-                    restaurantIds.add(r._id.toString());
-                    restaurantDetailsMap.set(r._id.toString(), { 
-                        ...r, 
+            const allFoodRestIds = [...new Set(foodRestaurantIds)];
+            
+            // Get all restaurants for these foods to attach restaurant info
+            const rsForFoods = await FoodRestaurant.find({
+                ...restaurantFilter,
+                _id: { $in: allFoodRestIds.map(id => new mongoose.Types.ObjectId(id)) }
+            }).lean();
+            
+            const restMap = new Map(rsForFoods.map(r => [r._id.toString(), r]));
+            
+            matchedFoods.forEach(f => {
+                const r = restMap.get(f.restaurantId.toString());
+                if (r) {
+                    matchedDishesResult.push({
+                        ...f,
                         matchType: 'food',
-                        matchedDish: matchedFoods.find(f => f.restaurantId.toString() === r._id.toString())?.name,
-                        matchedDishImage: matchedFoods.find(f => f.restaurantId.toString() === r._id.toString())?.image,
-                        matchedDishId: matchedFoods.find(f => f.restaurantId.toString() === r._id.toString())?._id
+                        restaurantName: r.restaurantName,
+                        restaurantImage: r.profileImage || r.image || (Array.isArray(r.images) ? r.images[0] : null),
+                        restaurantSlug: r.slug || r._id.toString(),
+                        restaurantRating: r.rating,
+                        estimatedDeliveryTime: r.estimatedDeliveryTimeMinutes || r.estimatedDeliveryTime
                     });
-                });
-            }
+                }
+            });
         }
     } else {
         // No search text -> List all restaurants matching filters (category/zone)
@@ -157,7 +164,9 @@ export const searchUnified = async (query = {}, options = {}) => {
         success: true,
         data: {
             restaurants: results.slice(skip, skip + limit),
+            dishes: matchedDishesResult.slice(skip, skip + limit),
             total: results.length,
+            totalDishes: matchedDishesResult.length,
             page: parseInt(page),
             limit: parseInt(limit),
             zoneFiltered: !!(zoneId && mongoose.Types.ObjectId.isValid(zoneId))
@@ -166,10 +175,10 @@ export const searchUnified = async (query = {}, options = {}) => {
 
     // FALLBACK: If results are empty and a zoneId was provided, try one more time without zoneId 
     // to ensure user sees SOMETHING if their current zone has no matches.
-    if (results.length === 0 && zoneId && mongoose.Types.ObjectId.isValid(zoneId)) {
+    if (results.length === 0 && matchedDishesResult.length === 0 && zoneId && mongoose.Types.ObjectId.isValid(zoneId)) {
         console.log(`[Search-Service] No results in zone ${zoneId}. Trying global fallback...`);
         const fallbackResults = await searchUnified({ ...query, zoneId: null }, options);
-        if (fallbackResults.data.total > 0) {
+        if (fallbackResults.data.total > 0 || fallbackResults.data.totalDishes > 0) {
             fallbackResults.data.wasFallback = true;
             return fallbackResults;
         }

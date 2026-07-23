@@ -104,9 +104,10 @@ export default function ProfessionalSearch() {
       if (res.data?.success) {
         // Grouping results into Restaurants and potential Dishes
         const all = res.data.data.restaurants || []
+        const dishesFromAPI = res.data.data.dishes || []
         setResults({
           restaurants: all.filter(r => r.matchType === 'restaurant' || !r.matchType),
-          dishes: all.filter(r => r.matchType === 'food')
+          dishes: dishesFromAPI.length > 0 ? dishesFromAPI : all.filter(r => r.matchType === 'food')
         })
       }
     } catch (err) {
@@ -293,38 +294,40 @@ export default function ProfessionalSearch() {
                    <h2 className="text-lg font-bold dark:text-white">Dishes from restaurants</h2>
                 </div>
                 <div className="grid gap-4">
-                  {results.dishes.map((r) => (
-                    <Link to={`/user/restaurants/${r.slug || r._id}${r.matchedDishId ? `?dish=${r.matchedDishId}` : ''}`} key={r._id} className="flex gap-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800 hover:shadow-md transition-shadow group">
-                       <div className="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 relative">
-                           <img 
-                            src={getMediaUrl(r.matchedDishImage || r.profileImage || r.image || (Array.isArray(r.images) && r.images[0]))} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                            onError={(e) => (e.target.src = "/placeholder-dish.jpg")}
-                          />
-                          {r.pureVegRestaurant && (
-                            <div className="absolute top-1 left-1 w-4 h-4 border border-green-600 p-[1px] bg-white rounded-sm">
-                               <div className="w-full h-full bg-green-600 rounded-full" />
+                    {results.dishes.map((r) => (
+                      <Link to={`/user/restaurants/${r.restaurantSlug || r.slug || r._id || r.restaurantId}?dish=${r._id || r.matchedDishId}`} key={r._id} className="flex gap-4 p-3 bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-slate-100 dark:border-zinc-800 hover:shadow-md transition-shadow group">
+                         <div className="w-24 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0 relative">
+                             <img 
+                              src={getMediaUrl(r.image || r.restaurantImage)} 
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                              onError={(e) => (e.target.src = "/placeholder-dish.jpg")}
+                            />
+                            {/* Removed Veg/Non-Veg icon as per user request */}
+                         </div>
+                         <div className="flex-1 min-w-0 flex flex-col justify-center">
+                            <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1">{r.name || r.matchedDish || query}</h3>
+                            {r.price && <div className="text-sm font-bold text-slate-700 dark:text-zinc-300 mt-1">₹{r.price}</div>}
+                            
+                            <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-zinc-400 mt-2">
+                               <Store className="w-3 h-3 text-slate-400" />
+                               <span className="line-clamp-1">{r.restaurantName}</span>
                             </div>
-                          )}
-                       </div>
-                       <div className="flex-1 min-w-0 flex flex-col justify-center">
-                          <div className="text-rose-500 text-[10px] font-bold uppercase tracking-wider mb-1">
-                             Matched: {r.matchedDish || query}
-                          </div>
-                          <h3 className="font-bold text-slate-900 dark:text-white line-clamp-1">{r.restaurantName}</h3>
-                          <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 mt-1">
-                             <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 text-orange-500 fill-orange-500" />
-                                <span className="font-semibold text-slate-700 dark:text-white">{r.rating || "New"}</span>
-                             </div>
-                             <span>•</span>
-                             <span>{r.estimatedDeliveryTime || "30-40 mins"}</span>
-                             <span>•</span>
-                             <span className="line-clamp-1">{r.cuisines?.slice(0, 2).join(", ")}</span>
-                          </div>
-                       </div>
-                    </Link>
-                  ))}
+                            
+                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-zinc-400 mt-1">
+                               <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 text-orange-500 fill-orange-500" />
+                                  <span className="font-semibold text-slate-700 dark:text-white">{r.restaurantRating || r.rating || "New"}</span>
+                               </div>
+                               {r.estimatedDeliveryTime && (
+                                 <>
+                                   <span>•</span>
+                                   <span>{r.estimatedDeliveryTime} mins</span>
+                                 </>
+                               )}
+                            </div>
+                         </div>
+                      </Link>
+                    ))}
                 </div>
               </section>
             )}

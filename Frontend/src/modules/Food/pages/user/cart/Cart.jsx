@@ -721,7 +721,10 @@ export default function Cart() {
       // Strategy 1: Try using restaurantId from cart if available
       if (cart[0]?.restaurantId) {
         try {
-          const cartRestaurantId = cart[0].restaurantId;
+          let cartRestaurantId = cart[0].restaurantId;
+          if (typeof cartRestaurantId === 'object' && cartRestaurantId !== null) {
+            cartRestaurantId = cartRestaurantId._id?.toString() || cartRestaurantId.restaurantId?.toString() || cartRestaurantId.toString();
+          }
           const cartRestaurantName = cart[0].restaurant;
 
           debugLog("?? Fetching restaurant data by restaurantId from cart:", cartRestaurantId)
@@ -1680,22 +1683,36 @@ export default function Cart() {
 
       // Include all cart items (main items + addons)
       // Note: Addons are added as separate cart items when user clicks the + button
-      const orderItems = cart.map(item => ({
-        itemId: item.itemId || item.id,
-        name: item.name,
-        price: item.price,
-        variantId: item.variantId || undefined,
-        variantName: item.variantName || undefined,
-        variantPrice: item.variantPrice || item.price,
-        quantity: item.quantity || 1,
-        image: item.image || "",
-        description: item.description || "",
-        isVeg: item.isVeg !== false,
-        preparationTime: item.preparationTime,
-        restaurantId: item.restaurantId || undefined,
-        restaurantName: item.restaurant || undefined,
-        moduleType: item.moduleType || 'food'
-      }))
+      const orderItems = cart.map(item => {
+        const rawRId = item.restaurantId;
+        let sanitizedRestaurantId = rawRId
+          ? (typeof rawRId === 'object' && rawRId !== null
+              ? (rawRId._id?.toString() || rawRId.restaurantId?.toString() || rawRId.id?.toString() || null)
+              : String(rawRId))
+          : undefined;
+
+        // Strip corrupted "[object Object]" or invalid hex strings from old localStorage data
+        if (sanitizedRestaurantId && !/^[0-9a-fA-F]{24}$/.test(sanitizedRestaurantId)) {
+          sanitizedRestaurantId = undefined;
+        }
+
+        return {
+          itemId: item.itemId || item.id,
+          name: item.name,
+          price: item.price,
+          variantId: item.variantId || undefined,
+          variantName: item.variantName || undefined,
+          variantPrice: item.variantPrice || item.price,
+          quantity: item.quantity || 1,
+          image: item.image || "",
+          description: item.description || "",
+          isVeg: item.isVeg !== false,
+          preparationTime: item.preparationTime,
+          restaurantId: sanitizedRestaurantId || undefined,
+          restaurantName: item.restaurant || undefined,
+          moduleType: item.moduleType || item.category || 'food'
+        };
+      })
 
       debugLog("?? Order items to send:", orderItems)
       debugLog("?? Order pricing:", orderPricing)
@@ -1793,7 +1810,16 @@ export default function Cart() {
       // Cash flow: order placed without online payment
       if (selectedPaymentMethod === "cash") {
         toast.success("Order placed with Cash on Delivery")
-        setPlacedOrderId(order?._id || order?.orderId || order?.id || null)
+        
+        let safeId = order?.orderMongoId || order?._id || order?.orderId || order?.id || null;
+          if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
+          
+          if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
+            const subId = order.subOrderIds[0];
+            safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
+          }
+          
+          setPlacedOrderId(safeId)
         setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
         setCompletedPaymentMethod('cash')
         setShowOrderSuccess(true)
@@ -1813,7 +1839,16 @@ export default function Cart() {
       // Wallet flow: order placed with wallet payment (already processed in backend)
       if (selectedPaymentMethod === "wallet") {
         toast.success("Order placed with Wallet payment")
-        setPlacedOrderId(order?._id || order?.orderId || order?.id || null)
+        
+        let safeId = order?.orderMongoId || order?._id || order?.orderId || order?.id || null;
+          if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
+          
+          if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
+            const subId = order.subOrderIds[0];
+            safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
+          }
+          
+          setPlacedOrderId(safeId)
         setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
         setCompletedPaymentMethod('wallet')
         setShowOrderSuccess(true)
@@ -1927,7 +1962,17 @@ export default function Cart() {
               toast.dismiss('razorpay-verifying')
               toast.success("Your order has been placed successfully.")
               setPaymentStage('success')
-              setPlacedOrderId(order?._id || order?.orderId)
+              
+              let safeId = order?.orderMongoId || order?._id || order?.orderId || order?.id || null;
+              if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
+              
+              // Fix for unified orders with only 1 sub-order: Use the real sub-order ID instead of the fake master ID
+              if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
+                const subId = order.subOrderIds[0];
+                safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
+              }
+              
+              setPlacedOrderId(safeId)
               setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
               setCompletedPaymentMethod('razorpay')
               setShowOrderSuccess(true)
@@ -3440,3 +3485,4 @@ export default function Cart() {
     </div>
   )
 }      
+

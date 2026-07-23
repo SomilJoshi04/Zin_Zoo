@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { FoodCategory } from './src/modules/food/admin/models/category.model.js';
-import { normalizeCategoryFoodTypeScope } from './src/modules/food/shared/categoryWorkflow.js';
+import { FoodCategory } from '../src/modules/food/admin/models/category.model.js';
+import { normalizeCategoryFoodTypeScope } from '../src/modules/food/shared/categoryWorkflow.js';
 
 async function test() {
     try {

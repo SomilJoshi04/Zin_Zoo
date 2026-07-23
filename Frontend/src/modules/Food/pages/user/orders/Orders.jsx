@@ -354,28 +354,47 @@ export default function Orders() {
       String(order?.orderId || order?.order_id || "").startsWith("GRO-") || 
       String(order?.orderId || order?.order_id || "").startsWith("ACC-")
 
-    const restaurantTarget = order.restaurantSlug || order.restaurantId
+    // Safely extract string restaurantId — may be a populated Mongoose object
+    const rawRestaurantId = order.restaurantId;
+    const restaurantIdStr = rawRestaurantId
+      ? (typeof rawRestaurantId === 'object' && rawRestaurantId !== null
+          ? (rawRestaurantId._id?.toString() || rawRestaurantId.restaurantId?.toString() || null)
+          : String(rawRestaurantId))
+      : null;
+
+    const restaurantTarget = order.restaurantSlug || restaurantIdStr
 
     if ((!isGroceryOrAccessories && !restaurantTarget) || !order.items?.length) {
       toast.info('Order items or restaurant information not available')
       return
     }
 
+    // Detect order-level moduleType
+    const orderModuleType = order.moduleType || 
+      (String(order?.orderId || '').startsWith('GRO-') ? 'grocery' :
+       String(order?.orderId || '').startsWith('ACC-') ? 'accessories' : 'food');
+
     const reorderItems = order.items
       .map((item, index) => {
-        const itemId = item.id || item.itemId || item._id
+        const itemId = item.itemId || item.id || item._id
         if (!itemId) return null
 
+        // Per-item moduleType (for combined orders), fall back to order-level
+        const itemModuleType = item.moduleType || orderModuleType;
+
         return {
-          id: itemId,
+          id: String(itemId),
+          itemId: String(itemId),
           name: item.name || item.foodName || "Item",
           price: Number(item.price) || 0,
           image: item.image || "",
-          restaurant: order.restaurant || "Restaurant",
-          restaurantId: order.restaurantId,
+          restaurant: order.restaurant || order.restaurantName || item.restaurantName || "Restaurant",
+          restaurantId: itemModuleType === 'food' ? restaurantIdStr : undefined,
           description: item.description || "",
           isVeg: item.isVeg !== false,
           quantity: Math.max(1, Number(item.quantity) || 1),
+          moduleType: itemModuleType,
+          category: itemModuleType,
           reorderIndex: index,
         }
       })
@@ -390,6 +409,7 @@ export default function Orders() {
     toast.success("Items added to cart")
     navigate("/food/user/cart")
   }
+
 
   // Three-dots menu handlers
   const toggleMenuForOrder = (orderId) => {
