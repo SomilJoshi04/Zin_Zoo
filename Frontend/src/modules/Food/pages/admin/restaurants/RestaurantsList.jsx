@@ -331,6 +331,40 @@ export default function RestaurantsList() {
       toast.error("Restaurant name and owner name are required")
       return
     }
+
+    const alphaSpaceRegex = /^[a-zA-Z\s]+$/;
+    const phoneRegex = /^[6-9]\d{9}$/;
+    const pinRegex = /^\d{6}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!alphaSpaceRegex.test(createForm.ownerName)) {
+      toast.error("Owner Name can only contain alphabets and spaces");
+      return;
+    }
+    if (createForm.city && !alphaSpaceRegex.test(createForm.city)) {
+      toast.error("City can only contain alphabets and spaces");
+      return;
+    }
+    if (createForm.state && !alphaSpaceRegex.test(createForm.state)) {
+      toast.error("State can only contain alphabets and spaces");
+      return;
+    }
+    if (createForm.ownerPhone && !phoneRegex.test(createForm.ownerPhone)) {
+      toast.error("Owner Phone must be a valid 10-digit number starting with 6-9");
+      return;
+    }
+    if (createForm.primaryContactNumber && !phoneRegex.test(createForm.primaryContactNumber)) {
+      toast.error("Primary Contact Number must be a valid 10-digit number starting with 6-9");
+      return;
+    }
+    if (createForm.pincode && !pinRegex.test(createForm.pincode)) {
+      toast.error("PIN Code must be exactly 6 digits");
+      return;
+    }
+    if (createForm.ownerEmail && !emailRegex.test(createForm.ownerEmail)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
     try {
       setCreating(true)
 

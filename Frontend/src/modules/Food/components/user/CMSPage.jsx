@@ -98,7 +98,7 @@ export default function CMSPage({ endpoint, title: defaultTitle, module = "USER"
              <h1 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
                {pageData.title || defaultTitle}
              </h1>
-             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">SwitchEats Information</p>
+             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">Zin Zoo Information</p>
           </div>
         </div>
       </div>
@@ -117,8 +117,8 @@ export default function CMSPage({ endpoint, title: defaultTitle, module = "USER"
                   <Mail className="w-6 h-6 text-[#F84E04]" />
                 </div>
                 <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-wider mb-2">Email Us</h3>
-                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{pageData.email || 'support@switcheats.com'}</p>
-                <a href={`mailto:${pageData.email || 'support@switcheats.com'}`} className="mt-4 text-xs font-black text-[#F84E04] uppercase tracking-widest hover:underline">Send Message</a>
+                <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">{pageData.email || 'support@zinzoo.com'}</p>
+                <a href={`mailto:${pageData.email || 'support@zinzoo.com'}`} className="mt-4 text-xs font-black text-[#F84E04] uppercase tracking-widest hover:underline">Send Message</a>
               </div>
               <div className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 flex flex-col items-center text-center group transition-all hover:border-[#F84E04]/30">
                 <div className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:scale-110 transition-transform">
@@ -154,9 +154,9 @@ export default function CMSPage({ endpoint, title: defaultTitle, module = "USER"
               <h2 className="text-xl font-black text-gray-900 dark:text-white mb-8 tracking-tight">Frequently Asked Questions</h2>
               <div className="grid gap-6">
                 {[
-                  { q: "How do I track my order?", a: "You can track your order in real-time through the 'My Orders' section in your profile." },
+                  { q: "How do I check my order status?", a: "You can check your order status through the 'My Orders' section in your profile." },
                   { q: "What if I receive a wrong item?", a: "Please contact our support immediately via call or email with your order ID for a quick resolution." },
-                  { q: "Can I cancel my order?", a: "Orders can only be cancelled before the restaurant starts preparing your food." }
+                  { q: "Can I cancel my order?", a: "Orders can only be cancelled before they are processed." }
                 ].map((faq, idx) => (
                   <div key={idx} className="space-y-2">
                     <h4 className="text-sm font-black text-gray-900 dark:text-white flex items-center gap-2">
@@ -189,7 +189,7 @@ export default function CMSPage({ endpoint, title: defaultTitle, module = "USER"
 
         <p className="text-center mt-10 text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] leading-relaxed">
           Last updated: {new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} <br />
-          © {new Date().getFullYear()} SwitchEats. All Rights Reserved.
+          © {new Date().getFullYear()} Zin Zoo. All Rights Reserved.
         </p>
       </div>
     </AnimatedPage>

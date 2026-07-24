@@ -21,30 +21,19 @@ export const ImageSourcePicker = ({
   fileNamePrefix = "upload",
   galleryInputRef = null
 }) => {
-  const runAfterClose = (fn) => {
-    onClose()
-    window.setTimeout(fn, 0)
-  }
-  
   const handleOpenCamera = async () => {
-    runAfterClose(() => {
-      void openCamera({
-        onSelectFile: onFileSelect,
-        fileNamePrefix: fileNamePrefix
-      })
+    onClose()
+    void openCamera({
+      onSelectFile: onFileSelect,
+      fileNamePrefix: fileNamePrefix
     })
   }
 
   const handlePickFromDevice = async () => {
-    runAfterClose(() => {
-      void openGallery({
-        onSelectFile: onFileSelect,
-        fileNamePrefix: fileNamePrefix
-      })
-      // Optional extra fallback trigger for non-bridge plain web.
-      if (!isFlutterBridgeAvailable() && galleryInputRef && galleryInputRef.current) {
-        galleryInputRef.current.click()
-      }
+    onClose()
+    void openGallery({
+      onSelectFile: onFileSelect,
+      fileNamePrefix: fileNamePrefix
     })
   }
 

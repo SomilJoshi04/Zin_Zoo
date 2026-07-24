@@ -1687,8 +1687,8 @@ export default function Cart() {
         const rawRId = item.restaurantId;
         let sanitizedRestaurantId = rawRId
           ? (typeof rawRId === 'object' && rawRId !== null
-              ? (rawRId._id?.toString() || rawRId.restaurantId?.toString() || rawRId.id?.toString() || null)
-              : String(rawRId))
+            ? (rawRId._id?.toString() || rawRId.restaurantId?.toString() || rawRId.id?.toString() || null)
+            : String(rawRId))
           : undefined;
 
         // Strip corrupted "[object Object]" or invalid hex strings from old localStorage data
@@ -1810,16 +1810,16 @@ export default function Cart() {
       // Cash flow: order placed without online payment
       if (selectedPaymentMethod === "cash") {
         toast.success("Order placed with Cash on Delivery")
-        
+
         let safeId = order?.orderMongoId || order?._id || order?.orderId || order?.id || null;
-          if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
-          
-          if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
-            const subId = order.subOrderIds[0];
-            safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
-          }
-          
-          setPlacedOrderId(safeId)
+        if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
+
+        if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
+          const subId = order.subOrderIds[0];
+          safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
+        }
+
+        setPlacedOrderId(safeId)
         setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
         setCompletedPaymentMethod('cash')
         setShowOrderSuccess(true)
@@ -1839,16 +1839,16 @@ export default function Cart() {
       // Wallet flow: order placed with wallet payment (already processed in backend)
       if (selectedPaymentMethod === "wallet") {
         toast.success("Order placed with Wallet payment")
-        
+
         let safeId = order?.orderMongoId || order?._id || order?.orderId || order?.id || null;
-          if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
-          
-          if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
-            const subId = order.subOrderIds[0];
-            safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
-          }
-          
-          setPlacedOrderId(safeId)
+        if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
+
+        if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
+          const subId = order.subOrderIds[0];
+          safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
+        }
+
+        setPlacedOrderId(safeId)
         setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
         setCompletedPaymentMethod('wallet')
         setShowOrderSuccess(true)
@@ -1962,16 +1962,16 @@ export default function Cart() {
               toast.dismiss('razorpay-verifying')
               toast.success("Your order has been placed successfully.")
               setPaymentStage('success')
-              
+
               let safeId = order?.orderMongoId || order?._id || order?.orderId || order?.id || null;
               if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
-              
+
               // Fix for unified orders with only 1 sub-order: Use the real sub-order ID instead of the fake master ID
               if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
                 const subId = order.subOrderIds[0];
                 safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
               }
-              
+
               setPlacedOrderId(safeId)
               setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
               setCompletedPaymentMethod('razorpay')
@@ -2255,15 +2255,15 @@ export default function Cart() {
                     key={tab}
                     onClick={() => handleTabChange(tab)}
                     className={`shrink-0 flex-1 min-w-max py-2 px-3.5 text-sm font-medium rounded-lg transition-all capitalize whitespace-nowrap flex items-center justify-center gap-2 ${activeCartTab === tab
-                        ? 'bg-[var(--module-theme-color,#F84E04)] text-white shadow-md'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                      ? 'bg-[var(--module-theme-color,#F84E04)] text-white shadow-md'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                   >
                     {tab === 'all' ? 'All Items' : tab}
                     {count > 0 && (
                       <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${activeCartTab === tab
-                          ? 'bg-white/20 text-white'
-                          : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
                         }`}>
                         {count}
                       </span>
@@ -3128,10 +3128,10 @@ export default function Cart() {
                 {completedPaymentMethod === 'cash'
                   ? 'Cash on Delivery'
                   : completedPaymentMethod === 'wallet'
-                  ? 'Paid via Wallet'
-                  : completedPaymentMethod === 'razorpay'
-                  ? 'Payment Successful'
-                  : 'Order Confirmed'}
+                    ? 'Paid via Wallet'
+                    : completedPaymentMethod === 'razorpay'
+                      ? 'Payment Successful'
+                      : 'Order Confirmed'}
               </div>
             </div>
 
@@ -3149,10 +3149,10 @@ export default function Cart() {
                   className="bg-white dark:bg-zinc-800 hover:bg-orange-50 dark:hover:bg-zinc-700 text-[#F84E04] font-semibold py-4 px-4 rounded-xl border-2 border-[#F84E04] transition-all w-full shadow-sm"
                   style={{ animation: 'slideUp 0.5s ease-out 1s both' }}
                 >
-                   Track Order
+                  Track Order
                 </button>
               )}
-              
+
               <button
                 onClick={handleContinueShopping}
                 className="bg-[#F84E04] hover:bg-[#D94F0C] text-white font-semibold py-4 px-4 rounded-xl shadow-lg shadow-orange-200/70 dark:shadow-orange-950/40 transition-all hover:shadow-xl hover:scale-105 w-full"
@@ -3484,5 +3484,5 @@ export default function Cart() {
         )}
     </div>
   )
-}      
+}
 

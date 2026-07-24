@@ -65,19 +65,20 @@ export default function OTP() {
     }
 
     setResendTimer(60)
-    const timer = setInterval(() => {
-      if (typeof document !== "undefined" && document.hidden) return
-      setResendTimer((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearInterval(timer)
   }, [navigate])
+
+  useEffect(() => {
+    let timer;
+    if (resendTimer > 0) {
+      timer = setInterval(() => {
+        if (typeof document !== "undefined" && document.hidden) return
+        setResendTimer((prev) => prev - 1)
+      }, 1000)
+    }
+    return () => {
+      if (timer) clearInterval(timer)
+    }
+  }, [resendTimer > 0])
 
   useEffect(() => {
     if (inputRefs.current[0] && !showNameInput) {

@@ -70,6 +70,7 @@ export default function SignIn() {
     if (!phone.trim()) return "Phone number is required"
     const cleanPhone = phone.replace(/\D/g, "")
     if (!/^\d{10}$/.test(cleanPhone)) return "Phone number must be exactly 10 digits"
+    if (!/^[6-9]/.test(cleanPhone)) return "Invalid mobile number"
     return ""
   }
 
@@ -187,12 +188,12 @@ export default function SignIn() {
             {/* Input Field Container */}
             <div className="w-full flex items-center border border-gray-200 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] bg-white focus-within:border-[#FF5E00]/50 transition-colors">
               {/* Country Selector */}
-              <div className="flex items-center px-4 py-4 space-x-2 border-r border-gray-100">
-                <svg className="w-5 h-5 text-[#FF5E00]" fill="currentColor" viewBox="0 0 20 20">
+              <div className="flex items-center px-3 sm:px-4 py-4 space-x-1.5 sm:space-x-2 border-r border-gray-100 shrink-0">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[#FF5E00]" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 004.87 4.87l.774-1.548a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
                 </svg>
-                <span className="font-extrabold text-gray-800">+91</span>
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <span className="font-extrabold text-gray-800 text-sm sm:text-base">+91</span>
+                <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
                 </svg>
               </div>
@@ -207,7 +208,7 @@ export default function SignIn() {
                 placeholder="Enter mobile number" 
                 value={formData.phone}
                 onChange={handleChange}
-                className="flex-grow border-none focus:ring-0 py-4 px-4 text-gray-800 placeholder-gray-400 font-bold text-lg outline-none tracking-wider"
+                className="flex-grow min-w-0 border-none focus:ring-0 py-4 px-3 sm:px-4 text-gray-800 placeholder-gray-400 font-bold text-base sm:text-lg outline-none tracking-wider"
               />
             </div>
 
@@ -340,12 +341,17 @@ export default function SignIn() {
         </section>
 
         {/* Footer */}
-        <footer className="relative z-30 flex items-center justify-center py-4 bg-[#FF5E00]" data-purpose="site-footer">
+        <footer className="relative z-30 flex flex-col items-center justify-center py-6 bg-[#FF5E00] gap-4" data-purpose="site-footer">
           <div className="flex items-center space-x-2 text-white">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
             </svg>
             <span className="text-sm font-extrabold tracking-wide">Your Trust, Our Priority</span>
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-bold text-white/90 px-4">
+            <Link to="/food/user/profile/terms" className="hover:text-white transition-colors underline-offset-2 hover:underline">Terms & Conditions</Link>
+            <Link to="/food/user/profile/privacy" className="hover:text-white transition-colors underline-offset-2 hover:underline">Privacy Policy</Link>
+            <Link to="/food/user/profile/help-content" className="hover:text-white transition-colors underline-offset-2 hover:underline">Support</Link>
           </div>
         </footer>
       </main>

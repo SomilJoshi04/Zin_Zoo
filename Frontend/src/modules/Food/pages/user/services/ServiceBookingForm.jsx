@@ -30,13 +30,53 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
     "04:00 PM - 06:00 PM"
   ]
 
+  const isTimeSlotValid = (slot, selectedDate) => {
+    if (!selectedDate) return true; // allow selection if no date picked yet (or you could disable all until date picked)
+    const today = new Date().toISOString().split('T')[0];
+    if (selectedDate < today) return false; // Past dates completely invalid
+    if (selectedDate > today) return true; // Future dates completely valid
+
+    // If today, check the time
+    const match = slot.match(/(\d+):(\d+)\s*(AM|PM)/i);
+    if (!match) return true;
+
+    let [_, hours, minutes, period] = match;
+    hours = parseInt(hours, 10);
+    minutes = parseInt(minutes, 10);
+    if (period.toUpperCase() === 'PM' && hours !== 12) hours += 12;
+    if (period.toUpperCase() === 'AM' && hours === 12) hours = 0;
+
+    const now = new Date();
+    const currentHours = now.getHours();
+    const currentMinutes = now.getMinutes();
+
+    if (currentHours > hours) return false;
+    if (currentHours === hours && currentMinutes >= minutes) return false;
+
+    return true;
+  };
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+    // Clear time slot if the newly selected date makes it invalid
+    if (e.target.name === 'date' && formData.timeSlot) {
+      if (!isTimeSlotValid(formData.timeSlot, e.target.value)) {
+        setFormData(prev => ({ ...prev, [e.target.name]: e.target.value, timeSlot: "" }))
+      }
+    }
   }
 
   const handleProceedToPayment = () => {
     if (!formData.date) return alert("Please select a date for the service")
+    
+    const today = new Date().toISOString().split('T')[0];
+    if (formData.date < today) return alert("You cannot select a past date.")
+
     if (!formData.timeSlot) return alert("Please select a time slot")
+    if (!isTimeSlotValid(formData.timeSlot, formData.date)) {
+      return alert("The selected time slot has already passed. Please choose a valid time.")
+    }
+
     if (!formData.name) return alert("Please enter your name")
     if (!formData.phone) return alert("Please enter your phone number")
     if (!formData.address) return alert("Please enter your service address")
@@ -198,20 +238,26 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
                     />
                     
                     <div className="grid grid-cols-2 gap-3">
-                      {timeSlots.map(slot => (
-                        <button
-                          key={slot}
-                          onClick={() => setFormData({...formData, timeSlot: slot})}
-                          className={`p-3 rounded-xl text-sm font-medium border text-center transition-all ${
-                            formData.timeSlot === slot 
-                              ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20 text-orange-600" 
-                              : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-orange-200"
-                          }`}
-                        >
-                          {slot}
-                        </button>
-                      ))}
-                    </div>
+                        {timeSlots.map(slot => {
+                          const isValid = isTimeSlotValid(slot, formData.date);
+                          return (
+                            <button
+                              key={slot}
+                              disabled={!isValid}
+                              onClick={() => setFormData({...formData, timeSlot: slot})}
+                              className={`p-3 rounded-xl text-sm font-medium border text-center transition-all ${
+                                !isValid 
+                                  ? "opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400"
+                                  : formData.timeSlot === slot 
+                                    ? "border-orange-500 bg-orange-50 dark:bg-orange-950/20 text-orange-600" 
+                                    : "border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-orange-200"
+                              }`}
+                            >
+                              {slot}
+                            </button>
+                          );
+                        })}
+                      </div>
                   </div>
 
                   {/* Personal Details */}

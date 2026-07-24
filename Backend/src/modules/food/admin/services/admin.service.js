@@ -3617,6 +3617,22 @@ export async function createRestaurantByAdmin(body) {
     const normalizedClosingTime = normalizeRestaurantTime(body.closingTime) || '22:00';
     validateOpeningClosingTimes(normalizedOpeningTime, normalizedClosingTime);
 
+    const alphaSpaceRegex = /^[a-zA-Z\s]+$/;
+    const phoneRegex = /^[6-9]\d{9}$/;
+    const pinRegex = /^\d{6}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (body.ownerName && !alphaSpaceRegex.test(body.ownerName)) throw new ValidationError("Owner Name can only contain alphabets and spaces");
+    if (body.city && !alphaSpaceRegex.test(body.city)) throw new ValidationError("City can only contain alphabets and spaces");
+    if (loc.city && !alphaSpaceRegex.test(loc.city)) throw new ValidationError("City can only contain alphabets and spaces");
+    if (body.state && !alphaSpaceRegex.test(body.state)) throw new ValidationError("State can only contain alphabets and spaces");
+    if (loc.state && !alphaSpaceRegex.test(loc.state)) throw new ValidationError("State can only contain alphabets and spaces");
+    if (body.ownerPhone && !phoneRegex.test(body.ownerPhone)) throw new ValidationError("Owner Phone must be a valid 10-digit number starting with 6-9");
+    if (body.primaryContactNumber && !phoneRegex.test(body.primaryContactNumber)) throw new ValidationError("Primary Contact Number must be a valid 10-digit number starting with 6-9");
+    if (body.pincode && !pinRegex.test(body.pincode)) throw new ValidationError("PIN Code must be exactly 6 digits");
+    if (loc.pincode && !pinRegex.test(loc.pincode)) throw new ValidationError("PIN Code must be exactly 6 digits");
+    if (body.ownerEmail && !emailRegex.test(body.ownerEmail)) throw new ValidationError("Please enter a valid email address");
+
     const doc = {
         restaurantName: toStr(body.restaurantName) || toStr(body.name),
         ownerName: toStr(body.ownerName),

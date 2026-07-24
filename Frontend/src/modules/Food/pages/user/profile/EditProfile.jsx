@@ -118,12 +118,14 @@ export default function EditProfile() {
   // Load from localStorage or use context
   const storedProfile = loadProfileFromStorage()
   const draftProfile = loadEditProfileDraft()
-  const initialProfile = draftProfile || storedProfile || userProfile || {}
+  const realProfile = storedProfile || userProfile || {}
+  const initialProfile = draftProfile || realProfile
 
   const initialFormData = buildFormDataFromProfile(initialProfile)
+  const realInitialFormData = buildFormDataFromProfile(realProfile)
 
   const [formData, setFormData] = useState(initialFormData)
-  const [initialData] = useState(initialFormData)
+  const [initialData, setInitialData] = useState(realInitialFormData)
   const [hasChanges, setHasChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isUploadingImage, setIsUploadingImage] = useState(false)
@@ -141,10 +143,11 @@ export default function EditProfile() {
 
   // Update form data when profile changes
   useEffect(() => {
+    const profile = loadProfileFromStorage() || userProfile || {}
+    setInitialData(buildFormDataFromProfile(profile))
+
     if (hydratedFromDraftRef.current) return
 
-    const storedProfile = loadProfileFromStorage()
-    const profile = storedProfile || userProfile || {}
     const newFormData = buildFormDataFromProfile(profile)
     setFormData(newFormData)
 
@@ -175,8 +178,11 @@ export default function EditProfile() {
   useEffect(() => {
     const currentData = JSON.stringify(formData)
     const savedData = JSON.stringify(initialData)
-    setHasChanges(currentData !== savedData)
-  }, [formData, initialData])
+    const savedImage = loadProfileFromStorage()?.profileImage || userProfile?.profileImage || ""
+    const imageChanged = profileImage !== savedImage
+    
+    setHasChanges(currentData !== savedData || imageChanged)
+  }, [formData, initialData, profileImage, userProfile])
 
   const validateName = (value) => {
     const trimmedName = String(value || "").trim()
@@ -366,12 +372,7 @@ export default function EditProfile() {
   }
 
   const handleProfileImageAction = () => {
-    if (isFlutterBridgeAvailable()) {
-      setPhotoPickerOpen(true)
-      return
-    }
-
-    fileInputRef.current?.click()
+    setPhotoPickerOpen(true)
   }
 
   const handleRemoveProfileImage = async () => {
@@ -600,22 +601,22 @@ export default function EditProfile() {
 
             {/* Mobile Field */}
             <div className="space-y-1.5">
-              <Label htmlFor="mobile" className="text-sm font-medium text-gray-700 dark:text-white">
-                Mobile
-              </Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="mobile" className="text-sm font-medium text-gray-700 dark:text-white">
+                  Mobile
+                </Label>
+                <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full border border-green-200">Verified</span>
+              </div>
               <div className="flex items-center gap-2">
                 <Input
                   id="mobile"
                   type="tel"
                   value={formData.mobile}
-                  onChange={(e) => handleChange('mobile', e.target.value)}
-                  className="flex-1 h-12 text-base  border border-gray-300 dark:border-gray-700 focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] rounded-lg bg-white dark:bg-[#1a1a1a] text-gray-900 dark:text-white"
+                  readOnly
+                  className="flex-1 h-12 text-base border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed opacity-80"
                   placeholder="Mobile"
                 />
               </div>
-              {fieldErrors.mobile && (
-                <p className="text-xs text-red-600">{fieldErrors.mobile}</p>
-              )}
             </div>
 
             {/* Email Field */}

@@ -253,6 +253,14 @@ export const openGallery = async ({ onSelectFile, fileNamePrefix = "gallery-phot
     })
   } catch (error) {
     console.error("Gallery pick failed:", error)
-    toast.error("Failed to open gallery")
+    // Try fallback on bridge failure
+    try {
+      openTransientImageInput({
+        onSelectFile,
+        accept: "image/*",
+      })
+    } catch (fallbackError) {
+      console.error("Gallery fallback failed:", fallbackError)
+    }
   }
 }
