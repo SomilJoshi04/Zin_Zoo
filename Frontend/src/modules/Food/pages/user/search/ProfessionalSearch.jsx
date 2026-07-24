@@ -151,16 +151,9 @@ export default function ProfessionalSearch() {
     setResults({ restaurants: [], dishes: [] })
   }
 
-  const handleCategoryClick = (id) => {
-    const newCat = selectedCategoryId === id ? null : id
-    setSelectedCategoryId(newCat)
-    if (newCat) {
-        setSearchParams({ ...Object.fromEntries(searchParams), cat: newCat })
-    } else {
-        const p = Object.fromEntries(searchParams)
-        delete p.cat
-        setSearchParams(p)
-    }
+  const handleCategoryClick = (cat) => {
+    const slug = cat.slug || cat.name.toLowerCase().replace(/\s+/g, "-")
+    navigate(`/food/user/category/${slug}`)
   }
 
   return (
@@ -214,7 +207,7 @@ export default function ProfessionalSearch() {
               {(categories.length > 8 ? categories.slice(0, 8) : categories).map((cat) => (
                 <button 
                   key={cat._id} 
-                  onClick={() => handleCategoryClick(cat._id)}
+                  onClick={() => handleCategoryClick(cat)}
                   className={`flex flex-col items-center group transition-all ${selectedCategoryId === cat._id ? 'scale-110' : ''}`}
                 >
                   <div className={`w-14 h-14 rounded-2xl mb-2 flex items-center justify-center overflow-hidden border-2 transition-all ${selectedCategoryId === cat._id ? 'border-rose-500 shadow-lg shadow-rose-100' : 'border-transparent bg-white dark:bg-zinc-900'}`}>

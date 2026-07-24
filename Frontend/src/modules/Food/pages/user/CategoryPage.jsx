@@ -1190,15 +1190,24 @@ export default function CategoryPage() {
     const rail = categoryScrollRef.current
     if (!rail) return
 
-    const selectedButton = rail.querySelector("[data-category-selected='true']")
-    if (!selectedButton || typeof selectedButton.scrollIntoView !== "function") return
+    // Use a small timeout to ensure the DOM is painted (especially when switching from skeleton)
+    const timeoutId = setTimeout(() => {
+      const selectedButton = rail.querySelector("[data-category-selected='true']")
+      if (!selectedButton) return
 
-    selectedButton.scrollIntoView({
-      behavior: "smooth",
-      inline: "center",
-      block: "nearest",
-    })
-  }, [selectedCategory, categories])
+      const railRect = rail.getBoundingClientRect();
+      const btnRect = selectedButton.getBoundingClientRect();
+      
+      const scrollPos = rail.scrollLeft + (btnRect.left - railRect.left) - (railRect.width / 2) + (btnRect.width / 2);
+      
+      rail.scrollTo({
+        left: scrollPos,
+        behavior: "smooth"
+      })
+    }, 50)
+
+    return () => clearTimeout(timeoutId)
+  }, [selectedCategory, categories, showCategorySkeleton])
 
   const toggleFilter = (filterId) => {
     setActiveFilters(prev => {
@@ -1649,20 +1658,16 @@ export default function CategoryPage() {
                 Foods in {categories.find(c => c.id === selectedCategory || c.slug === selectedCategory)?.name || selectedCategory}
               </h2>
 
-              {/* Loading Overlay */}
-              {showRestaurantSkeleton && (
-                <div className="absolute inset-0 z-10 rounded-lg bg-white/92 backdrop-blur-sm dark:bg-[#1a1a1a]/92">
-                  <LoadingSkeletonRegion label="Loading foods" className="h-full p-1 sm:p-2">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="h-32 bg-slate-105 dark:bg-slate-800 rounded-2xl animate-pulse" />
-                      ))}
-                    </div>
-                  </LoadingSkeletonRegion>
-                </div>
-              )}
-
-              {categoryFoods.length === 0 ? (
+              {/* Loading State, Empty State, or Foods Grid */}
+              {showRestaurantSkeleton ? (
+                <LoadingSkeletonRegion label="Loading foods" className="py-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="h-32 bg-slate-105 dark:bg-slate-800 rounded-2xl animate-pulse" />
+                    ))}
+                  </div>
+                </LoadingSkeletonRegion>
+              ) : categoryFoods.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-16 text-center px-4 bg-gray-50/50 dark:bg-gray-900/10 rounded-2xl border border-dashed border-gray-200 dark:border-gray-800">
                   <div className="w-14 h-14 rounded-full bg-[#FFF2EB] dark:bg-[#F84E04]/10 flex items-center justify-center mb-4">
                     <UtensilsCrossed className="h-6 w-6 text-[#F84E04]" />
