@@ -407,9 +407,10 @@ export default function Home() {
   const { openLocationSelector } = useLocationSelector();
   const {
     vegMode,
-    setVegMode: setVegModeContext
+    setVegMode: setVegModeContext,
+    vegModeOption,
+    setVegModeOption
   } = useProfile();
-  const [vegModeOption, setVegModeOption] = useState("all");
   const [prevVegMode, setPrevVegMode] = useState(vegMode);
   const [showVegModePopup, setShowVegModePopup] = useState(false);
   const [showSwitchOffPopup, setShowSwitchOffPopup] = useState(false);
@@ -1815,6 +1816,7 @@ export default function Home() {
                 slug: restaurant.slug,
                 restaurantId: restaurant.restaurantId,
                 pureVegRestaurant: restaurant.pureVegRestaurant === true,
+                restaurantType: restaurant.restaurantType || "Both",
                 location: restaurant.location, // Store location for distance recalculation
                 isActive: restaurant.isActive !== false, // Default to true if not specified
                 isAcceptingOrders: restaurant.isAcceptingOrders !== false, // Default to true if not specified
@@ -1997,10 +1999,14 @@ export default function Home() {
   const publicSocketListeners = useMemo(() => ({
     'food:product:update': () => {
       debugLog('Real-time socket update for food: refetching restaurants');
+      menuUnionCacheRef.current.clear();
+      setRefetchTrigger(prev => prev + 1);
       fetchRestaurants(appliedFilters, 1, false);
     },
     'food:restaurant:update': () => {
       debugLog('Real-time socket update for restaurant: refetching restaurants');
+      menuUnionCacheRef.current.clear();
+      setRefetchTrigger(prev => prev + 1);
       fetchRestaurants(appliedFilters, 1, false);
     },
     'food:category:update': () => {
@@ -2282,19 +2288,29 @@ export default function Home() {
     realCategories.length,
     slugifyCategory,
     vegMode,
+    refetchTrigger,
   ]);
 
   const matchesVegMode = useCallback(
     (restaurant) => {
       if (!vegMode) return true;
-      // If "Pure Veg restaurants only" is selected, only show pure veg restaurants.
-      // If "All restaurants" is selected, show all (item-level filtering happens in listing/detail pages).
       if (vegModeOption === "pure-veg") {
-        return restaurant?.pureVegRestaurant === true;
+        return restaurant?.restaurantType === "Veg";
+      }
+      if (vegModeOption === "all") {
+        if (restaurant?.restaurantType === "Non-Veg") return false;
+        if (restaurant?.restaurantType === "Both") {
+          const meta = restaurantDietMeta[restaurant.id];
+          if (meta) {
+            return meta.hasVeg === true;
+          }
+          return true; // Keep visible while metadata is loading to avoid flicker
+        }
+        return true;
       }
       return true;
     },
-    [vegMode, vegModeOption],
+    [vegMode, vegModeOption, restaurantDietMeta],
   );
 
   // Filter restaurants and foods based on active filters
@@ -2306,8 +2322,8 @@ export default function Home() {
 
   const restaurantLazyLoadResetKey = useMemo(() => {
     const activeFilterKey = Array.from(activeFilters).sort().join("|");
-    return `${restaurantsData.length}:${activeFilterKey}:${selectedCuisine || ""}:${sortBy || ""}:${vegMode ? "1" : "0"}`;
-  }, [activeFilters, restaurantsData.length, selectedCuisine, sortBy, vegMode]);
+    return `${restaurantsData.length}:${activeFilterKey}:${selectedCuisine || ""}:${sortBy || ""}:${vegMode ? "1" : "0"}:${vegModeOption}`;
+  }, [activeFilters, restaurantsData.length, selectedCuisine, sortBy, vegMode, vegModeOption]);
 
   const visibleRestaurants = filteredRestaurants;
 

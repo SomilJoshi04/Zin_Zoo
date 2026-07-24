@@ -1472,29 +1472,43 @@ export default function Cart() {
     // Validate with backend first; only set applied if backend accepts
     if (cart.length > 0 && hasSavedAddress) {
       try {
-        const items = cart.map(item => ({
-          itemId: item.itemId || item.id,
-          name: item.name,
-          price: item.price,
-          variantId: item.variantId || undefined,
-          variantName: item.variantName || undefined,
-          variantPrice: item.variantPrice || item.price,
-          quantity: item.quantity || 1,
-          image: item.image,
-          description: item.description,
-          isVeg: item.isVeg !== false
-        }))
+        const items = cart.map(item => {
+          const rawRId = item.restaurantId || restaurantData?.restaurantId || restaurantData?._id || restaurantId;
+          let sanitizedRestaurantId = rawRId
+            ? (typeof rawRId === 'object' && rawRId !== null
+              ? (rawRId._id?.toString() || rawRId.restaurantId?.toString() || rawRId.id?.toString() || null)
+              : String(rawRId))
+            : undefined;
+
+          if (sanitizedRestaurantId && !/^[0-9a-fA-F]{24}$/.test(sanitizedRestaurantId)) {
+            sanitizedRestaurantId = undefined;
+          }
+
+          return {
+            itemId: item.itemId || item.id,
+            name: item.name,
+            price: item.price,
+            variantId: item.variantId || undefined,
+            variantName: item.variantName || undefined,
+            variantPrice: item.variantPrice || item.price,
+            quantity: item.quantity || 1,
+            image: item.image,
+            description: item.description,
+            isVeg: item.isVeg !== false,
+            restaurantId: sanitizedRestaurantId
+          };
+        })
 
         const response = await orderAPI.calculateOrder({
           items,
-          restaurantId: restaurantData?.restaurantId || restaurantData?._id || restaurantId || null,
+          restaurantId: items.length > 0 ? items[0].restaurantId : null,
           deliveryAddress: defaultAddress,
           couponCode: coupon.code
         })
 
         const pricingData = response?.data?.data?.pricing
         if (!pricingData || !pricingData.appliedCoupon) {
-          toast.error("Coupon not applicable")
+          toast.error(pricingData?.couponError || "Coupon not applicable")
           return
         }
 
@@ -1533,22 +1547,36 @@ export default function Cart() {
     }
 
     try {
-      const items = cart.map(item => ({
-        itemId: item.itemId || item.id,
-        name: item.name,
-        price: item.price,
-        variantId: item.variantId || undefined,
-        variantName: item.variantName || undefined,
-        variantPrice: item.variantPrice || item.price,
-        quantity: item.quantity || 1,
-        image: item.image,
-        description: item.description,
-        isVeg: item.isVeg !== false
-      }))
+      const items = cart.map(item => {
+        const rawRId = item.restaurantId || restaurantData?.restaurantId || restaurantData?._id || restaurantId;
+        let sanitizedRestaurantId = rawRId
+          ? (typeof rawRId === 'object' && rawRId !== null
+            ? (rawRId._id?.toString() || rawRId.restaurantId?.toString() || rawRId.id?.toString() || null)
+            : String(rawRId))
+          : undefined;
+
+        if (sanitizedRestaurantId && !/^[0-9a-fA-F]{24}$/.test(sanitizedRestaurantId)) {
+          sanitizedRestaurantId = undefined;
+        }
+
+        return {
+          itemId: item.itemId || item.id,
+          name: item.name,
+          price: item.price,
+          variantId: item.variantId || undefined,
+          variantName: item.variantName || undefined,
+          variantPrice: item.variantPrice || item.price,
+          quantity: item.quantity || 1,
+          image: item.image,
+          description: item.description,
+          isVeg: item.isVeg !== false,
+          restaurantId: sanitizedRestaurantId
+        };
+      })
 
       const response = await orderAPI.calculateOrder({
         items,
-        restaurantId: restaurantData?.restaurantId || restaurantData?._id || restaurantId || null,
+        restaurantId: items.length > 0 ? items[0].restaurantId : null,
         deliveryAddress: defaultAddress,
         couponCode: inputCode
       })
@@ -1560,7 +1588,7 @@ export default function Cart() {
       }
 
       if (!pricingData.appliedCoupon) {
-        toast.error("Invalid or unavailable coupon code")
+        toast.error(pricingData.couponError || "Invalid or unavailable coupon code")
         setCouponCode("")
         return
       }
@@ -1592,22 +1620,36 @@ export default function Cart() {
     // Recalculate pricing without coupon
     if (cart.length > 0 && hasSavedAddress) {
       try {
-        const items = cart.map(item => ({
-          itemId: item.itemId || item.id,
-          name: item.name,
-          price: item.price,
-          variantId: item.variantId || undefined,
-          variantName: item.variantName || undefined,
-          variantPrice: item.variantPrice || item.price,
-          quantity: item.quantity || 1,
-          image: item.image,
-          description: item.description,
-          isVeg: item.isVeg !== false
-        }))
+        const items = cart.map(item => {
+          const rawRId = item.restaurantId || restaurantData?.restaurantId || restaurantData?._id || restaurantId;
+          let sanitizedRestaurantId = rawRId
+            ? (typeof rawRId === 'object' && rawRId !== null
+              ? (rawRId._id?.toString() || rawRId.restaurantId?.toString() || rawRId.id?.toString() || null)
+              : String(rawRId))
+            : undefined;
+
+          if (sanitizedRestaurantId && !/^[0-9a-fA-F]{24}$/.test(sanitizedRestaurantId)) {
+            sanitizedRestaurantId = undefined;
+          }
+
+          return {
+            itemId: item.itemId || item.id,
+            name: item.name,
+            price: item.price,
+            variantId: item.variantId || undefined,
+            variantName: item.variantName || undefined,
+            variantPrice: item.variantPrice || item.price,
+            quantity: item.quantity || 1,
+            image: item.image,
+            description: item.description,
+            isVeg: item.isVeg !== false,
+            restaurantId: sanitizedRestaurantId
+          };
+        })
 
         const response = await orderAPI.calculateOrder({
           items,
-          restaurantId: restaurantData?.restaurantId || restaurantData?._id || restaurantId || null,
+          restaurantId: items.length > 0 ? items[0].restaurantId : null,
           deliveryAddress: defaultAddress,
           couponCode: null
         })
@@ -2116,17 +2158,16 @@ export default function Cart() {
           </div>
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">Your cart is empty</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">Add items to start a new order</p>
-          <Link to="/user">
-            <Button
-              className="text-white border-0"
-              style={{
-                background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.9), var(--module-theme-color,#F84E04))",
-                boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,248,78,4),0.25)",
-              }}
-            >
-              Start Shopping
-            </Button>
-          </Link>
+          <Button
+            onClick={goBack}
+            className="text-white border-0"
+            style={{
+              background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.9), var(--module-theme-color,#F84E04))",
+              boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,248,78,4),0.25)",
+            }}
+          >
+            Start Shopping
+          </Button>
         </div>
       </AnimatedPage>
     )
@@ -2174,17 +2215,16 @@ export default function Cart() {
             >
               View All Items
             </Button>
-            <Link to="/user">
-              <Button
-                className="text-white border-0"
-                style={{
-                  background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.9), var(--module-theme-color,#F84E04))",
-                  boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,248,78,4),0.25)",
-                }}
-              >
-                Start Shopping
-              </Button>
-            </Link>
+            <Button
+              onClick={goBack}
+              className="text-white border-0"
+              style={{
+                background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.9), var(--module-theme-color,#F84E04))",
+                boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,248,78,4),0.25)",
+              }}
+            >
+              Start Shopping
+            </Button>
           </div>
         </div>
       </AnimatedPage>
@@ -3056,14 +3096,18 @@ export default function Cart() {
             >
               {/* Outer ring animation */}
               <div
-                className="absolute inset-0 w-32 h-32 rounded-full border-4 border-green-500 dark:border-green-400"
+                className="absolute inset-0 w-32 h-32 rounded-full border-4"
                 style={{
+                  borderColor: '#22c55e',
                   animation: 'ringPulse 1.5s ease-out infinite',
                   opacity: 0.3
                 }}
               />
               {/* Main circle */}
-              <div className="w-32 h-32 bg-gradient-to-br from-green-500 to-green-600 dark:from-green-500 dark:to-emerald-500 rounded-full flex items-center justify-center shadow-2xl shadow-green-200/60 dark:shadow-green-900/40">
+              <div 
+                className="w-32 h-32 rounded-full flex items-center justify-center shadow-2xl shadow-green-200/60 dark:shadow-green-900/40"
+                style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)' }}
+              >
                 <svg
                   className="w-16 h-16 text-white"
                   viewBox="0 0 24 24"

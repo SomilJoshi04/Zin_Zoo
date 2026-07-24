@@ -121,10 +121,29 @@ function RestaurantDetailsContent() {
   const [showShareModal, setShowShareModal] = useState(false)
   const [sharePayload, setSharePayload] = useState(null)
   const [expandedAddButtons, setExpandedAddButtons] = useState(new Set())
-  const [expandedSections, setExpandedSections] = useState(new Set([0])) // Default: Recommended section is expanded
+  const [expandedSections, setExpandedSections] = useState(() => {
+    if (typeof window !== "undefined" && slug) {
+      try {
+        const raw = sessionStorage.getItem(`food_restaurant_expanded_${slug}`)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (Array.isArray(parsed)) return new Set(parsed)
+        }
+      } catch (e) {}
+    }
+    return new Set([0])
+  }) // Default: Recommended section is expanded
   const [highlightedDishId, setHighlightedDishId] = useState(null)
   const [loadingMenuItems, setLoadingMenuItems] = useState(true)
-  const [selectedMenuCategory, setSelectedMenuCategory] = useState("all")
+  const [selectedMenuCategory, setSelectedMenuCategory] = useState(() => {
+    if (typeof window !== "undefined" && slug) {
+      try {
+        const raw = sessionStorage.getItem(`food_restaurant_category_${slug}`)
+        if (raw) return raw
+      } catch (e) {}
+    }
+    return "all"
+  })
   const dishCardRefs = useRef({})
 
   const getLineItemIdForDish = (item, variant = null) =>
@@ -135,6 +154,71 @@ function RestaurantDetailsContent() {
     if (variants.length === 0) return null
     return variants.find((variant) => String(variant.id) === String(preferredVariantId || "")) || variants[0]
   }
+
+  // Preserve state on change
+  useEffect(() => {
+    if (typeof window !== "undefined" && slug) {
+      sessionStorage.setItem(`food_restaurant_expanded_${slug}`, JSON.stringify(Array.from(expandedSections)))
+    }
+  }, [expandedSections, slug])
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && slug) {
+      sessionStorage.setItem(`food_restaurant_category_${slug}`, selectedMenuCategory)
+    }
+  }, [selectedMenuCategory, slug])
+
+  // Track scroll position
+  useEffect(() => {
+    if (typeof window === "undefined" || !slug) return
+    let timeoutId
+
+    const handleScroll = () => {
+      let currentPath = "";
+      try { currentPath = decodeURIComponent(window.location.pathname); } catch (e) { currentPath = window.location.pathname; }
+      if (!currentPath.includes(slug)) return;
+      if (timeoutId) clearTimeout(timeoutId)
+      timeoutId = setTimeout(() => {
+        if (window.scrollY > 0 && currentPath.includes(slug)) {
+          sessionStorage.setItem(`food_restaurant_scroll_${slug}`, window.scrollY.toString())
+        }
+      }, 100)
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true })
+    return () => {
+      window.removeEventListener("scroll", handleScroll)
+      if (timeoutId) clearTimeout(timeoutId)
+    }
+  }, [slug])
+
+  // Restore scroll position when menu finishes loading
+  useEffect(() => {
+    if (!loadingMenuItems && typeof window !== "undefined" && slug) {
+      const savedScroll = sessionStorage.getItem(`food_restaurant_scroll_${slug}`)
+      if (savedScroll && Number(savedScroll) > 0) {
+        const targetScroll = Number(savedScroll);
+        let attempts = 0;
+        
+        const tryScroll = () => {
+          if (attempts > 15) return; // give up after 1.5s
+          
+          if (document.documentElement.scrollHeight > targetScroll) {
+            window.scrollTo({ top: targetScroll, behavior: "instant" });
+            // Double check slightly after in case of images loading
+            setTimeout(() => {
+              window.scrollTo({ top: targetScroll, behavior: "instant" });
+            }, 50);
+          } else {
+            attempts++;
+            setTimeout(tryScroll, 100);
+          }
+        };
+        
+        tryScroll();
+      }
+    }
+  }, [loadingMenuItems, slug])
 
   const getDishQuantity = (item, preferredVariantId = "") => {
     const variant = getVariantForDish(item, preferredVariantId)
@@ -874,11 +958,22 @@ function RestaurantDetailsContent() {
                   menuSections: finalMenuSections,
                 }))
 
-                // Set first 3 sections (Recommended, Starters, Main Course) as expanded by default
-                const defaultExpandedSections = new Set(
-                  Array.from({ length: Math.min(3, finalMenuSections.length) }, (_, idx) => idx)
-                )
-                setExpandedSections(defaultExpandedSections)
+                // Set first 3 sections as expanded by default only if we don't have a saved state
+                let shouldSetDefault = true;
+                if (typeof window !== "undefined" && slug) {
+                  try {
+                    if (sessionStorage.getItem(`food_restaurant_expanded_${slug}`)) {
+                      shouldSetDefault = false;
+                    }
+                  } catch (e) {}
+                }
+                
+                if (shouldSetDefault) {
+                  const defaultExpandedSections = new Set(
+                    Array.from({ length: Math.min(3, finalMenuSections.length) }, (_, idx) => idx)
+                  )
+                  setExpandedSections(defaultExpandedSections)
+                }
 
                 debugLog('Fetched menu sections with recommended items:', finalMenuSections)
               }
@@ -2126,10 +2221,10 @@ function RestaurantDetailsContent() {
             </div>
           </div>
 
-          {/* Top Category */}
+          {/* Restaurant Type */}
           <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             <Utensils className="h-4 w-4" />
-            <span>{restaurant?.topCategory || restaurant?.cuisine || "Multi-cuisine"}</span>
+            <span className="capitalize">{restaurant?.restaurantType || "Both"}</span>
           </div>
 
           {/* Location - commented out as per user request

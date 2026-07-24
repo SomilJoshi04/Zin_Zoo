@@ -9,6 +9,7 @@ import { Button } from "@food/components/ui/button"
 import { Badge } from "@food/components/ui/badge"
 import { useOrders } from "@food/context/OrdersContext"
 import { useCompanyName } from "@food/hooks/useCompanyName"
+import { generateThermalInvoice } from "@food/utils/generateThermalInvoice"
 
 export default function OrderInvoice() {
   const companyName = useCompanyName()
@@ -158,8 +159,8 @@ export default function OrderInvoice() {
     }, 250)
   }
 
-  const handleDownloadPDF = () => {
-    handlePrint()
+  const handleDownloadPDF = async () => {
+    await generateThermalInvoice(order, "food")
   }
 
   return (

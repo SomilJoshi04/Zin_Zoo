@@ -314,6 +314,14 @@ import { AccessoriesProduct } from '../../../accessories/models/accessoriesProdu
 
 
 async function createUnifiedOrder(userId, dto) {
+  // Enforce authoritative backend pricing for the entire cart before splitting
+  const backendPricingResult = await calculateOrderPricing(userId, dto);
+  if (dto.pricing?.couponCode && backendPricingResult.pricing.discount === 0) {
+    throw new ValidationError("This coupon cannot be applied to this order.");
+  }
+  // Trust backend calculation over frontend
+  dto.pricing = { ...dto.pricing, ...backendPricingResult.pricing };
+
   console.log('--- createUnifiedOrder backend payload ---', JSON.stringify(dto.items, null, 2));
   for (const item of dto.items) {
     const mod = item.moduleType || 'food';
@@ -449,6 +457,17 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
   if (dto.moduleType === 'all' || dto.moduleType === 'unified') {
     return await createUnifiedOrder(userId, dto);
   }
+
+  // If this is a top-level single order call, enforce authoritative backend pricing
+  if (!bypassRazorpay) {
+    const backendPricingResult = await calculateOrderPricing(userId, dto);
+    if (dto.pricing?.couponCode && backendPricingResult.pricing.discount === 0) {
+      throw new ValidationError("This coupon cannot be applied to this order.");
+    }
+    // Trust backend calculation over frontend
+    dto.pricing = { ...dto.pricing, ...backendPricingResult.pricing };
+  }
+
   try {
     if (dto.moduleType === 'grocery' || dto.moduleType === 'accessories') {
       return await createGroceryOrder(userId, dto, bypassRazorpay);
@@ -616,6 +635,11 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
       riderEarning,
     );
 
+    // Prevent negative profit transactions
+    if (platformProfit < 0) {
+      throw new ValidationError("This coupon cannot be applied to this order as it exceeds allowed limits.");
+    }
+
     const initialStatus = (paymentMethod === "razorpay" || paymentMethod === "card") ? "pending_payment" : "confirmed";
 
     // Pre-calculate coinsEarned when order is created based on active business settings
@@ -755,22 +779,26 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
       logger.warn(`Notifications failed for order ${order._id}: ${err.message}`);
     }
 
-    // Handle Coupon usage
-    const couponCode = dto.pricing?.couponCode ? String(dto.pricing.couponCode).trim().toUpperCase() : "";
-    if (couponCode) {
-      try {
-        const offer = await FoodOffer.findOne({ couponCode }).lean();
-        if (offer) {
-          await FoodOffer.updateOne({ _id: offer._id }, { $inc: { usedCount: 1 } });
-          await FoodOfferUsage.updateOne(
-            { offerId: offer._id, userId: toObjectId(userId, 'User ID') },
-            { $inc: { count: 1 }, $set: { lastUsedAt: new Date() } },
-            { upsert: true },
-          );
-          broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+    // Handle Coupon usage (Only increment immediately if NOT awaiting online payment)
+    const isAwaitingOnlinePaymentForCoupon = String(paymentMethod || "").toLowerCase() === "razorpay" && String(payment?.status || "").toLowerCase() !== "paid";
+    
+    if (!isAwaitingOnlinePaymentForCoupon) {
+      const couponCode = dto.pricing?.couponCode ? String(dto.pricing.couponCode).trim().toUpperCase() : "";
+      if (couponCode) {
+        try {
+          const offer = await FoodOffer.findOne({ couponCode }).lean();
+          if (offer) {
+            await FoodOffer.updateOne({ _id: offer._id }, { $inc: { usedCount: 1 } });
+            await FoodOfferUsage.updateOne(
+              { offerId: offer._id, userId: toObjectId(userId, 'User ID') },
+              { $inc: { count: 1 }, $set: { lastUsedAt: new Date() } },
+              { upsert: true },
+            );
+            broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+          }
+        } catch (err) {
+          logger.error(`Coupon usage update failed: ${err.message}`);
         }
-      } catch (err) {
-        logger.error(`Coupon usage update failed: ${err.message}`);
       }
     }
 
@@ -845,6 +873,25 @@ export async function verifyPayment(userId, dto) {
       // Notify relevant restaurant/admin
       await notifyRestaurantNewOrder(order);
       broadcastNewOrderToAdmin(order);
+
+      // Handle Coupon usage exactly once upon successful payment
+      const couponCode = order.pricing?.couponCode ? String(order.pricing.couponCode).trim().toUpperCase() : "";
+      if (couponCode) {
+        try {
+          const offer = await FoodOffer.findOne({ couponCode }).lean();
+          if (offer) {
+            await FoodOffer.updateOne({ _id: offer._id }, { $inc: { usedCount: 1 } });
+            await FoodOfferUsage.updateOne(
+              { offerId: offer._id, userId: toObjectId(userId, 'User ID') },
+              { $inc: { count: 1 }, $set: { lastUsedAt: new Date() } },
+              { upsert: true },
+            );
+            broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+          }
+        } catch (err) {
+          logger.error(`Coupon usage update failed in unified verifyPayment: ${err.message}`);
+        }
+      }
     }
 
     if (anyUpdated) {
@@ -918,6 +965,25 @@ export async function verifyPayment(userId, dto) {
   await notifyRestaurantNewOrder(order);
   broadcastNewOrderToAdmin(order);
 
+  // Handle Coupon usage exactly once upon successful payment
+  const couponCode = order.pricing?.couponCode ? String(order.pricing.couponCode).trim().toUpperCase() : "";
+  if (couponCode) {
+    try {
+      const offer = await FoodOffer.findOne({ couponCode }).lean();
+      if (offer) {
+        await FoodOffer.updateOne({ _id: offer._id }, { $inc: { usedCount: 1 } });
+        await FoodOfferUsage.updateOne(
+          { offerId: offer._id, userId: toObjectId(userId, 'User ID') },
+          { $inc: { count: 1 }, $set: { lastUsedAt: new Date() } },
+          { upsert: true },
+        );
+        broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+      }
+    } catch (err) {
+      logger.error(`Coupon usage update failed in single verifyPayment: ${err.message}`);
+    }
+  }
+
   // Notify Customer about payment success
   await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
     title: "Payment Successful! ✅",
@@ -986,6 +1052,16 @@ export async function listOrdersUser(userId, query) {
 }
 
 async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
+  // If this is a top-level single order call, enforce authoritative backend pricing
+  if (!bypassRazorpay) {
+    const backendPricingResult = await calculateOrderPricing(userId, dto);
+    if (dto.pricing?.couponCode && backendPricingResult.pricing.discount === 0) {
+      throw new ValidationError("This coupon cannot be applied to this order.");
+    }
+    // Trust backend calculation over frontend
+    dto.pricing = { ...dto.pricing, ...backendPricingResult.pricing };
+  }
+
   const deliveryAddress = {
     label: dto.address?.label || "Home",
     name: dto.address?.name || dto.address?.fullName || dto.customerName || "",
@@ -1047,6 +1123,18 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
     razorpay: {},
     qr: {},
   };
+
+  // Estimate platform profit to prevent negative profit transactions.
+  // Since grocery may not have a rider earning natively calculated yet, assume 0 for check.
+  let platformProfit = Math.max(0, 
+    (Number.isFinite(normalizedPricing.deliveryFee) ? normalizedPricing.deliveryFee : 0) +
+    (Number.isFinite(normalizedPricing.platformFee) ? normalizedPricing.platformFee : 0) -
+    (Number.isFinite(normalizedPricing.discount) ? normalizedPricing.discount : 0)
+  );
+  
+  if (platformProfit < 0) {
+    throw new ValidationError("This coupon cannot be applied to this order as it exceeds allowed limits.");
+  }
 
   const initialStatus = (paymentMethod === "razorpay" || paymentMethod === "card") ? "pending_payment" : "confirmed";
 
@@ -1142,22 +1230,26 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
     logger.warn(`Notifications failed for grocery order ${order._id}: ${err.message}`);
   }
 
-  // Handle Coupon usage
-  const couponCode = dto.pricing?.couponCode ? String(dto.pricing.couponCode).trim().toUpperCase() : "";
-  if (couponCode) {
-    try {
-      const offer = await FoodOffer.findOne({ couponCode }).lean();
-      if (offer) {
-        await FoodOffer.updateOne({ _id: offer._id }, { $inc: { usedCount: 1 } });
-        await FoodOfferUsage.updateOne(
-          { offerId: offer._id, userId: toObjectId(userId, 'User ID') },
-          { $inc: { count: 1 }, $set: { lastUsedAt: new Date() } },
-          { upsert: true },
-        );
-        broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+  // Handle Coupon usage (Only increment immediately if NOT awaiting online payment)
+  const isAwaitingOnlinePaymentForCoupon = String(paymentMethod || "").toLowerCase() === "razorpay" && String(payment?.status || "").toLowerCase() !== "paid";
+
+  if (!isAwaitingOnlinePaymentForCoupon) {
+    const couponCode = dto.pricing?.couponCode ? String(dto.pricing.couponCode).trim().toUpperCase() : "";
+    if (couponCode) {
+      try {
+        const offer = await FoodOffer.findOne({ couponCode }).lean();
+        if (offer) {
+          await FoodOffer.updateOne({ _id: offer._id }, { $inc: { usedCount: 1 } });
+          await FoodOfferUsage.updateOne(
+            { offerId: offer._id, userId: toObjectId(userId, 'User ID') },
+            { $inc: { count: 1 }, $set: { lastUsedAt: new Date() } },
+            { upsert: true },
+          );
+          broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+        }
+      } catch (err) {
+        logger.error(`Coupon usage update failed: ${err.message}`);
       }
-    } catch (err) {
-      logger.error(`Coupon usage update failed: ${err.message}`);
     }
   }
 
@@ -1413,6 +1505,27 @@ export async function cancelOrder(orderId, userId, reason) {
     order.payment.refund = { status: "failed", amount: order.pricing.total };
   }
 
+  // Rollback coupon usage exactly once if it was committed
+
+  const wasUsageCommitted = (paymentMethod !== "razorpay") || (paymentMethod === "razorpay" && paymentStatus === "paid");
+  
+  if (wasUsageCommitted && order.pricing?.couponCode) {
+    try {
+      const couponCode = String(order.pricing.couponCode).trim().toUpperCase();
+      const offer = await FoodOffer.findOne({ couponCode }).lean();
+      if (offer) {
+        await FoodOffer.updateOne({ _id: offer._id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+        await FoodOfferUsage.updateOne(
+          { offerId: offer._id, userId: new mongoose.Types.ObjectId(userId), count: { $gt: 0 } },
+          { $inc: { count: -1 } }
+        );
+        broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+      }
+    } catch (err) {
+      logger.error(`Failed to rollback coupon usage on cancellation: ${err.message}`);
+    }
+  }
+
   await order.save();
 
   enqueueOrderEvent("order_cancelled_by_user", {
@@ -1608,6 +1721,30 @@ export async function updateOrderStatusRestaurant(
     to: orderStatus,
     note: note || "",
   });
+
+  if (String(orderStatus).includes("cancel")) {
+    const paymentMethod = String(order.payment?.method || "cash").toLowerCase();
+    const paymentStatus = String(order.payment?.status || "cod_pending").toLowerCase();
+    const wasUsageCommitted = (paymentMethod !== "razorpay") || (paymentMethod === "razorpay" && paymentStatus === "paid");
+    
+    if (wasUsageCommitted && order.pricing?.couponCode) {
+      try {
+        const couponCode = String(order.pricing.couponCode).trim().toUpperCase();
+        const offer = await FoodOffer.findOne({ couponCode }).lean();
+        if (offer) {
+          await FoodOffer.updateOne({ _id: offer._id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+          await FoodOfferUsage.updateOne(
+            { offerId: offer._id, userId: new mongoose.Types.ObjectId(order.userId), count: { $gt: 0 } },
+            { $inc: { count: -1 } }
+          );
+          broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+        }
+      } catch (err) {
+        logger.error(`Failed to rollback coupon usage on restaurant cancellation: ${err.message}`);
+      }
+    }
+  }
+
   await order.save();
 
   if (String(orderStatus) === "delivered") {
@@ -2245,6 +2382,27 @@ export async function updateOrderStatusAdmin(orderId, orderStatus, note = "", ad
     } catch (err) {
       logger.warn(`Admin cancellation refund failed for order ${order._id}: ${err?.message || err}`);
       order.payment.refund = { status: "failed", amount: order.pricing?.total || 0 };
+    }
+
+    const paymentMethod = String(order.payment?.method || "cash").toLowerCase();
+    const paymentStatus = String(order.payment?.status || "cod_pending").toLowerCase();
+    const wasUsageCommitted = (paymentMethod !== "razorpay") || (paymentMethod === "razorpay" && paymentStatus === "paid");
+    
+    if (wasUsageCommitted && order.pricing?.couponCode) {
+      try {
+        const couponCode = String(order.pricing.couponCode).trim().toUpperCase();
+        const offer = await FoodOffer.findOne({ couponCode }).lean();
+        if (offer) {
+          await FoodOffer.updateOne({ _id: offer._id, usedCount: { $gt: 0 } }, { $inc: { usedCount: -1 } });
+          await FoodOfferUsage.updateOne(
+            { offerId: offer._id, userId: new mongoose.Types.ObjectId(order.userId), count: { $gt: 0 } },
+            { $inc: { count: -1 } }
+          );
+          broadcastPublicUpdate("offer:update", { action: "update", id: offer._id.toString() });
+        }
+      } catch (err) {
+        logger.error(`Failed to rollback coupon usage on admin cancellation: ${err.message}`);
+      }
     }
   }
 

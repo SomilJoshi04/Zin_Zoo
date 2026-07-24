@@ -3,6 +3,14 @@ import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
 import { ArrowLeft, Clock, MapPin, IndianRupee, Wrench } from "lucide-react"
 import { Button } from "@food/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@food/components/ui/dialog"
 import { servicesUserAPI, servicesPublicAPI } from "@food/api"
 import { toast } from "sonner"
 
@@ -65,13 +73,25 @@ export default function MyServices() {
     }
   }
 
-  const handleCancel = async (id) => {
+  const [bookingToCancel, setBookingToCancel] = useState(null)
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
+
+  const initiateCancel = (id) => {
+    setBookingToCancel(id)
+    setIsCancelModalOpen(true)
+  }
+
+  const confirmCancel = async () => {
+    if (!bookingToCancel) return;
     try {
-      await servicesUserAPI.cancelBooking(id)
-      toast.success("Booking cancelled")
+      await servicesUserAPI.cancelBooking(bookingToCancel)
+      toast.success("Booking cancelled successfully.")
       fetchBookings()
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to cancel")
+    } finally {
+      setIsCancelModalOpen(false)
+      setBookingToCancel(null)
     }
   }
 
@@ -180,7 +200,7 @@ export default function MyServices() {
                   {booking.status === 'pending' && (
                     <Button 
                       variant="outline" 
-                      onClick={() => handleCancel(booking._id)}
+                      onClick={() => initiateCancel(booking._id)}
                       className="flex-1 rounded-xl h-11 text-red-600 border-red-200 hover:bg-red-50"
                     >
                       Cancel
@@ -200,6 +220,36 @@ export default function MyServices() {
           </div>
         )}
       </div>
+
+      <Dialog open={isCancelModalOpen} onOpenChange={setIsCancelModalOpen}>
+        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-[#1a1a1a] border-gray-100 dark:border-gray-800 p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white pr-8">Cancel Booking</DialogTitle>
+            <DialogDescription className="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base">
+              Are you sure you want to cancel this booking? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end mt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => { setIsCancelModalOpen(false); setBookingToCancel(null); }}
+              className="w-full sm:w-auto h-11 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl"
+            >
+              No, Keep It
+            </Button>
+            <Button 
+              onClick={confirmCancel} 
+              className="w-full sm:w-auto h-11 text-white border-0 rounded-xl"
+              style={{
+                background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.92), var(--module-theme-color,#F84E04))",
+                boxShadow: "0 8px 18px rgba(var(--module-theme-rgb,248,78,4),0.25)",
+              }}
+            >
+              Yes, Cancel Booking
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

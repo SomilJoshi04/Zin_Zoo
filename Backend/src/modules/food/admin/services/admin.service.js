@@ -3953,7 +3953,9 @@ export async function createAdminOffer(body) {
         }
     }
 
-    return doc.toObject();
+    const responseObj = doc.toObject();
+    responseObj._warning = "Coupon passed the current safety check. Final coupon eligibility and platform profit will be validated again when the coupon is applied to an order.";
+    return responseObj;
 }
 
 export async function updateAdminOfferCartVisibility(offerId, itemId, showInCart) {

@@ -23,6 +23,7 @@ import apiClient from "@/services/api/axios"
 import { useCart } from "@food/context/CartContext"
 import { toast } from "sonner"
 import { getCompanyNameAsync, getCachedSettings } from "@food/utils/businessSettings"
+import { generateThermalInvoice } from "@food/utils/generateThermalInvoice"
 const debugLog = (...args) => { }
 const debugWarn = (...args) => { }
 const debugError = (...args) => { }
@@ -283,124 +284,13 @@ export default function UserOrderDetails() {
     }
     window.location.href = `tel:${callNumber}`
   }
-
   const handleDownloadSummary = async () => {
     try {
-      const [{ jsPDF }, { default: autoTable }] = await Promise.all([
-        import("jspdf"),
-        import("jspdf-autotable"),
-      ])
-      const companyName = await getCompanyNameAsync()
-      // Create new PDF document
-      const doc = new jsPDF()
-
-      // Title
-      doc.setFontSize(16)
-      doc.setFont('helvetica', 'bold')
-      doc.text(`${companyName} Order: Summary and Receipt`, 105, 20, { align: 'center' })
-
-      // Order details section
-      let yPos = 35
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'normal')
-
-      // Order ID
-      doc.setFont('helvetica', 'bold')
-      doc.text('Order ID:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      doc.text(orderIdDisplay, 60, yPos)
-      yPos += 7
-
-      // Order Time
-      doc.setFont('helvetica', 'bold')
-      doc.text('Order Time:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      const orderTimeLines = doc.splitTextToSize(paymentDate || 'N/A', 130)
-      doc.text(orderTimeLines, 60, yPos)
-      yPos += orderTimeLines.length * 7
-
-      // Customer Name
-      doc.setFont('helvetica', 'bold')
-      doc.text('Customer Name:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      doc.text(userName || 'Customer', 60, yPos)
-      yPos += 7
-
-      // Delivery Address
-      doc.setFont('helvetica', 'bold')
-      doc.text('Delivery Address:', 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      const addressLines = doc.splitTextToSize(addressText || 'N/A', 130)
-      doc.text(addressLines, 60, yPos)
-      yPos += addressLines.length * 7
-
-      // Restaurant details (Food only)
-      if (!order.moduleType || order.moduleType === 'food') {
-        // Restaurant Name
-        doc.setFont('helvetica', 'bold')
-        doc.text('Restaurant Name:', 20, yPos)
-        doc.setFont('helvetica', 'normal')
-        doc.text(restaurantName, 60, yPos)
-        yPos += 7
-
-        // Restaurant Address
-        doc.setFont('helvetica', 'bold')
-        doc.text('Restaurant Address:', 20, yPos)
-        doc.setFont('helvetica', 'normal')
-        const restaurantAddressLines = doc.splitTextToSize(restaurantLocation || 'N/A', 130)
-        doc.text(restaurantAddressLines, 60, yPos)
-        yPos += restaurantAddressLines.length * 7 + 5
-      }
-
-      // Platform GST Number
-      if (pricing?.platformGstNumber) {
-        doc.setFont('helvetica', 'bold')
-        doc.text('GST Number:', 20, yPos)
-        doc.setFont('helvetica', 'normal')
-        doc.text(pricing.platformGstNumber, 60, yPos)
-        yPos += 7
-      }
-
-      // Items table
-      const tableData = items.map(item => [
-        item.variantName ? `${item.name || 'Item'} (${item.variantName})` : (item.name || 'Item'),
-        String(item.quantity || item.qty || 1),
-        `Rs. ${Number(item.price || 0).toFixed(2)}`,
-        `Rs. ${Number((item.price || 0) * (item.quantity || item.qty || 1)).toFixed(2)}`
-      ])
-
-      autoTable(doc, {
-        startY: yPos,
-        head: [['Item', 'Quantity', 'Unit Price', 'Total Price']],
-        body: tableData,
-        theme: 'striped',
-        headStyles: { fillColor: [0, 0, 0], textColor: 255, fontStyle: 'bold', fontSize: 10 },
-        styles: { fontSize: 9 },
-        columnStyles: {
-          0: { cellWidth: 80 },
-          1: { cellWidth: 30, halign: 'center' },
-          2: { cellWidth: 35, halign: 'right' },
-          3: { cellWidth: 35, halign: 'right', fontStyle: 'bold' }
-        }
-      })
-
-      // Get final Y position after table (autoTable adds lastAutoTable property)
-      const finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY : yPos + (tableData.length * 8) + 20
-
-      // Total
-      doc.setFontSize(12)
-      doc.setFont('helvetica', 'bold')
-      doc.text('Total:', 145, finalY + 10, { align: 'right' })
-      doc.text(`Rs. ${Number(pricing.total || 0).toFixed(2)}`, 195, finalY + 10, { align: 'right' })
-
-      // Save PDF instantly
-      const fileName = `Order_Summary_${orderIdDisplay}_${Date.now()}.pdf`
-      doc.save(fileName)
-
-      toast.success("Summary downloaded successfully!")
+      await generateThermalInvoice(order, "food");
+      toast.success("Invoice downloaded successfully!");
     } catch (error) {
-      debugError("Error generating PDF:", error)
-      toast.error("Failed to download summary")
+      console.error("Error generating PDF:", error);
+      toast.error("Failed to download invoice");
     }
   }
 

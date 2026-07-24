@@ -1103,6 +1103,7 @@ export const listApprovedRestaurants = async (query = {}) => {
         isAcceptingOrders: 1,
         status: 1,
         pureVegRestaurant: 1,
+        restaurantType: 1,
         createdAt: 1,
         location: 1,
         openingTime: 1,

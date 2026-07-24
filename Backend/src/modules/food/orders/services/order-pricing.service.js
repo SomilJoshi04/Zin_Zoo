@@ -99,6 +99,7 @@ export async function calculateOrderPricing(userId, dto) {
 
   let discount = 0;
   let appliedCoupon = null;
+  let couponError = null;
   const codeRaw = dto.couponCode
     ? String(dto.couponCode).trim().toUpperCase()
     : "";
@@ -199,6 +200,21 @@ export async function calculateOrderPricing(userId, dto) {
         perUserOk &&
         firstOrderOk;
 
+      console.log("[DEBUG COUPON]", {
+        codeRaw,
+        statusOk,
+        startOk,
+        endOk,
+        scopeOk,
+        minOk,
+        usageOk,
+        perUserOk,
+        firstOrderOk,
+        discountableSubtotal,
+        dtoRestaurantId: dto.restaurantId,
+        selectedRestaurantIds
+      });
+
       if (allowed) {
         if (offer.discountType === "percentage") {
           const raw = discountableSubtotal * (Number(offer.discountValue) / 100);
@@ -213,7 +229,18 @@ export async function calculateOrderPricing(userId, dto) {
           );
         }
         appliedCoupon = { code: codeRaw, discount };
+      } else {
+        if (!statusOk) couponError = "Coupon is currently inactive";
+        else if (!startOk || !endOk) couponError = "Coupon has expired or is not yet active";
+        else if (!scopeOk) couponError = "Coupon is not applicable to the items in your cart";
+        else if (!minOk) couponError = `Minimum order value of ₹${offer.minOrderValue} not met`;
+        else if (!usageOk) couponError = "Coupon usage limit has been reached";
+        else if (!perUserOk) couponError = "You have already reached the usage limit for this coupon";
+        else if (!firstOrderOk) couponError = "This coupon is valid for first-time orders only";
+        else couponError = "Coupon is not applicable to this order";
       }
+    } else {
+      couponError = "Invalid or unavailable coupon code";
     }
   }
 
@@ -235,6 +262,7 @@ export async function calculateOrderPricing(userId, dto) {
       couponCode: appliedCoupon?.code || codeRaw || null,
       platformGstNumber: feeSettings.gstNumber || null,
       appliedCoupon,
+      couponError,
       distanceKm: Number.isFinite(distanceKm) ? Number(distanceKm.toFixed(2)) : null,
       deliveryFeeBreakdown: Number.isFinite(distanceKm) ? {
         source: "distance",
