@@ -1,5 +1,5 @@
 import { FoodLandingSettings } from '../models/landingSettings.model.js';
-import { uploadImageBufferDetailed, deleteLocalFile } from '../../../../services/localUpload.service.js';
+import { uploadVideoBuffer, deleteLocalFile } from '../../../../services/localUpload.service.js';
 
 export const getLandingSettings = async () => {
     let doc = await FoodLandingSettings.findOne().lean();
@@ -22,11 +22,11 @@ export const uploadLandingVideoFile = async (file) => {
         throw new Error('No file provided');
     }
 
-    const uploadResult = await uploadImageBufferDetailed(file.buffer, 'food/landing-videos');
+    const uploadResultUrl = await uploadVideoBuffer(file.buffer, 'food/landing-videos');
 
     return {
-        videoUrl: uploadResult.secure_url,
-        publicId: uploadResult.public_id
+        videoUrl: uploadResultUrl,
+        publicId: uploadResultUrl
     };
 };
 

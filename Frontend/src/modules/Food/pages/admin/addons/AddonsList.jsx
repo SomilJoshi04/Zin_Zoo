@@ -5,6 +5,8 @@ import { adminAPI, uploadAPI } from "@food/api"
 import { toast } from "sonner"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog"
 
+
+const ADMIN_FALLBACK_IMAGE = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
 const debugError = (...args) => {}
 
 const getItemCreatedMs = (item = {}) => {
@@ -270,9 +272,7 @@ export default function AddonsList() {
                           src={getAddonImage(addon)}
                           alt={getAddonTitle(addon)}
                           className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = "https://via.placeholder.com/40"
-                          }}
+                          onError={(e) => { e.target.src = typeof ADMIN_FALLBACK_IMAGE !== "undefined" ? ADMIN_FALLBACK_IMAGE : (typeof FOOD_FALLBACK_IMAGE !== "undefined" ? FOOD_FALLBACK_IMAGE : typeof FALLBACK_IMAGE !== "undefined" ? FALLBACK_IMAGE : "") }}
                         />
                       </div>
                     </td>
@@ -340,9 +340,7 @@ export default function AddonsList() {
                   src={getAddonImage(selectedAddon)}
                   alt={getAddonTitle(selectedAddon)}
                   className="w-20 h-20 rounded-xl object-cover border border-slate-200"
-                  onError={(e) => {
-                    e.target.src = "https://via.placeholder.com/64"
-                  }}
+                  onError={(e) => { e.target.src = typeof ADMIN_FALLBACK_IMAGE !== "undefined" ? ADMIN_FALLBACK_IMAGE : (typeof FOOD_FALLBACK_IMAGE !== "undefined" ? FOOD_FALLBACK_IMAGE : typeof FALLBACK_IMAGE !== "undefined" ? FALLBACK_IMAGE : "") }}
                 />
                 <div>
                   <p className="text-lg font-semibold text-slate-900">{getAddonTitle(selectedAddon)}</p>
@@ -389,7 +387,7 @@ export default function AddonsList() {
                   src={editImagePreview}
                   alt="Preview"
                   className="w-16 h-16 rounded-md object-cover border"
-                  onError={(e) => (e.target.style.display = "none")}
+                  onError={(e) => { e.target.src = typeof ADMIN_FALLBACK_IMAGE !== "undefined" ? ADMIN_FALLBACK_IMAGE : (typeof FOOD_FALLBACK_IMAGE !== "undefined" ? FOOD_FALLBACK_IMAGE : typeof FALLBACK_IMAGE !== "undefined" ? FALLBACK_IMAGE : "") }}
                 />
               ) : (
                 <div className="w-16 h-16 rounded-md border border-dashed border-slate-300 flex items-center justify-center text-xs text-slate-500">

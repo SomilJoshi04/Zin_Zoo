@@ -34,31 +34,20 @@ export default function BottomNavigation() {
     };
 
     const handleResize = () => {
-      const currentIsPortrait = window.innerHeight > window.innerWidth;
-      
-      if (currentIsPortrait !== isPortrait) {
-        isPortrait = currentIsPortrait;
-        if (currentIsPortrait) {
-          portraitHeight = Math.max(portraitHeight, window.innerHeight);
-        } else {
-          landscapeHeight = Math.max(landscapeHeight, window.innerHeight);
-        }
-      }
-
-      const maxHeight = currentIsPortrait ? portraitHeight : landscapeHeight;
+      // A more robust way to detect keyboard on mobile:
+      // If the height shrinks by more than 150px from the screen height, it's likely a keyboard
+      const screenHeight = window.screen.height;
       const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
       
-      const shrinkAmount = maxHeight - currentHeight;
+      // We use the initial window.innerHeight as a baseline if screen.height is weird
+      const baselineHeight = Math.max(portraitHeight, screenHeight * 0.8);
+      const shrinkAmount = baselineHeight - currentHeight;
 
       if (shrinkAmount > 150) {
-        // Keyboard is definitely open
         setIsKeyboardVisible(true);
-      } else if (shrinkAmount < 50) {
-        // Keyboard is definitely closed
+      } else if (shrinkAmount < 100) {
         setIsKeyboardVisible(false);
       }
-      // If it's between 50 and 150, it is animating, so we DO NOTHING. 
-      // This prevents the bug where it flashes back into view.
     };
 
     document.addEventListener("focusin", handleFocusIn);
@@ -116,7 +105,7 @@ export default function BottomNavigation() {
   const activeFill = "rgba(var(--module-theme-rgb, 248,78,4), 0.2)"
 
   return (
-    <div className={`md:hidden fixed bottom-6 left-5 right-5 z-50 pointer-events-none ${isKeyboardVisible ? 'hidden' : ''}`}>
+    <div className={`md:hidden fixed bottom-6 left-5 right-5 z-50 pointer-events-none hide-on-keyboard ${isKeyboardVisible ? 'hidden' : ''}`}>
       <div className="flex items-center justify-around h-auto px-4 py-2 bg-white/85 dark:bg-[#1a1a1a]/85 backdrop-blur-[20px] border border-white/50 dark:border-white/10 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.15)] pointer-events-auto">
         
         {/* Home Tab */}

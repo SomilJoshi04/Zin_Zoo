@@ -309,7 +309,7 @@ export default function TransactionReport() {
               </div>
             </div>
             <div className="text-center">
-              <p className="text-xl font-bold text-green-600 mb-1">{formatCurrency(summary.completedTransaction)}</p>
+              <p className="text-xl font-bold text-green-600 mb-1">{formatFullCurrency(summary.completedTransaction)}</p>
               <p className="text-sm text-slate-600 leading-tight">Completed Transaction</p>
             </div>
           </div>

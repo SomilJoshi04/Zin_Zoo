@@ -346,7 +346,7 @@ export default function Favorites() {
                     }}
                     className="flex-1 h-12 text-white font-extrabold text-sm uppercase tracking-wider rounded-xl bg-[#F84E04] hover:bg-[#D94203]"
                   >
-                    Add to Cart - &#8377;{selectedProduct.price}
+                    Add to Cart &middot; &#8377;{selectedProduct.price}
                   </Button>
                 </div>
               </>

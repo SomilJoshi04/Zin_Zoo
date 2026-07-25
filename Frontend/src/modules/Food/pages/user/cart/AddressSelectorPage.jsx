@@ -964,7 +964,7 @@ export default function AddressSelectorPage() {
         </div>
 
         <div
-          className="sticky bottom-0 left-0 right-0 z-[80] flex-shrink-0 px-4 pt-3 bg-white dark:bg-[#1a1a1a] border-t dark:border-gray-800 shadow-[0_-12px_30px_rgba(0,0,0,0.12)]"
+          className="sticky bottom-0 left-0 right-0 z-[80] flex-shrink-0 px-4 pt-3 bg-white dark:bg-[#1a1a1a] border-t dark:border-gray-800 shadow-[0_-12px_30px_rgba(0,0,0,0.12)] hide-on-keyboard"
           style={{
             paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))",
           }}

@@ -511,7 +511,20 @@ export default function GroceryPage() {
                             <button onClick={(e) => handleRemove(e, product)} className="w-7 h-full flex items-center justify-center hover:bg-black/10 transition-colors">
                               <Minus className="w-3 h-3" />
                             </button>
-                            <span className="w-6 text-center text-xs font-bold">{qty}</span>
+                            <input 
+                              type="number"
+                              min="0"
+                              value={qty || 0}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                const newQuantity = val === "" ? 0 : parseInt(val, 10);
+                                if (!isNaN(newQuantity)) {
+                                  updateQuantity(product._id, Math.max(0, newQuantity), { x: 0, y: 0 }, { ...product, id: product._id });
+                                }
+                              }}
+                              onClick={(e) => e.stopPropagation()}
+                              className="w-8 text-center text-xs font-bold bg-transparent border-none focus:outline-none focus:ring-0 text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0 m-0"
+                            />
                             <button onClick={(e) => handleAdd(e, product)} className="w-7 h-full flex items-center justify-center hover:bg-black/10 transition-colors">
                               <Plus className="w-3 h-3" />
                             </button>
@@ -662,7 +675,7 @@ export default function GroceryPage() {
                         className="w-full h-14 bg-[var(--module-theme-color)] hover:bg-[var(--module-theme-color)]/90 text-white font-bold text-lg rounded-xl shadow-lg shadow-[var(--module-theme-color)]/30 transition-all hover:scale-[1.02] hover:shadow-[var(--module-theme-color)]/40 active:scale-95"
                         onClick={(e) => handleAdd(e, selectedProduct)}
                       >
-                        Add to Cart - &#8377;{selectedProduct.price}
+                        Add to Cart &middot; &#8377;{selectedProduct.price}
                       </Button>
                     )
                   } else {
@@ -672,7 +685,19 @@ export default function GroceryPage() {
                            <Minus className="w-6 h-6" strokeWidth={2.5} />
                          </button>
                          <div className="flex flex-col items-center">
-                           <span className="font-black text-lg text-[var(--module-theme-color)] leading-none">{qty}</span>
+                           <input 
+                             type="number"
+                             min="0"
+                             value={qty || 0}
+                             onChange={(e) => {
+                               const val = e.target.value;
+                               const newQuantity = val === "" ? 0 : parseInt(val, 10);
+                               if (!isNaN(newQuantity)) {
+                                 updateQuantity(selectedProduct._id, Math.max(0, newQuantity), { x: 0, y: 0 }, { ...selectedProduct, id: selectedProduct._id });
+                               }
+                             }}
+                             className="w-12 font-black text-lg text-center text-[var(--module-theme-color)] leading-none bg-transparent border-none focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                           />
                            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">in cart</span>
                          </div>
                          <button onClick={(e) => handleAdd(e, selectedProduct)} className="w-14 h-full flex items-center justify-center text-[var(--module-theme-color)] hover:bg-[var(--module-theme-color)]/10 rounded-lg transition-colors active:scale-90">

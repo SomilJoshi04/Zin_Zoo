@@ -595,7 +595,7 @@ export default function RestaurantsList() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800 flex-shrink-0 border border-slate-200 dark:border-slate-700">
                             <img src={getRestaurantImage(restaurant)} alt={restaurant.restaurantName} className="w-full h-full object-cover" loading="lazy"
-                              onError={(e) => { e.target.src = FALLBACK_IMAGE }} />
+                              onError={(e) => { e.target.src = typeof ADMIN_FALLBACK_IMAGE !== "undefined" ? ADMIN_FALLBACK_IMAGE : (typeof FOOD_FALLBACK_IMAGE !== "undefined" ? FOOD_FALLBACK_IMAGE : typeof FALLBACK_IMAGE !== "undefined" ? FALLBACK_IMAGE : "") }} />
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">{restaurant.restaurantName || "Unnamed"}</p>
@@ -711,7 +711,7 @@ export default function RestaurantsList() {
               <div className="flex items-start gap-4">
                 <img src={getRestaurantImage(selectedRestaurant)} alt={selectedRestaurant.restaurantName}
                   className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-slate-700 flex-shrink-0"
-                  onError={(e) => { e.target.src = FALLBACK_IMAGE }} />
+                  onError={(e) => { e.target.src = typeof ADMIN_FALLBACK_IMAGE !== "undefined" ? ADMIN_FALLBACK_IMAGE : (typeof FOOD_FALLBACK_IMAGE !== "undefined" ? FOOD_FALLBACK_IMAGE : typeof FALLBACK_IMAGE !== "undefined" ? FALLBACK_IMAGE : "") }} />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-bold text-slate-900 dark:text-white">{selectedRestaurant.restaurantName}</h3>
                   <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">

@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Plus, Search, Shield, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
 import { adminAPI } from "@food/api";
 
+
+const ADMIN_FALLBACK_IMAGE = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E";
 const SUBADMIN_EMAIL_REGEX = /^(?!.*\.\.)([A-Za-z0-9]+[._%+-]?)*[A-Za-z0-9]+@[A-Za-z0-9-]+\.[A-Za-z]{2,}$/;
 const INDIAN_MOBILE_REGEX = /^[6-9]\d{9}$/;
 const NAME_REGEX = /^[A-Za-z]+(?:\s+[A-Za-z]+)*$/;

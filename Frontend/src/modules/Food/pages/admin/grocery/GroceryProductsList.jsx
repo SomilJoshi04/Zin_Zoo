@@ -52,7 +52,7 @@ const createVariantDraft = (variant = {}) => ({
   price: variant?.price != null ? String(variant.price) : "",
 })
 
-const FOOD_FALLBACK_IMAGE = ""
+const FOOD_FALLBACK_IMAGE = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='2' ry='2'/%3E%3Ccircle cx='8.5' cy='8.5' r='1.5'/%3E%3Cpolyline points='21 15 16 10 5 21'/%3E%3C/svg%3E"
 
 export default function GroceryProductsList() {
   const navigate = useNavigate()
@@ -703,9 +703,7 @@ export default function GroceryProductsList() {
                           className="w-full h-full object-cover"
                           key={`${food.id}-${imageVersion}`}
                           loading="lazy"
-                          onError={(e) => {
-                            e.target.src = FOOD_FALLBACK_IMAGE
-                          }}
+                          onError={(e) => { e.target.src = typeof ADMIN_FALLBACK_IMAGE !== "undefined" ? ADMIN_FALLBACK_IMAGE : (typeof FOOD_FALLBACK_IMAGE !== "undefined" ? FOOD_FALLBACK_IMAGE : typeof FALLBACK_IMAGE !== "undefined" ? FALLBACK_IMAGE : "") }}
                         />
                       </div>
                     </td>
@@ -838,9 +836,7 @@ export default function GroceryProductsList() {
                           src={withImageVersion(selectedFood.image)}
                           alt={selectedFood.name}
                           className="w-20 h-20 rounded-xl object-cover border border-slate-200 dark:border-slate-800"
-                  onError={(e) => {
-                    e.target.src = FOOD_FALLBACK_IMAGE
-                  }}
+                  onError={(e) => { e.target.src = typeof ADMIN_FALLBACK_IMAGE !== "undefined" ? ADMIN_FALLBACK_IMAGE : (typeof FOOD_FALLBACK_IMAGE !== "undefined" ? FOOD_FALLBACK_IMAGE : typeof FALLBACK_IMAGE !== "undefined" ? FALLBACK_IMAGE : "") }}
                 />
                 <div>
                   <p className="text-lg font-semibold text-slate-900 dark:text-white">{selectedFood.name}</p>
@@ -1058,13 +1054,21 @@ export default function GroceryProductsList() {
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Quantity</label>
                 <input
-                  type="number"
-                  min="0"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   placeholder="Ex: 100"
                   value={foodForm.quantity}
+                  onKeyDown={(e) => {
+                    if (
+                      !/^[0-9]$/.test(e.key) &&
+                      !["Backspace", "ArrowLeft", "ArrowRight", "Delete", "Tab"].includes(e.key)
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
                   onChange={(e) => {
-                    let val = e.target.value;
-                    if (val !== "" && Number(val) < 0) val = "0";
+                    const val = e.target.value.replace(/[^0-9]/g, '');
                     setFoodForm((prev) => ({ ...prev, quantity: val }));
                   }}
                   className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"

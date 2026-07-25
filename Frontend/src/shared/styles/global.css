@@ -458,3 +458,8 @@
   border-color: #262626 !important;
 }
 
+.keyboard-open .hide-on-keyboard {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

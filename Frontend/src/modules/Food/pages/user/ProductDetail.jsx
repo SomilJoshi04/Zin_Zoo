@@ -371,9 +371,19 @@ export default function ProductDetail() {
                     >
                       <Minus className="h-5 w-5" />
                     </Button>
-                    <span className="px-4 text-lg font-semibold min-w-[2rem] text-center">
-                      {cartItem?.quantity || 0}
-                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      value={cartItem?.quantity || 0}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const newQuantity = val === "" ? 0 : parseInt(val, 10);
+                        if (!isNaN(newQuantity)) {
+                          updateQuantity(product.id, Math.max(0, newQuantity));
+                        }
+                      }}
+                      className="w-16 px-1 text-lg font-semibold text-center bg-transparent border-none focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
                     <Button
                       variant="ghost"
                       size="icon"
@@ -401,9 +411,19 @@ export default function ProductDetail() {
                     >
                       <Minus className="h-5 w-5" />
                     </Button>
-                    <span className="px-4 text-lg font-semibold min-w-[2rem] text-center">
-                      {quantity}
-                    </span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={quantity}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        const newQuantity = val === "" ? 0 : parseInt(val, 10);
+                        if (!isNaN(newQuantity)) {
+                          setQuantity(Math.max(1, newQuantity));
+                        }
+                      }}
+                      className="w-16 px-1 text-lg font-semibold text-center bg-transparent border-none focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
                     <Button
                       variant="ghost"
                       size="icon"
@@ -421,7 +441,7 @@ export default function ProductDetail() {
                       className="bg-primary-orange hover:opacity-90 text-white"
                     >
                       <ShoppingBag className="h-5 w-5 mr-2" />
-                      Add to Cart - ₹{(product.price * 83 * quantity).toFixed(0)}
+                      Add to Cart &middot; ₹{(product.price * 83 * quantity).toFixed(0)}
                     </Button>
                   </div>
                 </div>

@@ -2423,7 +2423,7 @@ export default function Cart() {
                   />
                   <div className="mt-2 flex items-center justify-between gap-3">
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                      Ye note order ke saath save hoga aur assigned delivery partner ko dikh sakta hai.
+                      This note will be saved with the order.
                     </p>
                     <span className="text-[11px] text-gray-400 dark:text-gray-500 whitespace-nowrap">
                       {note.length}/240
@@ -2796,7 +2796,7 @@ export default function Cart() {
                       />
                     </div>
                     <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                      Agar aap kisi aur ke liye order kar rahe ho, to yahan uska naam aur phone save kar do.
+                      If you are ordering for someone else, please provide their name and phone number here.
                     </p>
                   </div>
                 )}
@@ -2876,8 +2876,8 @@ export default function Cart() {
 
       {/* Bottom Sticky - Place Order */}
 
-      <div
-        className="bg-white dark:bg-[#1a1a1a] border-t dark:border-gray-800 shadow-lg z-30 flex-shrink-0 fixed bottom-0 left-0 right-0"
+      <div 
+        className="bg-white dark:bg-[#1a1a1a] border-t dark:border-gray-800 shadow-lg z-30 flex-shrink-0 fixed bottom-0 left-0 right-0 hide-on-keyboard"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 md:py-4">

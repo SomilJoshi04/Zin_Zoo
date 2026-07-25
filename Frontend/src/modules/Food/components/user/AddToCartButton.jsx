@@ -49,9 +49,20 @@ export default function AddToCartButton({ item, className = "" }) {
           >
             <Minus className="h-4 w-4" />
           </Button>
-          <span className="px-1 text-sm font-semibold min-w-[1rem] text-center">
-            {cartItem?.quantity || 0}
-          </span>
+          <input
+            type="number"
+            min="0"
+            value={cartItem?.quantity || 0}
+            onChange={(e) => {
+              const val = e.target.value;
+              const newQuantity = val === "" ? 0 : parseInt(val, 10);
+              if (!isNaN(newQuantity)) {
+                updateQuantity(item.id, Math.max(0, newQuantity));
+              }
+            }}
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="w-10 px-1 text-sm font-semibold text-center bg-transparent border-none focus:outline-none focus:ring-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
           <Button
             variant="ghost"
             size="icon"

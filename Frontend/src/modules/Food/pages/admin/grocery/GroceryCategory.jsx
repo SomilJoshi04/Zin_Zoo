@@ -13,6 +13,8 @@ import {
   Upload,
   X,
   ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { adminAPI, groceryAdminAPI, uploadAPI } from "@food/api"
@@ -24,8 +26,6 @@ const defaultFormData = {
   name: "",
   image: "",
   status: true,
-
-  zoneId: "global",
   foodTypeScope: "Both",
 }
 
@@ -42,15 +42,7 @@ const scopeBadgeClass = (scope) => {
   return "bg-slate-100 text-slate-700 border-slate-200"
 }
 
-const zoneLabel = (zone) => {
-  if (!zone) return "Global"
-  if (typeof zone === "string") {
-    const value = zone.trim()
-    if (/^[a-f0-9]{24}$/i.test(value)) return `Zone ID ${value.slice(-6)}`
-    return value
-  }
-  return zone?.name || zone?.zoneName || zone?.serviceLocation || "Zone"
-}
+
 
 const resolveCategoryId = (category) => String(category?._id || category?.id || "").trim()
 
@@ -62,8 +54,6 @@ export default function GroceryCategory() {
   const [showPendingOnly, setShowPendingOnly] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingCategory, setEditingCategory] = useState(null)
-  const [zones, setZones] = useState([])
-  const [zonesLoading, setZonesLoading] = useState(false)
   const [formData, setFormData] = useState(defaultFormData)
   const [selectedImageFile, setSelectedImageFile] = useState(null)
   const [imagePreview, setImagePreview] = useState(null)
@@ -85,30 +75,7 @@ export default function GroceryCategory() {
     fetchCategories()
   }, [])
 
-  useEffect(() => {
-    let cancelled = false
-    setZonesLoading(true)
-    adminAPI
-      .getZones({ limit: 1000 })
-      .then((res) => {
-        const list =
-          res?.data?.data?.zones ||
-          res?.data?.data?.data?.zones ||
-          res?.data?.data ||
-          []
-        if (!cancelled) setZones(Array.isArray(list) ? list : [])
-      })
-      .catch(() => {
-        if (!cancelled) setZones([])
-      })
-      .finally(() => {
-        if (!cancelled) setZonesLoading(false)
-      })
 
-    return () => {
-      cancelled = true
-    }
-  }, [])
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -130,6 +97,27 @@ export default function GroceryCategory() {
       )
     })
   }, [categories, searchQuery])
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
+
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage)
+  const currentCategories = filteredCategories.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page)
+    }
+  }
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, showPendingOnly])
 
   const fetchCategories = async () => {
     try {
@@ -180,17 +168,10 @@ export default function GroceryCategory() {
   const handleEdit = (category) => {
     if (!ensureActionAccess("edit")) return
     setEditingCategory(category)
-    const zoneIdValue =
-      typeof category?.zoneId === "string"
-        ? category.zoneId
-        : category?.zoneId?._id || category?.zoneId?.id || "global"
-
     setFormData({
       name: category?.name || "",
       image: category?.image || "",
       status: (category?.isActive ?? category?.status) !== false,
-
-      zoneId: zoneIdValue || "global",
       foodTypeScope: category?.foodTypeScope || "Both",
     })
     setSelectedImageFile(null)
@@ -322,14 +303,11 @@ export default function GroceryCategory() {
         index + 1,
         category?.name || "N/A",
         category?.foodTypeScope || "Both",
-        category?.isGlobal ? "Global" : "Private",
-        zoneLabel(category?.zoneId),
-        category?.approvalStatus || "pending",
       ])
 
       autoTable(doc, {
         startY: 35,
-        head: [["SL", "Category", "Visibility", "Zone", "Approval"]],
+        head: [["SL", "Category", "Type"]],
         body: tableData,
         theme: "striped",
         headStyles: {
@@ -367,10 +345,8 @@ export default function GroceryCategory() {
 
       const payload = {
         name: String(formData.name || "").trim(),
-
         status: Boolean(formData.status),
         image: imageUrl || undefined,
-        zoneId: (!formData.zoneId || formData.zoneId === "global") ? undefined : formData.zoneId,
         foodTypeScope: formData.foodTypeScope,
       }
 
@@ -477,12 +453,11 @@ export default function GroceryCategory() {
                   </td>
                 </tr>
               ) : (
-                filteredCategories.map((category) => {
+                currentCategories.map((category) => {
                   const categoryId = resolveCategoryId(category)
                   const creatorName = category?.createdByRestaurant?.name || category?.restaurant?.name || "Admin"
                   const approvalStatus = category?.approvalStatus || "pending"
                   const isRestaurantCategory = Boolean(category?.createdByRestaurantId || category?.restaurantId)
-                  const zoneText = zoneLabel(category?.zoneId)
 
                   return (
                     <tr key={categoryId || `category-${category?.name || "item"}`} className="align-top hover:bg-slate-50/80">
@@ -546,6 +521,46 @@ export default function GroceryCategory() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+            <div className="text-sm text-slate-500">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCategories.length)} of {filteredCategories.length} categories
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-1 text-sm font-medium rounded-lg transition-all ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {typeof window !== "undefined" &&

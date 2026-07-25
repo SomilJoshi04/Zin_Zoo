@@ -468,6 +468,10 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
           ? { lat: location.latitude, lng: location.longitude }
           : { lat: 22.7196, lng: 75.8577 }
 
+        // Wait a tiny bit for DOM layout to settle, specifically for absolute/inset layout
+        await new Promise(resolve => setTimeout(resolve, 50))
+        if (!isMounted || !mapContainerRef.current) return
+
         // Create map
         const map = new google.maps.Map(mapContainerRef.current, {
           center: initialLocation,
@@ -494,6 +498,18 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
         })
 
         googleMapRef.current = map
+
+        // Robust resize trigger to fix the squashed map bug
+        const forceResize = () => {
+          if (googleMapRef.current && window.google && window.google.maps) {
+            window.google.maps.event.trigger(googleMapRef.current, 'resize')
+            googleMapRef.current.setCenter(initialLocation)
+          }
+        }
+        
+        setTimeout(forceResize, 50)
+        setTimeout(forceResize, 300)
+        setTimeout(forceResize, 1000)
 
         // Create Green Marker (locked to autocomplete selection)
         const greenMarker = new google.maps.Marker({
@@ -2190,19 +2206,14 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
 
         {/* Map Section - Google Maps */}
         <div className="flex-shrink-0 relative" style={{ height: '35vh', minHeight: '250px' }}>
-          {/* Google Maps Container */}
-          <div
-            ref={mapContainerRef}
-            className="w-full h-full bg-gray-200 dark:bg-gray-800"
-            style={{
-              width: '100%',
-              height: '100%',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              zIndex: 1
-            }}
-          />
+          {/* Google Maps Wrapper */}
+          <div className="absolute inset-0 z-0 bg-gray-200 dark:bg-gray-800">
+            <div
+              ref={mapContainerRef}
+              className="w-full h-full"
+              style={{ width: '100%', height: '100%' }}
+            />
+          </div>
 
           {/* Loading State */}
           {mapLoading && (
@@ -2479,7 +2490,7 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-[#0a0a0a]"
+      className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-[#0a0a0a] h-[100dvh] max-h-[100dvh] overflow-hidden"
       style={{
         animation: 'fadeIn 0.3s ease-out'
       }}

@@ -47,16 +47,30 @@ export default function HomeHeader({
 
       {/* Main Header Content */}
       <div className="relative z-10 space-y-2.5">
-        {/* Row 1: Location, Toggle, and Notifications */}
-        <div className="flex items-center justify-between gap-3">
-          {/* Location Selector */}
+        {/* Row 1: Logo + Location (Left), Actions (Right) */}
+        <div className="flex items-start justify-between gap-3">
+          
+          {/* Left Column: Logo and Location Selector */}
           <div
-            className="flex items-center gap-2 cursor-pointer group min-w-0 flex-1"
+            className="flex items-center gap-2 cursor-pointer group min-w-0 flex-1 pt-1"
             onClick={handleLocationClick}
           >
-            <div className="bg-white/10 p-1 rounded-lg group-active:scale-95 transition-all">
+            {/* Logo - Perfectly Cropped to Black Border (Currently Hidden) 
+            <div className="w-[58px] h-[22px] sm:w-[68px] sm:h-[26px] overflow-hidden shrink-0 flex items-center justify-center rounded-[2px] shadow-sm">
+              <img 
+                src="/zinzoo-logo.png" 
+                alt="ZinZoo" 
+                className="w-[162%] max-w-none h-auto object-center" 
+              />
+            </div>
+            */}
+
+            {/* MapPin */}
+            <div className="bg-white/10 p-1 rounded-lg group-active:scale-95 transition-all shrink-0">
               <MapPin className="h-3.5 w-3.5 text-white/90 fill-white/20" />
             </div>
+
+            {/* Address Details */}
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-1">
                 <span className="text-[14px] font-black text-white truncate drop-shadow-sm">
@@ -71,49 +85,45 @@ export default function HomeHeader({
                         return area;
                       }
                     }
-                    
-                    // Fallback to a part of the address if area is missing or redundant
+
                     if (location?.address && location.address !== "Select location") {
                       const parts = location.address.split(',').map(p => p.trim());
-                      // Take the first part that isn't city or state
                       for (const part of parts) {
                         const partLower = part.toLowerCase();
-                        if (partLower && 
-                            partLower !== city && 
-                            partLower !== state && 
-                            !/^-?\d/.test(part) &&
-                            part.length > 2) {
+                        if (partLower &&
+                          partLower !== city &&
+                          partLower !== state &&
+                          !/^-?\d/.test(part) &&
+                          part.length > 2) {
                           return part;
                         }
                       }
                     }
-                    
+
                     return location?.area || location?.city || "Select Location";
                   })()}
                 </span>
                 <ChevronDown className="h-3 w-3 text-white/70" />
               </div>
-              
+
               <span className="text-[10px] font-medium text-white/90 truncate leading-tight mt-0.5">
                 {(() => {
-                  // Format Row 2: State, Pincode (matching screenshot)
                   const state = location?.state || "";
                   const pincode = location?.pincode || "";
-                  
+
                   if (state && pincode) return `${state}, ${pincode}`;
                   if (state) return state;
                   if (pincode) return pincode;
-                  
-                  // Fallback to snippet of address if no state/pincode
+
                   const addr = location?.address || "";
                   if (addr && addr.length > 10) {
-                     return addr.split(',').slice(1, 3).join(',').trim() || "Pinpoint location";
+                    return addr.split(',').slice(1, 3).join(',').trim() || "Pinpoint location";
                   }
-                  
+
                   return "Pinpoint location";
                 })()}
               </span>
-              
+
               <span className="text-[9px] font-black text-white/60 uppercase tracking-[0.25em] leading-tight mt-0.5">
                 {location?.city || "Indore"}
               </span>
@@ -121,9 +131,9 @@ export default function HomeHeader({
           </div>
 
           {/* Right Actions: Veg Toggle & Bell */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 pt-2">
             {/* Pure Veg Toggle */}
-            <div 
+            <div
               className={`flex items-center gap-1.5 px-2 py-1 rounded-full border transition-all duration-300 ${vegMode ? 'border-white/40 bg-white/10' : 'border-white/10 bg-white/5'}`}
               onClick={() => handleVegModeChange?.(!vegMode)}
             >
@@ -132,7 +142,7 @@ export default function HomeHeader({
               </div>
               <span className={`text-[8px] font-black uppercase tracking-tight ${vegMode ? 'text-white' : 'text-white/60'}`}>Veg</span>
             </div>
- 
+
             <HeaderNotificationBell className="h-4 w-4 text-white/90" triggerClass="rounded-full h-8 w-8" />
 
             <HeaderCartIcon />
@@ -144,7 +154,7 @@ export default function HomeHeader({
           onClick={handleSearchFocus}
         >
           <Search className="h-4 w-4 text-[#F84E04] mr-2 shrink-0" strokeWidth={3} />
-          
+
           <div className="flex-1 overflow-hidden relative h-4.5">
             <AnimatePresence mode="wait">
               <motion.span

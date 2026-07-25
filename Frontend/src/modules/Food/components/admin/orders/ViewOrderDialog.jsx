@@ -1,4 +1,4 @@
-import { Eye, MapPin, Package, User, Phone, Mail, Calendar, Clock, Truck, CreditCard, X, Receipt, CheckCircle2, ArrowLeft } from "lucide-react"
+import { Eye, MapPin, Package, User, Phone, Mail, Calendar, Clock, Truck, CreditCard, X, Receipt, CheckCircle2, ArrowLeft, FileText } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -278,7 +278,18 @@ export default function ViewOrderDialog({ isOpen, onOpenChange, order }) {
             </div>
           </div>
 
-
+          {/* Delivery Note */}
+          {order.note && (
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-2">
+                <FileText className="w-4 h-4" />
+                Delivery Note
+              </h3>
+              <div className="bg-orange-50 dark:bg-orange-950/30 text-orange-800 dark:text-orange-200 p-3 rounded-lg text-sm italic border border-orange-100 dark:border-orange-900/50">
+                "{order.note}"
+              </div>
+            </div>
+          )}
 
           {/* Order Items */}
           {order.items && Array.isArray(order.items) && order.items.length > 0 && (

@@ -10,6 +10,7 @@ export default function StickyCartCard() {
   const { cart, getCartCount, lastAddEvent } = useCart()
   const [isVisible, setIsVisible] = useState(true)
   const [bottomPosition, setBottomPosition] = useState("bottom-[70px]") // Fixed above bottom navigation
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const cartCount = getCartCount()
   const activeModule = useActiveModule()
 
@@ -128,8 +129,32 @@ export default function StickyCartCard() {
 
     window.addEventListener("resize", handleResize)
 
+    const handleFocus = (e) => {
+      if (window.innerWidth >= 768) return;
+      const target = e.target;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        setIsKeyboardOpen(true);
+      }
+    };
+    const handleBlur = (e) => {
+      if (window.innerWidth >= 768) return;
+      const target = e.target;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
+        setTimeout(() => {
+          if (document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+            setIsKeyboardOpen(false);
+          }
+        }, 50);
+      }
+    };
+
+    window.addEventListener('focusin', handleFocus);
+    window.addEventListener('focusout', handleBlur);
+
     return () => {
       window.removeEventListener("resize", handleResize)
+      window.removeEventListener('focusin', handleFocus);
+      window.removeEventListener('focusout', handleBlur);
     }
   }, [])
 
@@ -218,7 +243,7 @@ export default function StickyCartCard() {
       <AnimatePresence>
         {isVisible && (
           <motion.div
-            className={`fixed ${bottomPosition} md:bottom-6 left-0 right-0 md:left-auto md:right-6 z-50 px-4 md:px-0 pb-4 md:pb-0 pointer-events-none`}
+            className={`fixed ${bottomPosition} md:bottom-6 left-0 right-0 md:left-auto md:right-6 px-4 md:px-0 pb-4 md:pb-0 pointer-events-none transition-opacity duration-200 ${isKeyboardOpen ? 'opacity-0 -z-50' : 'z-50 opacity-100'}`}
             initial="initial"
             animate="animate"
             exit="exit"

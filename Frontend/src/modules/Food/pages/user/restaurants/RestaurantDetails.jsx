@@ -3648,12 +3648,30 @@ function RestaurantDetailsContent() {
                         >
                           <Minus className="h-5 w-5" />
                         </button>
-                        <span className={`text-lg font-semibold min-w-[2rem] text-center ${shouldShowGrayscale
-                          ? 'text-gray-400 dark:text-gray-600'
-                          : 'text-gray-900 dark:text-white'
-                          }`}>
-                          {getDishQuantity(selectedItem, selectedVariantId)}
-                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={getDishQuantity(selectedItem, selectedVariantId) || 0}
+                          onChange={(e) => {
+                            if (!shouldShowGrayscale) {
+                              const val = e.target.value;
+                              const newQuantity = val === "" ? 0 : parseInt(val, 10);
+                              if (!isNaN(newQuantity)) {
+                                updateItemQuantity(
+                                  selectedItem,
+                                  Math.max(0, newQuantity),
+                                  e,
+                                  getVariantForDish(selectedItem, selectedVariantId)
+                                );
+                              }
+                            }
+                          }}
+                          disabled={shouldShowGrayscale}
+                          className={`w-14 text-lg font-semibold text-center bg-transparent border-none focus:outline-none focus:ring-0 ${shouldShowGrayscale
+                            ? 'text-gray-400 dark:text-gray-600'
+                            : 'text-gray-900 dark:text-white'
+                            } [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0`}
+                        />
                         <button
                           onClick={(e) => {
                             if (!shouldShowGrayscale) {

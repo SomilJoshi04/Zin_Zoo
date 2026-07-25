@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { Image as ImageIcon } from 'lucide-react'
 
 /**
  * OptimizedImage Component
@@ -127,10 +128,8 @@ const OptimizedImage = React.memo(({
   // Don't render if resolvedSrc is empty or null
   if (!resolvedSrc || resolvedSrc === '') {
     return (
-      <div className={`relative overflow-hidden ${className}`}>
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-          <span className="text-xs text-gray-400 dark:text-gray-600">Image unavailable</span>
-        </div>
+      <div className={`relative overflow-hidden flex items-center justify-center bg-gray-50 dark:bg-gray-800/50 ${className}`}>
+        <ImageIcon className="w-6 h-6 text-gray-300 dark:text-gray-600 mb-1" strokeWidth={1.5} />
       </div>
     )
   }
@@ -192,8 +191,9 @@ const OptimizedImage = React.memo(({
 
       {/* Error State */}
       {hasError && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800">
-          <span className="text-xs text-gray-400 dark:text-gray-600">Image unavailable</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50 p-2 text-center">
+          <ImageIcon className="w-6 h-6 text-gray-300 dark:text-gray-600 mb-1" strokeWidth={1.5} />
+          <span className="text-[9px] text-gray-400 dark:text-gray-500 leading-tight hidden sm:block">No Image</span>
         </div>
       )}
     </div>

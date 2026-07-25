@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Pencil, Trash2, Plus, Loader2, PlusCircle, X } from 'lucide-react';
+import { Search, Pencil, Trash2, Plus, Loader2, PlusCircle, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { servicesAdminAPI, adminAPI, userAPI } from '@food/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog"
@@ -40,6 +40,26 @@ export default function ServiceCategories() {
       setLoading(false);
     }
   };
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(categories.length / itemsPerPage);
+  const currentCategories = categories.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
 
   const handleOpenModal = (category = null) => {
     if (category) {
@@ -223,9 +243,9 @@ export default function ServiceCategories() {
                   </td>
                 </tr>
               ) : (
-                categories.map((category, idx) => (
+                currentCategories.map((category, idx) => (
                   <tr key={category._id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
-                    <td className="px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400">{idx + 1}</td>
+                    <td className="px-6 py-4 text-xs font-semibold text-slate-600 dark:text-slate-400">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         {category.image ? (
@@ -290,6 +310,46 @@ export default function ServiceCategories() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, categories.length)} of {categories.length} categories
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    className={`px-3 py-1 text-sm font-medium rounded-lg transition-all ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
