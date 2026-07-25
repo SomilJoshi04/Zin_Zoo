@@ -518,8 +518,6 @@ export function useProfile() {
       removeDishFavorite: () => debugWarn("ProfileProvider not available"),
       isDishFavorite: () => false,
       getDishFavorites: () => [],
-      vegMode: false,
-      setVegMode: () => debugWarn("ProfileProvider not available")
     }
   }
   return context
