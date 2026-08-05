@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { isModuleAuthenticated, getModuleToken, getModuleRefreshToken, isTokenExpired } from "@food/utils/auth";
 import { restaurantAPI } from "@food/api";
@@ -66,7 +66,7 @@ async function silentRefresh(module) {
       // Client errors (401, 403, 400) mean the token is definitively invalid
       return { success: false, reason: "invalid" };
     }
-    // Network errors, timeouts, 500+ server errors
+    // Network errors, timeouts, 500+ server errors — do NOT log user out
     return { success: false, reason: "network" };
   } finally {
     // Release lock
@@ -75,56 +75,63 @@ async function silentRefresh(module) {
 }
 
 /**
+ * Computes the initial auth state synchronously from localStorage.
+ * Called once during component initialization.
+ */
+function getInitialAuthState(requiredRole) {
+  if (!requiredRole) return "authenticated";
+  if (isModuleAuthenticated(requiredRole)) return "authenticated";
+  if (getModuleRefreshToken(requiredRole)) return "refreshing";
+  return "unauthenticated";
+}
+
+/**
  * Role-based Protected Route Component
  * Only allows access if user is authenticated for the specific module.
  * On app restart, if the access token is expired but a refresh token exists,
  * it silently refreshes before deciding to redirect to login.
+ *
+ * IMPORTANT: All hooks are declared unconditionally at the top to comply with
+ * React's Rules of Hooks. Early returns based on role check are done via state.
  */
 export default function ProtectedRoute({ children, requiredRole, loginPath = "/food/user/auth/login" }) {
   const location = useLocation();
+  const isRestaurantRoute = requiredRole === "restaurant";
 
-  // If no role required, allow access
-  if (!requiredRole) {
-    return children;
+  // --- ALL hooks declared unconditionally ---
+  // Use a ref to hold the initial state so it's only computed ONCE and not
+  // affected by React 18 Strict Mode's double-invoke behavior.
+  const initialAuthStateRef = useRef(null);
+  if (initialAuthStateRef.current === null) {
+    initialAuthStateRef.current = getInitialAuthState(requiredRole);
   }
 
-  const accessToken = getModuleToken(requiredRole);
-  const isAccessExpired = !accessToken || isTokenExpired(accessToken);
-  const hasRefreshToken = !!getModuleRefreshToken(requiredRole);
-
-  // Determine initial auth state:
-  // - If access token is valid → authenticated immediately (no loading needed)
-  // - If access token is expired AND refresh token exists → show loading while refreshing
-  // - If neither → not authenticated, redirect
-  const initiallyAuthenticated = isModuleAuthenticated(requiredRole);
-  const needsSilentRefresh = !initiallyAuthenticated && hasRefreshToken;
-
-  const [authState, setAuthState] = useState(
-    initiallyAuthenticated ? "authenticated" : needsSilentRefresh ? "refreshing" : "unauthenticated"
-  );
-
-  const isRestaurantRoute = requiredRole === "restaurant";
+  const [authState, setAuthState] = useState(initialAuthStateRef.current);
   const [isSubscriptionCheckDone, setIsSubscriptionCheckDone] = useState(!isRestaurantRoute);
   const [serverRequiresPayment, setServerRequiresPayment] = useState(false);
 
-  // Silent token refresh on mount when access token is expired but refresh token exists
+  // --- Silent token refresh effect ---
   useEffect(() => {
-    if (authState !== "refreshing") return;
+    // If no role required or already authenticated, nothing to do
+    if (!requiredRole || authState !== "refreshing") return;
+
     let cancelled = false;
+
     silentRefresh(requiredRole).then((result) => {
       if (cancelled) return;
       if (result.success && result.token && !isTokenExpired(result.token)) {
         setAuthState("authenticated");
-        // Notify other parts of the app about the token refresh
         try {
-          window.dispatchEvent(new CustomEvent("authRefreshed", { detail: { module: requiredRole, token: result.token } }));
+          window.dispatchEvent(new CustomEvent("authRefreshed", {
+            detail: { module: requiredRole, token: result.token }
+          }));
         } catch (_) {}
       } else if (result.reason === "network") {
-        // Network error — Do NOT log the user out! Allow them into the app.
-        // The Axios interceptor will smoothly handle the refresh when the network stabilizes.
+        // Network error on startup — do NOT log the user out.
+        // The Axios interceptor will handle the refresh on the first API call.
         setAuthState("authenticated");
       } else {
-        // Refresh failed (invalid token) — clear stale data and redirect to login
+        // Token is definitively invalid — clear stale data and redirect to login
         try {
           localStorage.removeItem(`${requiredRole}_accessToken`);
           localStorage.removeItem(`${requiredRole}_refreshToken`);
@@ -133,22 +140,14 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
         setAuthState("unauthenticated");
       }
     });
+
     return () => { cancelled = true; };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [requiredRole]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Show nothing (blank) while refreshing to avoid a flash redirect to login
-  if (authState === "refreshing") {
-    return null;
-  }
-
-  // Not authenticated and refresh failed (or no refresh token) → go to login
-  if (authState === "unauthenticated") {
-    return <Navigate to={loginPath} state={{ from: location.pathname }} replace />;
-  }
-
-  // --- From here: user IS authenticated ---
-
+  // --- Restaurant subscription check effect ---
   useEffect(() => {
+    if (!requiredRole || !isRestaurantRoute || authState !== "authenticated") return;
+
     let active = true;
     const allowedPaths = [
       "/food/restaurant/onboarding-payment",
@@ -156,7 +155,7 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
       "/food/restaurant/pending-verification",
     ];
 
-    if (!isRestaurantRoute || allowedPaths.includes(location.pathname)) {
+    if (allowedPaths.includes(location.pathname)) {
       setIsSubscriptionCheckDone(true);
       setServerRequiresPayment(false);
       return () => { active = false; };
@@ -207,8 +206,26 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
 
     syncRestaurantSubscription();
     return () => { active = false; };
-  }, [isRestaurantRoute, authState, location.pathname]);
+  }, [isRestaurantRoute, authState, location.pathname, requiredRole]);
 
+  // --- Render logic (all hooks already declared above) ---
+
+  // If no role required, allow access unconditionally
+  if (!requiredRole) {
+    return children;
+  }
+
+  // Show nothing (blank) while silently refreshing the token
+  if (authState === "refreshing") {
+    return null;
+  }
+
+  // Not authenticated and refresh definitively failed → redirect to login
+  if (authState === "unauthenticated") {
+    return <Navigate to={loginPath} state={{ from: location.pathname }} replace />;
+  }
+
+  // User is authenticated — apply restaurant subscription gate if needed
   if (isRestaurantRoute) {
     if (!isSubscriptionCheckDone) return null;
     if (serverRequiresPayment) {
@@ -218,5 +235,3 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
 
   return children;
 }
-
-
