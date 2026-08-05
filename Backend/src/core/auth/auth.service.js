@@ -547,6 +547,8 @@ export const refreshAccessToken = async (token) => {
   try {
     payload = jwt.default.verify(token, config.jwtRefreshSecret);
   } catch {
+    // Token is tampered or expired — delete the DB record too
+    await FoodRefreshToken.deleteOne({ token }).catch(() => {});
     throw new AuthError("Invalid refresh token");
   }
 
@@ -554,14 +556,34 @@ export const refreshAccessToken = async (token) => {
   if (payload?.role === "USER") {
     const u = await FoodUser.findById(payload.userId).select("isActive").lean();
     if (!u || u.isActive === false) {
+      await FoodRefreshToken.deleteOne({ token }).catch(() => {});
       throw new AuthError("User account is deactivated");
     }
   }
+
+  // --- Token Rotation ---
+  // Delete the used refresh token and issue a brand-new one.
+  // This means every stolen/leaked refresh token can only be used once.
+  await FoodRefreshToken.deleteOne({ token });
 
   const newAccessToken = signAccessToken({
     userId: payload.userId,
     role: payload.role,
   });
+  const newRefreshToken = signRefreshToken({
+    userId: payload.userId,
+    role: payload.role,
+  });
 
-  return { accessToken: newAccessToken, refreshToken: token };
+  const ttlMs = ms(config.jwtRefreshExpiresIn || "7d");
+  const expiresAt = new Date(Date.now() + ttlMs);
+
+  await FoodRefreshToken.create({
+    userId: payload.userId,
+    token: newRefreshToken,
+    expiresAt,
+  });
+
+  return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 };
+
