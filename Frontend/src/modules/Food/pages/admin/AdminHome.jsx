@@ -56,8 +56,13 @@ export default function AdminHome() {
     axis: isDark ? "#a3a3a3" : "#6b7280",
     legendText: isDark ? "#d4d4d4" : "#111827",
   }), [isDark])
-  const [selectedZone, setSelectedZone] = useState("all")
-  const [selectedPeriod, setSelectedPeriod] = useState("overall")
+  const [selectedZone, setSelectedZone] = useState(() => sessionStorage.getItem("adminDashboardZone") || "all")
+  const [selectedPeriod, setSelectedPeriod] = useState(() => sessionStorage.getItem("adminDashboardPeriod") || "overall")
+
+  useEffect(() => {
+    sessionStorage.setItem("adminDashboardZone", selectedZone)
+    sessionStorage.setItem("adminDashboardPeriod", selectedPeriod)
+  }, [selectedZone, selectedPeriod])
   const [isLoading, setIsLoading] = useState(true)
   const [dashboardData, setDashboardData] = useState(null)
   const [zones, setZones] = useState([])
