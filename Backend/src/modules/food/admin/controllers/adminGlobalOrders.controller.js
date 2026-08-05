@@ -7,8 +7,15 @@ export async function getGlobalOrders(req, res, next) {
     try {
         const { status } = req.query;
 
-        let foodFilter = {};
-        let groceryFilter = {};
+        const validPaymentCondition = {
+            $or: [
+                { 'payment.method': 'cash' },
+                { 'payment.status': { $in: ['paid', 'authorized', 'refunded'] } }
+            ]
+        };
+
+        let foodFilter = { ...validPaymentCondition };
+        let groceryFilter = { ...validPaymentCondition };
 
         if (status === 'pending') {
             foodFilter.orderStatus = { $in: PENDING_ORDER_STATUSES };

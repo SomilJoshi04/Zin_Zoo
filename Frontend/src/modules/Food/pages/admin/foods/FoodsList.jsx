@@ -191,7 +191,7 @@ export default function FoodsList() {
             "Unknown Restaurant",
           categoryId: String(f.categoryId || ""),
           categoryName: f.categoryName || "",
-          price: getFoodDisplayPrice(f),
+          price: Number(f.price) || 0,
           variants: getFoodVariants(f),
           foodType: f.foodType || "Non-Veg",
           approvalStatus: f.approvalStatus || "approved",
@@ -330,7 +330,7 @@ export default function FoodsList() {
     setEditingFood(null)
     setFoodForm({
       ...createFoodForm(),
-      restaurantId: selectedRestaurant !== "all" ? selectedRestaurant : (restaurantOptions[0]?.id || ""),
+      restaurantId: selectedRestaurant !== "all" ? selectedRestaurant : (lastSelectedRestaurantForAdd || restaurantOptions[0]?.id || ""),
     })
     setSelectedImageFile(null)
     setImagePreviewUrl("")
@@ -475,7 +475,7 @@ export default function FoodsList() {
       return
     }
 
-    if (!hasVariants && (!Number.isFinite(parsedPrice) || parsedPrice <= 0)) {
+    if (!Number.isFinite(parsedPrice) || parsedPrice <= 0) {
       toast.error("Base price must be greater than 0")
       return
     }
@@ -500,7 +500,7 @@ export default function FoodsList() {
         categoryName: String(foodForm.categoryName || "").trim(),
         zoneId: foodForm.zoneId === "global" ? undefined : (foodForm.zoneId || undefined),
         name: foodForm.name.trim(),
-        price: hasVariants ? undefined : parsedPrice,
+        price: parsedPrice > 0 ? parsedPrice : undefined,
         variants: normalizedVariants.map((variant) => ({
           ...(variant.id && !variant.id.startsWith("variant-") ? { _id: variant.id } : {}),
           name: variant.name,
@@ -1031,11 +1031,10 @@ export default function FoodsList() {
                     if (val !== "" && Number(val) < 0) val = "0";
                     setFoodForm((prev) => ({ ...prev, price: val }));
                   }}
-                  disabled={(foodForm.variants || []).length > 0}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white disabled:bg-slate-100 disabled:text-slate-400 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:disabled:bg-slate-900 dark:disabled:text-slate-500"
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
                 {(foodForm.variants || []).length > 0 ? (
-                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Variants are active, so customers will see the lowest variant price as the starting price.</p>
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Base price of the item itself. Customers will see "Starting from" the lowest price among variants and base price.</p>
                 ) : null}
               </div>
               <div>

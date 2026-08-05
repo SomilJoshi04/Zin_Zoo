@@ -604,18 +604,7 @@ export default function AccessoriesCategory() {
                             />
                           </div>
 
-                          <div>
-                            <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Category Type</label>
-                            <select
-                              value={formData.foodTypeScope}
-                              onChange={(event) => setFormData((prev) => ({ ...prev, foodTypeScope: event.target.value }))}
-                              className="w-full rounded-xl border border-slate-300 dark:border-neutral-700 px-4 py-3 outline-none focus:border-slate-900 dark:focus:border-neutral-400 text-slate-900 dark:text-white bg-white dark:bg-neutral-800"
-                            >
-                              <option value="Both">Both (Veg & Non-Veg)</option>
-                              <option value="Veg">Veg Only</option>
-                              <option value="Non-Veg">Non-Veg Only</option>
-                            </select>
-                          </div>
+
                         </div>
 
                         <div>

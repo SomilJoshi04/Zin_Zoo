@@ -483,18 +483,7 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
           fullscreenControl: false,
           draggable: !lockMapToAutocomplete,
           clickableIcons: false,
-          gestureHandling: lockMapToAutocomplete ? "none" : "auto",
-          // Hide basemap "tiles" (roads/labels/POIs) for pin-only UI.
-          // This keeps the map container usable for centering/pin placement without showing the full map details.
-          styles: [
-            { featureType: "all", elementType: "labels", stylers: [{ visibility: "off" }] },
-            { featureType: "administrative", elementType: "geometry", stylers: [{ visibility: "off" }] },
-            { featureType: "poi", elementType: "all", stylers: [{ visibility: "off" }] },
-            { featureType: "road", elementType: "all", stylers: [{ visibility: "off" }] },
-            { featureType: "transit", elementType: "all", stylers: [{ visibility: "off" }] },
-            { featureType: "water", elementType: "all", stylers: [{ visibility: "off" }] },
-            { featureType: "landscape", elementType: "all", stylers: [{ color: "#f3f4f6" }] },
-          ],
+          gestureHandling: lockMapToAutocomplete ? "none" : "auto"
         })
 
         googleMapRef.current = map
@@ -2477,7 +2466,8 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
           <form onSubmit={handleAddressFormSubmit}>
             <Button
               type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 text-white h-12 text-base font-semibold"
+              className="w-full h-12 text-base font-semibold"
+              style={{ backgroundColor: '#16a34a', color: 'white' }}
               disabled={loadingAddress}
             >
               {loadingAddress ? "Loading..." : "Save address"}

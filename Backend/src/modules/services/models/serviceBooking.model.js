@@ -58,6 +58,10 @@ const serviceBookingSchema = new mongoose.Schema(
             enum: ['pending', 'accepted', 'completed', 'cancelled'],
             default: 'pending'
         },
+        isRated: {
+            type: Boolean,
+            default: false
+        },
         paymentMode: {
             type: String,
             enum: ['pay_upfront', 'pay_after_service'],

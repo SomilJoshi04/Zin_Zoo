@@ -9,5 +9,6 @@ router.post('/bookings', servicesUserController.createBooking);
 router.get('/bookings', servicesUserController.getUserBookings);
 router.put('/bookings/:id/cancel', servicesUserController.cancelBooking);
 router.put('/bookings/:id/verify-payment', servicesUserController.verifyBookingPayment);
+router.post('/bookings/:id/rate', servicesUserController.rateServiceBooking);
 
 export default router;

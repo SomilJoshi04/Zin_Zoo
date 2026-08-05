@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { Loader } from '@googlemaps/js-api-loader';
+import { getGoogleMapsApiKey } from "@food/utils/googleMapsApiKey";
 import { adminAPI, uploadAPI } from "@food/api";
 import { Button } from "@food/components/ui/button";
 import { Input } from "@food/components/ui/input";
@@ -11,6 +13,23 @@ import {
   CardTitle,
 } from "@food/components/ui/card";
 import { toast } from "sonner";
+const geocodeAddressHelper = (address) => {
+  return new Promise((resolve) => {
+    if (!address || !window.google || !window.google.maps) return resolve(null);
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === "OK" && results[0] && results[0].geometry) {
+        resolve({
+          lat: results[0].geometry.location.lat(),
+          lng: results[0].geometry.location.lng()
+        });
+      } else {
+        resolve(null);
+      }
+    });
+  });
+};
+
 import { User, Mail, Phone, Save, Loader2, Upload, X, Pencil, Eye, EyeOff } from "lucide-react";
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
@@ -73,6 +92,13 @@ export default function AdminProfile() {
           email: adminData.email || "",
           phone: adminData.phone || "",
           profileImage: adminData.profileImage || "",
+          address: adminData.address || "",
+          city: adminData.city || "",
+          state: adminData.state || "",
+          pincode: adminData.pincode || "",
+          latitude: adminData.latitude !== undefined && adminData.latitude !== null ? String(adminData.latitude) : "",
+          longitude: adminData.longitude !== undefined && adminData.longitude !== null ? String(adminData.longitude) : "",
+          locationMode: "map",
         });
         return;
       }
@@ -98,6 +124,13 @@ export default function AdminProfile() {
             email: fallback.email || "",
             phone: fallback.phone || "",
             profileImage: fallback.profileImage || "",
+            address: fallback.address || "",
+            city: fallback.city || "",
+            state: fallback.state || "",
+            pincode: fallback.pincode || "",
+            latitude: fallback.latitude !== undefined && fallback.latitude !== null ? String(fallback.latitude) : "",
+            longitude: fallback.longitude !== undefined && fallback.longitude !== null ? String(fallback.longitude) : "",
+            locationMode: "map",
           });
           toast.info("Showing saved profile. Backend disconnected — updates may not persist.");
           return;
@@ -242,12 +275,50 @@ export default function AdminProfile() {
         }
       }
 
+      // Validate store location coordinates if provided
+      let latNum = parseFloat(formData.latitude);
+      let lngNum = parseFloat(formData.longitude);
+      
+      if ((isNaN(latNum) || isNaN(lngNum) || (latNum === 0 && lngNum === 0)) && formData.address) {
+        const coords = await geocodeAddressHelper(formData.address);
+        if (coords) {
+          latNum = coords.lat;
+          lngNum = coords.lng;
+          setFormData(prev => ({ ...prev, latitude: latNum, longitude: lngNum }));
+        }
+      }
+
+      if (formData.latitude || formData.longitude || formData.address || formData.city || formData.state || formData.pincode) {
+        if (!formData.address || !formData.city || !formData.state || !formData.pincode) {
+          toast.error("Complete store address (Address, City, State, Pincode) is required");
+          return;
+        }
+        if (isNaN(latNum) || isNaN(lngNum)) {
+          toast.error("Valid store coordinates (Latitude and Longitude) are required");
+          return;
+        }
+        if (latNum < -90 || latNum > 90) {
+          toast.error("Latitude must be between -90 and 90 degrees");
+          return;
+        }
+        if (lngNum < -180 || lngNum > 180) {
+          toast.error("Longitude must be between -180 and 180 degrees");
+          return;
+        }
+      }
+
       // Update profile with uploaded image URL
       const response = await adminAPI.updateAdminProfile({
         name,
         email,
         phone: phone || undefined,
         profileImage: profileImageUrl || undefined,
+        address: formData.address || "",
+        city: formData.city || "",
+        state: formData.state || "",
+        pincode: formData.pincode || "",
+        latitude: latNum ? Number(latNum) : null,
+        longitude: lngNum ? Number(lngNum) : null,
       });
 
       const updatedAdmin = response?.data?.data?.user ?? response?.data?.data?.admin ?? response?.data?.admin;
@@ -259,6 +330,13 @@ export default function AdminProfile() {
           email: updatedAdmin.email || "",
           phone: updatedAdmin.phone || "",
           profileImage: updatedAdmin.profileImage || "",
+          address: updatedAdmin.address || "",
+          city: updatedAdmin.city || "",
+          state: updatedAdmin.state || "",
+          pincode: updatedAdmin.pincode || "",
+          latitude: updatedAdmin.latitude !== undefined && updatedAdmin.latitude !== null ? String(updatedAdmin.latitude) : "",
+          longitude: updatedAdmin.longitude !== undefined && updatedAdmin.longitude !== null ? String(updatedAdmin.longitude) : "",
+          locationMode: "map",
         });
         // Clear selected file and preview
         setSelectedFile(null);
@@ -306,6 +384,13 @@ export default function AdminProfile() {
       email: profile?.email || "",
       phone: profile?.phone || "",
       profileImage: profile?.profileImage || "",
+      address: profile?.address || "",
+      city: profile?.city || "",
+      state: profile?.state || "",
+      pincode: profile?.pincode || "",
+      latitude: profile?.latitude !== undefined && profile?.latitude !== null ? String(profile?.latitude) : "",
+      longitude: profile?.longitude !== undefined && profile?.longitude !== null ? String(profile?.longitude) : "",
+      locationMode: "map",
     });
     setSelectedFile(null);
     setImagePreview(null);
@@ -322,6 +407,13 @@ export default function AdminProfile() {
       email: profile?.email || "",
       phone: profile?.phone || "",
       profileImage: profile?.profileImage || "",
+      address: profile?.address || "",
+      city: profile?.city || "",
+      state: profile?.state || "",
+      pincode: profile?.pincode || "",
+      latitude: profile?.latitude !== undefined && profile?.latitude !== null ? String(profile?.latitude) : "",
+      longitude: profile?.longitude !== undefined && profile?.longitude !== null ? String(profile?.longitude) : "",
+      locationMode: "map",
     });
     setSelectedFile(null);
     setImagePreview(null);
@@ -586,6 +678,149 @@ export default function AdminProfile() {
                 )}
               </div>
 
+            {/* Store Location Details section */}
+            <div className="md:col-span-2 border-t border-neutral-200 pt-6 mt-6 space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-neutral-900">Store / Admin Address Location</h3>
+                <p className="text-xs text-neutral-500 mt-1">This address serves as the delivery origin for Grocery and Accessories orders.</p>
+              </div>
+
+              <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+                  <Label className="text-sm font-semibold text-slate-900 dark:text-white">Store Location Details</Label>
+                  <div className="flex bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-semibold">
+                    <button
+                      type="button"
+                      disabled={!isEditMode}
+                      onClick={() => setFormData(p => ({ ...p, locationMode: 'map' }))}
+                      className={`px-3 py-1 rounded-md transition-colors ${formData.locationMode !== 'manual' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'} ${!isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      Option A: Map Picker
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!isEditMode}
+                      onClick={() => setFormData(p => ({ ...p, locationMode: 'manual' }))}
+                      className={`px-3 py-1 rounded-md transition-colors ${formData.locationMode === 'manual' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'} ${!isEditMode ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      Option B: Manual Address
+                    </button>
+                  </div>
+                </div>
+
+                {isEditMode && formData.locationMode !== 'manual' ? (
+                  <MapPicker form={formData} setForm={setFormData} />
+                ) : (
+                  formData.locationMode !== 'manual' && !isEditMode && (
+                    <div className="relative w-full h-64 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50">
+                      <StaticMap form={formData} />
+                    </div>
+                  )
+                )}
+
+                {formData.locationMode === 'manual' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Latitude</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={formData.latitude}
+                        onChange={(e) => setFormData(p => ({ ...p, latitude: e.target.value }))}
+                        placeholder="e.g. 28.6139"
+                        disabled={!isEditMode}
+                        className={`h-11 ${!isEditMode ? "bg-neutral-50 cursor-not-allowed" : ""}`}
+                      />
+                    </div>
+                    <div>
+                      <Label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Longitude</Label>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={formData.longitude}
+                        onChange={(e) => setFormData(p => ({ ...p, longitude: e.target.value }))}
+                        placeholder="e.g. 77.2090"
+                        disabled={!isEditMode}
+                        className={`h-11 ${!isEditMode ? "bg-neutral-50 cursor-not-allowed" : ""}`}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Coordinates Read-Only view for Option A under Edit Mode */}
+                {isEditMode && formData.locationMode !== 'manual' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <Label className="block text-xs font-semibold text-slate-500 tracking-wider mb-1">Selected Latitude</Label>
+                      <Input
+                        type="text"
+                        value={formData.latitude}
+                        disabled
+                        className="h-11 bg-neutral-50 cursor-not-allowed text-neutral-500"
+                      />
+                    </div>
+                    <div>
+                      <Label className="block text-xs font-semibold text-slate-500 tracking-wider mb-1">Selected Longitude</Label>
+                      <Input
+                        type="text"
+                        value={formData.longitude}
+                        disabled
+                        className="h-11 bg-neutral-50 cursor-not-allowed text-neutral-500"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Shared address fields */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div className="sm:col-span-2">
+                    <Label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Store Address / Landmark</Label>
+                    <Input
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) => setFormData(p => ({ ...p, address: e.target.value }))}
+                      placeholder="Shop No, Building, Area"
+                      disabled={!isEditMode}
+                      className={`h-11 ${!isEditMode ? "bg-neutral-50 cursor-not-allowed" : ""}`}
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">City</Label>
+                    <Input
+                      type="text"
+                      value={formData.city}
+                      onChange={(e) => setFormData(p => ({ ...p, city: e.target.value }))}
+                      placeholder="City"
+                      disabled={!isEditMode}
+                      className={`h-11 ${!isEditMode ? "bg-neutral-50 cursor-not-allowed" : ""}`}
+                    />
+                  </div>
+                  <div>
+                    <Label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">State</Label>
+                    <Input
+                      type="text"
+                      value={formData.state}
+                      onChange={(e) => setFormData(p => ({ ...p, state: e.target.value }))}
+                      placeholder="State"
+                      disabled={!isEditMode}
+                      className={`h-11 ${!isEditMode ? "bg-neutral-50 cursor-not-allowed" : ""}`}
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pincode</Label>
+                    <Input
+                      type="text"
+                      value={formData.pincode}
+                      onChange={(e) => setFormData(p => ({ ...p, pincode: e.target.value }))}
+                      placeholder="6-digit Pincode"
+                      disabled={!isEditMode}
+                      className={`h-11 ${!isEditMode ? "bg-neutral-50 cursor-not-allowed" : ""}`}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Old Password</Label>
                 <div className="relative">
@@ -738,4 +973,256 @@ export default function AdminProfile() {
       </Card>
     </div>
   );
+}
+
+const MapPicker = ({ form, setForm }) => {
+  const mapContainerRef = useRef(null)
+  const autocompleteInputRef = useRef(null)
+  const [mapLoading, setMapLoading] = useState(false)
+  const mapRef = useRef(null)
+  const markerRef = useRef(null)
+  const autocompleteRef = useRef(null)
+  const [apiKey, setApiKey] = useState("")
+
+  useEffect(() => {
+    getGoogleMapsApiKey().then((key) => {
+      setApiKey(key || "")
+    })
+  }, [])
+
+  useEffect(() => {
+    if (autocompleteInputRef.current && form.address) {
+      autocompleteInputRef.current.value = form.address;
+    }
+  }, [form.address]);
+
+  useEffect(() => {
+    if (!apiKey || !mapContainerRef.current) return
+    let isMounted = true
+    setMapLoading(true)
+
+    const initializeMap = async () => {
+      try {
+        const loader = new Loader({
+          apiKey: apiKey,
+          version: "weekly",
+          libraries: ["places"],
+        })
+        const google = await loader.load()
+        if (!isMounted || !mapContainerRef.current) {
+          return
+        }
+
+        const initialLat = parseFloat(form.latitude)
+        const initialLng = parseFloat(form.longitude)
+        const hasCoords = !isNaN(initialLat) && !isNaN(initialLng) && (initialLat !== 0 || initialLng !== 0)
+        const initialPos = hasCoords ? { lat: initialLat, lng: initialLng } : { lat: 28.6139, lng: 77.2090 }
+
+        const map = new google.maps.Map(mapContainerRef.current, {
+          center: initialPos,
+          zoom: hasCoords ? 16 : 5,
+          zoomControl: true,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+        })
+        mapRef.current = map
+
+        const marker = new google.maps.Marker({
+          position: initialPos,
+          map: map,
+          draggable: true,
+          animation: google.maps.Animation.DROP,
+        })
+        markerRef.current = marker
+
+        // Geocoding Fallback if coordinates are 0,0 or missing but address is present
+        if (!hasCoords && form.address) {
+          const geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ address: form.address }, (results, status) => {
+            if (status === "OK" && results[0] && results[0].geometry) {
+              const pos = results[0].geometry.location;
+              map.setCenter(pos);
+              map.setZoom(16);
+              marker.setPosition(pos);
+              setForm(prev => ({
+                ...prev,
+                latitude: pos.lat(),
+                longitude: pos.lng()
+              }));
+            } else {
+            }
+          });
+        }
+
+        if (autocompleteInputRef.current) {
+          const autocomplete = new google.maps.places.Autocomplete(autocompleteInputRef.current, {
+            types: ["geocode", "establishment"],
+          })
+          autocompleteRef.current = autocomplete
+
+          autocomplete.addListener("place_changed", () => {
+            const place = autocomplete.getPlace()
+            if (!place.geometry || !place.geometry.location) return
+
+            const lat = place.geometry.location.lat()
+            const lng = place.geometry.location.lng()
+            const pos = { lat, lng }
+
+            map.setCenter(pos)
+            map.setZoom(16)
+            marker.setPosition(pos)
+
+            let streetAddress = place.formatted_address || ""
+            let city = ""
+            let state = ""
+            let pincode = ""
+
+            if (place.address_components) {
+              for (const component of place.address_components) {
+                const types = component.types
+                if (types.includes("locality")) city = component.long_name
+                if (types.includes("administrative_area_level_1")) state = component.long_name
+                if (types.includes("postal_code")) pincode = component.long_name
+              }
+            }
+
+            setForm(prev => ({
+              ...prev,
+              address: streetAddress,
+              city,
+              state,
+              pincode,
+              latitude: lat,
+              longitude: lng
+            }))
+          })
+        }
+
+        marker.addListener("dragend", () => {
+          const pos = marker.getPosition()
+          const lat = pos.lat()
+          const lng = pos.lng()
+
+          const geocoder = new google.maps.Geocoder()
+          geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (status === "OK" && results[0]) {
+              const place = results[0]
+              let streetAddress = place.formatted_address || ""
+              let city = ""
+              let state = ""
+              let pincode = ""
+
+              if (place.address_components) {
+                for (const component of place.address_components) {
+                  const types = component.types
+                  if (types.includes("locality")) city = component.long_name
+                  if (types.includes("administrative_area_level_1")) state = component.long_name
+                  if (types.includes("postal_code")) pincode = component.long_name
+                }
+              }
+
+              setForm(prev => ({
+                ...prev,
+                address: streetAddress,
+                city,
+                state,
+                pincode,
+                latitude: lat,
+                longitude: lng
+              }))
+            } else {
+              setForm(prev => ({
+                ...prev,
+                latitude: lat,
+                longitude: lng
+              }))
+            }
+          })
+        })
+
+        setMapLoading(false)
+      } catch (err) {
+        setMapLoading(false)
+      }
+    }
+
+    initializeMap()
+    return () => {
+      isMounted = false
+    }
+  }, [apiKey])
+
+  return (
+    <div className="space-y-3 col-span-1 sm:col-span-2">
+      <div className="relative w-full h-64 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50">
+        <div ref={mapContainerRef} className="w-full h-full" />
+        {mapLoading && (
+          <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+              <span className="text-xs text-slate-600">Loading map...</span>
+            </div>
+          </div>
+        )}
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Search Address on Map</label>
+        <input
+          ref={autocompleteInputRef}
+          type="text"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+          placeholder="Search location or establishment..."
+        />
+      </div>
+      <p className="text-xs text-slate-400 dark:text-slate-500">Drag the pin to refine the exact location coordinates.</p>
+    </div>
+  )
+}
+
+const StaticMap = ({ form }) => {
+  const mapContainerRef = useRef(null)
+  const [apiKey, setApiKey] = useState("")
+
+  useEffect(() => {
+    getGoogleMapsApiKey().then((key) => {
+      setApiKey(key || "")
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!apiKey || !mapContainerRef.current) return
+    const initializeMap = async () => {
+      try {
+        const loader = new Loader({
+          apiKey: apiKey,
+          version: "weekly",
+        })
+        const google = await loader.load()
+        const lat = parseFloat(form.latitude) || 28.6139
+        const lng = parseFloat(form.longitude) || 77.2090
+        const pos = { lat, lng }
+
+        const map = new google.maps.Map(mapContainerRef.current, {
+          center: pos,
+          zoom: form.latitude ? 16 : 5,
+          zoomControl: false,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          gestureHandling: "none",
+        })
+
+        new google.maps.Marker({
+          position: pos,
+          map: map,
+        })
+      } catch (err) {
+        console.error("Static map load failed:", err)
+      }
+    }
+    initializeMap()
+  }, [apiKey, form.latitude, form.longitude])
+
+  return <div ref={mapContainerRef} className="w-full h-full" />
 }

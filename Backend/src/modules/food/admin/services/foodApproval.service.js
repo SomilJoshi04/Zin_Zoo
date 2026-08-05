@@ -64,7 +64,7 @@ export async function listPendingFoodApprovals(query = {}) {
         sectionName: f.categoryName || '',
         subsectionName: '',
         approvalStatus: f.approvalStatus || 'pending',
-        price: getFoodDisplayPrice(f),
+        price: f.price,
         variants: serializeFoodVariants(f.variants),
         image: f.image || '',
         images: f.image ? [f.image] : [],

@@ -56,6 +56,12 @@ const userAddressSchema = new mongoose.Schema(
                 }
             }
         },
+        latitude: {
+            type: Number
+        },
+        longitude: {
+            type: Number
+        },
         isDefault: {
             type: Boolean,
             default: false,

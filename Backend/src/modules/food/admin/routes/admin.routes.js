@@ -339,6 +339,7 @@ router.get('/restaurants', adminController.getRestaurants);
 router.get('/restaurants/reviews', adminController.getRestaurantReviews);
 router.get('/restaurants/:id', adminController.getRestaurantById);
 router.patch('/restaurants/:id', adminController.updateRestaurantById);
+router.patch('/restaurants/:id/location', adminController.updateRestaurantLocation);
 router.delete('/restaurants/:id', adminController.deleteRestaurant);
 
 // ----- Restaurant Commissions -----

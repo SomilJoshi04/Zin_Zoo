@@ -52,9 +52,11 @@ export function validateCalculateOrderDto(body) {
         items: z.array(orderItemSchema).min(1, 'At least one item required'),
         restaurantId: z.string().nullable().optional(),
         deliveryAddressId: z.string().nullable().optional(),
+        deliveryAddress: addressSchema.optional(),
         zoneId: z.string().nullable().optional(),
         couponCode: z.string().nullable().optional(),
-        deliveryFleet: z.string().nullable().optional()
+        deliveryFleet: z.string().nullable().optional(),
+        moduleType: z.enum(['food', 'grocery', 'accessories', 'all', 'unified']).optional()
     });
     const result = schema.safeParse(body);
     if (!result.success) {

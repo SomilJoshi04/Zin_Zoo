@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { motion } from "framer-motion"
-import { ArrowLeft, Clock, MapPin, IndianRupee, Wrench } from "lucide-react"
+import { ArrowLeft, Clock, MapPin, IndianRupee, Wrench, Star } from "lucide-react"
 import { Button } from "@food/components/ui/button"
 import {
   Dialog,
@@ -67,7 +67,7 @@ export default function MyServices() {
 
     if (matchedCategory) {
       const slug = matchedCategory.name.toLowerCase().replace(/\s+/g, '-')
-      navigate(`/food/user/services/${slug}?categoryId=${matchedCategory._id}&serviceName=${encodeURIComponent(booking.serviceName)}`)
+      navigate(`/food/user/services/${slug}?categoryId=${matchedCategory._id}&serviceName=${encodeURIComponent(booking.serviceName)}&source=my-services`)
     } else {
       navigate('/food/user/services')
     }
@@ -92,6 +92,30 @@ export default function MyServices() {
     } finally {
       setIsCancelModalOpen(false)
       setBookingToCancel(null)
+    }
+  }
+
+  const [ratingBooking, setRatingBooking] = useState(null)
+  const [ratingValue, setRatingValue] = useState(0)
+
+  const initiateRating = (booking) => {
+    setRatingBooking(booking)
+    setRatingValue(0)
+  }
+
+  const submitRating = async () => {
+    if (ratingValue === 0) {
+      toast.error("Please select a rating")
+      return
+    }
+    try {
+      await servicesUserAPI.rateServiceBooking(ratingBooking._id, { rating: ratingValue })
+      toast.success("Thank you for your rating!")
+      fetchBookings()
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to submit rating")
+    } finally {
+      setRatingBooking(null)
     }
   }
 
@@ -214,6 +238,15 @@ export default function MyServices() {
                       Book Again
                     </Button>
                   )}
+                  {booking.status === 'completed' && !booking.isRated && (
+                    <Button 
+                      variant="outline"
+                      className="flex-1 rounded-xl h-11 border-orange-200 text-orange-600 hover:bg-orange-50"
+                      onClick={() => initiateRating(booking)}
+                    >
+                      Rate Service
+                    </Button>
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -246,6 +279,42 @@ export default function MyServices() {
               }}
             >
               Yes, Cancel Booking
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!ratingBooking} onOpenChange={(open) => !open && setRatingBooking(null)}>
+        <DialogContent className="sm:max-w-[425px] bg-white dark:bg-[#1a1a1a] border-gray-100 dark:border-gray-800 p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900 dark:text-white pr-8">Rate Service</DialogTitle>
+            <DialogDescription className="text-gray-500 dark:text-gray-400 mt-2 text-sm sm:text-base">
+              How was your experience with {ratingBooking?.serviceName}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center gap-2 my-6">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <Star
+                key={star}
+                className={`h-10 w-10 cursor-pointer transition-colors ${ratingValue >= star ? "text-yellow-400 fill-current" : "text-gray-300 dark:text-gray-600"}`}
+                onClick={() => setRatingValue(star)}
+              />
+            ))}
+          </div>
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-3 sm:justify-end">
+            <Button 
+              variant="outline" 
+              onClick={() => setRatingBooking(null)}
+              className="w-full sm:w-auto h-11 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-xl"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={submitRating} 
+              disabled={ratingValue === 0}
+              className="w-full sm:w-auto h-11 text-white border-0 rounded-xl bg-orange-600 hover:bg-orange-700 disabled:opacity-50"
+            >
+              Submit Rating
             </Button>
           </DialogFooter>
         </DialogContent>

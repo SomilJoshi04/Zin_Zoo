@@ -1,7 +1,26 @@
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback, useRef } from "react"
+import { Loader } from '@googlemaps/js-api-loader'
+import { getGoogleMapsApiKey } from "@food/utils/googleMapsApiKey"
 import { Search, Trash2, Loader2, Eye, Pencil, Plus, ChevronLeft, ChevronRight, Check, X, Building2, MapPin, Phone, Mail, Clock, Star, AlertTriangle, ShieldCheck, ShieldX, Save } from "lucide-react"
 import { adminAPI, uploadAPI } from "@food/api"
 import { toast } from "sonner"
+const geocodeAddressHelper = (address) => {
+  return new Promise((resolve) => {
+    if (!address || !window.google || !window.google.maps) return resolve(null);
+    const geocoder = new window.google.maps.Geocoder();
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === "OK" && results[0] && results[0].geometry) {
+        resolve({
+          lat: results[0].geometry.location.lat(),
+          lng: results[0].geometry.location.lng()
+        });
+      } else {
+        resolve(null);
+      }
+    });
+  });
+};
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog"
 
 const FALLBACK_IMAGE =
@@ -73,6 +92,9 @@ const createEmptyForm = () => ({
   zoneId: "",
   profileImage: "",
   isAcceptingOrders: true,
+  latitude: "",
+  longitude: "",
+  locationMode: "map",
 })
 
 export default function RestaurantsList() {
@@ -248,7 +270,7 @@ export default function RestaurantsList() {
       const fullRes = res?.data?.data || res?.data || restaurant
       
       setEditTarget(fullRes)
-      setEditForm({
+            setEditForm({
         restaurantName: fullRes.restaurantName || "",
         ownerName: fullRes.ownerName || "",
         ownerPhone: fullRes.ownerPhone || fullRes.primaryContactNumber || "",
@@ -267,6 +289,9 @@ export default function RestaurantsList() {
         zoneId: getZoneId(fullRes),
         profileImage: fullRes.profileImage || "",
         isAcceptingOrders: fullRes.isAcceptingOrders !== false,
+        latitude: fullRes.latitude || fullRes.location?.latitude || (fullRes.location?.coordinates ? fullRes.location.coordinates[1] : ""),
+        longitude: fullRes.longitude || fullRes.location?.longitude || (fullRes.location?.coordinates ? fullRes.location.coordinates[0] : ""),
+        locationMode: "map",
       })
       setSelectedImageFile(null)
       setImagePreviewUrl(fullRes.profileImage || "")
@@ -281,6 +306,43 @@ export default function RestaurantsList() {
 
   const handleEditSave = async () => {
     if (!editTarget) return
+    if (!editForm.restaurantName || !editForm.ownerName) {
+      toast.error("Restaurant name and owner name are required");
+      return;
+    }
+    if (!editForm.address || !editForm.city || !editForm.state || !editForm.pincode) {
+      toast.error("Address, City, State, and Pincode are required");
+      return;
+    }
+    
+    let latNum = parseFloat(editForm.latitude);
+    let lngNum = parseFloat(editForm.longitude);
+    
+    if ((isNaN(latNum) || isNaN(lngNum) || (latNum === 0 && lngNum === 0)) && editForm.address) {
+      const coords = await geocodeAddressHelper(editForm.address);
+      if (coords) {
+        latNum = coords.lat;
+        lngNum = coords.lng;
+        setEditForm(prev => ({ ...prev, latitude: latNum, longitude: lngNum }));
+      }
+    }
+    
+    if (latNum === 0 && lngNum === 0) {
+      toast.error("Could not resolve location coordinates for the given address. Please select on map or enter manually.");
+      return;
+    }
+    if (isNaN(latNum) || isNaN(lngNum)) {
+      toast.error("Valid Latitude and Longitude are required");
+      return;
+    }
+    if (latNum < -90 || latNum > 90) {
+      toast.error("Latitude must be between -90 and 90 degrees");
+      return;
+    }
+    if (lngNum < -180 || lngNum > 180) {
+      toast.error("Longitude must be between -180 and 180 degrees");
+      return;
+    }
     try {
       setSaving(true)
       const id = editTarget._id || editTarget.id
@@ -306,6 +368,14 @@ export default function RestaurantsList() {
         zoneId: editForm.zoneId || "",
       }
       await adminAPI.updateRestaurant(id, body)
+      await adminAPI.updateRestaurantLocation(id, {
+        address: editForm.address,
+        city: editForm.city,
+        state: editForm.state,
+        pincode: editForm.pincode,
+        latitude: latNum,
+        longitude: lngNum
+      })
       toast.success(`"${editForm.restaurantName}" updated successfully`)
       setShowEditModal(false)
       setEditTarget(null)
@@ -336,6 +406,25 @@ export default function RestaurantsList() {
     const phoneRegex = /^[6-9]\d{9}$/;
     const pinRegex = /^\d{6}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!createForm.address || !createForm.city || !createForm.state || !createForm.pincode) {
+      toast.error("Address, City, State, and Pincode are required");
+      return;
+    }
+    const latNum = parseFloat(createForm.latitude);
+    const lngNum = parseFloat(createForm.longitude);
+    if (isNaN(latNum) || isNaN(lngNum)) {
+      toast.error("Valid Latitude and Longitude are required");
+      return;
+    }
+    if (latNum < -90 || latNum > 90) {
+      toast.error("Latitude must be between -90 and 90 degrees");
+      return;
+    }
+    if (lngNum < -180 || lngNum > 180) {
+      toast.error("Longitude must be between -180 and 180 degrees");
+      return;
+    }
 
     if (!alphaSpaceRegex.test(createForm.ownerName)) {
       toast.error("Owner Name can only contain alphabets and spaces");
@@ -388,7 +477,18 @@ export default function RestaurantsList() {
         pureVegRestaurant: createForm.restaurantType === "Veg",
         zoneId: createForm.zoneId || "",
       }
-      await adminAPI.createRestaurant(body)
+      const createResponse = await adminAPI.createRestaurant(body)
+      const newRestId = createResponse?.data?.data?.restaurant?._id || createResponse?.data?.restaurant?._id
+      if (newRestId) {
+        await adminAPI.updateRestaurantLocation(newRestId, {
+          address: createForm.address,
+          city: createForm.city,
+          state: createForm.state,
+          pincode: createForm.pincode,
+          latitude: latNum,
+          longitude: lngNum
+        })
+      }
       toast.success(`"${createForm.restaurantName}" created successfully`)
       setShowCreateModal(false)
       fetchRestaurants()
@@ -507,23 +607,8 @@ export default function RestaurantsList() {
           <div className="h-px bg-slate-200 dark:bg-slate-800 w-full" />
 
           {/* Bottom Row: Filters & Search */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Status Filter Tabs */}
-            <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1 self-start">
-              {STATUS_FILTERS.map((filter) => (
-                <button
-                  key={filter}
-                  onClick={() => setStatusFilter(filter)}
-                  className={`px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
-                    statusFilter === filter
-                      ? "bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm"
-                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                  }`}
-                >
-                  {filter.charAt(0).toUpperCase() + filter.slice(1)}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-col md:flex-row md:items-center justify-end gap-4">
+
 
             {/* Search Input */}
             <div className="relative w-full md:max-w-md">
@@ -599,8 +684,8 @@ export default function RestaurantsList() {
                           </div>
                           <div className="min-w-0">
                             <p className="text-sm font-semibold text-slate-900 dark:text-white truncate max-w-[200px]">{restaurant.restaurantName || "Unnamed"}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">
-                              {[restaurant.area || restaurant.location?.area, restaurant.city || restaurant.location?.city].filter(Boolean).join(", ") || "—"}
+                            <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]" title={restaurant.location?.address || restaurant.address || restaurant.area}>
+                              {restaurant.location?.address || restaurant.address || [restaurant.area || restaurant.location?.area, restaurant.city || restaurant.location?.city].filter(Boolean).join(", ") || "—"}
                             </p>
                             {/* <p className="text-[10px] font-mono text-slate-400 dark:text-slate-500 mt-0.5 select-all">
                               ID: {restaurant._id || restaurant.id}
@@ -925,6 +1010,216 @@ export default function RestaurantsList() {
 }
 
 // Reusable form fields component defined outside the parent to avoid focus loss on every keystroke
+const MapPicker = ({ form, setForm }) => {
+  const mapContainerRef = useRef(null)
+  const autocompleteInputRef = useRef(null)
+  const [mapLoading, setMapLoading] = useState(false)
+  const mapRef = useRef(null)
+  const markerRef = useRef(null)
+  const autocompleteRef = useRef(null)
+  const [apiKey, setApiKey] = useState("")
+
+  useEffect(() => {
+    getGoogleMapsApiKey().then((key) => {
+      setApiKey(key || "")
+    })
+  }, [])
+
+  useEffect(() => {
+    if (autocompleteInputRef.current && form.address) {
+      autocompleteInputRef.current.value = form.address;
+    }
+  }, [form.address]);
+
+  useEffect(() => {
+    if (!apiKey || !mapContainerRef.current) return
+    let isMounted = true
+    setMapLoading(true)
+
+    const initializeMap = async () => {
+      try {
+        const loader = new Loader({
+          apiKey: apiKey,
+          version: "weekly",
+          libraries: ["places"],
+        })
+        const google = await loader.load()
+        if (!isMounted || !mapContainerRef.current) {
+          return
+        }
+
+        const initialLat = parseFloat(form.latitude)
+        const initialLng = parseFloat(form.longitude)
+        const hasCoords = !isNaN(initialLat) && !isNaN(initialLng) && (initialLat !== 0 || initialLng !== 0)
+        const initialPos = hasCoords ? { lat: initialLat, lng: initialLng } : { lat: 28.6139, lng: 77.2090 }
+
+        const map = new google.maps.Map(mapContainerRef.current, {
+          center: initialPos,
+          zoom: hasCoords ? 16 : 5,
+          zoomControl: true,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+        })
+        mapRef.current = map
+
+        const marker = new google.maps.Marker({
+          position: initialPos,
+          map: map,
+          draggable: true,
+          animation: google.maps.Animation.DROP,
+        })
+        markerRef.current = marker
+
+        // Prevent Geocoding Fallback from overwriting user interactions
+        let userInteracted = false;
+
+        // Geocoding Fallback if coordinates are 0,0 or missing but address is present
+        if (!hasCoords && form.address) {
+          const geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ address: form.address }, (results, status) => {
+            if (status === "OK" && results[0] && results[0].geometry && !userInteracted) {
+              const pos = results[0].geometry.location;
+              map.setCenter(pos);
+              map.setZoom(16);
+              marker.setPosition(pos);
+              setForm(prev => ({
+                ...prev,
+                latitude: pos.lat(),
+                longitude: pos.lng()
+              }));
+            }
+          });
+        }
+
+        if (autocompleteInputRef.current) {
+          const autocomplete = new google.maps.places.Autocomplete(autocompleteInputRef.current, {
+            types: ["geocode", "establishment"],
+            fields: ["address_components", "geometry", "formatted_address", "name"]
+          })
+          autocompleteRef.current = autocomplete
+
+          autocomplete.addListener("place_changed", () => {
+            userInteracted = true;
+            const place = autocomplete.getPlace()
+            if (!place.geometry || !place.geometry.location) return
+
+            const lat = place.geometry.location.lat()
+            const lng = place.geometry.location.lng()
+            const pos = { lat, lng }
+
+            map.setCenter(pos)
+            map.setZoom(16)
+            marker.setPosition(pos)
+
+            let streetAddress = place.formatted_address || place.name || autocompleteInputRef.current.value || ""
+            let city = ""
+            let state = ""
+            let pincode = ""
+
+            if (place.address_components) {
+              for (const component of place.address_components) {
+                const types = component.types
+                if (types.includes("locality")) city = component.long_name
+                if (types.includes("administrative_area_level_1")) state = component.long_name
+                if (types.includes("postal_code")) pincode = component.long_name
+              }
+            }
+
+            setForm(prev => ({
+              ...prev,
+              address: streetAddress,
+              city,
+              state,
+              pincode,
+              latitude: lat,
+              longitude: lng
+            }))
+          })
+        }
+
+        marker.addListener("dragend", () => {
+          userInteracted = true;
+          const pos = marker.getPosition()
+          const lat = pos.lat()
+          const lng = pos.lng()
+
+          const geocoder = new google.maps.Geocoder()
+          geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+            if (status === "OK" && results[0]) {
+              const place = results[0]
+              let streetAddress = place.formatted_address || ""
+              let city = ""
+              let state = ""
+              let pincode = ""
+
+              if (place.address_components) {
+                for (const component of place.address_components) {
+                  const types = component.types
+                  if (types.includes("locality")) city = component.long_name
+                  if (types.includes("administrative_area_level_1")) state = component.long_name
+                  if (types.includes("postal_code")) pincode = component.long_name
+                }
+              }
+
+              setForm(prev => ({
+                ...prev,
+                address: streetAddress,
+                city,
+                state,
+                pincode,
+                latitude: lat,
+                longitude: lng
+              }))
+            } else {
+              setForm(prev => ({
+                ...prev,
+                latitude: lat,
+                longitude: lng
+              }))
+            }
+          })
+        })
+
+        setMapLoading(false)
+      } catch (err) {
+        setMapLoading(false)
+      }
+    }
+
+    initializeMap()
+    return () => {
+      isMounted = false
+    }
+  }, [apiKey])
+
+  return (
+    <div className="space-y-3 col-span-1 sm:col-span-2">
+      <div className="relative w-full h-64 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50">
+        <div ref={mapContainerRef} className="w-full h-full" />
+        {mapLoading && (
+          <div className="absolute inset-0 bg-white/70 dark:bg-slate-900/70 flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin text-orange-500" />
+              <span className="text-xs text-slate-600">Loading map...</span>
+            </div>
+          </div>
+        )}
+      </div>
+      <div>
+        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Search Address on Map</label>
+        <input
+          ref={autocompleteInputRef}
+          type="text"
+          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+          placeholder="Search location or establishment..."
+        />
+      </div>
+      <p className="text-xs text-slate-400 dark:text-slate-500">Drag the pin to refine the exact location coordinates.</p>
+    </div>
+  )
+}
+
 const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile, imagePreviewUrl, setImagePreviewUrl }) => (
   <div className="space-y-4">
     {/* Restaurant Image Upload */}
@@ -961,6 +1256,7 @@ const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile,
         </div>
       </div>
     </div>
+    
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Name *</label>
@@ -986,44 +1282,109 @@ const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile,
           className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Enter primary contact number" />
       </div>
-      <div>
+      <div className="sm:col-span-2">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Email</label>
         <input type="email" value={form.ownerEmail} onChange={(e) => setForm((p) => ({ ...p, ownerEmail: e.target.value }))}
           className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
           placeholder="Enter email" />
       </div>
-      {/* Address and Area commented out as per user request
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Address</label>
-        <input type="text" value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="Shop No, Building, Street, Landmark" />
+
+      {/* LOCATION PICKER OPTIONS */}
+      <div className="col-span-1 sm:col-span-2 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+          <label className="text-sm font-semibold text-slate-900 dark:text-white">Restaurant Location Details *</label>
+          <div className="flex bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-semibold">
+            <button
+              type="button"
+              onClick={() => setForm(p => ({ ...p, locationMode: 'map' }))}
+              className={`px-3 py-1 rounded-md transition-colors ${form.locationMode !== 'manual' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}
+            >
+              Option A: Map Picker
+            </button>
+            <button
+              type="button"
+              onClick={() => setForm(p => ({ ...p, locationMode: 'manual' }))}
+              className={`px-3 py-1 rounded-md transition-colors ${form.locationMode === 'manual' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}
+            >
+              Option B: Manual Address
+            </button>
+          </div>
+        </div>
+
+        {form.locationMode !== 'manual' ? (
+          <MapPicker form={form} setForm={setForm} />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Latitude *</label>
+              <input
+                type="number"
+                step="any"
+                value={form.latitude}
+                onChange={(e) => setForm(p => ({ ...p, latitude: e.target.value }))}
+                placeholder="e.g. 28.6139"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Longitude *</label>
+              <input
+                type="number"
+                step="any"
+                value={form.longitude}
+                onChange={(e) => setForm(p => ({ ...p, longitude: e.target.value }))}
+                placeholder="e.g. 77.2090"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Address Text Fields (shared by both modes) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Street Address / Landmark *</label>
+            <input
+              type="text"
+              value={form.address}
+              onChange={(e) => setForm(p => ({ ...p, address: e.target.value }))}
+              placeholder="Shop No, Building, Area"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">City *</label>
+            <input
+              type="text"
+              value={form.city}
+              onChange={(e) => setForm(p => ({ ...p, city: e.target.value }))}
+              placeholder="City"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">State *</label>
+            <input
+              type="text"
+              value={form.state}
+              onChange={(e) => setForm(p => ({ ...p, state: e.target.value }))}
+              placeholder="State"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pincode *</label>
+            <input
+              type="text"
+              value={form.pincode}
+              onChange={(e) => setForm(p => ({ ...p, pincode: e.target.value }))}
+              placeholder="6-digit Pincode"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            />
+          </div>
+        </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Area</label>
-        <input type="text" value={form.area} onChange={(e) => setForm((p) => ({ ...p, area: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="Area / locality" />
-      </div>
-      */}
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">City</label>
-        <input type="text" value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="City" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">State</label>
-        <input type="text" value={form.state} onChange={(e) => setForm((p) => ({ ...p, state: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="State" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Pincode</label>
-        <input type="text" value={form.pincode} onChange={(e) => setForm((p) => ({ ...p, pincode: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="Pincode" />
-      </div>
+
       <div>
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Zone</label>
         <select value={form.zoneId} onChange={(e) => setForm((p) => ({ ...p, zoneId: e.target.value }))}
@@ -1071,5 +1432,4 @@ const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile,
       </div>
     </div>
   </div>
-)
-
+);

@@ -150,9 +150,10 @@ function RestaurantDetailsContent() {
     buildCartLineId(item?.id || item?._id || "", variant?.id || variant?._id || "")
 
   const getVariantForDish = (item, preferredVariantId = "") => {
+    // "base" or empty string means the user wants the base item (no variant)
+    if (!preferredVariantId || preferredVariantId === "base") return null
     const variants = getFoodVariants(item)
-    if (variants.length === 0) return null
-    return variants.find((variant) => String(variant.id) === String(preferredVariantId || "")) || variants[0]
+    return variants.find((variant) => String(variant.id) === String(preferredVariantId)) || null
   }
 
   // Preserve state on change
@@ -853,7 +854,7 @@ function RestaurantDetailsContent() {
                     id: String(item.id || item._id || `${Date.now()}-${Math.random()}`),
                     name: item.name || "Unnamed Item",
                     foodType,
-                    price: getFoodDisplayPrice(item),
+                    price: Number(item.price) || 0,
                     variants: getFoodVariants(item),
                     variations: getFoodVariants(item),
                     isAvailable: item.isAvailable !== false,
@@ -1211,8 +1212,9 @@ function RestaurantDetailsContent() {
       setSelectedVariantId("")
       return
     }
-    const defaultVariant = getDefaultFoodVariant(selectedItem)
-    setSelectedVariantId(defaultVariant?.id || "")
+    // FIXED: Default to "base" (original product price) when opening the item modal.
+    // User must explicitly select a variant — we never auto-select one.
+    setSelectedVariantId("base")
   }, [selectedItem])
 
   // Helper function to update item quantity in both local state and cart
@@ -1237,7 +1239,9 @@ function RestaurantDetailsContent() {
       return
     }
 
-    const resolvedVariant = preferredVariant || getDefaultFoodVariant(item)
+    // preferredVariant === null means the user selected the base item (no variant)
+    // preferredVariant === a variant object means a specific variant was chosen
+    const resolvedVariant = preferredVariant !== undefined ? preferredVariant : null
     const lineItemId = getLineItemIdForDish(item, resolvedVariant)
 
     // Update local state
@@ -3601,8 +3605,21 @@ function RestaurantDetailsContent() {
 
                     {hasFoodVariants(selectedItem) && (
                       <div className="mb-4">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Choose a variant</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white mb-2">Choose an option</p>
                         <div className="flex flex-wrap gap-2">
+                          {/* BASE ITEM — always shown as first option */}
+                          <button
+                            key="base"
+                            type="button"
+                            onClick={() => setSelectedVariantId("base")}
+                            className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${selectedVariantId === "base"
+                              ? "border-red-500 bg-red-50 text-red-600 dark:border-red-400 dark:bg-red-900/30 dark:text-red-200"
+                              : "border-gray-200 bg-white text-gray-700 dark:border-gray-700 dark:bg-[#2a2a2a] dark:text-gray-300"
+                              }`}
+                          >
+                            {selectedItem.name} · {RUPEE_SYMBOL}{Math.round(selectedItem.price)}
+                          </button>
+                          {/* VARIANT OPTIONS */}
                           {getFoodVariants(selectedItem).map((variant) => (
                             <button
                               key={variant.id}
@@ -3729,7 +3746,7 @@ function RestaurantDetailsContent() {
                             )}
                             <span className="text-base font-bold">
                               {hasFoodVariants(selectedItem)
-                                ? `· ${RUPEE_SYMBOL}${Math.round(getVariantForDish(selectedItem, selectedVariantId)?.price || selectedItem.price)}`
+                                ? `· ${RUPEE_SYMBOL}${Math.round(getVariantForDish(selectedItem, selectedVariantId)?.price ?? selectedItem.price)}`
                                 : `· ${RUPEE_SYMBOL}${Math.round(selectedItem.price)}`}
                             </span>
                           </div>

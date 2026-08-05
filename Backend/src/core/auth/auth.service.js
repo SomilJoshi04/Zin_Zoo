@@ -369,6 +369,12 @@ export const updateAdminProfile = async (userId, body) => {
   if (body.phone !== undefined) admin.phone = String(body.phone || "").trim();
   if (body.profileImage !== undefined)
     admin.profileImage = String(body.profileImage || "").trim();
+  if (body.address !== undefined) admin.address = body.address ? String(body.address).trim() : '';
+  if (body.city !== undefined) admin.city = body.city ? String(body.city).trim() : '';
+  if (body.state !== undefined) admin.state = body.state ? String(body.state).trim() : '';
+  if (body.pincode !== undefined) admin.pincode = body.pincode ? String(body.pincode).trim() : '';
+  if (body.latitude !== undefined) admin.latitude = body.latitude !== null ? Number(body.latitude) : null;
+  if (body.longitude !== undefined) admin.longitude = body.longitude !== null ? Number(body.longitude) : null;
   // Normalize servicesAccess so legacy values (e.g. 'zomato') don't fail schema validation on save
   if (Array.isArray(admin.servicesAccess)) {
     const valid = admin.servicesAccess.filter((s) =>

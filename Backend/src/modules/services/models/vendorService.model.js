@@ -58,6 +58,14 @@ const vendorServiceSchema = new mongoose.Schema(
         isActive: {
             type: Boolean,
             default: true
+        },
+        rating: {
+            type: Number,
+            default: 0
+        },
+        reviewsCount: {
+            type: Number,
+            default: 0
         }
     },
     {

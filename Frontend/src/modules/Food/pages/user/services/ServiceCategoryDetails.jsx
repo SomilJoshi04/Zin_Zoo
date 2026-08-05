@@ -29,9 +29,14 @@ export default function ServiceCategoryDetails() {
   const handleCloseBooking = () => {
     setIsBookingOpen(false)
     setSelectedService(null)
-    const newParams = new URLSearchParams(searchParams)
-    newParams.delete('serviceName')
-    navigate({ search: newParams.toString() }, { replace: true })
+    const source = searchParams.get('source')
+    if (source === 'my-services') {
+      navigate('/food/user/profile/my-services')
+    } else {
+      const newParams = new URLSearchParams(searchParams)
+      newParams.delete('serviceName')
+      navigate({ search: newParams.toString() }, { replace: true })
+    }
   }
 
   useEffect(() => {
@@ -396,9 +401,15 @@ function ServiceCard({ svc, idx, onBook }) {
         <div className="flex-1 py-1">
           <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{svc.name}</h3>
           <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500 dark:text-gray-400">
-            <span className="flex items-center gap-1 font-medium text-green-600 dark:text-green-500 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-md">
-              <Star className="h-3 w-3" fill="currentColor" /> 4.8
-            </span>
+            {svc.rating > 0 ? (
+              <span className="flex items-center gap-1 font-medium text-green-600 dark:text-green-500 bg-green-50 dark:bg-green-500/10 px-2 py-0.5 rounded-md">
+                <Star className="h-3 w-3" fill="currentColor" /> {Number(svc.rating).toFixed(1)}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 font-medium text-gray-500 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                <Star className="h-3 w-3" /> New
+              </span>
+            )}
             <span className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
               <Clock className="h-3 w-3" /> {svc.availableFrom} - {svc.availableTo}
             </span>

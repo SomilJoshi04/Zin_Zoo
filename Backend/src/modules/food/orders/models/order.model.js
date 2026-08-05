@@ -223,6 +223,12 @@ const orderSchema = new mongoose.Schema(
             type: deliveryAddressSchema,
             required: true
         },
+        deliveryDistance: { type: Number },
+        deliveryLatitude: { type: Number },
+        deliveryLongitude: { type: Number },
+        originLatitude: { type: Number },
+        originLongitude: { type: Number },
+        originAddress: { type: String, trim: true },
         customerName: { type: String, default: '', trim: true },
         customerPhone: { type: String, default: '', trim: true },
         pricing: {

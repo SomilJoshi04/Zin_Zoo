@@ -182,3 +182,82 @@ export const verifyBookingPayment = async (req, res, next) => {
         res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };
+
+// @desc    Rate a completed service booking
+// @route   POST /api/v1/services/user/bookings/:id/rate
+// @access  Private (User)
+export const rateServiceBooking = async (req, res, next) => {
+    try {
+        const { rating } = req.body;
+        
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: 'Valid rating between 1 and 5 is required' });
+        }
+
+        const booking = await ServiceBooking.findOne({ 
+            _id: req.params.id, 
+            userId: req.user.userId 
+        });
+
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Booking not found' });
+        }
+
+        if (booking.status !== 'completed') {
+            return res.status(400).json({ success: false, message: 'Can only rate completed bookings' });
+        }
+
+        if (booking.isRated) {
+            return res.status(400).json({ success: false, message: 'Booking is already rated' });
+        }
+
+        const { ServiceReview } = await import('../models/serviceReview.model.js');
+        const { VendorService } = await import('../models/vendorService.model.js');
+
+        let targetServiceId = booking.serviceId;
+        if (!targetServiceId && booking.serviceName) {
+            const service = await VendorService.findOne({ name: booking.serviceName });
+            if (service) {
+                targetServiceId = service._id;
+                booking.serviceId = service._id;
+            }
+        }
+
+        // Create review
+        await ServiceReview.create({
+            userId: req.user.userId,
+            serviceId: targetServiceId || undefined,
+            bookingId: booking._id,
+            rating: Number(rating)
+        });
+
+        // Update booking
+        booking.isRated = true;
+        await booking.save();
+
+        // Update service rating
+        if (targetServiceId) {
+            const service = await VendorService.findById(targetServiceId);
+            if (service) {
+                const currentRating = service.rating || 0;
+                const currentCount = service.reviewsCount || 0;
+                
+                const newTotalRating = (currentRating * currentCount) + Number(rating);
+                const newCount = currentCount + 1;
+                const newAverage = newTotalRating / newCount;
+
+                service.rating = newAverage;
+                service.reviewsCount = newCount;
+                await service.save();
+            }
+        }
+
+        res.status(201).json({
+            success: true,
+            message: 'Service rated successfully'
+        });
+    } catch (error) {
+        console.error('rateServiceBooking error:', error);
+        res.status(500).json({ success: false, message: 'Internal Server Error' });
+    }
+};

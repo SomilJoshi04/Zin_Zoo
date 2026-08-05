@@ -8,6 +8,23 @@ import { ValidationError } from '../../../../core/auth/errors.js';
 import { haversineKm } from './order.helpers.js';
 
 export async function calculateOrderPricing(userId, dto) {
+  // Resolve deliveryAddress if missing but deliveryAddressId is present
+  if ((!dto.deliveryAddress || !dto.deliveryAddress.location) && dto.deliveryAddressId && userId) {
+    const { FoodUser } = await import('../../../../core/users/user.model.js');
+    const user = await FoodUser.findById(userId).select('addresses').lean();
+    if (user && Array.isArray(user.addresses)) {
+      const addr = user.addresses.find(a => String(a._id) === String(dto.deliveryAddressId));
+      if (addr) {
+        dto.deliveryAddress = addr;
+      }
+    }
+  }
+
+  // Fallback to dto.address if deliveryAddress is missing
+  if (!dto.deliveryAddress && dto.address) {
+    dto.deliveryAddress = dto.address;
+  }
+
   let restaurant = null;
   if (dto.restaurantId) {
     restaurant = await FoodRestaurant.findById(dto.restaurantId)
@@ -46,14 +63,63 @@ export async function calculateOrderPricing(userId, dto) {
   ) {
     deliveryFee = 0;
   } else {
-    // Calculate distance if coordinates are available
+    const isGroceryOrAccessories = 
+      dto.moduleType === 'grocery' || 
+      dto.moduleType === 'accessories' ||
+      (items.length > 0 && (items[0].moduleType === 'grocery' || items[0].moduleType === 'accessories'));
+
+    let originLat = null;
+    let originLng = null;
+
+    if (isGroceryOrAccessories) {
+      const { FoodAdmin } = await import('../../../../core/admin/admin.model.js');
+      const storeAdmin = await FoodAdmin.findOne({ adminType: 'super_admin' }).lean();
+      if (storeAdmin) {
+        originLat = storeAdmin.latitude;
+        originLng = storeAdmin.longitude;
+      }
+    } else if (restaurant) {
+      if (restaurant.location?.coordinates?.length === 2) {
+        originLng = restaurant.location.coordinates[0];
+        originLat = restaurant.location.coordinates[1];
+      } else {
+        originLat = restaurant.location?.latitude;
+        originLng = restaurant.location?.longitude;
+      }
+    }
+
+    let userLat = dto.deliveryAddress?.latitude;
+    let userLng = dto.deliveryAddress?.longitude;
+    if (userLat === undefined || userLng === undefined || userLat === null || userLng === null) {
+      const coords = dto.deliveryAddress?.location?.coordinates || dto.deliveryAddress?.location;
+      if (Array.isArray(coords) && coords.length === 2) {
+        userLng = coords[0];
+        userLat = coords[1];
+      }
+    }
+
+    if (isGroceryOrAccessories) {
+      if (originLat === null || originLng === null || typeof originLat !== 'number' || typeof originLng !== 'number') {
+        throw new ValidationError("Store coordinates are not configured by Admin. Cannot calculate delivery fee.");
+      }
+    } else {
+      if (restaurant && (originLat === null || originLng === null || typeof originLat !== 'number' || typeof originLng !== 'number')) {
+        throw new ValidationError("Restaurant coordinates are not configured. Cannot calculate delivery fee.");
+      }
+    }
+
+    if (dto.deliveryAddress || dto.deliveryAddressId) {
+      console.log('[DEBUG PRICING]', { userLat, userLng, typeofUserLat: typeof userLat, typeofUserLng: typeof userLng, payloadDeliveryAddress: dto.deliveryAddress });
+      if (userLat === null || userLng === null || typeof userLat !== 'number' || typeof userLng !== 'number') {
+        throw new ValidationError("Delivery address coordinates are missing. Please select a location on the map.");
+      }
+    }
+
     if (
-      restaurant?.location?.coordinates?.length === 2 &&
-      dto.deliveryAddress?.location?.coordinates?.length === 2
+      typeof originLat === 'number' && typeof originLng === 'number' &&
+      typeof userLat === 'number' && typeof userLng === 'number'
     ) {
-      const [rLng, rLat] = restaurant.location.coordinates;
-      const [dLng, dLat] = dto.deliveryAddress.location.coordinates;
-      distanceKm = haversineKm(rLat, rLng, dLat, dLng);
+      distanceKm = haversineKm(originLat, originLng, userLat, userLng);
     }
 
     const ranges = Array.isArray(feeSettings.deliveryFeeRanges)

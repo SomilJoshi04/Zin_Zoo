@@ -144,12 +144,31 @@ export async function deleteGroceryProduct(id) {
 
 // ----- Grocery Orders -----
 export async function getGroceryOrders(query = {}) {
-    const filter = { moduleType: 'grocery' };
+    const validPaymentCondition = {
+        $or: [
+            { 'payment.method': { $in: ['cash', 'wallet'] } },
+            { 'payment.status': { $in: ['paid', 'authorized', 'captured', 'settled', 'refunded', 'cod_pending'] } }
+        ]
+    };
+
+    const filter = { 
+        moduleType: 'grocery',
+        ...validPaymentCondition
+    };
+
     if (query.search) {
-        filter.$or = [
-            { orderId: { $regex: query.search, $options: 'i' } },
-            { customerName: { $regex: query.search, $options: 'i' } }
+        // Use $and so we don't overwrite the validPaymentCondition $or
+        filter.$and = [
+            { ...validPaymentCondition },
+            {
+                $or: [
+                    { orderId: { $regex: query.search, $options: 'i' } },
+                    { customerName: { $regex: query.search, $options: 'i' } }
+                ]
+            }
         ];
+        // Remove the top-level $or since it's now inside $and
+        delete filter.$or;
     }
     if (query.status && query.status !== 'all') {
         const statusMap = {

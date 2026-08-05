@@ -93,47 +93,29 @@ const asyncPool = async (limit, items, iterator) => {
 
 const getCreateFoodPricing = (body = {}) => {
     const variants = normalizeFoodVariantsInput(extractRawFoodVariants(body));
-    if (variants.length > 0) {
-        return {
-            price: getFoodDisplayPrice({ variants }),
-            variants
-        };
-    }
-
     const price = Number(body.price);
     if (!Number.isFinite(price) || price < 0) throw new ValidationError('Price is invalid');
-    return {
-        price,
-        variants: []
-    };
+    return { price, variants };
 };
 
 const getUpdatedFoodPricing = (existing = {}, body = {}) => {
     const variantsTouched = body.variants !== undefined || body.variations !== undefined;
-    const existingHasVariants = hasFoodVariants(existing);
     const update = {};
 
     if (variantsTouched) {
         const variants = normalizeFoodVariantsInput(extractRawFoodVariants(body));
         update.variants = variants;
 
-        if (variants.length > 0) {
-            update.price = getFoodDisplayPrice({ variants });
-            return update;
+        if (variants.length === 0) {
+            const nextBasePrice = body.price !== undefined ? Number(body.price) : Number(existing.price);
+            if (!Number.isFinite(nextBasePrice) || nextBasePrice < 0) {
+                throw new ValidationError('Base price is required when variants are removed');
+            }
+            update.price = nextBasePrice;
         }
-
-        const nextBasePrice = body.price !== undefined ? Number(body.price) : Number(existingHasVariants ? NaN : existing.price);
-        if (!Number.isFinite(nextBasePrice) || nextBasePrice < 0) {
-            throw new ValidationError('Base price is required when variants are removed');
-        }
-        update.price = nextBasePrice;
-        return update;
     }
 
     if (body.price !== undefined) {
-        if (existingHasVariants) {
-            throw new ValidationError('Update variants instead of base price for foods with variants');
-        }
         const price = Number(body.price);
         if (!Number.isFinite(price) || price < 0) throw new ValidationError('Price is invalid');
         update.price = price;

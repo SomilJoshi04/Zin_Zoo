@@ -22,16 +22,23 @@ export const getFoodVariants = (item = {}) =>
 
 export const hasFoodVariants = (item = {}) => getFoodVariants(item).length > 0
 
-export const getDefaultFoodVariant = (item = {}) => getFoodVariants(item)[0] || null
+// Returns null by default — null means "base item is selected" (not any variant)
+export const getDefaultFoodVariant = (item = {}) => null
 
 export const getFoodDisplayPrice = (item = {}) => {
   const variants = getFoodVariants(item)
+  const basePrice = Number(item?.price)
+  const validBase = Number.isFinite(basePrice) && basePrice > 0 ? basePrice : null
+
   if (variants.length > 0) {
-    return Math.min(...variants.map((variant) => Number(variant.price) || 0))
+    // FIXED: Include base price in the minimum calculation so "Starting from"
+    // always reflects the lowest of (base price, all variant prices).
+    const variantPrices = variants.map((v) => Number(v.price)).filter((p) => p > 0)
+    const allPrices = validBase !== null ? [validBase, ...variantPrices] : variantPrices
+    return allPrices.length > 0 ? Math.min(...allPrices) : 0
   }
 
-  const price = Number(item?.price)
-  return Number.isFinite(price) ? price : 0
+  return validBase ?? 0
 }
 
 export const getFoodPriceLabel = (item = {}) => {

@@ -490,6 +490,8 @@ export default function Cart() {
       state: loc?.state || loc?.city || "Current State",
       zipCode: loc?.postalCode || loc?.zipCode || "",
       phone: userProfile?.phone || "",
+      latitude: loc.latitude,
+      longitude: loc.longitude,
       location: {
         type: "Point",
         coordinates: [loc.longitude, loc.latitude], // [lng, lat]
@@ -1059,7 +1061,8 @@ export default function Cart() {
           quantity: item.quantity || 1,
           image: item.image,
           description: item.description,
-          isVeg: item.isVeg !== false
+          isVeg: item.isVeg !== false,
+          moduleType: item.moduleType || activeCartTab
         }))
 
         const resolvedRestaurantId = restaurantData?.restaurantId || restaurantData?._id || restaurantId || undefined
@@ -1069,7 +1072,8 @@ export default function Cart() {
           items,
           restaurantId: resolvedRestaurantId,
           deliveryAddress: defaultAddress,
-          couponCode: resolvedCouponCode
+          couponCode: resolvedCouponCode,
+          moduleType: activeCartTab === 'all' ? 'unified' : activeCartTab
         })
 
         if (response?.data?.success && response?.data?.data?.pricing) {
@@ -1503,7 +1507,8 @@ export default function Cart() {
           items,
           restaurantId: items.length > 0 ? items[0].restaurantId : null,
           deliveryAddress: defaultAddress,
-          couponCode: coupon.code
+          couponCode: coupon.code,
+          moduleType: activeCartTab === 'all' ? 'unified' : activeCartTab
         })
 
         const pricingData = response?.data?.data?.pricing
@@ -1570,7 +1575,8 @@ export default function Cart() {
           image: item.image,
           description: item.description,
           isVeg: item.isVeg !== false,
-          restaurantId: sanitizedRestaurantId
+          restaurantId: sanitizedRestaurantId,
+          moduleType: item.moduleType || activeCartTab
         };
       })
 
@@ -1578,7 +1584,8 @@ export default function Cart() {
         items,
         restaurantId: items.length > 0 ? items[0].restaurantId : null,
         deliveryAddress: defaultAddress,
-        couponCode: inputCode
+        couponCode: inputCode,
+        moduleType: activeCartTab === 'all' ? 'unified' : activeCartTab
       })
 
       const pricingData = response?.data?.data?.pricing
@@ -1651,7 +1658,8 @@ export default function Cart() {
           items,
           restaurantId: items.length > 0 ? items[0].restaurantId : null,
           deliveryAddress: defaultAddress,
-          couponCode: null
+          couponCode: null,
+          moduleType: activeCartTab === 'all' ? 'unified' : activeCartTab
         })
 
         if (response?.data?.success && response?.data?.data?.pricing) {
@@ -2843,7 +2851,7 @@ export default function Cart() {
                       </span>
                     </div>
                     {deliveryFeeBreakdownText && (
-                      <div className="text-[11px] text-gray-500 dark:text-gray-400 -mt-1.5 ml-1 border-l-2 border-gray-100 pl-2">
+                      <div className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
                         {deliveryFeeBreakdownText}
                       </div>
                     )}

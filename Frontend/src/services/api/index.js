@@ -192,6 +192,10 @@ export const servicesUserAPI = {
     apiClient.put(`/services/user/bookings/${id}/verify-payment`, body, {
       contextModule: "user",
     }),
+  rateServiceBooking: (id, body) =>
+    apiClient.post(`/services/user/bookings/${id}/rate`, body, {
+      contextModule: "user",
+    }),
 };
 
 /** Admin API - new backend only (GET /auth/me, PATCH /auth/admin/profile, POST /auth/admin/change-password) */

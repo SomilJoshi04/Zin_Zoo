@@ -2778,6 +2778,13 @@ export async function updateRestaurantLocation(id, body = {}) {
     const latitude = toFiniteNumber(source.latitude ?? latFromCoordinates);
     const longitude = toFiniteNumber(source.longitude ?? lngFromCoordinates);
 
+    if (latitude !== null && (latitude < -90 || latitude > 90)) {
+        throw new ValidationError('Latitude must be between -90 and 90 degrees');
+    }
+    if (longitude !== null && (longitude < -180 || longitude > 180)) {
+        throw new ValidationError('Longitude must be between -180 and 180 degrees');
+    }
+
     const area = toStr(source.area);
     const city = toStr(source.city);
     const state = toStr(source.state);
@@ -3355,7 +3362,7 @@ export async function getFoods(query) {
         categoryName: f.categoryName || '',
         name: f.name,
         description: f.description || '',
-        price: getFoodDisplayPrice(f),
+        price: f.price,
         variants: serializeFoodVariants(f.variants),
         variations: serializeFoodVariants(f.variants),
         image: f.image || '',
@@ -3410,49 +3417,35 @@ const resolveAdminFoodCategory = async ({ categoryId, categoryName, foodType, pu
     };
 };
 
+// FIXED: base price is always taken from body.price.
+// Variants are stored separately and must NEVER overwrite the base price.
 const getAdminFoodCreatePricing = (body = {}) => {
     const variants = normalizeFoodVariantsInput(extractRawFoodVariants(body));
-    if (variants.length > 0) {
-        return {
-            price: getFoodDisplayPrice({ variants }),
-            variants
-        };
-    }
-
     const price = Number(body.price);
     if (!Number.isFinite(price) || price <= 0) throw new ValidationError('Price must be greater than 0');
-    return {
-        price,
-        variants: []
-    };
+    return { price, variants };
 };
 
 const getAdminFoodUpdatedPricing = (existing = {}, body = {}) => {
     const variantsTouched = body.variants !== undefined || body.variations !== undefined;
-    const existingHasVariants = hasFoodVariants(existing);
     const update = {};
 
     if (variantsTouched) {
         const variants = normalizeFoodVariantsInput(extractRawFoodVariants(body));
         update.variants = variants;
-
-        if (variants.length > 0) {
-            update.price = getFoodDisplayPrice({ variants });
-            return update;
+        // If all variants are removed, restore base price from body.price or existing.price.
+        if (variants.length === 0) {
+            const nextBasePrice = body.price !== undefined ? Number(body.price) : Number(existing.price);
+            if (!Number.isFinite(nextBasePrice) || nextBasePrice <= 0) {
+                throw new ValidationError('Base price must be greater than 0 when variants are removed');
+            }
+            update.price = nextBasePrice;
         }
-
-        const nextBasePrice = body.price !== undefined ? Number(body.price) : Number(existingHasVariants ? NaN : existing.price);
-        if (!Number.isFinite(nextBasePrice) || nextBasePrice <= 0) {
-            throw new ValidationError('Base price must be greater than 0 when variants are removed');
-        }
-        update.price = nextBasePrice;
-        return update;
     }
 
+    // FIXED (Option A): Admin can always edit the base price directly.
+    // This allows correcting prices that were previously overwritten by variants.
     if (body.price !== undefined) {
-        if (existingHasVariants) {
-            throw new ValidationError('Update variants instead of base price for foods with variants');
-        }
         const price = Number(body.price);
         if (!Number.isFinite(price) || price <= 0) throw new ValidationError('Price must be greater than 0');
         update.price = price;
@@ -3609,6 +3602,13 @@ export async function createRestaurantByAdmin(body) {
     const latFromCoordinates = toFiniteNumber(coordinates[1]);
     const latitude = toFiniteNumber(loc.latitude ?? latFromCoordinates);
     const longitude = toFiniteNumber(loc.longitude ?? lngFromCoordinates);
+
+    if (latitude !== null && (latitude < -90 || latitude > 90)) {
+        throw new ValidationError('Latitude must be between -90 and 90 degrees');
+    }
+    if (longitude !== null && (longitude < -180 || longitude > 180)) {
+        throw new ValidationError('Longitude must be between -180 and 180 degrees');
+    }
     const menuUrls = Array.isArray(body.menuImages)
         ? body.menuImages.map((m) => toUrl(m)).filter(Boolean)
         : [];

@@ -599,13 +599,16 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
       qr: {},
     };
 
+    let rLat = restaurant.location?.coordinates?.[1] ?? restaurant.location?.latitude;
+    let rLng = restaurant.location?.coordinates?.[0] ?? restaurant.location?.longitude;
+    let dLat = dto.address?.latitude ?? dto.address?.location?.coordinates?.[1];
+    let dLng = dto.address?.longitude ?? dto.address?.location?.coordinates?.[0];
+
     let distanceKm = null;
     if (
-      restaurant.location?.coordinates?.length === 2 &&
-      dto.address?.location?.coordinates?.length === 2
+      typeof rLat === 'number' && typeof rLng === 'number' &&
+      typeof dLat === 'number' && typeof dLng === 'number'
     ) {
-      const [rLng, rLat] = restaurant.location.coordinates;
-      const [dLng, dLat] = dto.address.location.coordinates;
       const d = haversineKm(rLat, rLng, dLat, dLng);
       distanceKm = Number.isFinite(d) ? d : null;
     }
@@ -664,6 +667,12 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
       zoneId: dto.zoneId ? toObjectId(dto.zoneId, 'Zone ID') : (restaurant.zoneId ? toObjectId(restaurant.zoneId, 'Restaurant Zone ID') : null),
       items: populatedItems,
       deliveryAddress,
+      deliveryDistance: distanceKm,
+      deliveryLatitude: dLat,
+      deliveryLongitude: dLng,
+      originLatitude: rLat,
+      originLongitude: rLng,
+      originAddress: restaurant.location?.address || restaurant.location?.formattedAddress || "",
       customerName: String(dto.customerName || deliveryAddress.fullName || ""),
       customerPhone: String(dto.customerPhone || deliveryAddress.phone || ""),
       pricing: normalizedPricing,
@@ -1138,6 +1147,24 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
 
   const initialStatus = (paymentMethod === "razorpay" || paymentMethod === "card") ? "pending_payment" : "confirmed";
 
+  const { FoodAdmin } = await import('../../../../core/admin/admin.model.js');
+  const storeAdmin = await FoodAdmin.findOne({ adminType: 'super_admin' }).lean();
+  let originLat = storeAdmin?.latitude || null;
+  let originLng = storeAdmin?.longitude || null;
+  let originAddress = storeAdmin?.address || '';
+
+  let dLat = dto.address?.latitude ?? dto.address?.location?.coordinates?.[1];
+  let dLng = dto.address?.longitude ?? dto.address?.location?.coordinates?.[0];
+
+  let distanceKm = null;
+  if (
+    typeof originLat === 'number' && typeof originLng === 'number' &&
+    typeof dLat === 'number' && typeof dLng === 'number'
+  ) {
+    const d = haversineKm(originLat, originLng, dLat, dLng);
+    distanceKm = Number.isFinite(d) ? d : null;
+  }
+
   const order = new GroceryOrder({
     userId: toObjectId(userId, 'User ID'),
     moduleType: dto.moduleType || 'grocery',
@@ -1152,6 +1179,12 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
       notes: item.notes || ''
     })),
     deliveryAddress,
+    deliveryDistance: distanceKm,
+    deliveryLatitude: dLat,
+    deliveryLongitude: dLng,
+    originLatitude: originLat,
+    originLongitude: originLng,
+    originAddress: originAddress,
     customerName: String(dto.customerName || deliveryAddress.fullName || ""),
     customerPhone: String(dto.customerPhone || deliveryAddress.phone || ""),
     pricing: normalizedPricing,
@@ -2056,12 +2089,10 @@ async function resolveFoodOrdersItemRestaurants(ordersList) {
 
 export async function listOrdersAdmin(query) {
   const { page, limit, skip } = buildPaginationOptions(query);
-  const moduleType = query.moduleType || 'all';
-
-  // Base payment filter
+  // Base payment filter: Allow cash/wallet immediately, but require Razorpay/QR to be paid/authorized
   const paymentFilter = {
     $or: [
-      { "payment.method": { $in: ["cash", "wallet", "razorpay", "razorpay_qr"] } },
+      { "payment.method": { $in: ["cash", "wallet"] } },
       { "payment.status": { $in: ["paid", "authorized", "captured", "settled", "refunded", "cod_pending"] } },
     ],
   };
@@ -2157,10 +2188,14 @@ export async function listOrdersAdmin(query) {
   let total = 0;
 
   if (moduleType === 'food') {
-    const foodFilter = { ...filter };
+    const foodFilter = { ...filter, $and: [{ ...paymentFilter }] };
+    delete foodFilter.$or; // ensure the base payment filter is inside $and
+    
+    let additionalOr = null;
+    
     if (query.restaurantId && mongoose.Types.ObjectId.isValid(query.restaurantId)) {
       const rIdObj = new mongoose.Types.ObjectId(query.restaurantId);
-      foodFilter.$or = [
+      additionalOr = [
         { restaurantId: rIdObj },
         { restaurantIds: rIdObj }
       ];
@@ -2170,18 +2205,22 @@ export async function listOrdersAdmin(query) {
         zoneId: new mongoose.Types.ObjectId(query.zoneId),
       }).distinct("_id");
       const zoneRIdObjs = zoneRestaurantIds.map(id => new mongoose.Types.ObjectId(id));
-      if (foodFilter.$or) {
+      if (additionalOr) {
         const filterRIdStr = String(query.restaurantId);
         const inZone = zoneRestaurantIds.some(id => String(id) === filterRIdStr);
         if (!inZone) {
-          foodFilter.$or = [{ restaurantId: null }, { restaurantIds: null }];
+          additionalOr = [{ restaurantId: null }, { restaurantIds: null }];
         }
       } else {
-        foodFilter.$or = [
+        additionalOr = [
           { restaurantId: { $in: zoneRIdObjs } },
           { restaurantIds: { $in: zoneRIdObjs } }
         ];
       }
+    }
+
+    if (additionalOr) {
+      foodFilter.$and.push({ $or: additionalOr });
     }
 
     [docs, total] = await Promise.all([

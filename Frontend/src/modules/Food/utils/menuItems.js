@@ -12,7 +12,7 @@ const normalizeItem = (item = {}, sectionName = "", subsectionName = "") => ({
   name: item?.name || "Unnamed Item",
   category: item?.category || sectionName || "Varieties",
   foodType: item?.foodType || "Non-Veg",
-  price: getFoodDisplayPrice(item),
+  price: Number(item?.price) || 0,
   rating: Number(item?.rating || 0),
   reviews: Number(item?.reviews || 0),
   stock: item?.stock || "Unlimited",
