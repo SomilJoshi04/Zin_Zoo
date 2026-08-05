@@ -1,11 +1,78 @@
 import { useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { isModuleAuthenticated } from "@food/utils/auth";
+import { isModuleAuthenticated, getModuleToken, getModuleRefreshToken, isTokenExpired } from "@food/utils/auth";
 import { restaurantAPI } from "@food/api";
+import axios from "axios";
+
+const baseURL =
+  typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL
+    ? String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")
+    : "";
+
+const REFRESH_LOCK_KEY = (module) => `zinzoo_refresh_lock_${module}`;
+const REFRESH_LOCK_TTL = 8000; // 8 seconds — covers the 10s request timeout
+
+/**
+ * Silently refreshes the access token using the stored refresh token.
+ * Uses a localStorage-based lock to prevent parallel calls across tabs.
+ * Returns the new access token string, or null on failure.
+ */
+async function silentRefresh(module) {
+  const refreshToken = getModuleRefreshToken(module);
+  if (!refreshToken) return null;
+
+  const lockKey = REFRESH_LOCK_KEY(module);
+
+  // --- Cross-tab lock: check if another tab is already refreshing ---
+  const existingLock = localStorage.getItem(lockKey);
+  if (existingLock) {
+    const lockTime = parseInt(existingLock, 10);
+    if (Date.now() - lockTime < REFRESH_LOCK_TTL) {
+      // Another tab is refreshing — wait for it to finish, then reuse its token
+      await new Promise((resolve) => setTimeout(resolve, REFRESH_LOCK_TTL));
+      const savedToken = localStorage.getItem(`${module}_accessToken`);
+      if (savedToken && !isTokenExpired(savedToken)) return savedToken;
+      return null; // Other tab's refresh also failed
+    }
+    // Lock is stale — clear it and proceed
+    localStorage.removeItem(lockKey);
+  }
+
+  // Acquire lock
+  try { localStorage.setItem(lockKey, String(Date.now())); } catch (_) {}
+
+  try {
+    const refreshUrl = baseURL
+      ? `${baseURL}/food/auth/refresh-token`
+      : "/api/v1/food/auth/refresh-token";
+    const { data } = await axios.post(refreshUrl, { refreshToken }, { timeout: 10000 });
+    const newAccessToken = data?.data?.accessToken || data?.accessToken;
+    const newRefreshToken = data?.data?.refreshToken || data?.refreshToken;
+    if (newAccessToken) {
+      try {
+        localStorage.setItem(`${module}_accessToken`, newAccessToken);
+        // Save the rotated refresh token so next refresh uses the new one
+        if (newRefreshToken && typeof newRefreshToken === "string") {
+          localStorage.setItem(`${module}_refreshToken`, newRefreshToken);
+        }
+      } catch (_) {}
+      return newAccessToken;
+    }
+    return null;
+  } catch (_) {
+    return null;
+  } finally {
+    // Release lock
+    try { localStorage.removeItem(lockKey); } catch (_) {}
+  }
+}
+
 
 /**
  * Role-based Protected Route Component
- * Only allows access if user is authenticated for the specific module
+ * Only allows access if user is authenticated for the specific module.
+ * On app restart, if the access token is expired but a refresh token exists,
+ * it silently refreshes before deciding to redirect to login.
  */
 export default function ProtectedRoute({ children, requiredRole, loginPath = "/food/user/auth/login" }) {
   const location = useLocation();
@@ -15,15 +82,61 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
     return children;
   }
 
-  const isAuthenticated = isModuleAuthenticated(requiredRole);
+  const accessToken = getModuleToken(requiredRole);
+  const isAccessExpired = !accessToken || isTokenExpired(accessToken);
+  const hasRefreshToken = !!getModuleRefreshToken(requiredRole);
+
+  // Determine initial auth state:
+  // - If access token is valid → authenticated immediately (no loading needed)
+  // - If access token is expired AND refresh token exists → show loading while refreshing
+  // - If neither → not authenticated, redirect
+  const initiallyAuthenticated = isModuleAuthenticated(requiredRole);
+  const needsSilentRefresh = !initiallyAuthenticated && hasRefreshToken;
+
+  const [authState, setAuthState] = useState(
+    initiallyAuthenticated ? "authenticated" : needsSilentRefresh ? "refreshing" : "unauthenticated"
+  );
+
   const isRestaurantRoute = requiredRole === "restaurant";
   const [isSubscriptionCheckDone, setIsSubscriptionCheckDone] = useState(!isRestaurantRoute);
   const [serverRequiresPayment, setServerRequiresPayment] = useState(false);
 
-  // If not authenticated for this module, redirect to login
-  if (!isAuthenticated) {
+  // Silent token refresh on mount when access token is expired but refresh token exists
+  useEffect(() => {
+    if (authState !== "refreshing") return;
+    let cancelled = false;
+    silentRefresh(requiredRole).then((newToken) => {
+      if (cancelled) return;
+      if (newToken && !isTokenExpired(newToken)) {
+        setAuthState("authenticated");
+        // Notify other parts of the app about the token refresh
+        try {
+          window.dispatchEvent(new CustomEvent("authRefreshed", { detail: { module: requiredRole, token: newToken } }));
+        } catch (_) {}
+      } else {
+        // Refresh failed — clear stale data and redirect to login
+        try {
+          localStorage.removeItem(`${requiredRole}_accessToken`);
+          localStorage.removeItem(`${requiredRole}_refreshToken`);
+          localStorage.removeItem(`${requiredRole}_authenticated`);
+        } catch (_) {}
+        setAuthState("unauthenticated");
+      }
+    });
+    return () => { cancelled = true; };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Show nothing (blank) while refreshing to avoid a flash redirect to login
+  if (authState === "refreshing") {
+    return null;
+  }
+
+  // Not authenticated and refresh failed (or no refresh token) → go to login
+  if (authState === "unauthenticated") {
     return <Navigate to={loginPath} state={{ from: location.pathname }} replace />;
   }
+
+  // --- From here: user IS authenticated ---
 
   useEffect(() => {
     let active = true;
@@ -33,16 +146,12 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
       "/food/restaurant/pending-verification",
     ];
 
-    if (!isRestaurantRoute || !isAuthenticated || allowedPaths.includes(location.pathname)) {
+    if (!isRestaurantRoute || allowedPaths.includes(location.pathname)) {
       setIsSubscriptionCheckDone(true);
       setServerRequiresPayment(false);
-      return () => {
-        active = false;
-      };
+      return () => { active = false; };
     }
 
-    // Keep current UI mounted during route-to-route checks to avoid white flashes
-    // when switching tabs inside restaurant module.
     const syncRestaurantSubscription = async () => {
       try {
         const [restaurantResult, featureResult] = await Promise.allSettled([
@@ -59,11 +168,8 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
           response?.data?.restaurant ||
           null;
 
-        // If restaurant payload is not available, keep access blocked until next successful sync.
         if (!restaurant) {
-          if (active) {
-            setServerRequiresPayment(true);
-          }
+          if (active) setServerRequiresPayment(true);
           return;
         }
         if (restaurant) {
@@ -81,30 +187,20 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
         const isExpired = Number.isFinite(expiryMs) && expiryMs < Date.now();
         const shouldBlock = subscriptionFeatureEnabled && (!onboardingFeePaid || isExpired);
 
-        if (active) {
-          setServerRequiresPayment(shouldBlock);
-        }
+        if (active) setServerRequiresPayment(shouldBlock);
       } catch {
-        if (active) {
-          setServerRequiresPayment(true);
-        }
+        if (active) setServerRequiresPayment(true);
       } finally {
-        if (active) {
-          setIsSubscriptionCheckDone(true);
-        }
+        if (active) setIsSubscriptionCheckDone(true);
       }
     };
 
     syncRestaurantSubscription();
-    return () => {
-      active = false;
-    };
-  }, [isRestaurantRoute, isAuthenticated, location.pathname]);
+    return () => { active = false; };
+  }, [isRestaurantRoute, authState, location.pathname]);
 
   if (isRestaurantRoute) {
-    if (!isSubscriptionCheckDone) {
-      return null;
-    }
+    if (!isSubscriptionCheckDone) return null;
     if (serverRequiresPayment) {
       return <Navigate to="/food/restaurant/onboarding-payment" replace />;
     }
@@ -112,3 +208,5 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
 
   return children;
 }
+
+
