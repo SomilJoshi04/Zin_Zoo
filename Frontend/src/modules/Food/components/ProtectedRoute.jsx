@@ -15,11 +15,11 @@ const REFRESH_LOCK_TTL = 8000; // 8 seconds — covers the 10s request timeout
 /**
  * Silently refreshes the access token using the stored refresh token.
  * Uses a localStorage-based lock to prevent parallel calls across tabs.
- * Returns the new access token string, or null on failure.
+ * Returns { success: true, token } or { success: false, reason: "invalid" | "network" }.
  */
 async function silentRefresh(module) {
   const refreshToken = getModuleRefreshToken(module);
-  if (!refreshToken) return null;
+  if (!refreshToken) return { success: false, reason: "invalid" };
 
   const lockKey = REFRESH_LOCK_KEY(module);
 
@@ -31,8 +31,10 @@ async function silentRefresh(module) {
       // Another tab is refreshing — wait for it to finish, then reuse its token
       await new Promise((resolve) => setTimeout(resolve, REFRESH_LOCK_TTL));
       const savedToken = localStorage.getItem(`${module}_accessToken`);
-      if (savedToken && !isTokenExpired(savedToken)) return savedToken;
-      return null; // Other tab's refresh also failed
+      if (savedToken && !isTokenExpired(savedToken)) {
+        return { success: true, token: savedToken };
+      }
+      return { success: false, reason: "invalid" };
     }
     // Lock is stale — clear it and proceed
     localStorage.removeItem(lockKey);
@@ -56,17 +58,21 @@ async function silentRefresh(module) {
           localStorage.setItem(`${module}_refreshToken`, newRefreshToken);
         }
       } catch (_) {}
-      return newAccessToken;
+      return { success: true, token: newAccessToken };
     }
-    return null;
-  } catch (_) {
-    return null;
+    return { success: false, reason: "invalid" };
+  } catch (err) {
+    if (err.response && err.response.status >= 400 && err.response.status < 500) {
+      // Client errors (401, 403, 400) mean the token is definitively invalid
+      return { success: false, reason: "invalid" };
+    }
+    // Network errors, timeouts, 500+ server errors
+    return { success: false, reason: "network" };
   } finally {
     // Release lock
     try { localStorage.removeItem(lockKey); } catch (_) {}
   }
 }
-
 
 /**
  * Role-based Protected Route Component
@@ -105,16 +111,20 @@ export default function ProtectedRoute({ children, requiredRole, loginPath = "/f
   useEffect(() => {
     if (authState !== "refreshing") return;
     let cancelled = false;
-    silentRefresh(requiredRole).then((newToken) => {
+    silentRefresh(requiredRole).then((result) => {
       if (cancelled) return;
-      if (newToken && !isTokenExpired(newToken)) {
+      if (result.success && result.token && !isTokenExpired(result.token)) {
         setAuthState("authenticated");
         // Notify other parts of the app about the token refresh
         try {
-          window.dispatchEvent(new CustomEvent("authRefreshed", { detail: { module: requiredRole, token: newToken } }));
+          window.dispatchEvent(new CustomEvent("authRefreshed", { detail: { module: requiredRole, token: result.token } }));
         } catch (_) {}
+      } else if (result.reason === "network") {
+        // Network error — Do NOT log the user out! Allow them into the app.
+        // The Axios interceptor will smoothly handle the refresh when the network stabilizes.
+        setAuthState("authenticated");
       } else {
-        // Refresh failed — clear stale data and redirect to login
+        // Refresh failed (invalid token) — clear stale data and redirect to login
         try {
           localStorage.removeItem(`${requiredRole}_accessToken`);
           localStorage.removeItem(`${requiredRole}_refreshToken`);
