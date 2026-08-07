@@ -1,5 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
+import api from "@food/api"
+import { API_ENDPOINTS } from "@food/api/config"
 import {
   Search,
   HelpCircle,
@@ -188,6 +190,32 @@ export default function Help() {
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedCategory, setExpandedCategory] = useState(null)
   const [expandedQuestion, setExpandedQuestion] = useState(null)
+  const [supportInfo, setSupportInfo] = useState({
+    title: "Help & Support",
+    content: "",
+    email: "",
+    mobile: ""
+  })
+
+  useEffect(() => {
+    const fetchSupportData = async () => {
+      try {
+        const res = await api.get(API_ENDPOINTS.ADMIN.SUPPORT_PUBLIC, { params: { module: "ALL" } })
+        const payload = res?.data?.data || res?.data
+        if (payload) {
+          setSupportInfo({
+            title: payload.title || "Help & Support",
+            content: payload.content || "",
+            email: payload.email || "",
+            mobile: payload.mobile || ""
+          })
+        }
+      } catch (e) {
+        console.error("Error fetching support info:", e)
+      }
+    }
+    fetchSupportData()
+  }, [])
 
   const filteredCategories = helpCategories.filter(category =>
     category.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -389,10 +417,10 @@ export default function Help() {
                       Call us anytime
                     </p>
                     <a
-                      href="tel:+1-800-123-4567"
+                      href={`tel:${supportInfo.mobile || '+91-9876543210'}`}
                       className="text-sm text-primary hover:underline font-medium"
                     >
-                      +1 (800) 123-4567
+                      {supportInfo.mobile || "+91 98765 43210"}
                     </a>
                   </div>
                 </div>
@@ -406,10 +434,10 @@ export default function Help() {
                       We'll respond within 24 hours
                     </p>
                     <a
-                      href="mailto:support@switcheats.com"
+                      href={`mailto:${supportInfo.email || 'support@zinzoo.com'}`}
                       className="text-sm text-primary hover:underline font-medium"
                     >
-                      support@switcheats.com
+                      {supportInfo.email || "support@zinzoo.com"}
                     </a>
                   </div>
                 </div>
