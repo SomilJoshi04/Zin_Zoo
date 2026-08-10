@@ -222,7 +222,7 @@ export default function UserRouter() {
             }
           />
           <Route
-            path="profile/support"
+            path="profile/issues"
             element={
               <ProtectedRoute requiredRole="user" loginPath="/food/user/auth/login">
                 <Support />

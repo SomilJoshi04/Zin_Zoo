@@ -166,7 +166,7 @@ export default function SubmitComplaint() {
           <h1 className="text-lg font-semibold text-gray-800 dark:text-white ml-3">Submit Complaint</h1>
           <button
             type="button"
-            onClick={() => navigate("/user/profile/support")}
+            onClick={() => navigate("/user/profile/issues")}
             className="ml-auto text-sm font-semibold text-[#F84E04]"
           >
             View History

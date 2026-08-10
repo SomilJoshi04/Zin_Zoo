@@ -25,12 +25,7 @@ export default function Support() {
   const [submitting, setSubmitting] = useState(false)
   const [tickets, setTickets] = useState([])
   const [loadingTickets, setLoadingTickets] = useState(false)
-  const [supportInfo, setSupportInfo] = useState({
-    title: "Help & Support",
-    content: "",
-    email: "",
-    mobile: ""
-  })
+
 
   usePublicSocket({
     "support:ticket:update": (data) => {
@@ -67,23 +62,7 @@ export default function Support() {
         setLoadingTickets(false)
       })
 
-    const fetchSupportData = async () => {
-      try {
-        const res = await api.get(API_ENDPOINTS.ADMIN.SUPPORT_PUBLIC, { params: { module: "ALL" } })
-        const payload = res?.data?.data || res?.data
-        if (payload) {
-          setSupportInfo({
-            title: payload.title || "Help & Support",
-            content: payload.content || "",
-            email: payload.email || "",
-            mobile: payload.mobile || ""
-          })
-        }
-      } catch (e) {
-        console.error("Error fetching support data:", e)
-      }
-    }
-    fetchSupportData()
+
   }, [])
 
   const orderIssues = ["Item missing", "Wrong item", "Not delivered", "Payment issue"]
@@ -253,69 +232,16 @@ export default function Support() {
   return (
     <AnimatedPage className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0a]">
       <div className="max-w-md md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 py-4 sm:py-6 md:py-8 pb-20">
-        <div className="mb-4">
-          <Link to="/user/profile">
-            <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-              <ArrowLeft className="h-5 w-5 text-black dark:text-white" />
-            </Button>
-          </Link>
-        </div>
-
-        <Card className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 mb-3 overflow-hidden">
-          <CardContent className="p-4 sm:p-5 space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/40 text-[#F84E04]">
-                    <Headphones className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                      {supportInfo.title || "Help & Support"}
-                    </h1>
-                    <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                      Raise a support ticket or contact our support team directly.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Direct Admin Contact Buttons */}
-              {(supportInfo.mobile || supportInfo.email) && (
-                <div className="flex flex-wrap items-center gap-2 pt-1 sm:pt-0">
-                  {supportInfo.mobile && (
-                    <a
-                      href={`tel:${supportInfo.mobile}`}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 bg-[#F84E04] hover:bg-[#e04502] text-white rounded-lg text-xs sm:text-sm font-semibold transition-all shadow-sm active:scale-95"
-                    >
-                      <Phone className="h-4 w-4" />
-                      <span>{supportInfo.mobile}</span>
-                    </a>
-                  )}
-                  {supportInfo.email && (
-                    <a
-                      href={`mailto:${supportInfo.email}`}
-                      className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-100 dark:bg-zinc-800 text-slate-800 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-zinc-700 border border-slate-200 dark:border-zinc-700 rounded-lg text-xs sm:text-sm font-semibold transition-all active:scale-95"
-                    >
-                      <Mail className="h-4 w-4 text-[#F84E04]" />
-                      <span>{supportInfo.email}</span>
-                    </a>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Admin CMS Description if set */}
-            {supportInfo.content && (
-              <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                <div
-                  className="prose prose-xs sm:prose-sm dark:prose-invert max-w-none prose-p:my-1"
-                  dangerouslySetInnerHTML={{ __html: supportInfo.content }}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {step === "pick" && (
+          <div className="flex items-center gap-3 mb-6">
+            <Link to="/user/profile">
+              <Button variant="ghost" size="icon" className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full">
+                <ArrowLeft className="h-5 w-5 text-slate-900 dark:text-white" />
+              </Button>
+            </Link>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Issues</h1>
+          </div>
+        )}
 
         <Card className="bg-white dark:bg-[#1a1a1a] rounded-xl shadow-sm border border-slate-200 dark:border-gray-800 mb-3">
           <CardContent className="p-4 space-y-4">
@@ -352,7 +278,12 @@ export default function Support() {
 
             {step === "choose_order" && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-slate-900 dark:text-white">Select an order</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <Button variant="ghost" size="icon" onClick={() => setStep("pick")} className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full shrink-0">
+                    <ArrowLeft className="h-5 w-5 text-slate-900 dark:text-white" />
+                  </Button>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-lg">Select an order</h3>
+                </div>
                 {orders.length > 0 ? (
                   <div className="space-y-2">
                     <Input
@@ -379,7 +310,12 @@ export default function Support() {
 
             {step === "order_issue" && selectedOrder && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-slate-900 dark:text-white">Issue type</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <Button variant="ghost" size="icon" onClick={() => setStep("choose_order")} className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full shrink-0">
+                    <ArrowLeft className="h-5 w-5 text-slate-900 dark:text-white" />
+                  </Button>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-lg">Issue type</h3>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   {orderIssues.map((it) => (
                     <Button key={it} variant={issueType === it ? "default" : "outline"} onClick={() => setIssueType(it)}>{it}</Button>
@@ -397,7 +333,12 @@ export default function Support() {
 
             {step === "choose_restaurant" && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-slate-900 dark:text-white">Select a restaurant</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <Button variant="ghost" size="icon" onClick={() => setStep("pick")} className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full shrink-0">
+                    <ArrowLeft className="h-5 w-5 text-slate-900 dark:text-white" />
+                  </Button>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-lg">Select a restaurant</h3>
+                </div>
                 {restaurants.length > 0 ? (
                   <div className="space-y-2">
                     <Input
@@ -424,7 +365,12 @@ export default function Support() {
 
             {step === "restaurant_issue" && selectedRestaurant && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-slate-900 dark:text-white">Issue type</h3>
+                <div className="flex items-center gap-2 mb-1">
+                  <Button variant="ghost" size="icon" onClick={() => setStep("choose_restaurant")} className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full shrink-0">
+                    <ArrowLeft className="h-5 w-5 text-slate-900 dark:text-white" />
+                  </Button>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-lg">Issue type</h3>
+                </div>
                 <div className="grid grid-cols-2 gap-2">
                   {restaurantIssues.map((it) => (
                     <Button key={it} variant={issueType === it ? "default" : "outline"} onClick={() => setIssueType(it)}>{it}</Button>
@@ -442,6 +388,12 @@ export default function Support() {
 
             {step === "other_form" && (
               <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <Button variant="ghost" size="icon" onClick={() => setStep("pick")} className="h-8 w-8 p-0 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full shrink-0">
+                    <ArrowLeft className="h-5 w-5 text-slate-900 dark:text-white" />
+                  </Button>
+                  <h3 className="font-semibold text-slate-900 dark:text-white text-lg">Other Issue</h3>
+                </div>
                 <Input placeholder="Subject" value={subject} onChange={(e) => setSubject(e.target.value)} />
                 <Textarea placeholder="Describe your issue" value={description} onChange={(e) => setDescription(e.target.value)} />
                 <div className="flex gap-2">
