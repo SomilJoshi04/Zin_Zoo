@@ -56,6 +56,7 @@ export async function calculateOrderPricing(userId, dto) {
   const freeThreshold = Number(feeSettings.freeDeliveryThreshold || 0);
   let deliveryFee = 0;
   let distanceKm = null;
+  console.log('[DEBUG PRICING SUBTOTAL]', { subtotal, freeThreshold });
   if (
     Number.isFinite(freeThreshold) &&
     freeThreshold > 0 &&
@@ -63,31 +64,6 @@ export async function calculateOrderPricing(userId, dto) {
   ) {
     deliveryFee = 0;
   } else {
-    const isGroceryOrAccessories = 
-      dto.moduleType === 'grocery' || 
-      dto.moduleType === 'accessories' ||
-      (items.length > 0 && (items[0].moduleType === 'grocery' || items[0].moduleType === 'accessories'));
-
-    let originLat = null;
-    let originLng = null;
-
-    if (isGroceryOrAccessories) {
-      const { FoodAdmin } = await import('../../../../core/admin/admin.model.js');
-      const storeAdmin = await FoodAdmin.findOne({ adminType: 'super_admin' }).lean();
-      if (storeAdmin) {
-        originLat = storeAdmin.latitude;
-        originLng = storeAdmin.longitude;
-      }
-    } else if (restaurant) {
-      if (restaurant.location?.coordinates?.length === 2) {
-        originLng = restaurant.location.coordinates[0];
-        originLat = restaurant.location.coordinates[1];
-      } else {
-        originLat = restaurant.location?.latitude;
-        originLng = restaurant.location?.longitude;
-      }
-    }
-
     let userLat = dto.deliveryAddress?.latitude;
     let userLng = dto.deliveryAddress?.longitude;
     if (userLat === undefined || userLng === undefined || userLat === null || userLng === null) {
@@ -98,28 +74,90 @@ export async function calculateOrderPricing(userId, dto) {
       }
     }
 
-    if (isGroceryOrAccessories) {
-      if (originLat === null || originLng === null || typeof originLat !== 'number' || typeof originLng !== 'number') {
-        throw new ValidationError("Store coordinates are not configured by Admin. Cannot calculate delivery fee.");
-      }
-    } else {
-      if (restaurant && (originLat === null || originLng === null || typeof originLat !== 'number' || typeof originLng !== 'number')) {
-        throw new ValidationError("Restaurant coordinates are not configured. Cannot calculate delivery fee.");
-      }
-    }
-
     if (dto.deliveryAddress || dto.deliveryAddressId) {
-      console.log('[DEBUG PRICING]', { userLat, userLng, typeofUserLat: typeof userLat, typeofUserLng: typeof userLng, payloadDeliveryAddress: dto.deliveryAddress });
       if (userLat === null || userLng === null || typeof userLat !== 'number' || typeof userLng !== 'number') {
         throw new ValidationError("Delivery address coordinates are missing. Please select a location on the map.");
       }
     }
 
-    if (
-      typeof originLat === 'number' && typeof originLng === 'number' &&
-      typeof userLat === 'number' && typeof userLng === 'number'
-    ) {
-      distanceKm = haversineKm(originLat, originLng, userLat, userLng);
+    const fulfillmentSources = [];
+    let needsAdminSource = false;
+    const requiredRestaurantIds = new Set();
+    
+    console.log("[DEBUG_BACKEND_PRICING] Received dto.moduleType:", dto.moduleType, "items count:", items.length);
+    console.log("[DEBUG_BACKEND_PRICING] Items:", JSON.stringify(items));
+
+    
+    for (const item of items) {
+      const type = item.moduleType || dto.moduleType;
+      console.log(`[DEBUG_BACKEND_PRICING] Processing item ${item.itemId}, type: ${type}`);
+      if (type === 'grocery' || type === 'accessories') {
+        needsAdminSource = true;
+      } else if (type === 'food') {
+        if (item.restaurantId) {
+          requiredRestaurantIds.add(String(item.restaurantId));
+        } else if (dto.restaurantId) {
+          requiredRestaurantIds.add(String(dto.restaurantId));
+        }
+      }
+    }
+    
+    console.log("[DEBUG_BACKEND_PRICING] Final needsAdminSource:", needsAdminSource, "requiredRestaurantIds:", Array.from(requiredRestaurantIds));
+
+    if (needsAdminSource) {
+      const { FoodAdmin } = await import('../../../../core/admin/admin.model.js');
+      const storeAdmin = await FoodAdmin.findOne({ adminType: 'super_admin' }).lean();
+      let originLat = storeAdmin?.latitude;
+      let originLng = storeAdmin?.longitude;
+      
+      if (originLat === null || originLng === null || originLat === undefined || originLng === undefined || typeof originLat !== 'number' || typeof originLng !== 'number') {
+        throw new ValidationError("Store coordinates are not configured by Admin. Cannot calculate delivery fee.");
+      }
+      fulfillmentSources.push({ lat: originLat, lng: originLng, type: 'admin' });
+    }
+
+    if (requiredRestaurantIds.size > 0) {
+      const restaurantIdsArray = Array.from(requiredRestaurantIds);
+      const restaurants = await FoodRestaurant.find({ _id: { $in: restaurantIdsArray } }).select("status location").lean();
+      
+      for (const resId of restaurantIdsArray) {
+        const res = restaurants.find(r => String(r._id) === resId);
+        if (!res) throw new ValidationError(`Restaurant ${resId} not found`);
+        if (res.status !== "approved") throw new ValidationError(`Restaurant ${resId} not available`);
+        
+        let originLat = null;
+        let originLng = null;
+        
+        if (res.location?.coordinates?.length === 2) {
+          originLng = res.location.coordinates[0];
+          originLat = res.location.coordinates[1];
+        } else {
+          originLat = res.location?.latitude;
+          originLng = res.location?.longitude;
+        }
+        
+        if (originLat === null || originLng === null || typeof originLat !== 'number' || typeof originLng !== 'number') {
+          throw new ValidationError("Restaurant coordinates are not configured. Cannot calculate delivery fee.");
+        }
+        fulfillmentSources.push({ lat: originLat, lng: originLng, type: 'restaurant', id: resId });
+      }
+    }
+
+    if (fulfillmentSources.length > 0) {
+      if (typeof userLat !== 'number' || typeof userLng !== 'number') {
+        throw new ValidationError("Delivery address coordinates are missing. Please select a location on the map.");
+      }
+      
+      let maxDistanceKm = 0;
+      for (const source of fulfillmentSources) {
+        const dist = haversineKm(source.lat, source.lng, userLat, userLng);
+        console.log(`[DEBUG DISTANCE] User -> ${source.type} (${source.id || 'Admin'}): ${dist} km`);
+        if (dist > maxDistanceKm) {
+          maxDistanceKm = dist;
+        }
+      }
+      distanceKm = maxDistanceKm;
+      console.log(`[DEBUG MAX DISTANCE] ${distanceKm} km`);
     }
 
     const ranges = Array.isArray(feeSettings.deliveryFeeRanges)
@@ -199,28 +237,30 @@ export async function calculateOrderPricing(userId, dto) {
         }
       }
 
-      let discountableSubtotal = subtotal;
-      if (isFood) {
-        if (offer.restaurantScope === "selected") {
-          const eligibleResIds = selectedRestaurantIds.map(id => String(id));
-          const eligibleItems = items.filter(it => it.restaurantId && eligibleResIds.includes(String(it.restaurantId)));
-          discountableSubtotal = eligibleItems.reduce(
-            (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
-            0,
-          );
+      const eligibleItems = items.filter(it => {
+        const itemType = it.moduleType || dto.moduleType;
+        
+        if (isFood) {
+          if (itemType !== 'food') return false;
+          if (offer.restaurantScope === "selected") {
+            const eligibleResIds = selectedRestaurantIds.map(id => String(id));
+            if (!it.restaurantId || !eligibleResIds.includes(String(it.restaurantId))) return false;
+          }
+        } else {
+          if (offer.moduleType && itemType !== offer.moduleType) return false;
+          const eligibleItemIds = Array.isArray(offer.itemIds) ? offer.itemIds.map(id => String(id)) : [];
+          if (eligibleItemIds.length > 0 && !eligibleItemIds.includes(String(it.itemId || it.id))) return false;
         }
-      } else {
-        const eligibleItemIds = Array.isArray(offer.itemIds) ? offer.itemIds.map(id => String(id)) : [];
-        if (eligibleItemIds.length > 0) {
-          const eligibleItems = items.filter(it => eligibleItemIds.includes(String(it.itemId || it.id)));
-          discountableSubtotal = eligibleItems.reduce(
-            (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
-            0,
-          );
-        }
-      }
+        
+        return true;
+      });
 
-      const minOk = subtotal >= (Number(offer.minOrderValue) || 0);
+      const discountableSubtotal = eligibleItems.reduce(
+        (sum, it) => sum + (Number(it.price) || 0) * (Number(it.quantity) || 1),
+        0
+      );
+
+      const minOk = discountableSubtotal >= (Number(offer.minOrderValue) || 0);
       let usageOk = true;
       if (
         Number(offer.usageLimit) > 0 &&

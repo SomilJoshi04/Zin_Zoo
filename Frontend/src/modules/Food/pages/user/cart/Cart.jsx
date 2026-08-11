@@ -183,7 +183,7 @@ export default function Cart() {
   const activeCartTab = searchParams.get('module') || 'all';
   const cart = useMemo(() => {
     if (activeCartTab === 'all') return globalCart;
-    return globalCart.filter(i => (i.moduleType || 'food') === activeCartTab);
+    return globalCart.filter(i => (i.moduleType || i.category || (i.restaurantId ? 'food' : 'unknown')) === activeCartTab);
   }, [globalCart, activeCartTab]);
 
   const handleTabChange = (tab) => {
@@ -974,8 +974,7 @@ export default function Cart() {
   // Fetch coupons for items in cart
   useEffect(() => {
     const fetchCouponsForCartItems = async () => {
-      const isFoodCart = cart.some(i => (i.moduleType || 'food') === 'food');
-      if (cart.length === 0 || (isFoodCart && !restaurantId)) {
+      if (cart.length === 0) {
         setAvailableCoupons([])
         return
       }
@@ -983,87 +982,84 @@ export default function Cart() {
       debugLog(`[CART-COUPONS] Fetching coupons for ${cart.length} items in cart`)
       setLoadingCoupons(true)
 
-      const allCoupons = []
-      const uniqueCouponCodes = new Set()
+      try {
+        const response = await restaurantAPI.getApplicableCoupons(cart, subtotal)
+        if (response?.data?.success && response?.data?.data?.coupons) {
+          const coupons = response.data.data.coupons
+          debugLog(`[CART-COUPONS] Found ${coupons.length} applicable coupons`)
 
-      // Fetch coupons for each item in cart
-      for (const cartItem of cart) {
-        const couponItemId = cartItem.itemId || cartItem.id
-        if (!couponItemId) {
-          debugLog(`[CART-COUPONS] Skipping item without id:`, cartItem)
-          continue
+          const allCoupons = coupons.map(coupon => ({
+            code: coupon.couponCode,
+            discount: coupon.originalPrice - coupon.discountedPrice,
+            discountPercentage: coupon.discountPercentage,
+            discountDisplay: coupon.discountType === "percentage"
+              ? `${coupon.discountPercentage}% OFF`
+              : `${RUPEE_SYMBOL}${Math.max(0, (coupon.originalPrice || 0) - (coupon.discountedPrice || 0))} OFF`,
+            minOrder: coupon.minOrderValue || 0,
+            description: coupon.discountType === "percentage"
+              ? `${coupon.discountPercentage}% OFF with '${coupon.couponCode}'`
+              : `Save ${RUPEE_SYMBOL}${Math.max(0, (coupon.originalPrice || 0) - (coupon.discountedPrice || 0))} with '${coupon.couponCode}'`,
+            originalPrice: coupon.originalPrice,
+            discountedPrice: coupon.discountedPrice,
+            customerGroup: coupon.customerGroup || "all",
+            isGlobalCoupon: Boolean(coupon.isGlobalCoupon)
+          }))
+          
+          setAvailableCoupons(allCoupons)
         }
-
-        try {
-          debugLog(`[CART-COUPONS] Fetching coupons for itemId: ${couponItemId}, name: ${cartItem.name}`)
-          const response = await restaurantAPI.getCouponsByItemIdPublic(restaurantId, couponItemId, subtotal)
-
-          if (response?.data?.success && response?.data?.data?.coupons) {
-            const coupons = response.data.data.coupons
-            debugLog(`[CART-COUPONS] Found ${coupons.length} coupons for item ${couponItemId}`)
-
-            // Add coupons, avoiding duplicates
-            coupons.forEach(coupon => {
-              if (!uniqueCouponCodes.has(coupon.couponCode)) {
-                uniqueCouponCodes.add(coupon.couponCode)
-                // Convert backend coupon format to frontend format
-                allCoupons.push({
-                  code: coupon.couponCode,
-                  discount: coupon.originalPrice - coupon.discountedPrice,
-                  discountPercentage: coupon.discountPercentage,
-                  discountDisplay: coupon.discountType === "percentage"
-                    ? `${coupon.discountPercentage}% OFF`
-                    : `${RUPEE_SYMBOL}${Math.max(0, (coupon.originalPrice || 0) - (coupon.discountedPrice || 0))} OFF`,
-                  minOrder: coupon.minOrderValue || 0,
-                  description: coupon.discountType === "percentage"
-                    ? `${coupon.discountPercentage}% OFF with '${coupon.couponCode}'`
-                    : `Save ${RUPEE_SYMBOL}${Math.max(0, (coupon.originalPrice || 0) - (coupon.discountedPrice || 0))} with '${coupon.couponCode}'`,
-                  originalPrice: coupon.originalPrice,
-                  discountedPrice: coupon.discountedPrice,
-                  customerGroup: coupon.customerGroup || "all",
-                  isGlobalCoupon: Boolean(coupon.isGlobalCoupon),
-                  itemId: couponItemId,
-                  itemName: cartItem.name,
-                })
-              }
-            })
-          }
-        } catch (error) {
-          debugError(`[CART-COUPONS] Error fetching coupons for item ${cartItem.id}:`, error)
-        }
+      } catch (error) {
+        debugError(`[CART-COUPONS] Error fetching coupons:`, error)
+      } finally {
+        setLoadingCoupons(false)
       }
-
-      debugLog(`[CART-COUPONS] Total unique coupons found: ${allCoupons.length}`, allCoupons)
-      setAvailableCoupons(allCoupons)
-      setLoadingCoupons(false)
     }
 
     fetchCouponsForCartItems()
-  }, [cart, restaurantId, activeCartTab])
+  }, [cart, activeCartTab])
 
   // Calculate pricing from backend whenever cart, address, or coupon changes
   useEffect(() => {
+    let ignore = false;
     const calculatePricing = async () => {
+      console.log("[DEBUG_CART] calculatePricing triggered. Cart length:", cart.length, "activeTab:", activeCartTab);
       if (cart.length === 0 || !hasSavedAddress) {
+        console.log("[DEBUG_CART] calculatePricing aborted. Cart empty or no address.");
         setPricing(null)
         return
       }
 
       try {
         setLoadingPricing(true)
-        const items = cart.map(item => ({
-          itemId: item.itemId || item.id,
-          name: item.name,
-          price: item.price, // Price should already be in INR
-          variantId: item.variantId || undefined,
-          variantName: item.variantName || undefined,
-          variantPrice: item.variantPrice || item.price,
-          quantity: item.quantity || 1,
-          image: item.image,
-          description: item.description,
-          isVeg: item.isVeg !== false,
-          moduleType: item.moduleType || activeCartTab
-        }))
+        const items = cart.map(item => {
+          const rawRId = item.restaurantId || restaurantData?.restaurantId || restaurantData?._id || restaurantId;
+          let sanitizedRestaurantId = rawRId
+            ? (typeof rawRId === 'object' && rawRId !== null
+              ? (rawRId._id?.toString() || rawRId.restaurantId?.toString() || rawRId.id?.toString() || null)
+              : String(rawRId))
+            : undefined;
+
+          if (sanitizedRestaurantId && !/^[0-9a-fA-F]{24}$/.test(sanitizedRestaurantId)) {
+            sanitizedRestaurantId = undefined;
+          }
+
+          const actualModuleType = item.moduleType || item.category || (item.restaurantId ? 'food' : undefined);
+          return {
+            itemId: item.itemId || item.id,
+            name: item.name,
+            price: item.price, // Price should already be in INR
+            variantId: item.variantId || undefined,
+            variantName: item.variantName || undefined,
+            variantPrice: item.variantPrice || item.price,
+            quantity: item.quantity || 1,
+            image: item.image,
+            description: item.description,
+            isVeg: item.isVeg !== false,
+            restaurantId: sanitizedRestaurantId,
+            moduleType: actualModuleType || undefined
+          }
+        })
+
+        console.log("[DEBUG_CART] Items sent to calculateOrder:", JSON.stringify(items));
 
         const resolvedRestaurantId = restaurantData?.restaurantId || restaurantData?._id || restaurantId || undefined
         const resolvedCouponCode = appliedCoupon?.code || couponCode || undefined
@@ -1076,7 +1072,9 @@ export default function Cart() {
           moduleType: activeCartTab === 'all' ? 'unified' : activeCartTab
         })
 
-        if (response?.data?.success && response?.data?.data?.pricing) {
+        console.log("[DEBUG_CART] API response received. success:", response?.data?.success, "pricing:", response?.data?.data?.pricing, "ignore:", ignore);
+
+        if (!ignore && response?.data?.success && response?.data?.data?.pricing) {
           setPricing(response.data.data.pricing)
 
           // Update applied coupon if backend returns one
@@ -1088,6 +1086,7 @@ export default function Cart() {
           }
         }
       } catch (error) {
+        if (ignore) return;
         // Network errors or 404 errors - silently handle, fallback to frontend calculation
         if (error.code !== 'ERR_NETWORK' && error.response?.status !== 404) {
           debugError("Error calculating pricing:", error)
@@ -1095,11 +1094,14 @@ export default function Cart() {
         // Fallback to frontend calculation if backend fails
         setPricing(null)
       } finally {
-        setLoadingPricing(false)
+        if (!ignore) {
+          setLoadingPricing(false)
+        }
       }
     }
 
     calculatePricing()
+    return () => { ignore = true; }
   }, [cart, defaultAddress, appliedCoupon, couponCode, restaurantId])
 
   // Fetch wallet balance
@@ -1234,7 +1236,7 @@ export default function Cart() {
     // Priority 3: Default Base Fee
     return Number(feeSettings.deliveryFee || 0)
   })()
-  const deliveryFee = pricing?.deliveryFee || fallbackDeliveryFee
+  const deliveryFee = pricing?.deliveryFee ?? fallbackDeliveryFee
   const deliveryFeeBreakdown = pricing?.deliveryFeeBreakdown || null
   const hasDistanceDeliveryBreakdown =
     deliveryFeeBreakdown?.source === "distance" &&
@@ -1242,16 +1244,16 @@ export default function Cart() {
   const deliveryFeeBreakdownText = hasDistanceDeliveryBreakdown
     ? deliveryFeeBreakdown.message || `Distance: ${Number(deliveryFeeBreakdown.distanceKm).toFixed(1)} km`
     : null
-  const platformFee = pricing?.platformFee || feeSettings.platformFee
-  const gstCharges = pricing?.tax || Math.round(subtotal * (feeSettings.gstRate / 100))
+  const platformFee = pricing?.platformFee ?? feeSettings.platformFee
+  const gstCharges = pricing?.tax ?? Math.round(subtotal * (feeSettings.gstRate / 100))
   const gstLabel = activeCartTab === 'grocery' || activeCartTab === 'accessories'
     ? 'GST and Store Charges'
     : (activeCartTab === 'all' && cart.some(i => i.moduleType === 'grocery' || i.moduleType === 'accessories') && !cart.some(i => (i.moduleType || 'food') === 'food')
       ? 'GST and Store Charges'
       : 'GST and Kitchen Charges')
-  const discount = pricing?.discount || (appliedCoupon ? Math.min(appliedCoupon.discount, subtotal * 0.5) : 0)
+  const discount = pricing?.discount ?? (appliedCoupon ? Math.min(appliedCoupon.discount, subtotal * 0.5) : 0)
   const totalBeforeDiscount = subtotal + (deliveryFee === 0 ? (feeSettings.deliveryFee ?? 25) : deliveryFee) + platformFee + gstCharges
-  const total = subtotal + deliveryFee + platformFee + gstCharges - (pricing?.discount || discount)
+  const total = subtotal + deliveryFee + platformFee + gstCharges - (pricing?.discount ?? discount)
   const savings = pricing?.savings ?? Math.max(0, totalBeforeDiscount - total)
   const selectedPaymentLabel =
     selectedPaymentMethod === "wallet"
@@ -1488,6 +1490,7 @@ export default function Cart() {
             sanitizedRestaurantId = undefined;
           }
 
+          const actualModuleType = item.moduleType || item.category || (item.restaurantId ? 'food' : undefined);
           return {
             itemId: item.itemId || item.id,
             name: item.name,
@@ -1499,7 +1502,8 @@ export default function Cart() {
             image: item.image,
             description: item.description,
             isVeg: item.isVeg !== false,
-            restaurantId: sanitizedRestaurantId
+            restaurantId: sanitizedRestaurantId,
+            moduleType: actualModuleType || undefined
           };
         })
 
@@ -1564,6 +1568,7 @@ export default function Cart() {
           sanitizedRestaurantId = undefined;
         }
 
+        const actualModuleType = item.moduleType || item.category || (item.restaurantId ? 'food' : undefined);
         return {
           itemId: item.itemId || item.id,
           name: item.name,
@@ -1576,7 +1581,7 @@ export default function Cart() {
           description: item.description,
           isVeg: item.isVeg !== false,
           restaurantId: sanitizedRestaurantId,
-          moduleType: item.moduleType || activeCartTab
+          moduleType: actualModuleType || undefined
         };
       })
 
@@ -1639,6 +1644,7 @@ export default function Cart() {
             sanitizedRestaurantId = undefined;
           }
 
+          const actualModuleType = item.moduleType || item.category || (item.restaurantId ? 'food' : undefined);
           return {
             itemId: item.itemId || item.id,
             name: item.name,
@@ -1650,7 +1656,8 @@ export default function Cart() {
             image: item.image,
             description: item.description,
             isVeg: item.isVeg !== false,
-            restaurantId: sanitizedRestaurantId
+            restaurantId: sanitizedRestaurantId,
+            moduleType: actualModuleType || undefined
           };
         })
 
@@ -1746,6 +1753,7 @@ export default function Cart() {
           sanitizedRestaurantId = undefined;
         }
 
+        const actualModuleType = item.moduleType || item.category || (item.restaurantId ? 'food' : undefined);
         return {
           itemId: item.itemId || item.id,
           name: item.name,
@@ -1760,7 +1768,7 @@ export default function Cart() {
           preparationTime: item.preparationTime,
           restaurantId: sanitizedRestaurantId || undefined,
           restaurantName: item.restaurant || undefined,
-          moduleType: item.moduleType || item.category || 'food'
+          moduleType: actualModuleType || undefined
         };
       })
 
@@ -2167,7 +2175,7 @@ export default function Cart() {
           <h2 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">Your cart is empty</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 text-center">Add items to start a new order</p>
           <Button
-            onClick={goBack}
+            onClick={handleContinueShopping}
             className="text-white border-0"
             style={{
               background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.9), var(--module-theme-color,#F84E04))",
@@ -2224,7 +2232,7 @@ export default function Cart() {
               View All Items
             </Button>
             <Button
-              onClick={goBack}
+              onClick={handleContinueShopping}
               className="text-white border-0"
               style={{
                 background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.9), var(--module-theme-color,#F84E04))",

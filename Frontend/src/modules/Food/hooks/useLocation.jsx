@@ -1411,6 +1411,38 @@ export function useLocation() {
     }
   }
 
+  useEffect(() => {
+    const handleLocationUpdated = () => {
+      debugLog("locationUpdated event received, parsing from localStorage");
+      try {
+        const stored = localStorage.getItem("userLocation");
+        if (stored) {
+          const loc = JSON.parse(stored);
+          if (loc?.latitude && loc?.longitude) {
+            // Create a fresh object reference to force React to re-render
+            setLocation({ ...loc, _ts: Date.now() });
+          }
+        }
+      } catch (e) {
+        debugWarn("Failed to parse stored location on event", e);
+      }
+    };
+
+    const handleStorageEvent = (e) => {
+      if (e.key === "userLocation" || e.key === "deliveryAddressMode") {
+        handleLocationUpdated();
+      }
+    };
+
+    window.addEventListener("locationUpdated", handleLocationUpdated);
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      window.removeEventListener("locationUpdated", handleLocationUpdated);
+      window.removeEventListener("storage", handleStorageEvent);
+    };
+  }, []);
+
   return {
     location,
     loading,

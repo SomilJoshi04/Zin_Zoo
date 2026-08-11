@@ -324,7 +324,10 @@ async function createUnifiedOrder(userId, dto) {
 
   console.log('--- createUnifiedOrder backend payload ---', JSON.stringify(dto.items, null, 2));
   for (const item of dto.items) {
-    const mod = item.moduleType || 'food';
+    const mod = item.moduleType || (dto.moduleType !== 'unified' ? dto.moduleType : null);
+    if (!mod || !['food', 'grocery', 'accessories'].includes(mod)) {
+      throw new Error(`Invalid or missing module type for item: ${item.name || item.itemId}`);
+    }
     if (mod === 'food') {
       const dbItem = await FoodItem.findById(item.itemId);
       if (!dbItem || dbItem.isAvailable === false) {
@@ -345,9 +348,10 @@ async function createUnifiedOrder(userId, dto) {
 
   const moduleItems = { food: [], grocery: [], accessories: [] };
   for (const item of dto.items) {
-    const mod = item.moduleType || 'food';
-    if (!moduleItems[mod]) moduleItems[mod] = [];
-    moduleItems[mod].push(item);
+    const mod = item.moduleType || (dto.moduleType !== 'unified' ? dto.moduleType : null);
+    if (mod && moduleItems[mod]) {
+      moduleItems[mod].push(item);
+    }
   }
 
   const createdOrders = [];

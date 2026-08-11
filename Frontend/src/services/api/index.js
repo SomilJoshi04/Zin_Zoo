@@ -1254,27 +1254,38 @@ export const restaurantAPI = {
   updateMyOfferStatus: (id, status) => apiClient.patch(`/food/restaurant/my-offers/${id}/status`, { status }, { contextModule: "restaurant" }),
   /** Public Offers for users (global/selected restaurant) */
   getPublicOffers: (params = {}) => apiClient.get("/food/restaurant/offers", { params }),
-  getCouponsByItemIdPublic: (restaurantId, itemId, subtotal) =>
-    apiClient.get("/food/restaurant/offers", { params: { restaurantId, subtotal } }).then((res) => {
+  getApplicableCoupons: (cartItems, subtotal) =>
+    apiClient.get("/food/restaurant/offers", { params: { subtotal } }).then((res) => {
       const list = res?.data?.data?.allOffers || res?.data?.allOffers || [];
       const now = Date.now();
       const coupons = list
         .filter((o) => {
           const isFood = !o.moduleType || o.moduleType === 'food';
           if (isFood) {
+            const foodItems = cartItems.filter(it => (it.moduleType || it.category || (it.restaurantId ? 'food' : 'unknown')) === 'food');
+            if (foodItems.length === 0) return false;
+            
             if (String(o?.restaurantScope) === "selected") {
-              if (!restaurantId) return false;
-              const restaurantIds = Array.isArray(o.restaurantIds) && o.restaurantIds.length > 0
+              const offerResIds = Array.isArray(o.restaurantIds) && o.restaurantIds.length > 0
                 ? o.restaurantIds
                 : [o.restaurantId].filter(Boolean);
-              return restaurantIds.some((id) => String(id) === String(restaurantId || ""));
+              
+              return foodItems.some(it => {
+                const itResId = it.restaurantId || it.restaurant?._id || it.restaurant?.id;
+                return offerResIds.some(id => String(id) === String(itResId || ""));
+              });
             }
             return true;
           } else {
-            // Grocery/Accessories: check itemIds if specified
+            const targetModule = o.moduleType;
+            const moduleItems = cartItems.filter(it => (it.moduleType || it.category || 'unknown') === targetModule);
+            if (moduleItems.length === 0) return false;
+            
             if (Array.isArray(o.itemIds) && o.itemIds.length > 0) {
-              if (!itemId) return false;
-              return o.itemIds.some((id) => String(id) === String(itemId));
+              return moduleItems.some((it) => {
+                const itId = it.itemId || it.id;
+                return o.itemIds.some((id) => String(id) === String(itId));
+              });
             }
             return true;
           }
@@ -1287,7 +1298,6 @@ export const restaurantAPI = {
             discountType: o.discountType,
             discountPercentage: isPct ? discountVal : 0,
             discountValue: discountVal,
-            // For backward compat with Cart.jsx mapping (original - discounted = savings)
             originalPrice: isPct ? 0 : discountVal,
             discountedPrice: 0,
             minOrderValue: Number(o.minOrderValue || 0),

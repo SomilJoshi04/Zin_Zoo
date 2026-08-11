@@ -944,10 +944,10 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
 
       // Requirement: when user taps "Use current location" from delivery-location selector,
       // don't open the "Add address" form. Just close and return to homepage.
-      // Store selection mode so Cart can prefer this current location for delivery address.
       try {
         localStorage.setItem("deliveryAddressMode", "current");
       } catch {}
+      window.dispatchEvent(new Event("locationUpdated"));
       setShowAddressForm(false)
       setAddressFormData((prev) => ({
         ...prev,
@@ -1993,11 +1993,11 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
       const savedAddressId = getAddressId(savedAddress) || existingAddressId
       if (savedAddressId) {
         setDefaultAddress(savedAddressId)
-        // User saved an address; prefer saved delivery address in Cart.
         try {
           localStorage.setItem("deliveryAddressMode", "saved")
         } catch {}
       }
+      window.dispatchEvent(new Event("locationUpdated"));
 
       // Reset form
       setAddressFormData({
@@ -2012,8 +2012,7 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
       setShowAddressForm(false)
       setLoadingAddress(false)
 
-      // Close overlay and keep user in current flow
-      onClose()
+      // Do not close overlay automatically so user returns to the 'Select a location' screen
     } catch (error) {
       debugError("? Error saving address:", error)
       debugError("? Error details:", {
@@ -2088,6 +2087,7 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
         formattedAddress: `${address.street}, ${address.city}, ${address.state}`
       }
       localStorage.setItem("userLocation", JSON.stringify(locationData))
+      window.dispatchEvent(new Event("locationUpdated"));
 
       // Update map position to show selected address
       setMapPosition([latitude, longitude])
@@ -2135,10 +2135,10 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
       if (selectedAddressId) {
         setDefaultAddress(selectedAddressId)
       }
-      // User picked a saved address; Cart should prefer saved address over current location.
       try {
         localStorage.setItem("deliveryAddressMode", "saved");
       } catch {}
+      window.dispatchEvent(new Event("locationUpdated"));
       onClose()
     } catch (error) {
       debugError("Error selecting saved address:", error)

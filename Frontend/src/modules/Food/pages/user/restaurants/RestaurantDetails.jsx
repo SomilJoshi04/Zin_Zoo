@@ -3007,6 +3007,9 @@ function RestaurantDetailsContent() {
                           key={index}
                           className="w-full flex items-center justify-between py-3 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
                           onClick={() => {
+                            // Synchronize the selected category state with the top horizontal filter
+                            setSelectedMenuCategory(category.id)
+                            
                             // Expand the selected category section automatically
                             setExpandedSections(prev => {
                               const newSet = new Set(prev)

@@ -290,7 +290,7 @@ export function CartProvider({ children }) {
 
   const addToCart = async (item, sourcePosition = null) => {
     const safeCart = normalizeCartData(cart)
-    const isFood = (item?.moduleType || 'food') === 'food';
+    const isFood = (item?.moduleType || undefined) === 'food';
     
     // Auto-fill default restaurant info for food if missing
     if (isFood) {
@@ -307,7 +307,7 @@ export function CartProvider({ children }) {
     }
 
     const baseItemId = item.itemId || item.productId || item.foodId || item.id || item._id;
-    const moduleType = item.moduleType || item.category || 'food';
+    const moduleType = item.moduleType || item.category || undefined;
 
     let itemIdToUse = item.id;
     let existing = null;
@@ -318,7 +318,7 @@ export function CartProvider({ children }) {
       const variantStr = String(item.variant || item.size || "");
 
       existing = safeCart.find(i => {
-        const iModule = i.moduleType || i.category || 'food';
+        const iModule = i.moduleType || i.category || undefined;
         if (iModule !== moduleType) return false;
         
         const iBaseId = String(i.itemId || i.productId || i.foodId || i.id || i._id || "");
@@ -367,7 +367,7 @@ export function CartProvider({ children }) {
                 id: itemIdToUse,
                 name: item.name,
                 imageUrl: item.image || item.imageUrl,
-                moduleType: item.moduleType || 'food',
+                moduleType: item.moduleType || undefined,
               },
               sourcePosition,
             })
@@ -377,7 +377,7 @@ export function CartProvider({ children }) {
             i.id === itemIdToUse ? { ...i, quantity: i.quantity + 1 } : i
           )
         }
-        const newItem = { ...item, quantity: 1 }
+        const newItem = { ...item, moduleType, quantity: 1 }
         
         if (sourcePosition) {
           setLastAddEvent({
@@ -385,7 +385,7 @@ export function CartProvider({ children }) {
               id: item.id,
               name: item.name,
               imageUrl: item.image || item.imageUrl,
-              moduleType: item.moduleType || 'food',
+              moduleType: item.moduleType || undefined,
             },
             sourcePosition,
           })
@@ -415,7 +415,7 @@ export function CartProvider({ children }) {
             id: productInfo.id || itemToRemove.id,
             name: productInfo.name || itemToRemove.name,
             imageUrl: productInfo.imageUrl || productInfo.image || itemToRemove.image || itemToRemove.imageUrl,
-            moduleType: productInfo.moduleType || itemToRemove.moduleType || 'food',
+            moduleType: productInfo.moduleType || itemToRemove.moduleType || undefined,
           },
           sourcePosition,
         })
@@ -444,7 +444,7 @@ export function CartProvider({ children }) {
               id: productInfo.id || itemToRemove.id,
               name: productInfo.name || itemToRemove.name,
               imageUrl: productInfo.imageUrl || productInfo.image || itemToRemove.image || itemToRemove.imageUrl,
-              moduleType: productInfo.moduleType || itemToRemove.moduleType || 'food',
+              moduleType: productInfo.moduleType || itemToRemove.moduleType || undefined,
             },
             sourcePosition,
           })
@@ -470,7 +470,7 @@ export function CartProvider({ children }) {
               id: productInfo.id || existing.id,
               name: productInfo.name || existing.name,
               imageUrl: productInfo.imageUrl || productInfo.image || existing.image || existing.imageUrl,
-              moduleType: productInfo.moduleType || existing.moduleType || 'food',
+              moduleType: productInfo.moduleType || existing.moduleType || undefined,
             },
             sourcePosition,
           })
@@ -485,7 +485,7 @@ export function CartProvider({ children }) {
 
     // Increasing quantity!
     const baseItemId = existingItem.itemId || existingItem.productId || existingItem.id
-    const moduleType = existingItem.moduleType || existingItem.category || 'food'
+    const moduleType = existingItem.moduleType || existingItem.category || undefined
 
     const pendingKey = resolvedItemId
     const currentPending = pendingQuantitiesRef.current[pendingKey] || 0
@@ -542,7 +542,7 @@ export function CartProvider({ children }) {
       const quantity = Number(item?.quantity)
       if (!item?.id || !Number.isFinite(quantity) || quantity <= 0) return false;
       // Grocery and accessories items don't need a restaurantId
-      const moduleType = item?.moduleType || item?.category || 'food';
+      const moduleType = item?.moduleType || item?.category || undefined;
       if (moduleType === 'grocery' || moduleType === 'accessories') return true;
       // Food items need at least a restaurantId or restaurant name
       return !!(item?.restaurantId || item?.restaurant);
@@ -669,8 +669,8 @@ export function CartProvider({ children }) {
         imageUrl: item.image || item.imageUrl,
       },
       quantity: item.quantity || 1,
-      moduleType: item.moduleType || 'food',
-      category: item.category || 'food',
+      moduleType: item.moduleType || undefined,
+      category: item.category || undefined,
     }))
     
     const itemCount = safeCart.reduce((total, item) => total + (item.quantity || 0), 0)

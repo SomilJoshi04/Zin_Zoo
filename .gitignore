@@ -1,7 +1,8 @@
-# ── Node ──────────────────────────────────────────────────────────────────────
-node_modules/
+# ==============================================================================
+# ZIN ZOO Master .gitignore
+# ==============================================================================
 
-# ── Environment Variables (NEVER commit real .env files) ─────────────────────
+# ── Environment Variables (NEVER commit) ─────────────────────────────────────
 .env
 .env.*
 !.env.example
@@ -9,14 +10,63 @@ node_modules/
 */.env.*
 !*/.env.example
 
-# ── Scratch/Temp files ────────────────────────────────────────────────────────
-scratch/
-.agents/
+# ── Node.js ───────────────────────────────────────────────────────────────────
+node_modules/
+*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# ── Build/Deploy scripts ──────────────────────────────────────────────────────
+# ── Logs & Debugging ──────────────────────────────────────────────────────────
+logs/
+*.log
+*/logs/
+
+# ── Scratch & Script Files (Testing/Hardcoded data) ───────────────────────────
+scratch/
+scripts/
+scratch_files/
+*/scratch/
+*/scripts/
+*/scratch_files/
+
+# ── Build Outputs ─────────────────────────────────────────────────────────────
+dist/
+dist-ssr/
+coverage/
+*/dist/
+*/dist-ssr/
+*/coverage/
+
+# ── Vite ──────────────────────────────────────────────────────────────────────
+*.timestamp-*
+*.local
+
+# ── Uploads & User Generated Content ──────────────────────────────────────────
+uploads/
+*/uploads/
+
+# ── Editor Directories and Files ──────────────────────────────────────────────
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.swp
+
+# ── Custom / Temporary Build & Deploy Scripts ─────────────────────────────────
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
 
-# ── Markdown files ────────────────────────────────────────────────────────────
+# ── Agent System Files ────────────────────────────────────────────────────────
+.agents/
+
+# ── Markdown files (as requested) ─────────────────────────────────────────────
 *.md
