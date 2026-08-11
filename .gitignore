@@ -1,6 +1,22 @@
+# ── Node ──────────────────────────────────────────────────────────────────────
+node_modules/
+
+# ── Environment Variables (NEVER commit real .env files) ─────────────────────
+.env
+.env.*
+!.env.example
+*/.env
+*/.env.*
+!*/.env.example
+
+# ── Scratch/Temp files ────────────────────────────────────────────────────────
+scratch/
+.agents/
+
+# ── Build/Deploy scripts ──────────────────────────────────────────────────────
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
-*.md  
-scratch/
-.agents/
+
+# ── Markdown files ────────────────────────────────────────────────────────────
+*.md

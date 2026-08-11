@@ -3007,6 +3007,12 @@ function RestaurantDetailsContent() {
                           key={index}
                           className="w-full flex items-center justify-between py-3 px-2 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors text-left"
                           onClick={() => {
+                            // Expand the selected category section automatically
+                            setExpandedSections(prev => {
+                              const newSet = new Set(prev)
+                              newSet.add(category.sectionIndex)
+                              return newSet
+                            })
                             setShowMenuSheet(false)
                             // Scroll to category section
                             setTimeout(() => {
