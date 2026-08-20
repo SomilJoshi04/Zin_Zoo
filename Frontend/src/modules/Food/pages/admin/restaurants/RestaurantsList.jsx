@@ -2,8 +2,12 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { Loader } from '@googlemaps/js-api-loader'
 import { getGoogleMapsApiKey } from "@food/utils/googleMapsApiKey"
 import { Search, Trash2, Loader2, Eye, Pencil, Plus, ChevronLeft, ChevronRight, Check, X, Building2, MapPin, Phone, Mail, Clock, Star, AlertTriangle, ShieldCheck, ShieldX, Save } from "lucide-react"
-import { adminAPI, uploadAPI } from "@food/api"
+import { adminAPI, uploadAPI, baseApiUrl } from "@food/api"
 import { toast } from "sonner"
+import { usePublicSocket } from "@food/hooks/usePublicSocket"
+import ImageUploadField from "../../../components/admin/ImageUploadField"
+import { canCurrentAdminAction } from "@food/utils/adminRbac"
+
 const geocodeAddressHelper = (address) => {
   return new Promise((resolve) => {
     if (!address || !window.google || !window.google.maps) return resolve(null);
@@ -1220,42 +1224,30 @@ const MapPicker = ({ form, setForm }) => {
   )
 }
 
-const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile, imagePreviewUrl, setImagePreviewUrl }) => (
+const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile, imagePreviewUrl, setImagePreviewUrl }) => {
+  if (!form) return null;
+  return (
   <div className="space-y-4">
     {/* Restaurant Image Upload */}
-    <div>
-      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Image</label>
-      <div className="flex items-start gap-4">
-        {imagePreviewUrl ? (
-          <div className="relative w-24 h-24 rounded-xl overflow-hidden border-2 border-orange-200 dark:border-orange-950/30 flex-shrink-0">
-            <img src={imagePreviewUrl} alt="Preview" className="w-full h-full object-cover" />
-            <button type="button" onClick={() => { setSelectedImageFile?.(null); setImagePreviewUrl?.(""); setForm((p) => ({ ...p, profileImage: "" })) }}
-              className="absolute top-1 right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs hover:bg-red-600 transition-colors shadow">✕</button>
-          </div>
-        ) : (
-          <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center flex-shrink-0 bg-slate-50 dark:bg-slate-800/50">
-            <span className="text-xs text-slate-400 dark:text-slate-500 text-center px-1">No image</span>
-          </div>
-        )}
-        <div className="flex-1">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0] || null
-              setSelectedImageFile?.(file)
-              if (file) {
-                setImagePreviewUrl?.(URL.createObjectURL(file))
-              } else {
-                setImagePreviewUrl?.(form.profileImage || "")
-              }
-            }}
-            className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white file:mr-3 file:rounded file:border-0 file:bg-orange-50 file:px-3 file:py-1.5 file:text-sm file:text-[#F84E04] file:font-medium dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:file:bg-slate-700 dark:file:text-white hover:file:bg-orange-100 dark:hover:file:bg-slate-600 transition-colors"
-          />
-          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Upload restaurant image (shown on user side)</p>
-        </div>
-      </div>
-    </div>
+    <ImageUploadField
+      value={form.selectedImageFile || imagePreviewUrl || form.profileImage}
+      onChange={(file) => {
+        setSelectedImageFile?.(file)
+        if (file) {
+          setImagePreviewUrl?.(URL.createObjectURL(file))
+        } else {
+          setImagePreviewUrl?.(form.profileImage || "")
+        }
+      }}
+      onClear={() => {
+        setSelectedImageFile?.(null)
+        setImagePreviewUrl?.(form.profileImage || "")
+        setForm((p) => ({ ...p, profileImage: "" }))
+      }}
+      aspectRatio={1.7777777777777777}
+      label="Restaurant Image (16:9)"
+      helpText="Upload restaurant image (shown on user side)"
+    />
     
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
@@ -1432,4 +1424,5 @@ const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile,
       </div>
     </div>
   </div>
-);
+  );
+};

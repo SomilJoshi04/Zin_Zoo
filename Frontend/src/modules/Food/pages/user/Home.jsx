@@ -148,7 +148,7 @@ const RestaurantImageCarousel = React.memo(
     restaurant,
     priority = false,
     backendOrigin = "",
-    className = "h-48 sm:h-56 md:h-60 lg:h-64 xl:h-72",
+    className = "w-full aspect-[4/3]",
     roundedClass = "rounded-t-md",
   }) => {
     const webviewSessionKeyRef = useRef(WEBVIEW_SESSION_CACHE_BUSTER);
@@ -2468,7 +2468,7 @@ export default function Home() {
         <div
           ref={heroShellRef}
           data-home-hero-shell="true"
-          className="relative w-full overflow-hidden aspect-[1.7/1] sm:aspect-[2.0/1] lg:aspect-[2.8/1] xl:aspect-[3.2/1] min-h-[140px] sm:min-h-[180px] lg:min-h-[200px] lg:max-h-[280px] rounded-2xl shadow-sm group cursor-pointer bg-white"
+          className="relative w-full overflow-hidden aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.8/1] xl:aspect-[3.2/1] rounded-2xl shadow-sm group cursor-pointer bg-white"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -2549,7 +2549,7 @@ export default function Home() {
             className="flex-shrink-0 flex flex-col items-center gap-2 cursor-pointer transition-transform hover:scale-105 active:scale-95"
             onClick={() => navigate("/user/under-250")}
           >
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#F84E04] rounded-b-full rounded-t-sm shadow-md border-t-4 border-orange-200 flex flex-col items-center justify-center p-1">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 aspect-square bg-[#F84E04] rounded-b-full rounded-t-sm shadow-md border-t-4 border-orange-200 flex flex-col items-center justify-center p-1">
               <span className="text-[10px] sm:text-xs font-bold text-white text-center leading-tight">UNDER</span>
               <span className="text-sm sm:text-base font-extrabold text-white">₹200</span>
               <div className="w-10 h-3.5 bg-white rounded-full mt-1 flex items-center justify-center">
@@ -2569,7 +2569,7 @@ export default function Home() {
                 className="flex-shrink-0 flex flex-col items-center gap-2 group transition-all duration-300 hover:-translate-y-1"
                 style={{ animation: `fade-in-up 0.5s ease-out forwards ${index * 0.05}s`, opacity: 0 }}
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 group-hover:border-[#F84E04] transition-colors">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 aspect-square rounded-full overflow-hidden shadow-sm border border-gray-100 dark:border-gray-800 group-hover:border-[#F84E04] transition-colors">
                   <OptimizedImage
                     src={category.image}
                     alt={category.name}
@@ -2804,7 +2804,7 @@ export default function Home() {
                         }}
                         className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px] cursor-pointer"
                       >
-                        <div className={`relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 border-gray-150 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] group-active:scale-95 transition-all duration-300`}>
+                        <div className={`relative w-16 h-16 xs:w-16 sm:w-20 sm:h-20 shrink-0 aspect-square rounded-full overflow-hidden shadow-md border-2 border-gray-150 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] group-active:scale-95 transition-all duration-300`}>
                           {/* Shining Glint Effect */}
                           <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
                             <motion.div
@@ -2837,7 +2837,7 @@ export default function Home() {
                         onClick={() => navigate("/food/user/categories")}
                         className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px] cursor-pointer"
                       >
-                        <div className="relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 border-transparent bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 transition-all duration-300">
+                        <div className="relative w-16 h-16 xs:w-16 sm:w-20 sm:h-20 shrink-0 aspect-square rounded-full overflow-hidden shadow-md border-2 border-transparent bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 transition-all duration-300">
                           <Plus className="w-6 h-6 text-[#F84E04]" />
                         </div>
                         <span className="text-[10px] xs:text-[11px] sm:text-xs font-bold text-gray-555 dark:text-gray-400 group-hover:text-[#F84E04] text-center leading-tight">
@@ -2909,7 +2909,7 @@ export default function Home() {
                             }}
                             className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px] cursor-pointer"
                           >
-                            <div className={`relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 border-gray-150 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] group-active:scale-95 transition-all duration-300`}>
+                            <div className={`relative w-16 h-16 xs:w-16 sm:w-20 sm:h-20 shrink-0 aspect-square rounded-full overflow-hidden shadow-md border-2 border-gray-150 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] group-active:scale-95 transition-all duration-300`}>
                               {/* Shining Glint Effect */}
                               <div className="absolute inset-0 z-10 pointer-events-none overflow-hidden">
                                 <motion.div
@@ -2942,7 +2942,7 @@ export default function Home() {
                             onClick={() => navigate("/food/user/categories")}
                             className="flex-shrink-0 flex flex-col items-center gap-1.5 group w-[70px] xs:w-[78px] sm:w-[94px] md:w-[104px] cursor-pointer"
                           >
-                            <div className="relative w-16 h-16 xs:w-[72px] xs:h-[72px] sm:w-22 sm:h-22 rounded-full overflow-hidden shadow-md border-2 border-transparent bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 transition-all duration-300">
+                            <div className="relative w-16 h-16 xs:w-16 sm:w-20 sm:h-20 shrink-0 aspect-square rounded-full overflow-hidden shadow-md border-2 border-transparent bg-orange-50 dark:bg-orange-950/20 flex items-center justify-center group-hover:bg-orange-100 dark:group-hover:bg-orange-900/30 transition-all duration-300">
                               <Plus className="w-6 h-6 text-[#F84E04]" />
                             </div>
                             <span className="text-[10px] xs:text-[11px] sm:text-xs font-bold text-gray-555 dark:text-gray-400 group-hover:text-[#F84E04] text-center leading-tight">
@@ -3001,12 +3001,12 @@ export default function Home() {
                     <Link
                       to={`/user/restaurants/${restaurantSlug}`}
                       className="block rounded-[20px] overflow-hidden border border-gray-100 dark:border-gray-800 bg-white dark:bg-[#1a1a1a] shadow-sm hover:shadow-md transition-shadow">
-                      <div className="relative h-24 sm:h-28 md:h-32 bg-gray-50">
+                      <div className="relative w-full aspect-[4/3] bg-gray-50 overflow-hidden rounded-t-[20px]">
                         <RestaurantImageCarousel
                           restaurant={restaurant}
                           backendOrigin={BACKEND_ORIGIN}
-                          className="h-24 sm:h-28 md:h-32"
-                          roundedClass="rounded-t-[20px]"
+                          className="w-full h-full"
+                          roundedClass=""
                         />
                         <div className={`absolute bottom-1.5 left-1.5 px-1.5 py-0.5 rounded-md ${Number(restaurant.rating) > 0 ? "bg-black/85 backdrop-blur-md text-white font-black" : "bg-gray-800/90 text-white font-bold"} text-[9px] xs:text-[10px] shadow-lg border border-white/10`}>
                           {Number(restaurant.rating) > 0 ? Number(restaurant.rating).toFixed(1) : "NEW"}
@@ -3155,12 +3155,12 @@ export default function Home() {
                     >
                       <div className={`bg-white dark:bg-[#151515] rounded-[20px] overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 group hover:shadow-[0_12px_30px_-6px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col h-full relative ${!isAvailable ? 'opacity-70' : ''}`}>
                         {/* Restaurant Image */}
-                        <div className="relative h-36 sm:h-40 md:h-44 w-full overflow-hidden bg-gray-50 dark:bg-gray-900">
+                        <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-t-[20px]">
                           <RestaurantImageCarousel
                             restaurant={restaurant}
                             backendOrigin={BACKEND_ORIGIN}
-                            className="h-36 sm:h-40 md:h-44"
-                            roundedClass="rounded-t-[20px]"
+                            className="w-full h-full"
+                            roundedClass=""
                           />
                           {/* Rating Badge */}
                           <div className={`absolute bottom-2 left-2 px-2 py-0.5 rounded-lg ${Number(restaurant.rating) > 0 ? "bg-black/85 backdrop-blur-md text-white font-black" : "bg-gray-800/90 text-white font-bold"} text-[10px] xs:text-xs shadow-lg border border-white/10 flex items-center gap-1`}>

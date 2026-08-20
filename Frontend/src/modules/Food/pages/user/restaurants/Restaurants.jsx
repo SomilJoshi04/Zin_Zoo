@@ -160,7 +160,7 @@ export default function Restaurants() {
                   <Link to={`/food/user/restaurants/${restaurant.slug}`} className="h-full flex">
                     <div className="bg-white dark:bg-[#151515] rounded-[20px] overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 group hover:shadow-[0_12px_30px_-6px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col h-full w-full relative">
                       {/* Restaurant Image */}
-                      <div className="relative h-36 sm:h-40 md:h-44 w-full overflow-hidden bg-gray-50 dark:bg-gray-900">
+                      <div className="relative w-full aspect-[4/3] overflow-hidden bg-gray-50 dark:bg-gray-900 rounded-t-[20px]">
                         <img
                           src={restaurant.image || "https://via.placeholder.com/400x300?text=Restaurant"}
                           alt={restaurant.name}

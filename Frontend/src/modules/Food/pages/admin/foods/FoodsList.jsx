@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/componen
 import { usePublicSocket } from "@food/hooks/usePublicSocket"
 import { Popover, PopoverContent, PopoverTrigger } from "@food/components/ui/popover"
 import { getFoodDisplayPrice, getFoodVariants } from "@food/utils/foodVariants"
+import ImageUploadField from "../../../components/admin/ImageUploadField"
 import { canCurrentAdminAction } from "@food/utils/adminRbac"
 const debugLog = (...args) => { }
 const debugWarn = (...args) => { }
@@ -1048,23 +1049,23 @@ export default function FoodsList() {
                   <option value="Non-Veg">Non-Veg</option>
                 </select>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Upload Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0] || null
-                    setSelectedImageFile(file)
-                    if (file) {
-                      setImagePreviewUrl(URL.createObjectURL(file))
-                    } else {
-                      setImagePreviewUrl(foodForm.image.trim())
-                    }
-                  }}
-                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white file:mr-3 file:rounded file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:file:bg-slate-700 dark:file:text-white"
-                />
-              </div>
+              <ImageUploadField
+                value={selectedImageFile || imagePreviewUrl || foodForm.image}
+                onChange={(file) => {
+                  setSelectedImageFile(file)
+                  if (file) {
+                    setImagePreviewUrl(URL.createObjectURL(file))
+                  } else {
+                    setImagePreviewUrl(foodForm.image.trim())
+                  }
+                }}
+                onClear={() => {
+                  setSelectedImageFile(null)
+                  setImagePreviewUrl(foodForm.image.trim())
+                }}
+                aspectRatio={1.7777777777777777}
+                label="Upload Image (16:9)"
+              />
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Timing</label>
                 <div className="relative">
@@ -1105,18 +1106,6 @@ export default function FoodsList() {
                   className="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                 />
               </div>
-              {imagePreviewUrl ? (
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Image Preview</label>
-                  <div className="w-28 h-28 rounded-lg overflow-hidden border border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50">
-                    <img
-                      src={imagePreviewUrl}
-                      alt="Food preview"
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                </div>
-              ) : null}
               <div className="flex items-center gap-6 pt-7">
                 <label className="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
                   <input

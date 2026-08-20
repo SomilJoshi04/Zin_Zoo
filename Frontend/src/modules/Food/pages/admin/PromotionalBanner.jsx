@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { Edit, Upload, Info, Trash2, Plus, Calendar, Link as LinkIcon, Save, X, Loader2, Image as ImageIcon } from "lucide-react"
 import api from "@food/api"
+import ImageUploadField from "../components/admin/ImageUploadField"
 
 const debugError = (...args) => {}
 
@@ -356,24 +357,26 @@ export default function PromotionalBanner() {
               <form onSubmit={handleSubmit} className="p-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
-                    <label className="block text-sm font-semibold text-slate-700">Banner Image</label>
-                    <div className="relative aspect-[2/1] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center overflow-hidden group cursor-pointer hover:border-blue-400 transition-colors">
-                      {formData.preview ? (
-                        <>
-                          <img src={formData.preview} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                            <Upload className="w-8 h-8 text-white" />
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-center p-4">
-                          <ImageIcon className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-                          <p className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Upload 5:1 Image</p>
-                        </div>
-                      )}
-                      <input type="file" accept="image/*" onChange={handleFileChange} className="absolute inset-0 opacity-0 cursor-pointer" />
-                    </div>
-                    <p className="text-[10px] text-slate-400">JPEG, PNG or WebP. Max 2MB.</p>
+                    <ImageUploadField
+                      value={formData.file || formData.preview}
+                      onChange={(file) => {
+                        setFormData(prev => ({
+                          ...prev,
+                          file,
+                          preview: file ? URL.createObjectURL(file) : null
+                        }))
+                      }}
+                      onClear={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          file: null,
+                          preview: null
+                        }))
+                      }}
+                      aspectRatio={5/1}
+                      label="Banner Image (5:1)"
+                      helpText="JPEG, PNG or WebP. Max 2MB."
+                    />
                   </div>
 
                   <div className="space-y-4">

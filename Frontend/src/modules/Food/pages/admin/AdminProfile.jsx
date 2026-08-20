@@ -1197,6 +1197,7 @@ const StaticMap = ({ form }) => {
         const loader = new Loader({
           apiKey: apiKey,
           version: "weekly",
+          libraries: ["places"],
         })
         const google = await loader.load()
         const lat = parseFloat(form.latitude) || 28.6139

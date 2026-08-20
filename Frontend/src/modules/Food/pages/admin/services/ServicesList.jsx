@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Eye, Pencil, Trash2, Plus, Loader2, X, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { servicesAdminAPI, adminAPI, userAPI } from '@food/api';
+import ImageUploadField from "../../../components/admin/ImageUploadField";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@food/components/ui/dialog"
 
 export default function ServicesList() {
@@ -325,26 +326,30 @@ export default function ServicesList() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-bold text-slate-800 dark:text-slate-200 mb-1">Service Image</label>
-              <div className="flex items-center gap-3">
-                {formData.image ? (
-                  <img src={formData.image} className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700" alt="" />
-                ) : (
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">No Img</div>
-                )}
-                <label className="cursor-pointer px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-700 dark:text-slate-300 rounded-xl transition-colors">
-                  {isUploading ? 'Uploading...' : 'Choose Image'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    disabled={isUploading}
-                    onChange={handleImageUpload}
-                  />
-                </label>
-              </div>
-            </div>
+            <ImageUploadField
+              value={formData.image}
+              onChange={async (file) => {
+                if (!file) return;
+                setIsUploading(true);
+                try {
+                  const res = await userAPI.uploadGenericImage(file);
+                  const url = res?.data?.data?.url || res?.data?.url || '';
+                  if (!url) throw new Error('No URL returned');
+                  setFormData(prev => ({ ...prev, image: url }));
+                  toast.success('Image uploaded');
+                } catch (err) {
+                  toast.error('Failed to upload image');
+                  console.error(err);
+                } finally {
+                  setIsUploading(false);
+                }
+              }}
+              onClear={() => {
+                setFormData(prev => ({ ...prev, image: '' }));
+              }}
+              aspectRatio={1}
+              label="Service Image (Square)"
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div>

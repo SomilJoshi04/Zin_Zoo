@@ -2621,7 +2621,7 @@ function RestaurantDetailsContent() {
                             </div>
 
                             {/* Right Side - Image and Add Button */}
-                            <div className={`relative w-32 flex-shrink-0 ${item.image ? "h-32" : "h-auto flex items-end justify-center"}`}>
+                            <div className={`relative w-28 sm:w-32 flex-shrink-0 ${item.image ? "aspect-square" : "h-auto flex items-end justify-center"}`}>
                               {item.image ? (
                                 <img
                                   src={item.image}
@@ -2851,7 +2851,7 @@ function RestaurantDetailsContent() {
                                       </div>
 
                                       {/* Right Side - Image and Add Button */}
-                                      <div className={`relative w-32 flex-shrink-0 ${item.image ? "h-32" : "h-auto flex items-end justify-center"}`}>
+                                      <div className={`relative w-28 sm:w-32 flex-shrink-0 ${item.image ? "aspect-square" : "h-auto flex items-end justify-center"}`}>
                                         {item.image ? (
                                           <img
                                             src={item.image}

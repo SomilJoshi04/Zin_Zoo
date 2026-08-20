@@ -238,6 +238,7 @@ apiClient.interceptors.request.use(
         normalizedPath.endsWith("/public");
       const isAuthEndpoint =
         path.includes("/food/auth/admin/login") ||
+        path.includes("/food/auth/admin/forgot-password") ||
         path.includes("/food/auth/me") ||
         path.includes("/food/auth/refresh-token") ||
         path.includes("/food/auth/logout");

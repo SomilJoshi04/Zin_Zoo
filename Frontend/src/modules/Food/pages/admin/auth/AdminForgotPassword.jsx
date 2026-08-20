@@ -270,14 +270,14 @@ export default function AdminForgotPassword() {
                       disabled={isLoading}
                       autoComplete="email"
                       required
-                      className="h-12 pl-10 text-base"
+                      className="h-12 pl-10 text-base bg-white !text-black placeholder:text-slate-450 border-slate-300 focus:!text-black"
                     />
                   </div>
                 </div>
 
                 <Button
                   type="submit"
-                  className="h-12 w-full bg-black text-white transition-colors hover:bg-neutral-900"
+                  className="h-12 w-full bg-[#F84E04] text-white transition-colors hover:bg-[#D94203] focus-visible:ring-2 focus-visible:ring-[#F84E04] focus-visible:ring-offset-2 font-bold"
                   disabled={isLoading}
                 >
                   {isLoading ? "Sending..." : "Send Verification Code"}
@@ -307,7 +307,7 @@ export default function AdminForgotPassword() {
                         onChange={(e) => handleOtpChange(index, e.target.value)}
                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
                         onPaste={index === 0 ? handleOtpPaste : undefined}
-                        className="h-14 w-14 text-center text-2xl font-semibold border-2 focus-visible:ring-2 focus-visible:ring-black"
+                        className="h-14 w-14 text-center text-2xl font-semibold border-2 border-slate-300 bg-white !text-black focus-visible:ring-2 focus-visible:ring-[#F84E04] focus:!text-black"
                         disabled={isLoading}
                       />
                     ))}
@@ -339,7 +339,7 @@ export default function AdminForgotPassword() {
 
                 <Button
                   type="submit"
-                  className="h-12 w-full bg-black text-white transition-colors hover:bg-neutral-900"
+                  className="h-12 w-full bg-[#F84E04] text-white transition-colors hover:bg-[#D94203] focus-visible:ring-2 focus-visible:ring-[#F84E04] focus-visible:ring-offset-2 font-bold"
                   disabled={isLoading}
                 >
                   {isLoading ? "Verifying..." : "Verify Code"}
@@ -366,7 +366,7 @@ export default function AdminForgotPassword() {
                       disabled={isLoading}
                       autoComplete="new-password"
                       required
-                      className="h-12 pl-10 pr-10 text-base"
+                      className="h-12 pl-10 pr-10 text-base bg-white !text-black placeholder:text-slate-450 border-slate-300 focus:!text-black"
                     />
                     <button
                       type="button"
@@ -396,7 +396,7 @@ export default function AdminForgotPassword() {
                       disabled={isLoading}
                       autoComplete="new-password"
                       required
-                      className="h-12 pl-10 pr-10 text-base"
+                      className="h-12 pl-10 pr-10 text-base bg-white !text-black placeholder:text-slate-450 border-slate-300 focus:!text-black"
                     />
                     <button
                       type="button"
@@ -411,7 +411,7 @@ export default function AdminForgotPassword() {
 
                 <Button
                   type="submit"
-                  className="h-12 w-full bg-black text-white transition-colors hover:bg-neutral-900"
+                  className="h-12 w-full bg-[#F84E04] text-white transition-colors hover:bg-[#D94203] focus-visible:ring-2 focus-visible:ring-[#F84E04] focus-visible:ring-offset-2 font-bold"
                   disabled={isLoading}
                 >
                   {isLoading ? "Resetting..." : "Reset Password"}
