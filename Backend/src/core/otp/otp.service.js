@@ -22,8 +22,8 @@ const sendSmsViaIndiaHub = async (phone, otp) => {
         const msisdn = digits.startsWith('91') ? digits : `91${digits}`;
 
         // EXACT DLT TEMPLATE provided by user:
-        // "Welcome to the ##var## powered by SMSINDIAHUB. Your OTP for registration is ##var##"
-        const message = `Welcome to the Switcheats powered by SMSINDIAHUB. Your OTP for registration is ${otp}`;
+        // "Welcome to the ##var## powered by Appzeto.Your OTP for registration is ##var##.BGADEC"
+        const message = `Welcome to the ZinZooX powered by Appzeto.Your OTP for registration is ${otp}.BGADEC`;
 
         // SMS India Hub HTTP GET API — query param names are case-sensitive per SOP
         const url = new URL('http://cloud.smsindiahub.in/vendorsms/pushsms.aspx');
@@ -150,10 +150,8 @@ export const verifyOtp = async (phone, otp) => {
     record.attempts += 1;
 
     if (record.otp !== otp) {
-        // TEMPORARY BYPASS: Accept ANY OTP for testing
-        // await record.save();
-        // return { valid: false, reason: 'Invalid OTP' };
-        logger.info(`[TESTING] OTP bypass used for phone ${phone}. Entered: ${otp}, Actual: ${record.otp}`);
+        await record.save();
+        return { valid: false, reason: 'Invalid OTP' };
     }
 
     await record.deleteOne();

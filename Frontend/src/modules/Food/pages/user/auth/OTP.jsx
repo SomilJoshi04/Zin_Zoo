@@ -533,7 +533,7 @@ export default function OTP() {
                 alt="Delivery Rider" 
                 className="w-full h-auto object-contain max-h-[160px]" 
                 data-purpose="rider-illustration" 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJKGTVcnQ792lwZbHSIVyZ8Zje2CusGOz4UuAU6JPdFnz8e7mHkvUHjCsqBed_guEZdTiLOAjIRSpDWwQr3cXA4VirZDyAzj738LrUgPEQOozNglK7RHNV32a2cOk9NrkKIyRYiH8lpoxqg9o7UkpFNRGj91WVZw5ZD82ZxmhPKqTMuYHi2FQ-PHCincP_aliMkk1f3zm0htFCegl3ZZC3uR7nV4UrI-FmjqhoLVDWaz9RHGn8nk23oriwI_z4DeFnad0aj596flE"
+                src="/rider.png"
               />
             </div>
 
