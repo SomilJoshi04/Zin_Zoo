@@ -133,9 +133,47 @@ export default function SignIn() {
   }
 
   return (
-    <AnimatedPage className="min-h-[100dvh] w-full bg-slate-50 flex items-center justify-center font-sans overflow-x-hidden p-0 sm:p-4 md:p-6 lg:p-8">
+    <AnimatedPage className="min-h-[100dvh] w-full bg-slate-50 sm:bg-[#FF5E00] flex items-center justify-center sm:justify-end sm:pr-[8%] md:pr-[12%] lg:pr-[15%] font-sans overflow-hidden">
+      
+      {/* Left Side Desktop Content */}
+      <div className="hidden sm:flex absolute left-0 top-0 w-[55%] h-full items-center justify-center p-12 overflow-hidden z-0">
+        
+        {/* Abstract Glows inside left side */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-white/20 blur-3xl opacity-60" />
+          <div className="absolute bottom-[10%] -right-[10%] w-[60%] h-[80%] rounded-full bg-black/10 blur-3xl opacity-30" />
+        </div>
+
+        {/* Center Content of Left Side */}
+        <div className="relative z-10 w-full max-w-lg flex flex-col items-center text-center">
+          <motion.div animate={{ y: [-15, 10, -15] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
+            <img src="/rider.png" alt="Delivery Rider" className="w-full max-w-[380px] drop-shadow-2xl mb-8 object-contain" />
+          </motion.div>
+          <h2 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4 drop-shadow-md">
+            ZÎN ZOO-<span className="text-[#FFE5D4] italic ml-1">X</span>
+          </h2>
+          <p className="text-white/90 text-lg lg:text-xl font-medium tracking-wide max-w-md">
+            Fastest Food & Grocery Delivery at your doorstep. Fresh, safe, and on time!
+          </p>
+        </div>
+
+        {/* Floating Animated Icons */}
+        <motion.div className="absolute left-[15%] top-[20%]" animate={{ y: [0, -20, 0], rotate: [0, 15, -15, 0] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}>
+          <svg className="w-12 h-12 text-white/30 drop-shadow-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6v1H3v-1z"/><rect x="3" y="14" width="18" height="3" rx="1.5"/><path d="M3 12h18" strokeDasharray="1,1"/></svg>
+        </motion.div>
+        <motion.div className="absolute right-[20%] top-[30%]" animate={{ y: [0, 20, 0], rotate: [0, -20, 20, 0] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
+          <svg className="w-14 h-14 text-white/30 drop-shadow-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 8H7l1 10a2 2 0 002 2h4a2 2 0 002-2l1-10z"/><line x1="6" y1="8" x2="18" y2="8"/><path d="M12 8V4"/></svg>
+        </motion.div>
+        <motion.div className="absolute left-[20%] bottom-[25%]" animate={{ y: [0, 15, 0], rotate: [0, 25, -25, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}>
+          <svg className="w-12 h-12 text-white/30 drop-shadow-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+        </motion.div>
+        <motion.div className="absolute right-[25%] bottom-[15%]" animate={{ y: [0, -15, 0], rotate: [0, -15, 15, 0] }} transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>
+          <svg className="w-12 h-12 text-white/30 drop-shadow-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 8V6a6 6 0 0112 0v2"/><rect x="3" y="8" width="18" height="12" rx="2"/></svg>
+        </motion.div>
+      </div>
+
       {/* Mobile Frame Container (Responsive aspect on laptops, full viewport on mobile) */}
-      <main className="w-full max-w-[450px] min-h-[100dvh] h-[100dvh] sm:min-h-[580px] sm:h-[630px] sm:max-h-[640px] bg-white flex flex-col justify-start relative sm:rounded-[32px] sm:shadow-2xl overflow-hidden border border-transparent sm:border-slate-100/60">
+      <main className="w-full max-w-[450px] min-h-[100dvh] h-[100dvh] sm:min-h-[580px] sm:h-[630px] sm:max-h-[640px] bg-white flex flex-col justify-start relative sm:rounded-[32px] sm:shadow-2xl overflow-hidden border border-transparent sm:border-slate-100/60 z-10">
 
         {/* Fixed Non-Scrollable Container (Guarantees everything fits statically on mobile viewports) */}
         <div className="flex flex-col justify-start items-center flex-grow overflow-hidden relative z-10 w-full h-full bg-white">
@@ -179,10 +217,10 @@ export default function SignIn() {
             </div>
 
             {/* Main Logo Area with Animated Floating Food Icons */}
-            <section className="relative z-10 flex flex-col items-center pt-5 pb-1" data-purpose="header-section">
+            <section className="relative z-10 w-full flex flex-col items-center mt-[12dvh] sm:mt-[8dvh] pt-2 pb-1" data-purpose="header-section">
               {/* Floating Animated Burger (Upper Left - Positioned Closer) */}
               <motion.div
-                className="absolute left-[24%] top-3 text-[#FF5E00] opacity-85 z-10 pointer-events-none"
+                className="absolute left-[8%] sm:left-[12%] top-[-10px] text-[#FF5E00] opacity-85 z-10 pointer-events-none"
                 animate={{
                   y: [0, -5, 0],
                   rotate: [0, 8, -8, 0]
@@ -202,7 +240,7 @@ export default function SignIn() {
 
               {/* Floating Animated Shopping Bag (Lower Left - Positioned Closer) */}
               <motion.div
-                className="absolute left-[16%] top-12 text-[#FF5E00] opacity-80 z-10 pointer-events-none"
+                className="absolute left-[5%] sm:left-[8%] top-14 text-[#FF5E00] opacity-80 z-10 pointer-events-none"
                 animate={{
                   y: [0, 4, 0],
                   rotate: [0, -10, 10, 0]
@@ -222,7 +260,7 @@ export default function SignIn() {
 
               {/* Floating Animated Pizza Slice (Upper Right - Positioned Closer) */}
               <motion.div
-                className="absolute right-[24%] top-3 text-[#FF5E00] opacity-85 z-10 pointer-events-none"
+                className="absolute right-[8%] sm:right-[12%] top-[-5px] text-[#FF5E00] opacity-85 z-10 pointer-events-none"
                 animate={{
                   y: [0, 5, 0],
                   rotate: [0, -8, 8, 0]
@@ -244,7 +282,7 @@ export default function SignIn() {
 
               {/* Floating Animated Drink Cup (Lower Right - Positioned Closer) */}
               <motion.div
-                className="absolute right-[16%] top-12 text-[#FF5E00] opacity-80 z-10 pointer-events-none"
+                className="absolute right-[5%] sm:right-[8%] top-14 text-[#FF5E00] opacity-80 z-10 pointer-events-none"
                 animate={{
                   y: [0, -4, 0],
                   scale: [1, 1.08, 1]

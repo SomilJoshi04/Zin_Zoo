@@ -286,337 +286,244 @@ export default function OTP() {
   };
 
   return (
-    <AnimatedPage className="min-h-[100dvh] bg-gray-100 flex items-center justify-center font-sans overflow-x-hidden">
-      {/* Mobile Frame Container */}
-      <main className="w-full max-w-[450px] min-h-[100dvh] bg-white flex flex-col justify-between relative shadow-2xl overflow-x-hidden">
+    <AnimatedPage className="h-[100dvh] w-full bg-slate-50 sm:bg-gradient-to-br sm:from-[#FF5E00] sm:via-[#F05500] sm:to-[#CC4700] flex items-center justify-center sm:justify-end sm:pr-[8%] md:pr-[12%] lg:pr-[15%] font-sans overflow-hidden p-0 relative z-0">
+      
+      {/* --- DESKTOP PREMIUM SPLIT VIEW (LEFT SIDE) --- */}
+      <div className="hidden sm:flex absolute left-0 top-0 w-[55%] h-full items-center justify-center p-12 overflow-hidden z-0">
         
-        {/* Curved Orange Header Background */}
-        <section className="relative h-64 overflow-hidden" data-purpose="header-section">
-          <div 
-            className="absolute top-0 left-0 right-0 h-[120px] z-0"
-            style={{
-              background: "linear-gradient(135deg, #FF5E00 0%, #FF8A00 100%)",
-              borderBottomLeftRadius: "100% 40px"
-            }}
-          />
-          {/* Top Actions Row: Back Button & Secure Login */}
-          <div className="absolute top-4 left-0 right-0 z-20 px-4 flex items-center justify-between">
-            <button
-              onClick={() => navigate("/food/user/auth/login")}
-              className="p-2 rounded-lg bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white transition-colors"
-              title="Back to Login"
-            >
-              <ArrowLeft className="h-5 w-5" />
+        {/* Abstract Glows inside left side */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-white/20 blur-3xl opacity-60" />
+          <div className="absolute bottom-[10%] -right-[10%] w-[60%] h-[80%] rounded-full bg-black/10 blur-3xl opacity-30" />
+        </div>
+
+        {/* Center Content of Left Side */}
+        <div className="relative z-10 w-full max-w-lg flex flex-col items-center text-center">
+          <motion.div animate={{ y: [-15, 10, -15] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}>
+            <img src="/rider.png" alt="Delivery Rider" className="w-full max-w-[380px] drop-shadow-2xl mb-8 object-contain" />
+          </motion.div>
+          <h2 className="text-4xl lg:text-5xl font-black text-white tracking-tight mb-4 drop-shadow-md">
+            ZÎN ZOO-<span className="text-[#FFE5D4] italic ml-1">X</span>
+          </h2>
+          <p className="text-white/90 text-lg lg:text-xl font-medium tracking-wide max-w-md">
+            Fastest Food & Grocery Delivery at your doorstep. Fresh, safe, and on time!
+          </p>
+        </div>
+
+        {/* Floating Animated Icons */}
+        <motion.div className="absolute left-[15%] top-[20%]" animate={{ y: [0, -20, 0], rotate: [0, 15, -15, 0] }} transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}>
+          <svg className="w-12 h-12 text-white/30 drop-shadow-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6v1H3v-1z"/><rect x="3" y="14" width="18" height="3" rx="1.5"/><path d="M3 12h18" strokeDasharray="1,1"/></svg>
+        </motion.div>
+        <motion.div className="absolute right-[20%] top-[30%]" animate={{ y: [0, 20, 0], rotate: [0, -20, 20, 0] }} transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
+          <svg className="w-14 h-14 text-white/30 drop-shadow-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 8H7l1 10a2 2 0 002 2h4a2 2 0 002-2l1-10z"/><line x1="6" y1="8" x2="18" y2="8"/><path d="M12 8V4"/></svg>
+        </motion.div>
+        <motion.div className="absolute left-[20%] bottom-[25%]" animate={{ y: [0, 15, 0], rotate: [0, 25, -25, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}>
+          <svg className="w-12 h-12 text-white/30 drop-shadow-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+        </motion.div>
+        <motion.div className="absolute right-[25%] bottom-[15%]" animate={{ y: [0, -15, 0], rotate: [0, -15, 15, 0] }} transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}>
+          <svg className="w-12 h-12 text-white/30 drop-shadow-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 8V6a6 6 0 0112 0v2"/><rect x="3" y="8" width="18" height="12" rx="2"/></svg>
+        </motion.div>
+      </div>
+
+      {/* Mobile Frame Container - strictly bounded height, no scrolling */}
+      <main className="w-full max-w-[420px] h-[100dvh] sm:max-h-[800px] bg-white flex flex-col relative z-10 sm:rounded-[28px] sm:shadow-[0_30px_60px_rgba(0,0,0,0.15)] sm:border sm:border-white overflow-hidden">
+
+        {/* Top Orange Curved Background */}
+        <div className="absolute top-0 left-0 w-full h-[150px] sm:h-[180px] pointer-events-none z-0">
+          <svg viewBox="0 0 1440 320" preserveAspectRatio="none" className="w-full h-full">
+            <path fill="#FF5E00" fillOpacity="1" d="M0,96L80,106.7C160,117,320,139,480,128C640,117,800,75,960,64C1120,53,1280,75,1360,85.3L1440,96L1440,0L1360,0C1280,0,1120,0,960,0C800,0,640,0,480,0C320,0,160,0,80,0L0,0Z"></path>
+          </svg>
+        </div>
+
+        {/* Floating Animated Food Icons */}
+        <div className="absolute inset-0 pointer-events-none z-0 opacity-30 overflow-hidden">
+          <motion.div className="absolute left-[10%] top-[25%]" animate={{ y: [0, -10, 0], rotate: [0, 5, -5, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}>
+            <svg className="w-6 h-6 text-[#FF5E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 11c0-3.3 2.7-6 6-6h6c3.3 0 6 2.7 6 6v1H3v-1z"/><rect x="3" y="14" width="18" height="3" rx="1.5"/><path d="M3 12h18" strokeDasharray="1,1"/></svg>
+          </motion.div>
+          <motion.div className="absolute left-[85%] top-[18%]" animate={{ y: [0, 8, 0], rotate: [0, -15, 15, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}>
+            <svg className="w-5 h-5 text-[#FF5E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+          </motion.div>
+          <motion.div className="absolute left-[80%] top-[35%]" animate={{ y: [0, -8, 0], rotate: [0, 10, -10, 0] }} transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 2 }}>
+            <svg className="w-5 h-5 text-[#FF5E00]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 8H7l1 10a2 2 0 002 2h4a2 2 0 002-2l1-10z"/><line x1="6" y1="8" x2="18" y2="8"/><path d="M12 8V4"/></svg>
+          </motion.div>
+        </div>
+
+        {/* Main Content Flow */}
+        <div className="flex flex-col w-full h-full relative z-10 overflow-hidden pb-1">
+          
+          {/* Top Actions Row */}
+          <div className="px-4 pt-3 pb-1 flex items-center justify-between shrink-0">
+            <button onClick={() => navigate("/food/user/auth/login")} className="p-1.5 rounded-lg bg-transparent text-black transition-colors">
+              <ArrowLeft className="h-5 w-5 stroke-[2.5]" />
             </button>
-            <div className="flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-[11px] font-bold tracking-wide uppercase">
-              <Lock className="h-3 w-3" />
-              <span>Secure Login</span>
+            <div className="flex flex-col items-center bg-white rounded-xl px-2 py-0.5 shadow-sm">
+              <Shield className="h-3.5 w-3.5 text-[#FF5E00]" />
+              <span className="text-[8px] font-bold text-gray-800 leading-tight">Secure</span>
+              <span className="text-[8px] font-bold text-gray-800 leading-tight">Login</span>
             </div>
           </div>
 
-          {/* Food Emojis Pattern */}
-          <div className="absolute inset-0 flex justify-around items-start pt-8 opacity-20 pointer-events-none z-10">
-            <span className="text-3xl">🍔</span>
-            <span className="text-3xl translate-y-8">🍎</span>
-            <span className="text-3xl translate-x-12">🥤</span>
-            <span className="text-3xl -translate-y-4">🍕</span>
+          <div className="flex-grow max-h-[2vh] min-h-0 shrink" />
+
+          {/* Shield & Logo Section (Compact) */}
+          <div className="flex flex-col items-center shrink-0 px-4">
+            <div className="mb-1 w-14 h-14 rounded-full bg-white/40 backdrop-blur-sm flex items-center justify-center shadow-lg p-1.5 border border-white/50">
+              <div className="w-full h-full bg-[#FF5E00] rounded-full flex items-center justify-center shadow-inner">
+                <Shield className="w-6 h-6 text-white fill-white" />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-1 mb-0.5">
+              <span className="text-[22px] font-extrabold tracking-tighter text-black">ZÎN ZOO-</span>
+              <span className="text-[26px] font-black italic text-[#FF5E00]" style={{ transform: "skewX(-10deg)" }}>X</span>
+            </div>
+            <div className="flex items-center w-full max-w-[170px]">
+              <div className="h-[1px] flex-grow bg-[#FF5E00]/80"></div>
+              <span className="px-2 text-[7px] font-black tracking-[0.2em] text-gray-700 whitespace-nowrap uppercase">FOOD. GROCERY & MORE</span>
+              <div className="h-[1px] flex-grow bg-[#FF5E00]/80"></div>
+            </div>
           </div>
 
-          {/* Main Logo Area */}
-          <div className="relative z-10 flex flex-col items-center pt-16">
-            <div className="flex items-center space-x-1">
-              <span className="text-4xl font-extrabold tracking-tighter text-black">ZÎN ZOO-</span>
-              <span className="text-5xl font-black italic text-[#FF5E00]" style={{ transform: "skewX(-10deg)" }}>X</span>
-            </div>
-            <div className="flex items-center mt-2 w-full max-w-[200px]">
-              <div className="h-[2px] flex-grow bg-[#FF5E00]"></div>
-              <span className="px-2 text-[10px] font-bold tracking-[0.2em] text-black whitespace-nowrap">FOOD. GROCERY & MORE</span>
-              <div className="h-[2px] flex-grow bg-[#FF5E00]"></div>
-            </div>
-          </div>
-        </section>
+          <div className="flex-grow max-h-[2vh] min-h-0 shrink" />
 
-        {/* Content Form Section */}
-        <section className="px-6 -mt-16 relative z-20 flex flex-col items-center flex-grow" data-purpose="login-form">
-          <AnimatePresence mode="wait">
-            {!showNameInput ? (
-              <motion.div
-                key="otp-view"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="w-full flex flex-col items-center"
-              >
-                {/* Shield Verification Icon Circle */}
-                <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mb-4 shadow-sm">
-                  <Shield className="h-8 w-8 text-[#FF5E00]" />
-                </div>
-                
-                <h1 className="text-xl font-bold text-gray-800 text-center">Verify OTP</h1>
-                <p className="text-gray-500 text-center mt-1 text-sm max-w-[280px] leading-snug">
-                  Sent to <span className="font-extrabold text-gray-800">{contactInfo}</span>
-                </p>
+          {/* Form Section */}
+          <section className="px-4 w-full shrink-0" data-purpose="otp-form">
+            <AnimatePresence mode="wait">
+              {!showNameInput ? (
+                <motion.div key="otp-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full flex flex-col items-center">
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-800 text-center tracking-tight mb-0.5">Verify OTP</h1>
+                  <p className="text-gray-500 text-center text-[11px] sm:text-[12px] font-medium leading-tight">
+                    We've sent a 4-digit OTP to<br/>
+                    <span className="font-bold text-[#FF5E00] text-[12px] sm:text-[13px] tracking-wide">{contactInfo}</span>
+                  </p>
 
-                {/* OTP Inputs */}
-                <div className="w-full mt-6 space-y-4">
-                  <div className="flex justify-center gap-3">
-                    {otp.map((digit, index) => (
-                      <div key={index} className="relative">
-                        <input
-                          ref={(el) => (inputRefs.current[index] = el)}
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={1}
-                          value={digit}
-                          onChange={(e) => handleChange(index, e.target.value)}
-                          onKeyDown={(e) => handleKeyDown(index, e)}
-                          onPaste={index === 0 ? handlePaste : undefined}
-                          disabled={isLoading}
-                          className="w-14 h-16 text-center text-3xl font-black bg-zinc-50 border border-gray-200 focus:border-[#FF5E00] focus:ring-1 focus:ring-[#FF5E00]/20 rounded-2xl text-gray-800 transition-all outline-none shadow-sm"
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  <div className="w-full mt-2 space-y-2.5">
+                    {/* OTP Inputs */}
+                    <div className="flex justify-center gap-2">
+                      {otp.map((digit, index) => (
+                        <div key={index} className="relative">
+                          <input
+                            ref={(el) => (inputRefs.current[index] = el)}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleChange(index, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(index, e)}
+                            onPaste={index === 0 ? handlePaste : undefined}
+                            disabled={isLoading}
+                            className="w-[3rem] h-[3.5rem] sm:w-[3.25rem] sm:h-[3.75rem] text-center text-xl font-semibold bg-white border border-gray-200 focus:border-[#FF5E00] focus:ring-1 focus:ring-[#FF5E00] rounded-xl text-[#FF5E00] transition-all outline-none shadow-sm selection:bg-orange-100"
+                          />
+                        </div>
+                      ))}
+                    </div>
 
-                  {error && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex items-center justify-center gap-2 text-xs font-bold text-[#FF5E00] bg-orange-50/50 py-3 px-4 rounded-xl border border-orange-100"
-                    >
-                      <AlertCircle className="h-4 w-4 shrink-0" />
-                      <span>{error}</span>
-                    </motion.div>
-                  )}
-
-                  {/* Expiry Timer Indicator */}
-                  <div className="text-center mt-2">
-                    <p className="text-xs font-bold text-gray-400">
-                      OTP will expire in <span className="text-[#FF5E00] font-extrabold">{formatTimer(resendTimer)}</span>
-                    </p>
-                  </div>
-
-                  {/* Primary Verify Button */}
-                  <button 
-                    onClick={() => handleVerify()}
-                    disabled={isLoading || otp.some(digit => digit === "")}
-                    className="w-full py-4 rounded-2xl flex items-center justify-center space-x-2 transition-all bg-[#FF5E00] hover:bg-[#FF4D00] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-100 active:scale-[0.98]"
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center gap-2 text-white font-bold text-lg">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Verifying...</span>
-                      </div>
-                    ) : (
-                      <span className="text-white font-extrabold text-lg">Verify & Continue</span>
+                    {error && (
+                      <motion.div initial={{ opacity: 0, y: -5 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center gap-1 text-[10px] font-bold text-red-500">
+                        <AlertCircle className="h-3 w-3 shrink-0" />
+                        <span>{error}</span>
+                      </motion.div>
                     )}
-                  </button>
 
-                  {/* Resend & Edit actions */}
-                  <div className="flex flex-col items-center mt-4 space-y-3.5">
-                    {resendTimer === 0 ? (
-                      <button
-                        type="button"
-                        onClick={handleResend}
-                        disabled={isLoading}
-                        className="text-sm font-extrabold text-[#FF5E00] hover:underline"
-                      >
-                        Resend OTP
+                    {/* Timer */}
+                    <div className="text-center pt-1">
+                      <p className="text-[11px] sm:text-[12px] font-semibold text-gray-500 flex items-center justify-center gap-1.5">
+                        <svg className="w-3.5 h-3.5 text-[#FF5E00]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 16 14" /></svg>
+                        OTP will expire in <span className="text-[#FF5E00] font-bold">{formatTimer(resendTimer)}</span>
+                      </p>
+                    </div>
+
+                    {/* Verify Button */}
+                    <button 
+                      onClick={() => handleVerify()}
+                      disabled={isLoading || otp.some(digit => digit === "")}
+                      className="w-full py-2.5 sm:py-3 rounded-[10px] flex items-center justify-center space-x-2 transition-all bg-[#FF5E00] hover:bg-[#E05300] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_rgba(255,94,0,0.3)] active:scale-[0.98] text-white font-semibold text-[14px] sm:text-[15px]"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /><span>Verifying...</span></div>
+                      ) : (
+                        <div className="flex items-center justify-between w-full px-4">
+                          <span className="opacity-0 w-4"></span><span className="tracking-wide">Verify & Continue</span><ArrowLeft className="h-4 w-4 stroke-[2.5] rotate-180" />
+                        </div>
+                      )}
+                    </button>
+
+                    {/* Resend & Change Links */}
+                    <div className="flex flex-col items-center space-y-2.5">
+                      {resendTimer === 0 ? (
+                        <p className="text-[11px] sm:text-[12px] font-medium text-gray-500">Didn't receive OTP? <button type="button" onClick={handleResend} disabled={isLoading} className="font-bold text-[#FF5E00] hover:underline">Resend OTP</button></p>
+                      ) : (
+                        <div className="h-[16px]"><p className="text-[11px] sm:text-[12px] font-medium text-gray-500">Didn't receive OTP? <span className="font-bold text-[#FF5E00]/50">Resend OTP</span></p></div>
+                      )}
+                      <button onClick={() => navigate("/food/user/auth/login")} className="flex items-center justify-center space-x-1.5 w-full py-2.5 bg-[#FFF2EA] hover:bg-[#FFE5D4] transition-colors rounded-[10px] text-[#FF5E00] font-bold text-[12px] sm:text-[13px]">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                        <span>Change Mobile Number</span>
                       </button>
-                    ) : (
-                      <div className="h-5"></div>
-                    )}
-                    
-                    <button
-                      onClick={() => navigate("/food/user/auth/login")}
-                      className="text-xs font-bold text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                      Change Mobile Number
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div key="name-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full flex flex-col items-center">
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-800 text-center tracking-tight mb-1">One Last Step</h1>
+                  <p className="text-gray-500 text-center text-[11px] font-medium leading-relaxed">Tell us your name to complete your profile</p>
+                  <div className="w-full mt-3 space-y-3">
+                    <div className="w-full flex items-center border border-gray-200 rounded-xl bg-white px-3 py-2.5 focus-within:border-[#FF5E00] focus-within:ring-1 focus-within:ring-[#FF5E00] transition-all shadow-sm">
+                      <input type="text" value={name} onChange={(e) => { const sanitized = e.target.value.replace(/[^A-Za-z ]/g, ""); setName(sanitized); if (nameError) setNameError(""); }} disabled={isLoading} placeholder="Enter your full name" className="flex-grow border-none focus:ring-0 p-0 text-gray-800 placeholder-gray-400 font-semibold text-sm outline-none tracking-wide bg-transparent" />
+                    </div>
+                    {nameError && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] font-bold text-red-500 pl-2">{nameError}</motion.p>}
+                    {error && <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-[10px] font-bold text-red-500 pl-2">{error}</motion.p>}
+                    <button onClick={handleSubmitName} disabled={isLoading || name.trim().length < 2} className="w-full py-2.5 rounded-xl flex items-center justify-center space-x-2 transition-all bg-[#FF5E00] hover:bg-[#E05300] disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_4px_14px_rgba(255,94,0,0.3)] active:scale-[0.98] text-white font-semibold text-[14px] mt-1 tracking-wide">
+                      {isLoading ? <div className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /><span>Saving...</span></div> : <span>Complete Setup</span>}
                     </button>
                   </div>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="name-view"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="w-full flex flex-col items-center"
-              >
-                {/* Visual User Profile Icon Circle */}
-                <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mb-4 shadow-sm">
-                  <svg className="w-8 h-8 text-[#FF5E00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                
-                <h1 className="text-xl font-bold text-gray-800 text-center">One Last Step</h1>
-                <p className="text-gray-500 text-center mt-1 text-sm max-w-[260px] leading-snug">
-                  Tell us your name to complete your profile
-                </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </section>
 
-                <div className="w-full mt-6 space-y-4">
-                  {/* Name Input Field Container */}
-                  <div className="w-full flex items-center border border-gray-200 rounded-2xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] bg-white focus-within:border-[#FF5E00]/50 transition-colors">
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => {
-                        const sanitized = e.target.value.replace(/[^A-Za-z ]/g, "")
-                        setName(sanitized)
-                        if (nameError) setNameError("")
-                      }}
-                      disabled={isLoading}
-                      placeholder="Enter your full name"
-                      className="flex-grow border-none focus:ring-0 py-4 px-5 text-gray-800 placeholder-gray-400 font-bold text-lg outline-none"
-                    />
-                  </div>
-                  
-                  {nameError && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs font-bold text-[#FF5E00] pl-2"
-                    >
-                      {nameError}
-                    </motion.p>
-                  )}
+          <div className="flex-grow min-h-0 shrink" />
 
-                  {error && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-xs font-bold text-[#FF5E00] pl-2"
-                    >
-                      {error}
-                    </motion.p>
-                  )}
+          {/* Illustration Container */}
+          <div className="w-full flex justify-center items-end shrink min-h-[40px] relative">
+            <div className="absolute bottom-0 w-[120%] h-6 bg-gradient-to-t from-[#FFF2EA] to-transparent z-0 blur-sm rounded-[100%]" />
+            <img alt="Delivery Rider" className="w-auto h-full max-h-[22vh] sm:max-h-[25vh] object-contain relative z-10" src="/rider.png" />
+          </div>
 
-                  {/* Complete Button */}
-                  <button 
-                    onClick={handleSubmitName}
-                    disabled={isLoading || name.trim().length < 2}
-                    className="w-full py-4 rounded-2xl flex items-center justify-center space-x-2 transition-all bg-[#FF5E00] hover:bg-[#FF4D00] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-orange-100 active:scale-[0.98]"
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center gap-2 text-white font-bold text-lg">
-                        <Loader2 className="h-5 w-5 animate-spin" />
-                        <span>Saving Profile...</span>
-                      </div>
-                    ) : (
-                      <span className="text-white font-extrabold text-lg">Complete Setup</span>
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </section>
-
-        {/* Illustration and Features Section */}
-        <section className="relative mt-4" data-purpose="feature-section">
-          {/* Background Curve for Features Area */}
-          <div className="absolute bottom-0 left-0 right-0 h-[380px] bg-white z-0">
-            {/* Cityscape Silhouette */}
-            <div className="absolute bottom-0 w-full h-32 opacity-[0.04] pointer-events-none flex items-end justify-between px-4">
-              <div className="h-16 w-10 bg-gray-600 rounded-t-lg"></div>
-              <div className="h-28 w-14 bg-gray-600 rounded-t-lg"></div>
-              <div className="h-20 w-12 bg-gray-600 rounded-t-lg"></div>
-              <div className="h-24 w-10 bg-gray-600 rounded-t-lg"></div>
+          {/* Horizontal Features Section */}
+          <div className="w-full flex justify-between items-start pt-1.5 pb-2 bg-[#FFF2EA]/30 border-t border-orange-100/40 shrink-0 mt-[-5px]">
+            <div className="flex flex-col items-center flex-1 px-1">
+              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center mb-0.5 shadow-sm border border-orange-50"><svg className="w-3 h-3 text-[#FF5E00]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg></div>
+              <p className="font-bold text-gray-800 text-[8.5px] leading-tight text-center">Fast Delivery</p>
+              <p className="text-[7px] text-gray-400 leading-tight text-center mt-0.5">On time<br/>every time</p>
+            </div>
+            <div className="flex flex-col items-center flex-1 px-1">
+              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center mb-0.5 shadow-sm border border-orange-50"><svg className="w-3 h-3 text-[#FF5E00]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg></div>
+              <p className="font-bold text-gray-800 text-[8.5px] leading-tight text-center">Safe & Secure</p>
+              <p className="text-[7px] text-gray-400 leading-tight text-center mt-0.5">Your safety<br/>our priority</p>
+            </div>
+            <div className="flex flex-col items-center flex-1 px-1">
+              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center mb-0.5 shadow-sm border border-orange-50"><svg className="w-3 h-3 text-[#FF5E00]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg></div>
+              <p className="font-bold text-gray-800 text-[8.5px] leading-tight text-center">Best Quality</p>
+              <p className="text-[7px] text-gray-400 leading-tight text-center mt-0.5">Top quality<br/>products</p>
+            </div>
+            <div className="flex flex-col items-center flex-1 px-1">
+              <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center mb-0.5 shadow-sm border border-orange-50"><svg className="w-3 h-3 text-[#FF5E00]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg></div>
+              <p className="font-bold text-gray-800 text-[8.5px] leading-tight text-center">Top Support</p>
+              <p className="text-[7px] text-gray-400 leading-tight text-center mt-0.5">We're here<br/>to help you</p>
             </div>
           </div>
 
-          <div className="relative z-10 px-6 pt-4 flex pb-2 items-end">
-            {/* Rider Illustration */}
-            <div className="w-[45%] pr-2 translate-y-6">
-              <img 
-                alt="Delivery Rider" 
-                className="w-full h-auto object-contain max-h-[160px]" 
-                data-purpose="rider-illustration" 
-                src="/rider.png"
-              />
-            </div>
-
-            {/* Features List */}
-            <div className="w-[55%] space-y-3.5 pb-2">
-              {/* Item 1 */}
-              <div className="flex items-start space-x-2.5">
-                <div className="bg-orange-50 p-1.5 rounded-lg shrink-0">
-                  <svg className="w-4 h-4 text-[#FF5E00]" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"></path>
-                    <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7h-3v7h3.05a2.5 2.5 0 014.9 0H18a1 1 0 001-1V9.414a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 6H14z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-extrabold text-gray-800 text-xs leading-none">Fast Delivery</p>
-                  <p className="text-[9px] text-gray-400 mt-0.5">On time every time</p>
-                </div>
-              </div>
-
-              {/* Item 2 */}
-              <div className="flex items-start space-x-2.5">
-                <div className="bg-orange-50 p-1.5 rounded-lg shrink-0">
-                  <svg className="w-4 h-4 text-[#FF5E00]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 4.946-2.56 9.29-6.433 11.79l-.214.138a1 1 0 01-1.07 0l-.214-.138C6.22 16.29 3.66 11.946 3.66 7c0-.68.056-1.35.166-2.001z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-extrabold text-gray-800 text-xs leading-none">Safe & Secure</p>
-                  <p className="text-[9px] text-gray-400 mt-0.5">Your safety our priority</p>
-                </div>
-              </div>
-
-              {/* Item 3 */}
-              <div className="flex items-start space-x-2.5">
-                <div className="bg-orange-50 p-1.5 rounded-lg shrink-0">
-                  <svg className="w-4 h-4 text-[#FF5E00]" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-extrabold text-gray-800 text-xs leading-none">Best Quality</p>
-                  <p className="text-[9px] text-gray-400 mt-0.5">Top quality products</p>
-                </div>
-              </div>
-
-              {/* Item 4 */}
-              <div className="flex items-start space-x-2.5">
-                <div className="bg-orange-50 p-1.5 rounded-lg shrink-0">
-                  <svg className="w-4 h-4 text-[#FF5E00]" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-2 0c0 .993-.241 1.929-.668 2.754l-1.524-1.525a3.997 3.997 0 00.192-1.229V7a2 2 0 00-2-2H9V3h1v2h1a3 3 0 013 3v2h2zm-4-3v2H8V7a1 1 0 011-1h2a1 1 0 011 1zM7 8H5v2h2V8zm0 4H5v2h2v-2zm9 1.414l1.414-1.414L18.828 15l-1.414 1.414-1.414-1.414z"></path>
-                  </svg>
-                </div>
-                <div>
-                  <p className="font-extrabold text-gray-800 text-xs leading-none">Top Support</p>
-                  <p className="text-[9px] text-gray-400 mt-0.5">We're here to help you</p>
-                </div>
-              </div>
+          {/* Footer Text */}
+          <div className="w-full flex justify-center pb-1.5 z-10 shrink-0">
+            <div className="flex items-center space-x-1">
+              <svg className="w-3 h-3 text-[#FF5E00]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+              <span className="text-[9px] font-bold text-gray-600 tracking-wide">Your Trust, Our Priority</span>
             </div>
           </div>
 
-          {/* Road/Path Decoration */}
-          <div className="absolute bottom-0 w-full h-24 overflow-hidden pointer-events-none z-0">
-            <div className="w-[150%] h-[160px] bg-[#FF5E00] rounded-[100%] absolute top-8 left-1/2 -translate-x-1/2 flex items-center justify-center">
-              {/* Road markings */}
-              <div className="w-full flex justify-center space-x-8 mt-6 opacity-30">
-                <div className="w-10 h-1.5 bg-white rounded-full"></div>
-                <div className="w-10 h-1.5 bg-white rounded-full"></div>
-                <div className="w-10 h-1.5 bg-white rounded-full"></div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer className="relative z-30 flex items-center justify-center py-4 bg-[#FF5E00]" data-purpose="site-footer">
-          <div className="flex items-center space-x-2 text-white">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path>
-            </svg>
-            <span className="text-sm font-extrabold tracking-wide">Your Trust, Our Priority</span>
-          </div>
-        </footer>
+        </div>
       </main>
     </AnimatedPage>
   )
 }
+

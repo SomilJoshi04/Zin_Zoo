@@ -22,9 +22,9 @@ export default function OrdersTopbar({
 }) {
   const navigate = useNavigate()
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6 mb-4 sm:mb-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => navigate('/admin/food')}
             className="p-2 rounded-full hover:bg-slate-100 transition-colors text-slate-500 hover:text-slate-900 flex items-center justify-center shrink-0 border border-slate-200"
@@ -32,15 +32,15 @@ export default function OrdersTopbar({
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
             {title}
-            <span className="px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 text-slate-700">
+            <span className="px-2.5 py-1 sm:px-3 rounded-full text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700">
               {count}
             </span>
           </h1>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 sm:flex-initial">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-auto sm:flex-initial">
             <input
               type="text"
               placeholder="Search your order..."
