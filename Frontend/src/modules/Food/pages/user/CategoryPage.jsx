@@ -875,7 +875,7 @@ export default function CategoryPage() {
       } else {
         setLoadingRestaurants(true)
       }
-      
+
       // Strict zone check: if no zoneId, don't fetch/show anything
       if (!zoneId) {
         if (!append) setRestaurantsData([])
@@ -886,7 +886,7 @@ export default function CategoryPage() {
 
       const params = { zoneId, limit: 10, page: pageNum }
       const response = await restaurantAPI.getRestaurants(params)
-      
+
       if (requestSeq !== restaurantsRequestSeqRef.current) return
 
       if (response.data && response.data.success && response.data.data && response.data.data.restaurants) {
@@ -894,224 +894,224 @@ export default function CategoryPage() {
         const total = response.data.data.total || 0
         setHasMoreRestaurantsBackend(pageNum * 10 < total)
 
-          // Helper function to check if value is a default/mock value
-          const isDefaultValue = (value, fieldName) => {
-            if (!value) return false
+        // Helper function to check if value is a default/mock value
+        const isDefaultValue = (value, fieldName) => {
+          if (!value) return false
 
-            const defaultOffers = [
-              "Flat ₹50 OFF above ₹199",
-              "Flat 50% OFF",
-              "Flat ₹40 OFF above ₹149"
-            ]
-            const defaultDeliveryTimes = ["25-30 mins", "20-25 mins", "30-35 mins"]
-            const defaultDistances = ["1.2 km", "1 km", "0.8 km"]
-            const defaultFeaturedPrice = 249
+          const defaultOffers = [
+            "Flat ₹50 OFF above ₹199",
+            "Flat 50% OFF",
+            "Flat ₹40 OFF above ₹149"
+          ]
+          const defaultDeliveryTimes = ["25-30 mins", "20-25 mins", "30-35 mins"]
+          const defaultDistances = ["1.2 km", "1 km", "0.8 km"]
+          const defaultFeaturedPrice = 249
 
-            if (fieldName === 'offer' && defaultOffers.includes(value)) return true
-            if (fieldName === 'deliveryTime' && defaultDeliveryTimes.includes(value)) return true
-            if (fieldName === 'distance' && defaultDistances.includes(value)) return true
-            if (fieldName === 'featuredPrice' && value === defaultFeaturedPrice) return true
+          if (fieldName === 'offer' && defaultOffers.includes(value)) return true
+          if (fieldName === 'deliveryTime' && defaultDeliveryTimes.includes(value)) return true
+          if (fieldName === 'distance' && defaultDistances.includes(value)) return true
+          if (fieldName === 'featuredPrice' && value === defaultFeaturedPrice) return true
 
-            return false
-          }
+          return false
+        }
 
-          // Transform restaurants - filter out default values
-          const restaurantsWithIds = restaurantsArray
-            .filter((restaurant) => {
-              const displayName = String(restaurant.restaurantName || restaurant.name || "").trim()
-              const hasName = displayName.length > 0
-              return hasName
-            })
-            .map((restaurant) => {
-              let deliveryTime = restaurant.estimatedDeliveryTime || null
-              let distance = restaurant.distance || null
-              let offer = restaurant.offer || null
+        // Transform restaurants - filter out default values
+        const restaurantsWithIds = restaurantsArray
+          .filter((restaurant) => {
+            const displayName = String(restaurant.restaurantName || restaurant.name || "").trim()
+            const hasName = displayName.length > 0
+            return hasName
+          })
+          .map((restaurant) => {
+            let deliveryTime = restaurant.estimatedDeliveryTime || null
+            let distance = restaurant.distance || null
+            let offer = restaurant.offer || null
 
-              if (isDefaultValue(deliveryTime, 'deliveryTime')) deliveryTime = null
-              if (isDefaultValue(distance, 'distance')) distance = null
-              if (isDefaultValue(offer, 'offer')) offer = null
+            if (isDefaultValue(deliveryTime, 'deliveryTime')) deliveryTime = null
+            if (isDefaultValue(distance, 'distance')) distance = null
+            if (isDefaultValue(offer, 'offer')) offer = null
 
-              const coverImages = restaurant.coverImages && restaurant.coverImages.length > 0
-                ? restaurant.coverImages.map(img => normalizeImageUrl(img.url || img)).filter(Boolean)
-                : []
+            const coverImages = restaurant.coverImages && restaurant.coverImages.length > 0
+              ? restaurant.coverImages.map(img => normalizeImageUrl(img.url || img)).filter(Boolean)
+              : []
 
-              const fallbackImages = restaurant.menuImages && restaurant.menuImages.length > 0
-                ? restaurant.menuImages.map(img => normalizeImageUrl(img.url || img)).filter(Boolean)
-                : []
+            const fallbackImages = restaurant.menuImages && restaurant.menuImages.length > 0
+              ? restaurant.menuImages.map(img => normalizeImageUrl(img.url || img)).filter(Boolean)
+              : []
 
-              const allImages = coverImages.length > 0
-                ? coverImages
-                : (restaurant.profileImage?.url
-                  ? [normalizeImageUrl(restaurant.profileImage.url)]
-                  : (fallbackImages.length > 0
-                    ? fallbackImages
-                    : []))
+            const allImages = coverImages.length > 0
+              ? coverImages
+              : (restaurant.profileImage?.url
+                ? [normalizeImageUrl(restaurant.profileImage.url)]
+                : (fallbackImages.length > 0
+                  ? fallbackImages
+                  : []))
 
-              const image = allImages[0] || normalizeImageUrl(restaurant.coverImage || restaurant.profileImage?.url || restaurant.profileImage) || ""
+            const image = allImages[0] || normalizeImageUrl(restaurant.coverImage || restaurant.profileImage?.url || restaurant.profileImage) || ""
 
-              return {
-                id: restaurant._id || restaurant.id,
-                restaurantId: restaurant.restaurantId || restaurant.id,
-                mongoId: restaurant._id || restaurant.id,
-                slug: restaurant.slug || (restaurant.restaurantName || restaurant.name || "").toLowerCase().replace(/\s+/g, "-"),
-                name: restaurant.restaurantName || restaurant.name || "Unknown Restaurant",
-                image: image,
-                images: allImages,
-                cuisine: Array.isArray(restaurant.cuisines) && restaurant.cuisines.length > 0 ? restaurant.cuisines[0] : "Multi-cuisine",
-                rating: Number(restaurant.rating || restaurant.avgRating || 0) || 4.5,
-                deliveryTime: deliveryTime || (restaurant.estimatedDeliveryTimeMinutes ? `${restaurant.estimatedDeliveryTimeMinutes} mins` : "25-30 mins"),
-                distance: distance || (restaurant.distance ? (typeof restaurant.distance === 'number' ? `${restaurant.distance.toFixed(1)} km` : restaurant.distance) : "1.2 km"),
-                priceRange: restaurant.priceRange || "$$",
-                offer: offer ,
-                featuredDish: restaurant.featuredDish || "Special Dish",
-                featuredPrice: Number(restaurant.featuredPrice || 249),
-                // Critical timing fields for availability utility
-                isActive: restaurant.isActive,
-                isAcceptingOrders: restaurant.isAcceptingOrders,
-                outletTimings: restaurant.outletTimings,
-                openDays: restaurant.openDays,
-                deliveryTimings: restaurant.deliveryTimings,
-                openingTime: restaurant.openingTime,
-                closingTime: restaurant.closingTime,
-                // Zone info for strict frontend filtering
-                zoneId: restaurant.zoneId || restaurant.zone?._id || restaurant.zone || null,
-              }
-            })
-
-          startTransition(() => {
-            if (append) {
-              setRestaurantsData(prev => {
-                const existingMap = new Map(prev.map(r => [r.id, r]))
-                restaurantsWithIds.forEach(r => existingMap.set(r.id, r))
-                return Array.from(existingMap.values())
-              })
-            } else {
-              setRestaurantsData(restaurantsWithIds)
+            return {
+              id: restaurant._id || restaurant.id,
+              restaurantId: restaurant.restaurantId || restaurant.id,
+              mongoId: restaurant._id || restaurant.id,
+              slug: restaurant.slug || (restaurant.restaurantName || restaurant.name || "").toLowerCase().replace(/\s+/g, "-"),
+              name: restaurant.restaurantName || restaurant.name || "Unknown Restaurant",
+              image: image,
+              images: allImages,
+              cuisine: Array.isArray(restaurant.cuisines) && restaurant.cuisines.length > 0 ? restaurant.cuisines[0] : "Multi-cuisine",
+              rating: Number(restaurant.rating || restaurant.avgRating || 0) || 4.5,
+              deliveryTime: deliveryTime || (restaurant.estimatedDeliveryTimeMinutes ? `${restaurant.estimatedDeliveryTimeMinutes} mins` : "25-30 mins"),
+              distance: distance || (restaurant.distance ? (typeof restaurant.distance === 'number' ? `${restaurant.distance.toFixed(1)} km` : restaurant.distance) : "1.2 km"),
+              priceRange: restaurant.priceRange || "$$",
+              offer: offer,
+              featuredDish: restaurant.featuredDish || "Special Dish",
+              featuredPrice: Number(restaurant.featuredPrice || 249),
+              // Critical timing fields for availability utility
+              isActive: restaurant.isActive,
+              isAcceptingOrders: restaurant.isAcceptingOrders,
+              outletTimings: restaurant.outletTimings,
+              openDays: restaurant.openDays,
+              deliveryTimings: restaurant.deliveryTimings,
+              openingTime: restaurant.openingTime,
+              closingTime: restaurant.closingTime,
+              // Zone info for strict frontend filtering
+              zoneId: restaurant.zoneId || restaurant.zone?._id || restaurant.zone || null,
             }
           })
 
-          setIsEnrichingMenus(true)
-          const enrichmentRequestId = ++menuEnrichmentRequestRef.current
-          void (async () => {
-            try {
-              const transformedRestaurants = []
+        startTransition(() => {
+          if (append) {
+            setRestaurantsData(prev => {
+              const existingMap = new Map(prev.map(r => [r.id, r]))
+              restaurantsWithIds.forEach(r => existingMap.set(r.id, r))
+              return Array.from(existingMap.values())
+            })
+          } else {
+            setRestaurantsData(restaurantsWithIds)
+          }
+        })
 
-              for (let index = 0; index < restaurantsWithIds.length; index += 4) {
-                const batchRestaurants = restaurantsWithIds.slice(index, index + 4)
-                const batchResults = await Promise.all(
-                  batchRestaurants.map(async (restaurant) => {
-                    try {
-                      const lookupIds = [
-                        restaurant.restaurantId,
-                        restaurant.id,
-                        restaurant.mongoId,
-                        restaurant.slug,
-                      ]
-                        .filter(Boolean)
-                        .map((value) => String(value).trim())
-                        .filter((value, valueIndex, arr) => arr.indexOf(value) === valueIndex)
+        setIsEnrichingMenus(true)
+        const enrichmentRequestId = ++menuEnrichmentRequestRef.current
+        void (async () => {
+          try {
+            const transformedRestaurants = []
 
-                      let menu = null
-                      for (const lookupId of lookupIds) {
-                        try {
-                          const menuResponse = await restaurantAPI.getMenuByRestaurantId(lookupId, { noCache: true })
-                          const rawMenu = getMenuFromResponse(menuResponse)
-                          const normalizedMenu = normalizeMenu(rawMenu)
-                          if (menuResponse?.data?.success && normalizedMenu?.sections?.length > 0) {
-                            menu = normalizedMenu
+            for (let index = 0; index < restaurantsWithIds.length; index += 4) {
+              const batchRestaurants = restaurantsWithIds.slice(index, index + 4)
+              const batchResults = await Promise.all(
+                batchRestaurants.map(async (restaurant) => {
+                  try {
+                    const lookupIds = [
+                      restaurant.restaurantId,
+                      restaurant.id,
+                      restaurant.mongoId,
+                      restaurant.slug,
+                    ]
+                      .filter(Boolean)
+                      .map((value) => String(value).trim())
+                      .filter((value, valueIndex, arr) => arr.indexOf(value) === valueIndex)
+
+                    let menu = null
+                    for (const lookupId of lookupIds) {
+                      try {
+                        const menuResponse = await restaurantAPI.getMenuByRestaurantId(lookupId, { noCache: true })
+                        const rawMenu = getMenuFromResponse(menuResponse)
+                        const normalizedMenu = normalizeMenu(rawMenu)
+                        if (menuResponse?.data?.success && normalizedMenu?.sections?.length > 0) {
+                          menu = normalizedMenu
+                          break
+                        }
+                      } catch (lookupError) {
+                        if (lookupError?.response?.status !== 404) {
+                          throw lookupError
+                        }
+                      }
+                    }
+
+                    if (!menu || menu.sections.length === 0) {
+                      const approvedFoods = await fetchApprovedFoods()
+                      menu = buildFallbackMenuFromFoods(approvedFoods, restaurant)
+                    }
+
+                    if (menu?.sections?.length > 0) {
+                      const hasPaneer = checkCategoryInMenu(menu, 'paneer-tikka')
+
+                      let featuredDish = restaurant.featuredDish
+                      let featuredPrice = restaurant.featuredPrice
+
+                      if (!featuredDish || !featuredPrice) {
+                        for (const section of (menu.sections || [])) {
+                          if (section.items && section.items.length > 0) {
+                            const firstItem = section.items[0]
+                            if (!featuredDish) featuredDish = firstItem.name
+                            if (!featuredPrice) {
+                              const originalPrice = firstItem.originalPrice || firstItem.price || 0
+                              const discountPercent = firstItem.discountPercent || 0
+                              featuredPrice = discountPercent > 0
+                                ? Math.round(originalPrice * (1 - discountPercent / 100))
+                                : originalPrice
+                            }
                             break
                           }
-                        } catch (lookupError) {
-                          if (lookupError?.response?.status !== 404) {
-                            throw lookupError
-                          }
                         }
                       }
 
-                      if (!menu || menu.sections.length === 0) {
-                        const approvedFoods = await fetchApprovedFoods()
-                        menu = buildFallbackMenuFromFoods(approvedFoods, restaurant)
+                      return {
+                        ...restaurant,
+                        menu: menu,
+                        hasPaneer: hasPaneer,
+                        featuredDish: featuredDish || null,
+                        featuredPrice: featuredPrice || null,
+                        categoryMatches: {},
                       }
-
-                      if (menu?.sections?.length > 0) {
-                        const hasPaneer = checkCategoryInMenu(menu, 'paneer-tikka')
-
-                        let featuredDish = restaurant.featuredDish
-                        let featuredPrice = restaurant.featuredPrice
-
-                        if (!featuredDish || !featuredPrice) {
-                          for (const section of (menu.sections || [])) {
-                            if (section.items && section.items.length > 0) {
-                              const firstItem = section.items[0]
-                              if (!featuredDish) featuredDish = firstItem.name
-                              if (!featuredPrice) {
-                                const originalPrice = firstItem.originalPrice || firstItem.price || 0
-                                const discountPercent = firstItem.discountPercent || 0
-                                featuredPrice = discountPercent > 0
-                                  ? Math.round(originalPrice * (1 - discountPercent / 100))
-                                  : originalPrice
-                              }
-                              break
-                            }
-                          }
-                        }
-
-                        return {
-                          ...restaurant,
-                          menu: menu,
-                          hasPaneer: hasPaneer,
-                          featuredDish: featuredDish || null,
-                          featuredPrice: featuredPrice || null,
-                          categoryMatches: {},
-                        }
-                      }
-                    } catch (error) {
-                      debugWarn(`Failed to fetch menu for restaurant ${restaurant.restaurantId}:`, error)
                     }
+                  } catch (error) {
+                    debugWarn(`Failed to fetch menu for restaurant ${restaurant.restaurantId}:`, error)
+                  }
 
-                    return {
-                      ...restaurant,
-                      menu: null,
-                      hasPaneer: false,
-                      categoryMatches: {},
-                    }
-                  })
-                )
-
-                if (enrichmentRequestId !== menuEnrichmentRequestRef.current) return
-                transformedRestaurants.push(...batchResults)
-              }
-
-              if (enrichmentRequestId === menuEnrichmentRequestRef.current) {
-                startTransition(() => {
-                  if (append) {
-                    setRestaurantsData(prev => {
-                      const existingMap = new Map(prev.map(r => [r.id, r]))
-                      transformedRestaurants.forEach(r => existingMap.set(r.id, r))
-                      return Array.from(existingMap.values())
-                    })
-                  } else {
-                    setRestaurantsData(transformedRestaurants)
+                  return {
+                    ...restaurant,
+                    menu: null,
+                    hasPaneer: false,
+                    categoryMatches: {},
                   }
                 })
-              }
-            } finally {
-              if (enrichmentRequestId === menuEnrichmentRequestRef.current) {
-                setIsEnrichingMenus(false)
-              }
+              )
+
+              if (enrichmentRequestId !== menuEnrichmentRequestRef.current) return
+              transformedRestaurants.push(...batchResults)
             }
-          })()
-        } else {
-          if (!append) setRestaurantsData([])
-          setHasMoreRestaurantsBackend(false)
-        }
-      } catch (error) {
-        console.error("Error fetching restaurants:", error)
+
+            if (enrichmentRequestId === menuEnrichmentRequestRef.current) {
+              startTransition(() => {
+                if (append) {
+                  setRestaurantsData(prev => {
+                    const existingMap = new Map(prev.map(r => [r.id, r]))
+                    transformedRestaurants.forEach(r => existingMap.set(r.id, r))
+                    return Array.from(existingMap.values())
+                  })
+                } else {
+                  setRestaurantsData(transformedRestaurants)
+                }
+              })
+            }
+          } finally {
+            if (enrichmentRequestId === menuEnrichmentRequestRef.current) {
+              setIsEnrichingMenus(false)
+            }
+          }
+        })()
+      } else {
         if (!append) setRestaurantsData([])
-      } finally {
-        setLoadingRestaurants(false)
-        setLoadingMoreRestaurants(false)
+        setHasMoreRestaurantsBackend(false)
       }
+    } catch (error) {
+      console.error("Error fetching restaurants:", error)
+      if (!append) setRestaurantsData([])
+    } finally {
+      setLoadingRestaurants(false)
+      setLoadingMoreRestaurants(false)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zoneId, isOutOfService])
 
@@ -1197,9 +1197,9 @@ export default function CategoryPage() {
 
       const railRect = rail.getBoundingClientRect();
       const btnRect = selectedButton.getBoundingClientRect();
-      
+
       const scrollPos = rail.scrollLeft + (btnRect.left - railRect.left) - (railRect.width / 2) + (btnRect.width / 2);
-      
+
       rail.scrollTo({
         left: scrollPos,
         behavior: "smooth"

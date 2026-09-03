@@ -252,13 +252,13 @@ export const adminAPI = {
     const fcmToken = typeof localStorage !== "undefined" ? localStorage.getItem("fcm_web_registered_token_admin") : null;
     return authService.logout(token, fcmToken, "web");
   },
-  
+
   // Real-time Admin Notifications
   getAdminNotificationsHistory: (params = {}) => apiClient.get("/food/admin/notifications/history", { params, contextModule: "admin" }),
   markAdminNotificationAsRead: (id) => apiClient.patch(`/food/admin/notifications/${id}/read`, {}, { contextModule: "admin" }),
   markAllAdminNotificationsAsRead: () => apiClient.patch("/food/admin/notifications/read-all", {}, { contextModule: "admin" }),
   clearAllAdminNotifications: () => apiClient.delete("/food/admin/notifications/clear-all", { contextModule: "admin" }),
-  
+
   // ============================
   // CUSTOMER MANAGEMENT
   // ============================
@@ -1264,12 +1264,12 @@ export const restaurantAPI = {
           if (isFood) {
             const foodItems = cartItems.filter(it => (it.moduleType || it.category || (it.restaurantId ? 'food' : 'unknown')) === 'food');
             if (foodItems.length === 0) return false;
-            
+
             if (String(o?.restaurantScope) === "selected") {
               const offerResIds = Array.isArray(o.restaurantIds) && o.restaurantIds.length > 0
                 ? o.restaurantIds
                 : [o.restaurantId].filter(Boolean);
-              
+
               return foodItems.some(it => {
                 const itResId = it.restaurantId || it.restaurant?._id || it.restaurant?.id;
                 return offerResIds.some(id => String(id) === String(itResId || ""));
@@ -1280,7 +1280,7 @@ export const restaurantAPI = {
             const targetModule = o.moduleType;
             const moduleItems = cartItems.filter(it => (it.moduleType || it.category || 'unknown') === targetModule);
             if (moduleItems.length === 0) return false;
-            
+
             if (Array.isArray(o.itemIds) && o.itemIds.length > 0) {
               return moduleItems.some((it) => {
                 const itId = it.itemId || it.id;
@@ -3106,7 +3106,7 @@ export const groceryAdminAPI = {
   getOrders: (params) => apiClient.get("/grocery/admin/orders", { params, contextModule: "admin" }),
   getOrderById: (id) => apiClient.get(`/grocery/admin/orders/${id}`, { contextModule: "admin" }),
   updateOrderStatus: (id, data) => apiClient.put(`/grocery/admin/orders/${id}/status`, data, { contextModule: "admin" }),
-  
+
   seedGroceryData: () =>
     apiClient.post("/grocery/admin/seed", {}, { contextModule: "admin" }),
 };

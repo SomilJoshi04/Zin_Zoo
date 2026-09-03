@@ -63,6 +63,8 @@ export default function FoodsList() {
   const [selectedCategory, setSelectedCategory] = useState("all")
   const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false)
   const [categorySearchQuery, setCategorySearchQuery] = useState("")
+  const [isRestaurantDropdownOpen, setIsRestaurantDropdownOpen] = useState(false)
+  const [restaurantSearchQuery, setRestaurantSearchQuery] = useState("")
   const [filterCategories, setFilterCategories] = useState([])
   const [foods, setFoods] = useState([])
   const [restaurantsForFilter, setRestaurantsForFilter] = useState([])
@@ -656,6 +658,63 @@ export default function FoodsList() {
                         className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors truncate ${selectedCategory === cat.id ? "bg-orange-50 text-[#F84E04] font-medium dark:bg-orange-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
                       >
                         {cat.name}
+                      </button>
+                    ))}
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Popover open={isRestaurantDropdownOpen} onOpenChange={setIsRestaurantDropdownOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  className="px-4 py-2.5 text-sm rounded-lg border border-transparent bg-[#F84E04] text-white font-medium focus:outline-none focus:ring-2 focus:ring-[#F84E04]/50 min-w-[150px] cursor-pointer hover:bg-[#D94203] transition-all flex items-center justify-between gap-2"
+                >
+                  <span className="truncate max-w-[140px]">
+                    {selectedRestaurant === "all" ? "All Restaurants" : restaurantsForFilter.find(r => String(r.id) === String(selectedRestaurant))?.name || "All Restaurants"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 shrink-0 text-white" />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px] p-0" align="start">
+                <div className="p-2 border-b border-slate-100 dark:border-slate-800">
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <input
+                      type="text"
+                      placeholder="Search restaurant..."
+                      value={restaurantSearchQuery}
+                      onChange={(e) => setRestaurantSearchQuery(e.target.value)}
+                      className="w-full rounded-md border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-[#F84E04] focus:ring-1 focus:ring-[#F84E04] dark:bg-slate-900 dark:border-slate-700 dark:text-white placeholder:text-slate-400"
+                    />
+                  </div>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto p-1">
+                  <button
+                    onClick={() => {
+                      setSelectedRestaurant("all")
+                      setCurrentPage(1)
+                      setIsRestaurantDropdownOpen(false)
+                      setRestaurantSearchQuery("")
+                    }}
+                    className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors ${selectedRestaurant === "all" ? "bg-orange-50 text-[#F84E04] font-medium dark:bg-orange-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+                  >
+                    All Restaurants
+                  </button>
+                  {restaurantsForFilter
+                    .filter(r => r.name?.toLowerCase().includes(restaurantSearchQuery.toLowerCase()))
+                    .map((r) => (
+                      <button
+                        key={r.id}
+                        onClick={() => {
+                          setSelectedRestaurant(r.id)
+                          setCurrentPage(1)
+                          setIsRestaurantDropdownOpen(false)
+                          setRestaurantSearchQuery("")
+                        }}
+                        className={`w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors truncate ${selectedRestaurant === r.id ? "bg-orange-50 text-[#F84E04] font-medium dark:bg-orange-900/20" : "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"}`}
+                      >
+                        {r.name}
                       </button>
                     ))}
                 </div>

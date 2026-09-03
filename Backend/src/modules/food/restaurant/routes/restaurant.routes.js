@@ -7,7 +7,7 @@ import {
     listPublicOffersController,
     getCurrentRestaurantController,
     updateRestaurantProfileController,
-    updateRestaurantAcceptingOrdersController,uploadRestaurantProfileImageController,
+    updateRestaurantAcceptingOrdersController, uploadRestaurantProfileImageController,
     uploadRestaurantMenuImageController,
     uploadRestaurantCoverImagesController,
     uploadRestaurantMenuImagesController,
