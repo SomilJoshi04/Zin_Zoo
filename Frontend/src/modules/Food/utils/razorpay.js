@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Razorpay Payment Integration Utility
  * Handles Razorpay payment initialization and verification
  */
@@ -118,9 +118,9 @@ export const initRazorpayPayment = async (options) => {
       amount: options.amount,
       currency: options.currency || 'INR',
       order_id: options.order_id,
-      name: options.name || 'Switcheats',
+      name: options.name || 'Zinzoox',
       description: options.description || 'Order Payment',
-      image: options.image || '/switcheats-logo.png',
+      image: options.image || '/zinzoox-logo.png',
       prefill: options.prefill || {},
       notes: options.notes || {},
       theme: {
@@ -220,3 +220,4 @@ export const initRazorpayPayment = async (options) => {
 export const formatAmount = (amount) => {
   return `₹${(amount / 100).toFixed(2)}`;
 };
+

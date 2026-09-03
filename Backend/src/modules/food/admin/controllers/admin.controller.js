@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import * as adminService from '../services/admin.service.js';
 import * as featureSettingsService from '../services/featureSettings.service.js';
 import { validateCategoryListQuery, validateCategoryRejectDto, validateCategoryUpsertDto } from '../validators/category.validator.js';
@@ -1572,7 +1572,7 @@ export async function processRefund(req, res, next) {
                 {
                     title: 'Refund Processed! 💸',
                     body: `Your refund of ₹${refundAmount || order.totalAmount || order.total || 0} for Order #${order.orderId} has been processed successfully.`,
-                    image: 'https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png',
+                    image: 'https://i.ibb.co/5GzXz7r/Zinzoox-Brand-Image.png',
                     data: {
                         type: 'refund_processed',
                         orderId: String(order.orderId),
@@ -1748,3 +1748,4 @@ export async function updateFeatureSetting(req, res, next) {
         next(error);
     }
 }
+

@@ -1,11 +1,11 @@
-import { Link } from "react-router-dom"
+﻿import { Link } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { ArrowLeft, ArrowRight, Heart, Users, Shield, Clock, Star, Award, FileText, Lock, Loader2, Receipt, Truck, XCircle } from "lucide-react"
 import { motion } from "framer-motion"
 import AnimatedPage from "@food/components/user/AnimatedPage"
 import { Button } from "@food/components/ui/button"
 import { Card, CardContent } from "@food/components/ui/card"
-import quickSpicyLogo from "@food/assets/switcheats-logo.png"
+import quickSpicyLogo from "@food/assets/zinzoox-logo.png"
 import api from "@food/api"
 import { API_ENDPOINTS } from "@food/api/config"
 import { useCompanyName } from "@food/hooks/useCompanyName"
@@ -338,5 +338,6 @@ export default function About() {
     </AnimatedPage>
   )
 }
+
 
 

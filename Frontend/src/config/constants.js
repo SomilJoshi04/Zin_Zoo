@@ -1,5 +1,5 @@
-export const APP_CONFIG = {
-  NAME: 'SwitchEats',
+﻿export const APP_CONFIG = {
+  NAME: 'Zinzoox',
   VERSION: '1.0.0',
 };
 
@@ -15,3 +15,4 @@ export const ROLES = {
   RESTAURANT: 'restaurant',
   DELIVERY: 'delivery',
 };
+

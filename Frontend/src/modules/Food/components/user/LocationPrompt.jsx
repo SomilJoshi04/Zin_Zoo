@@ -3,13 +3,21 @@ import { MapPin, X } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "@food/components/ui/card"
 import { Button } from "@food/components/ui/button"
 import { useLocation } from "@food/hooks/useLocation"
+import { useLocationSelector } from "./UserLayout"
 
 export default function LocationPrompt() {
   const { location, loading, permissionGranted, requestLocation } = useLocation()
+  const { openLocationSelector } = useLocationSelector()
   const [showPrompt, setShowPrompt] = useState(false)
   const cardRef = useRef(null)
 
   useEffect(() => {
+    // If user explicitly dismissed it in this session, don't show it again
+    if (sessionStorage.getItem("locationPromptDismissed") === "true") return;
+
+    // If user already granted permission before, don't show
+    if (localStorage.getItem("locationPromptGranted") === "true") return;
+
     // Check if location permission was already granted
     const storedLocation = localStorage.getItem("userLocation")
 
@@ -17,31 +25,51 @@ export default function LocationPrompt() {
     // 1. No stored location AND
     // 2. Permission not already granted
     if (!storedLocation && !permissionGranted) {
-      // Wait a bit to let the hook try to get location automatically
-      // If it fails, we'll show the prompt
-      const timer = setTimeout(() => {
-        // Check again if location was set (hook might have succeeded)
-        const currentLocation = localStorage.getItem("userLocation")
-        if (!currentLocation && !permissionGranted) {
-          setShowPrompt(true)
-          // Prevent body scroll when popup is open
-          document.body.style.overflow = "hidden"
-          // CSS animation will handle the fade-in
-          if (cardRef.current) {
-            cardRef.current.style.opacity = '0'
-            cardRef.current.style.transform = 'translateY(20px)'
-            requestAnimationFrame(() => {
-              if (cardRef.current) {
-                cardRef.current.style.opacity = '1'
-                cardRef.current.style.transform = 'translateY(0)'
-              }
-            })
-          }
+      let isCancelled = false;
+
+      // Check native permissions first
+      const checkNative = async () => {
+        if (navigator.permissions && navigator.permissions.query) {
+          try {
+            const res = await navigator.permissions.query({ name: 'geolocation' })
+            if (res.state === 'granted') return true;
+          } catch(e) {}
         }
-      }, 1500) // Wait 1.5 seconds for automatic location request to complete
+        return false;
+      };
+
+      checkNative().then(isGranted => {
+        if (isGranted || isCancelled) return;
+
+        // Wait a bit to let the hook try to get location automatically
+        // If it fails, we'll show the prompt
+        const timer = setTimeout(() => {
+          if (isCancelled) return;
+          // Check again if location was set (hook might have succeeded)
+          const currentLocation = localStorage.getItem("userLocation")
+          const nowDismissed = sessionStorage.getItem("locationPromptDismissed") === "true"
+          
+          if (!currentLocation && !permissionGranted && !nowDismissed) {
+            setShowPrompt(true)
+            // Prevent body scroll when popup is open
+            document.body.style.overflow = "hidden"
+            // CSS animation will handle the fade-in
+            if (cardRef.current) {
+              cardRef.current.style.opacity = '0'
+              cardRef.current.style.transform = 'translateY(20px)'
+              requestAnimationFrame(() => {
+                if (cardRef.current) {
+                  cardRef.current.style.opacity = '1'
+                  cardRef.current.style.transform = 'translateY(0)'
+                }
+              })
+            }
+          }
+        }, 1500) // Wait 1.5 seconds for automatic location request to complete
+      });
 
       return () => {
-        clearTimeout(timer)
+        isCancelled = true;
         document.body.style.overflow = ""
       }
     }
@@ -63,6 +91,7 @@ export default function LocationPrompt() {
   const handleAllow = async () => {
     setFetchingLocation(true)
     try {
+      localStorage.setItem("locationPromptGranted", "true")
       const loc = await requestLocation()
       // Store location in localStorage so the prompt won't show next time
       if (loc) {
@@ -80,8 +109,13 @@ export default function LocationPrompt() {
   }
 
   const handleDismiss = () => {
+    sessionStorage.setItem("locationPromptDismissed", "true")
     setShowPrompt(false)
     document.body.style.overflow = ""
+    // Open the manual location selector
+    setTimeout(() => {
+      openLocationSelector()
+    }, 100)
   }
 
   // Cleanup on unmount

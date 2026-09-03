@@ -1026,21 +1026,26 @@ export function useLocation() {
             }
             // Try multiple fallback strategies
             try {
-              // Strategy 1: Use DB location if available
-              let fallback = dbLocation
-              if (!fallback) {
-                fallback = await fetchLocationFromDB()
-              }
+              let fallback = null
+              
+              // Only fallback to cached locations if we are not explicitly forcing a fresh one.
+              if (!forceFresh) {
+                // Strategy 1: Use DB location if available
+                fallback = dbLocation
+                if (!fallback) {
+                  fallback = await fetchLocationFromDB()
+                }
 
-              // Strategy 2: Use cached location from localStorage
-              if (!fallback) {
-                const stored = localStorage.getItem("userLocation")
-                if (stored) {
-                  try {
-                    fallback = JSON.parse(stored)
-                    debugLog("? Using cached location from localStorage")
-                  } catch (parseErr) {
-                    debugWarn("?? Failed to parse stored location:", parseErr)
+                // Strategy 2: Use cached location from localStorage
+                if (!fallback) {
+                  const stored = localStorage.getItem("userLocation")
+                  if (stored) {
+                    try {
+                      fallback = JSON.parse(stored)
+                      debugLog("? Using cached location from localStorage")
+                    } catch (parseErr) {
+                      debugWarn("?? Failed to parse stored location:", parseErr)
+                    }
                   }
                 }
               }
@@ -1315,33 +1320,42 @@ export function useLocation() {
 
     const init = async () => {
       try {
-        const stored = localStorage.getItem("userLocation")
-        if (stored) {
-          try {
-            const loc = JSON.parse(stored)
-            if (loc?.latitude && loc?.longitude) {
-              setLocation(loc)
-              initialResolvedLocation = loc
+        const mode = localStorage.getItem("deliveryAddressMode") || "current"
+        let initialResolvedLocation = null
+        let hasInitialLocation = false
+
+        // Only preload from storage if mode is 'saved'. 
+        // If mode is 'current', we want a fresh location every time.
+        if (mode === "saved") {
+          const stored = localStorage.getItem("userLocation")
+          if (stored) {
+            try {
+              const loc = JSON.parse(stored)
+              if (loc?.latitude && loc?.longitude) {
+                setLocation(loc)
+                initialResolvedLocation = loc
+                hasInitialLocation = true
+                setLoading(false)
+                setPermissionGranted(true)
+              }
+            } catch (e) {
+              debugWarn("Failed to parse stored location", e)
+            }
+          }
+
+          if (!hasInitialLocation) {
+            const dbLoc = await fetchLocationFromDB()
+            if (dbLoc) {
+              setLocation(dbLoc)
+              initialResolvedLocation = dbLoc
               hasInitialLocation = true
               setLoading(false)
               setPermissionGranted(true)
-
-              if (loc.city === "Current Location" || !loc.formattedAddress || loc.formattedAddress === "Select location") {
-                shouldForceRefresh = true
-              }
             }
-          } catch (e) {
-            debugWarn("Failed to parse stored location", e)
           }
-        }
-
-        const dbLoc = await fetchLocationFromDB()
-        if (dbLoc) {
-          setLocation(dbLoc)
-          initialResolvedLocation = dbLoc
-          hasInitialLocation = true
-          setLoading(false)
-          setPermissionGranted(true)
+        } else {
+          // Mode is current, don't use the old cached location
+          localStorage.removeItem("userLocation")
         }
 
         if (!hasInitialLocation) {
@@ -1349,17 +1363,10 @@ export function useLocation() {
           setLoading(false)
         }
 
-        const currentKnownLocation = initialResolvedLocation || lastDbLocationRef.current || location
-        const hasUsableInitialLocation = hasUsableSavedLocation(currentKnownLocation)
-        const shouldPreserveSavedForLoggedIn =
-          isAuthenticatedUser() && hasUsableInitialLocation
-
         const tryAutoResolveLocation = async () => {
-          // Requirement:
-          // - Guest/open app: auto-fetch current location
-          // - Logged-in user with existing saved location: keep existing location
-          if (!shouldPreserveSavedForLoggedIn) {
-            const freshLoc = await getLocation(true, shouldForceRefresh)
+          if (mode === "current") {
+            // Always get fresh location for current mode
+            const freshLoc = await getLocation(true, true)
             if (freshLoc) {
               setLocation(freshLoc)
               if (AUTO_START_LIVE_WATCH) startWatchingLocation()
@@ -1371,12 +1378,14 @@ export function useLocation() {
 
         if (navigator.permissions && navigator.permissions.query) {
           const result = await navigator.permissions.query({ name: 'geolocation' })
-          // `prompt` should also attempt geolocation so browser can ask permission.
-          if (result.state === 'granted' || (!hasUsableInitialLocation && result.state === 'prompt')) {
+          if (result.state === 'granted' || result.state === 'prompt') {
             await tryAutoResolveLocation()
+          } else if (mode === "current") {
+            // Denied and we wanted current: clear it
+            setLocation(null)
+            setPermissionGranted(false)
           }
-        } else if (!hasUsableInitialLocation) {
-          // Fallback for browsers/webviews that do not support Permissions API.
+        } else {
           await tryAutoResolveLocation()
         }
       } catch (err) {

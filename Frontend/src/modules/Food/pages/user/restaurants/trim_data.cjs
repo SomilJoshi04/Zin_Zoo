@@ -1,9 +1,9 @@
-const debugLog = (...args) => {}
+﻿const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
 
 const fs = require('fs');
-const path = 'e:\\switcheats\\switcheats\\frontend\\src\\module\\user\\pages\\restaurants\\RestaurantDetails.jsx';
+const path = 'e:\\zinzoox\\zinzoox\\frontend\\src\\module\\user\\pages\\restaurants\\RestaurantDetails.jsx';
 const content = fs.readFileSync(path, 'utf8');
 const lines = content.split(/\r?\n/);
 debugLog('Total lines:', lines.length);
@@ -17,4 +17,5 @@ const newLines = [...lines.slice(0, 41), ...lines.slice(2951)];
 const newContent = newLines.join('\n');
 fs.writeFileSync(path, newContent);
 debugLog('File updated. New line count:', newLines.length);
+
 

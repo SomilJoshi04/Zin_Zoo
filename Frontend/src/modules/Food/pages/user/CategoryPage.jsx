@@ -1549,7 +1549,7 @@ export default function CategoryPage() {
                   return (
                     <Link
                       key={restaurant.id}
-                      to={`/user/restaurants/${restaurant.name.toLowerCase().replace(/\s+/g, '-')}`}
+                      to={`/user/restaurants/${restaurant.name.toLowerCase().replace(/\s+/g, '-')}${restaurant.dishId ? `?dish=${restaurant.dishId}` : ''}`}
                       className="block"
                     >
                       <div className={`group ${shouldShowGrayscale ? 'grayscale opacity-75' : ''}`}>
@@ -1685,8 +1685,8 @@ export default function CategoryPage() {
                     const isVeg = food.foodType === "Veg"
                     return (
                       <Link
-                        key={food.itemId}
-                        to={`/user/restaurants/${food.restaurantSlug}`}
+                        key={food.itemId || food.id || food._id}
+                        to={`/user/restaurants/${food.restaurantSlug}?dish=${food.itemId || ''}`}
                         className="block bg-white dark:bg-[#151515] rounded-2xl p-4 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-all duration-300"
                       >
                         <div className="flex justify-between items-start gap-4">
@@ -1776,7 +1776,7 @@ export default function CategoryPage() {
                   const isFavorite = favorites.has(restaurant.id)
 
                   return (
-                    <Link key={restaurant.id} to={`/user/restaurants/${restaurantSlug}`} className="h-full flex">
+                    <Link key={restaurant.id} to={`/user/restaurants/${restaurantSlug}${restaurant.dishId ? `?dish=${restaurant.dishId}` : ''}`} className="h-full flex">
                       <Card className={`overflow-hidden cursor-pointer gap-0 border-0 dark:border-gray-800 group bg-white dark:bg-[#1a1a1a] shadow-md hover:shadow-xl transition-all duration-300 py-0 rounded-md h-full flex flex-col w-full ${shouldShowGrayscale ? 'grayscale opacity-75' : ''
                         }`}>
                         {/* Image Section */}

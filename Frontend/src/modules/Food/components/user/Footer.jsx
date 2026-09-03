@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom"
+﻿import { Link } from "react-router-dom"
 import { Facebook, Twitter, Instagram, Mail, Phone, MapPin, Heart } from "lucide-react"
 import { useState, useEffect } from "react"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
 import { useCompanyName } from "@food/hooks/useCompanyName"
-import quickSpicyLogo from "@food/assets/switcheats-logo.png"
+import quickSpicyLogo from "@food/assets/zinzoox-logo.png"
 
 export default function Footer() {
   const companyName = useCompanyName()
@@ -231,4 +231,5 @@ export default function Footer() {
     </footer>
   )
 }
+
 

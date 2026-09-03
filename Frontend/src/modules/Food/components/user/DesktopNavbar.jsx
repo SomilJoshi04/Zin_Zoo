@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom"
+﻿import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState, useRef } from "react"
 import { ChevronDown, ShoppingCart, Wallet, Search, Mic } from "lucide-react"
 import { Button } from "@food/components/ui/button"
@@ -10,7 +10,7 @@ import { useLocationSelector, useSearchOverlay } from "./UserLayout"
 import { useProfile } from "@food/context/ProfileContext"
 import { FaLocationDot } from "react-icons/fa6"
 import { AnimatePresence, motion } from "framer-motion"
-import quickSpicyLogo from "@food/assets/switcheats-logo.png"
+import quickSpicyLogo from "@food/assets/zinzoox-logo.png"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
 import HeaderNotificationBell from "./HeaderNotificationBell"
 const debugLog = (...args) => {}
@@ -428,5 +428,6 @@ export default function DesktopNavbar({ showLogo = true }) {
         </nav>
     )
 }
+
 
 

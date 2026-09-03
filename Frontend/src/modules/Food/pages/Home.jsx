@@ -1,11 +1,11 @@
-import { Link, useNavigate } from "react-router-dom"
+﻿import { Link, useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { ArrowRight, Utensils, Truck, Store, Globe, Heart, Shield, Clock } from "lucide-react"
 import { motion } from "framer-motion"
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@food/components/ui/card"
 import { Button } from "@food/components/ui/button"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
-const quickSpicyLogo = "/switcheats-logo.png"
+const quickSpicyLogo = "/zinzoox-logo.png"
 
 export default function Home() {
   const navigate = useNavigate()
@@ -60,7 +60,7 @@ export default function Home() {
               </div>
             )}
           </div>
-          <CardTitle className="text-3xl font-bold text-center">{companyName || "SwitchEats Food"}</CardTitle>
+          <CardTitle className="text-3xl font-bold text-center">{companyName || "Zinzoox Food"}</CardTitle>
           <CardDescription className="text-lg">
             Welcome to the Service Platform
           </CardDescription>
@@ -103,4 +103,5 @@ export default function Home() {
     </div>
   )
 }
+
 

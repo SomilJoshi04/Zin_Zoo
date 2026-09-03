@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Business Settings Utility
  * Handles loading and updating business settings (favicon, title, logo)
  */
@@ -527,7 +527,7 @@ export const getCachedSettings = () => {
 
 /**
  * Get company name from business settings with fallback
- * @returns {string} Company name or default "SwitchEats Food"
+ * @returns {string} Company name or default "Zinzoox Food"
  */
 export const getCompanyName = () => {
   return "Zin Zoo X";
@@ -535,8 +535,9 @@ export const getCompanyName = () => {
 
 /**
  * Get company name asynchronously (loads if not cached)
- * @returns {Promise<string>} Company name or default "SwitchEats Food"
+ * @returns {Promise<string>} Company name or default "Zinzoox Food"
  */
 export const getCompanyNameAsync = async () => {
   return "Zin Zoo X";
 };
+

@@ -1,9 +1,9 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const businessSettingsSchema = new mongoose.Schema(
     {
-        companyName: { type: String, required: true, default: 'Switcheats' },
-        email: { type: String, required: true, default: 'admin@switcheats.com' },
+        companyName: { type: String, required: true, default: 'Zinzoox' },
+        email: { type: String, required: true, default: 'admin@zinzoox.com' },
         phone: {
             countryCode: { type: String, default: '+91' },
             number: { type: String, default: '' }
@@ -66,3 +66,4 @@ const businessSettingsSchema = new mongoose.Schema(
 );
 
 export const FoodBusinessSettings = mongoose.model('FoodBusinessSettings', businessSettingsSchema);
+

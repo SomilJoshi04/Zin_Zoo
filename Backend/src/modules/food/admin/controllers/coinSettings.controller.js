@@ -1,4 +1,4 @@
-import { FoodBusinessSettings } from '../models/businessSettings.model.js';
+﻿import { FoodBusinessSettings } from '../models/businessSettings.model.js';
 import { sendResponse } from '../../../../utils/response.js';
 import { broadcastPublicUpdate } from '../../../../config/socket.js';
 
@@ -25,8 +25,8 @@ export async function getCoinSettings(req, res, next) {
         let settings = await FoodBusinessSettings.findOne().lean();
         if (!settings) {
             settings = await FoodBusinessSettings.create({
-                companyName: 'Switcheats',
-                email: 'admin@switcheats.com'
+                companyName: 'Zinzoox',
+                email: 'admin@zinzoox.com'
             });
         }
         const payload = buildCoinSettingsPayload(settings?.coinSettings || {}, settings?.coinSettings || COIN_SETTINGS_DEFAULT);
@@ -42,8 +42,8 @@ export async function updateCoinSettings(req, res, next) {
         let settings = await FoodBusinessSettings.findOne();
         if (!settings) {
             settings = new FoodBusinessSettings({
-                companyName: 'Switcheats',
-                email: 'admin@switcheats.com'
+                companyName: 'Zinzoox',
+                email: 'admin@zinzoox.com'
             });
         }
 
@@ -56,3 +56,4 @@ export async function updateCoinSettings(req, res, next) {
         next(error);
     }
 }
+

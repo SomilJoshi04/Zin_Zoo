@@ -2176,7 +2176,7 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
   // If showing address form, render full-screen address form
   if (showAddressForm) {
     return (
-      <div className="fixed inset-0 z-[10000] bg-white dark:bg-[#0a0a0a] flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden">
+      <div key="map-view" className="fixed inset-0 z-[10000] bg-white dark:bg-[#0a0a0a] flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden">
         {/* Header */}
         <div className="flex-shrink-0 bg-white dark:bg-[#1a1a1a] border-b border-gray-100 dark:border-gray-800 px-4 py-3">
           <div className="flex items-center gap-4">
@@ -2479,7 +2479,7 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
   }
 
   return (
-    <div
+    <div key="list-view"
       className="fixed inset-0 z-[9999] flex flex-col bg-white dark:bg-[#0a0a0a] h-[100dvh] max-h-[100dvh] overflow-hidden"
       style={{
         animation: 'fadeIn 0.3s ease-out'

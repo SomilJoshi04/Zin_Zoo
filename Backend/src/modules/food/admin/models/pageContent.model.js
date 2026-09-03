@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 
 const featureSchema = new mongoose.Schema(
     {
@@ -24,7 +24,7 @@ const legalPageSchema = new mongoose.Schema(
 
 const aboutPageSchema = new mongoose.Schema(
     {
-        appName: { type: String, default: 'Switcheats' },
+        appName: { type: String, default: 'Zinzoox' },
         version: { type: String, default: '1.0.0' },
         description: { type: String, default: '' },
         logo: { type: String, default: '' },
@@ -59,4 +59,5 @@ const pageContentSchema = new mongoose.Schema(
 pageContentSchema.index({ key: 1, module: 1 }, { unique: true });
 
 export const FoodPageContent = mongoose.model('FoodPageContent', pageContentSchema);
+
 

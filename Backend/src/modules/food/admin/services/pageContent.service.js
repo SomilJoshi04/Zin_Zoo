@@ -1,4 +1,4 @@
-import { FoodPageContent } from '../models/pageContent.model.js';
+﻿import { FoodPageContent } from '../models/pageContent.model.js';
 import { ValidationError } from '../../../../core/auth/errors.js';
 
 const normalizeKey = (key) => String(key || '').trim().toLowerCase();
@@ -87,7 +87,7 @@ export const upsertLegalPage = async (key, payload, updatedBy, module = 'ALL') =
 
 export const upsertAboutPage = async (payload, updatedBy, module = 'ALL') => {
     const m = String(module || 'ALL').toUpperCase();
-    const appName = decodeHtmlEntities(String(payload?.appName || '')).trim() || 'Switcheats';
+    const appName = decodeHtmlEntities(String(payload?.appName || '')).trim() || 'Zinzoox';
     const version = decodeHtmlEntities(String(payload?.version || '')).trim() || '1.0.0';
     const description = decodeHtmlEntities(String(payload?.description || '')).trim();
     const logo = decodeHtmlEntities(String(payload?.logo || '')).trim();
@@ -120,4 +120,5 @@ export const upsertAboutPage = async (payload, updatedBy, module = 'ALL') => {
 
     return { key: 'about', module: m, data: normalizeAboutForResponse(doc?.about || null) };
 };
+
 

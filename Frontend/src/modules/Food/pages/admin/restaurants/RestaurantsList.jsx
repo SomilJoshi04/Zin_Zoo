@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from "react"
 import { Loader } from '@googlemaps/js-api-loader'
 import { getGoogleMapsApiKey } from "@food/utils/googleMapsApiKey"
 import { Search, Trash2, Loader2, Eye, Pencil, Plus, ChevronLeft, ChevronRight, Check, X, Building2, MapPin, Phone, Mail, Clock, Star, AlertTriangle, ShieldCheck, ShieldX, Save } from "lucide-react"
-import { adminAPI, uploadAPI, baseApiUrl } from "@food/api"
+import { adminAPI, uploadAPI } from "@food/api"
 import { toast } from "sonner"
 import { usePublicSocket } from "@food/hooks/usePublicSocket"
 import ImageUploadField from "../../../components/admin/ImageUploadField"
@@ -272,9 +272,9 @@ export default function RestaurantsList() {
       const id = restaurant._id || restaurant.id
       const res = await adminAPI.getRestaurantById(id)
       const fullRes = res?.data?.data || res?.data || restaurant
-      
+
       setEditTarget(fullRes)
-            setEditForm({
+      setEditForm({
         restaurantName: fullRes.restaurantName || "",
         ownerName: fullRes.ownerName || "",
         ownerPhone: fullRes.ownerPhone || fullRes.primaryContactNumber || "",
@@ -314,14 +314,20 @@ export default function RestaurantsList() {
       toast.error("Restaurant name and owner name are required");
       return;
     }
-    if (!editForm.address || !editForm.city || !editForm.state || !editForm.pincode) {
-      toast.error("Address, City, State, and Pincode are required");
+    if (!editForm.address || !editForm.city || !editForm.state) {
+      toast.error("Address, City, and State are required");
       return;
     }
-    
+
+    const pinRegex = /^\d{6}$/;
+    if (editForm.pincode && !pinRegex.test(editForm.pincode)) {
+      toast.error("Pincode must be a valid 6-digit number");
+      return;
+    }
+
     let latNum = parseFloat(editForm.latitude);
     let lngNum = parseFloat(editForm.longitude);
-    
+
     if ((isNaN(latNum) || isNaN(lngNum) || (latNum === 0 && lngNum === 0)) && editForm.address) {
       const coords = await geocodeAddressHelper(editForm.address);
       if (coords) {
@@ -330,7 +336,7 @@ export default function RestaurantsList() {
         setEditForm(prev => ({ ...prev, latitude: latNum, longitude: lngNum }));
       }
     }
-    
+
     if (latNum === 0 && lngNum === 0) {
       toast.error("Could not resolve location coordinates for the given address. Please select on map or enter manually.");
       return;
@@ -411,8 +417,8 @@ export default function RestaurantsList() {
     const pinRegex = /^\d{6}$/;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!createForm.address || !createForm.city || !createForm.state || !createForm.pincode) {
-      toast.error("Address, City, State, and Pincode are required");
+    if (!createForm.address || !createForm.city || !createForm.state) {
+      toast.error("Address, City, and State are required");
       return;
     }
     const latNum = parseFloat(createForm.latitude);
@@ -709,13 +715,12 @@ export default function RestaurantsList() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${
-                          restaurant.restaurantType === 'Veg'
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
-                            : restaurant.restaurantType === 'Non-Veg'
-                              ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800'
-                              : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
-                        }`}>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${restaurant.restaurantType === 'Veg'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800'
+                          : restaurant.restaurantType === 'Non-Veg'
+                            ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/20 dark:text-rose-300 dark:border-rose-800'
+                            : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800'
+                          }`}>
                           {restaurant.restaurantType || (restaurant.pureVegRestaurant ? "Veg" : "Both")}
                         </span>
                       </td>
@@ -1227,202 +1232,202 @@ const MapPicker = ({ form, setForm }) => {
 const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile, imagePreviewUrl, setImagePreviewUrl }) => {
   if (!form) return null;
   return (
-  <div className="space-y-4">
-    {/* Restaurant Image Upload */}
-    <ImageUploadField
-      value={form.selectedImageFile || imagePreviewUrl || form.profileImage}
-      onChange={(file) => {
-        setSelectedImageFile?.(file)
-        if (file) {
-          setImagePreviewUrl?.(URL.createObjectURL(file))
-        } else {
+    <div className="space-y-4">
+      {/* Restaurant Image Upload */}
+      <ImageUploadField
+        value={form.selectedImageFile || imagePreviewUrl || form.profileImage}
+        onChange={(file) => {
+          setSelectedImageFile?.(file)
+          if (file) {
+            setImagePreviewUrl?.(URL.createObjectURL(file))
+          } else {
+            setImagePreviewUrl?.(form.profileImage || "")
+          }
+        }}
+        onClear={() => {
+          setSelectedImageFile?.(null)
           setImagePreviewUrl?.(form.profileImage || "")
-        }
-      }}
-      onClear={() => {
-        setSelectedImageFile?.(null)
-        setImagePreviewUrl?.(form.profileImage || "")
-        setForm((p) => ({ ...p, profileImage: "" }))
-      }}
-      aspectRatio={1.7777777777777777}
-      label="Restaurant Image (16:9)"
-      helpText="Upload restaurant image (shown on user side)"
-    />
-    
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Name *</label>
-        <input type="text" value={form.restaurantName} onChange={(e) => setForm((p) => ({ ...p, restaurantName: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="Enter restaurant name" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Name *</label>
-        <input type="text" value={form.ownerName} onChange={(e) => setForm((p) => ({ ...p, ownerName: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="Enter owner name" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Phone</label>
-        <input type="text" value={form.ownerPhone} onChange={(e) => setForm((p) => ({ ...p, ownerPhone: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="Enter phone number" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Primary Contact Number (App Call)</label>
-        <input type="text" value={form.primaryContactNumber} onChange={(e) => setForm((p) => ({ ...p, primaryContactNumber: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="Enter primary contact number" />
-      </div>
-      <div className="sm:col-span-2">
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Email</label>
-        <input type="email" value={form.ownerEmail} onChange={(e) => setForm((p) => ({ ...p, ownerEmail: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="Enter email" />
-      </div>
+          setForm((p) => ({ ...p, profileImage: "" }))
+        }}
+        aspectRatio={1.7777777777777777}
+        label="Restaurant Image (16:9)"
+        helpText="Upload restaurant image (shown on user side)"
+      />
 
-      {/* LOCATION PICKER OPTIONS */}
-      <div className="col-span-1 sm:col-span-2 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-          <label className="text-sm font-semibold text-slate-900 dark:text-white">Restaurant Location Details *</label>
-          <div className="flex bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-semibold">
-            <button
-              type="button"
-              onClick={() => setForm(p => ({ ...p, locationMode: 'map' }))}
-              className={`px-3 py-1 rounded-md transition-colors ${form.locationMode !== 'manual' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}
-            >
-              Option A: Map Picker
-            </button>
-            <button
-              type="button"
-              onClick={() => setForm(p => ({ ...p, locationMode: 'manual' }))}
-              className={`px-3 py-1 rounded-md transition-colors ${form.locationMode === 'manual' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}
-            >
-              Option B: Manual Address
-            </button>
-          </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Name *</label>
+          <input type="text" value={form.restaurantName} onChange={(e) => setForm((p) => ({ ...p, restaurantName: e.target.value }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            placeholder="Enter restaurant name" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Name *</label>
+          <input type="text" value={form.ownerName} onChange={(e) => setForm((p) => ({ ...p, ownerName: e.target.value }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            placeholder="Enter owner name" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Phone</label>
+          <input type="text" value={form.ownerPhone} onChange={(e) => setForm((p) => ({ ...p, ownerPhone: e.target.value }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            placeholder="Enter phone number" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Primary Contact Number (App Call)</label>
+          <input type="text" value={form.primaryContactNumber} onChange={(e) => setForm((p) => ({ ...p, primaryContactNumber: e.target.value }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            placeholder="Enter primary contact number" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Owner Email</label>
+          <input type="email" value={form.ownerEmail} onChange={(e) => setForm((p) => ({ ...p, ownerEmail: e.target.value }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            placeholder="Enter email" />
         </div>
 
-        {form.locationMode !== 'manual' ? (
-          <MapPicker form={form} setForm={setForm} />
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Latitude *</label>
+        {/* LOCATION PICKER OPTIONS */}
+        <div className="col-span-1 sm:col-span-2 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
+            <label className="text-sm font-semibold text-slate-900 dark:text-white">Restaurant Location Details *</label>
+            <div className="flex bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg text-xs font-semibold">
+              <button
+                type="button"
+                onClick={() => setForm(p => ({ ...p, locationMode: 'map' }))}
+                className={`px-3 py-1 rounded-md transition-colors ${form.locationMode !== 'manual' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}
+              >
+                Option A: Map Picker
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(p => ({ ...p, locationMode: 'manual' }))}
+                className={`px-3 py-1 rounded-md transition-colors ${form.locationMode === 'manual' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white' : 'text-slate-500'}`}
+              >
+                Option B: Manual Address
+              </button>
+            </div>
+          </div>
+
+          {form.locationMode !== 'manual' ? (
+            <MapPicker form={form} setForm={setForm} />
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Latitude *</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={form.latitude}
+                  onChange={(e) => setForm(p => ({ ...p, latitude: e.target.value }))}
+                  placeholder="e.g. 28.6139"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Longitude *</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={form.longitude}
+                  onChange={(e) => setForm(p => ({ ...p, longitude: e.target.value }))}
+                  placeholder="e.g. 77.2090"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Address Text Fields (shared by both modes) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Street Address / Landmark *</label>
               <input
-                type="number"
-                step="any"
-                value={form.latitude}
-                onChange={(e) => setForm(p => ({ ...p, latitude: e.target.value }))}
-                placeholder="e.g. 28.6139"
+                type="text"
+                value={form.address}
+                onChange={(e) => setForm(p => ({ ...p, address: e.target.value }))}
+                placeholder="Shop No, Building, Area"
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Longitude *</label>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">City *</label>
               <input
-                type="number"
-                step="any"
-                value={form.longitude}
-                onChange={(e) => setForm(p => ({ ...p, longitude: e.target.value }))}
-                placeholder="e.g. 77.2090"
+                type="text"
+                value={form.city}
+                onChange={(e) => setForm(p => ({ ...p, city: e.target.value }))}
+                placeholder="City"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">State *</label>
+              <input
+                type="text"
+                value={form.state}
+                onChange={(e) => setForm(p => ({ ...p, state: e.target.value }))}
+                placeholder="State"
+                className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pincode</label>
+              <input
+                type="text"
+                value={form.pincode}
+                onChange={(e) => setForm(p => ({ ...p, pincode: e.target.value }))}
+                placeholder="6-digit Pincode"
                 className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
               />
             </div>
           </div>
-        )}
-
-        {/* Address Text Fields (shared by both modes) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-          <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Street Address / Landmark *</label>
-            <input
-              type="text"
-              value={form.address}
-              onChange={(e) => setForm(p => ({ ...p, address: e.target.value }))}
-              placeholder="Shop No, Building, Area"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">City *</label>
-            <input
-              type="text"
-              value={form.city}
-              onChange={(e) => setForm(p => ({ ...p, city: e.target.value }))}
-              placeholder="City"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">State *</label>
-            <input
-              type="text"
-              value={form.state}
-              onChange={(e) => setForm(p => ({ ...p, state: e.target.value }))}
-              placeholder="State"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Pincode *</label>
-            <input
-              type="text"
-              value={form.pincode}
-              onChange={(e) => setForm(p => ({ ...p, pincode: e.target.value }))}
-              placeholder="6-digit Pincode"
-              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-            />
-          </div>
         </div>
-      </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Zone</label>
-        <select value={form.zoneId} onChange={(e) => setForm((p) => ({ ...p, zoneId: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]">
-          <option value="">Global Zone</option>
-          {zones.map((z) => (
-            <option key={z._id || z.id} value={String(z._id || z.id)}>
-              {z.name || z.zoneName || "Unnamed Zone"}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Cuisines</label>
-        <input type="text" value={form.cuisines} onChange={(e) => setForm((p) => ({ ...p, cuisines: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
-          placeholder="North Indian, Chinese, etc." />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Opening Time</label>
-        <input type="time" value={form.openingTime} onChange={(e) => setForm((p) => ({ ...p, openingTime: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Closing Time</label>
-        <input type="time" value={form.closingTime} onChange={(e) => setForm((p) => ({ ...p, closingTime: e.target.value }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Type</label>
-        <select value={form.restaurantType} onChange={(e) => setForm((p) => ({ ...p, restaurantType: e.target.value, pureVegRestaurant: e.target.value === "Veg" }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]">
-          <option value="Veg">Veg</option>
-          <option value="Non-Veg">Non-Veg</option>
-          <option value="Both">Both</option>
-        </select>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status (Accepting Orders)</label>
-        <select value={String(form.isAcceptingOrders)} onChange={(e) => setForm((p) => ({ ...p, isAcceptingOrders: e.target.value === "true" }))}
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]">
-          <option value="true">Active (Open)</option>
-          <option value="false">Inactive (Force Closed)</option>
-        </select>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Zone</label>
+          <select value={form.zoneId} onChange={(e) => setForm((p) => ({ ...p, zoneId: e.target.value }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]">
+            <option value="">Global Zone</option>
+            {zones.map((z) => (
+              <option key={z._id || z.id} value={String(z._id || z.id)}>
+                {z.name || z.zoneName || "Unnamed Zone"}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Cuisines</label>
+          <input type="text" value={form.cuisines} onChange={(e) => setForm((p) => ({ ...p, cuisines: e.target.value }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]"
+            placeholder="North Indian, Chinese, etc." />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Opening Time</label>
+          <input type="time" value={form.openingTime} onChange={(e) => setForm((p) => ({ ...p, openingTime: e.target.value }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Closing Time</label>
+          <input type="time" value={form.closingTime} onChange={(e) => setForm((p) => ({ ...p, closingTime: e.target.value }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Type</label>
+          <select value={form.restaurantType} onChange={(e) => setForm((p) => ({ ...p, restaurantType: e.target.value, pureVegRestaurant: e.target.value === "Veg" }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]">
+            <option value="Veg">Veg</option>
+            <option value="Non-Veg">Non-Veg</option>
+            <option value="Both">Both</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Status (Accepting Orders)</label>
+          <select value={String(form.isAcceptingOrders)} onChange={(e) => setForm((p) => ({ ...p, isAcceptingOrders: e.target.value === "true" }))}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]">
+            <option value="true">Active (Open)</option>
+            <option value="false">Inactive (Force Closed)</option>
+          </select>
+        </div>
       </div>
     </div>
-  </div>
   );
 };

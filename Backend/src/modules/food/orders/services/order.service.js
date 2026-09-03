@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+﻿import mongoose from 'mongoose';
 import { FoodOrder, FoodSettings } from '../models/order.model.js';
 import { GroceryOrder } from '../models/groceryOrder.model.js';
 // import { paymentSnapshotFromOrder } from './foodOrderPayment.service.js';
@@ -773,7 +773,7 @@ export async function createOrder(userId, dto, bypassRazorpay = false) {
         await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
           title: "Order Confirmed! 🍔",
           body: `Your order #${order.order_id || order._id} from ${restaurantDisplayString} has been placed successfully.`,
-          image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+          image: "https://i.ibb.co/5GzXz7r/Zinzoox-Brand-Image.png",
           data: {
             type: "order_created",
             orderId: String(order._id),
@@ -912,7 +912,7 @@ export async function verifyPayment(userId, dto) {
       await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
         title: "Payment Successful! ✅",
         body: `We have received your payment of ₹${totalAmount} for your Unified Order.`,
-        image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+        image: "https://i.ibb.co/5GzXz7r/Zinzoox-Brand-Image.png",
         data: {
           type: "payment_success",
           orderId: "unified"
@@ -1001,7 +1001,7 @@ export async function verifyPayment(userId, dto) {
   await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
     title: "Payment Successful! ✅",
     body: `We have received your payment of ₹${order.payment.amountDue} for Order #${order._id.toString()}.`,
-    image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+    image: "https://i.ibb.co/5GzXz7r/Zinzoox-Brand-Image.png",
     data: {
       type: "payment_success",
       orderId: String(order._id.toString()),
@@ -1251,7 +1251,7 @@ async function createGroceryOrder(userId, dto, bypassRazorpay = false) {
       await notifyOwnersSafely([{ ownerType: "USER", ownerId: userId }], {
         title: "Grocery Order Confirmed! 🛒",
         body: `Your grocery order #${order.order_id || order._id} has been placed successfully.`,
-        image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+        image: "https://i.ibb.co/5GzXz7r/Zinzoox-Brand-Image.png",
         data: {
           type: "order_created",
           orderId: String(order._id),
@@ -1610,7 +1610,7 @@ export async function cancelOrder(orderId, userId, reason) {
     {
       title: "Order Cancelled ",
       body: `Order #${order.order_id || order._id} has been cancelled successfully.${refundDetail}`,
-      image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+      image: "https://i.ibb.co/5GzXz7r/Zinzoox-Brand-Image.png",
       data: {
         type: "order_cancelled",
         orderId: String(order._id.toString()),
@@ -1898,7 +1898,7 @@ export async function updateOrderStatusRestaurant(
       {
         title: title,
         body: body,
-        image: "https://i.ibb.co/5GzXz7r/Switcheats-Brand-Image.png",
+        image: "https://i.ibb.co/5GzXz7r/Zinzoox-Brand-Image.png",
         data: {
           type: "order_status_update",
           orderId: order._id.toString(),
@@ -2662,3 +2662,4 @@ export async function submitOrderRatings(orderId, userId, dto) {
 
   return normalizeOrderForClient(updatedOrder, 'user');
 }
+

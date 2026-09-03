@@ -1,10 +1,10 @@
-import React from "react";
+﻿import React from "react";
 import { MapPin, ChevronDown } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import outOfZoneBg from "@food/assets/Outofzone_bg.jpg";
 
 const OutOfZoneScreen = ({ location }) => {
-  const BRAND_NAME = "SwitchEats";
+  const BRAND_NAME = "Zinzoox";
 
   const routerLocation = useLocation();
 
@@ -92,3 +92,4 @@ const OutOfZoneScreen = ({ location }) => {
 };
 
 export default OutOfZoneScreen;
+

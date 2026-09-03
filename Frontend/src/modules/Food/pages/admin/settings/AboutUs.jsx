@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+﻿import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { adminAPI, uploadAPI } from "@food/api"
 import { Heart, Users, Shield, Clock, Star, Award, Plus, X, GripVertical, Upload } from "lucide-react"
@@ -47,7 +47,7 @@ export default function AboutUs() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [aboutData, setAboutData] = useState({
-    appName: 'SwitchEats Food',
+    appName: 'Zinzoox Food',
     version: '1.0.0',
     description: '',
     logo: '',
@@ -394,4 +394,5 @@ export default function AboutUs() {
     </div>
   )
 }
+
 

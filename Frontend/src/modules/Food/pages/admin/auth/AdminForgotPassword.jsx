@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+﻿import { useState, useRef, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { Button } from "@food/components/ui/button"
 import {
@@ -12,7 +12,7 @@ import {
 import { Input } from "@food/components/ui/input"
 import { Label } from "@food/components/ui/label"
 import { Mail, ArrowLeft, Shield } from "lucide-react"
-import quickSpicyLogo from "@food/assets/switcheats-logo.png"
+import quickSpicyLogo from "@food/assets/zinzoox-logo.png"
 import { adminAPI } from "@food/api"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { loadBusinessSettings } from "@food/utils/businessSettings"
@@ -434,4 +434,5 @@ export default function AdminForgotPassword() {
     </div>
   )
 }
+
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, Fragment } from "react"
+﻿import { useState, useEffect, useRef, useMemo, Fragment } from "react"
 import { createPortal } from "react-dom"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Share2, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2, Sparkles, Banknote, Zap, CheckCircle2, MessageCircle, Send, Mail, Copy, Coins, ShoppingCart, ShoppingBag } from "lucide-react"
@@ -2101,7 +2101,7 @@ export default function Cart() {
           `2. Backend is accessible at ${backendUrl}\n` +
           `3. Check browser console (F12) for more details\n\n` +
           `If backend is not running, start it with:\n` +
-          `cd switcheats/backend && npm start`
+          `cd zinzoox/backend && npm start`
 
         debugError("?? Network Error Details:", {
           code: error.code,
@@ -3545,4 +3545,5 @@ export default function Cart() {
     </div>
   )
 }
+
 

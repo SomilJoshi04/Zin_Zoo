@@ -33,6 +33,11 @@ Backend/scratch/
 */scripts/
 */scratch_files/
 
+# Specific Test Files
+Frontend/src/modules/Food/utils/backendConnectionTest.js
+Backend/src/modules/food/admin/test_save.js
+Backend/src/api/v1/test
+
 # ── Build Outputs ─────────────────────────────────────────────────────────────
 dist/
 dist-ssr/
