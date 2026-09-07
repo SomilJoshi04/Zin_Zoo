@@ -196,7 +196,7 @@ export default function LandingPageManagement() {
         setTopBanners([])
         setError(null)
       } else {
-        setErrorSafely(err.response?.data?.message || 'Failed to load top banners')
+        setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to load top banners')
       }
     } finally {
       setTopBannersLoading(false)
@@ -262,7 +262,7 @@ export default function LandingPageManagement() {
       if (err.response?.status === 401 || err.message === 'Authentication token not found') {
         setError(null)
       } else {
-        setErrorSafely(err.response?.data?.message || 'Failed to upload banners')
+        setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to upload banners')
       }
       setTopBannersUploadProgress({ current: 0, total: 0 })
     } finally {
@@ -283,7 +283,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to delete banner.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to delete banner.')
     } finally {
       setTopBannersDeleting(null)
     }
@@ -300,7 +300,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to update banner status.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to update banner status.')
     }
   }
 
@@ -344,7 +344,7 @@ export default function LandingPageManagement() {
         setError(null)
       } else {
         // Filter out token-related errors
-        const errorMessage = err.response?.data?.message || 'Failed to load hero banners'
+        const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to load hero banners'
         setErrorSafely(errorMessage)
       }
     } finally {
@@ -431,7 +431,7 @@ export default function LandingPageManagement() {
         setError(null)
       } else {
         // Filter out token-related errors
-        const errorMessage = err.response?.data?.message || 'Failed to upload banners'
+        const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to upload banners'
         setErrorSafely(errorMessage)
       }
 
@@ -454,7 +454,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to delete banner.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to delete banner.')
     } finally {
       setBannersDeleting(null)
     }
@@ -471,7 +471,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to update banner status.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to update banner status.')
     }
   }
 
@@ -518,7 +518,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to link restaurants to banner.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to link restaurants to banner.')
     } finally {
       setLinkingRestaurants(false)
     }
@@ -586,7 +586,7 @@ export default function LandingPageManagement() {
         setError(null) // Clear any previous error
       } else {
         // Filter out token-related errors
-        const errorMessage = err.response?.data?.message || 'Failed to load categories'
+        const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to load categories'
         setErrorSafely(errorMessage)
       }
     } finally {
@@ -674,9 +674,7 @@ export default function LandingPageManagement() {
         formData.append('label', item.label.trim())
 
         try {
-          const response = await api.post('/food/hero-banners/landing/categories', formData, getAuthConfig({
-            headers: { 'Content-Type': 'multipart/form-data' },
-          }))
+          const response = await api.post('/food/hero-banners/landing/categories', formData, getAuthConfig())
           if (response.data.success) {
             successCount++
           } else {
@@ -737,7 +735,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to delete category.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to delete category.')
     } finally {
       setCategoriesDeleting(null)
     }
@@ -754,7 +752,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to update category status.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to update category status.')
     }
   }
 
@@ -792,7 +790,7 @@ export default function LandingPageManagement() {
         setError(null) // Clear any previous error
       } else {
         // Filter out token-related errors
-        const errorMessage = err.response?.data?.message || 'Failed to load explore more items'
+        const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to load explore more items'
         setErrorSafely(errorMessage)
       }
     } finally {
@@ -824,9 +822,7 @@ export default function LandingPageManagement() {
       formData.append('image', file)
       formData.append('label', exploreMoreLabel.trim())
       formData.append('link', exploreMoreLink.trim())
-      const response = await api.post('/food/hero-banners/landing/explore-more', formData, getAuthConfig({
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }))
+      const response = await api.post('/food/hero-banners/landing/explore-more', formData, getAuthConfig())
       if (response.data.success) {
         setSuccess('Explore more item created successfully!')
         setExploreMoreLabel("")
@@ -836,7 +832,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to create explore more item.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to create explore more item.')
     } finally {
       setExploreMoreUploading(false)
     }
@@ -855,7 +851,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to delete explore more item.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to delete explore more item.')
     } finally {
       setExploreMoreDeleting(null)
     }
@@ -872,7 +868,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to update explore more status.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to update explore more status.')
     }
   }
 
@@ -894,16 +890,12 @@ export default function LandingPageManagement() {
 
       if (existingItem) {
         // Update existing
-        res = await api.patch(`/food/hero-banners/landing/explore-more/${existingItem._id}`, formData, getAuthConfig({
-          headers: { 'Content-Type': 'multipart/form-data' }
-        }))
+        res = await api.patch(`/food/hero-banners/landing/explore-more/${existingItem._id}`, formData, getAuthConfig())
       } else {
         // Create new
         formData.append('label', label)
         formData.append('link', link)
-        res = await api.post('/food/hero-banners/landing/explore-more', formData, getAuthConfig({
-          headers: { 'Content-Type': 'multipart/form-data' }
-        }))
+        res = await api.post('/food/hero-banners/landing/explore-more', formData, getAuthConfig())
       }
 
       if (res.data?.success) {
@@ -913,7 +905,7 @@ export default function LandingPageManagement() {
       }
     } catch (err) {
       debugError('Upload failed', err)
-      setErrorSafely(err.response?.data?.message || 'Failed to update icon')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to update icon')
     } finally {
       setExploreIconsUploading(prev => ({ ...prev, [itemId]: false }))
     }
@@ -955,7 +947,7 @@ export default function LandingPageManagement() {
         setUnder250Banners([])
         setError(null)
       } else {
-        const errorMessage = err.response?.data?.message || 'Failed to load Switch 99 banners'
+        const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to load Switch 99 banners'
         setErrorSafely(errorMessage)
       }
     } finally {
@@ -993,9 +985,7 @@ export default function LandingPageManagement() {
         formData.append('files', file)
       })
 
-      const response = await api.post('/food/hero-banners/under-250/multiple', formData, getAuthConfig({
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }))
+      const response = await api.post('/food/hero-banners/under-250/multiple', formData, getAuthConfig())
 
       if (response.data.success) {
         setSuccess(`${response.data.data.banners?.length || files.length} Switch 99 banner(s) uploaded successfully!`)
@@ -1003,7 +993,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to upload Switch 99 banners'
+      const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to upload Switch 99 banners'
       setErrorSafely(errorMessage)
 
       setUnder250BannersUploadProgress({ current: 0, total: 0 })
@@ -1025,7 +1015,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to delete banner.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to delete banner.')
     } finally {
       setUnder250BannersDeleting(null)
     }
@@ -1042,7 +1032,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to update banner status.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to update banner status.')
     }
   }
 
@@ -1081,7 +1071,7 @@ export default function LandingPageManagement() {
         setAccessoriesBanners([])
         setError(null)
       } else {
-        const errorMessage = err.response?.data?.message || 'Failed to load accessories banners'
+        const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to load accessories banners'
         setErrorSafely(errorMessage)
       }
     } finally {
@@ -1117,9 +1107,7 @@ export default function LandingPageManagement() {
         formData.append('files', file)
       })
 
-      const response = await api.post('/food/hero-banners/accessories/multiple', formData, getAuthConfig({
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }))
+      const response = await api.post('/food/hero-banners/accessories/multiple', formData, getAuthConfig())
 
       if (response.data.success) {
         setSuccess(`${response.data.data.banners?.length || files.length} accessories banner(s) uploaded successfully!`)
@@ -1127,7 +1115,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || 'Failed to upload accessories banners'
+      const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to upload accessories banners'
       setErrorSafely(errorMessage)
       setAccessoriesBannersUploadProgress({ current: 0, total: 0 })
     } finally {
@@ -1148,7 +1136,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to delete banner.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to delete banner.')
     } finally {
       setAccessoriesBannersDeleting(null)
     }
@@ -1165,7 +1153,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to update banner status.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to update banner status.')
     }
   }
 
@@ -1214,7 +1202,7 @@ export default function LandingPageManagement() {
         setError(null) // Clear any previous error
       } else {
         // Filter out token-related errors
-        const errorMessage = err.response?.data?.message || 'Failed to load settings'
+        const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to load settings'
         setErrorSafely(errorMessage)
       }
     } finally {
@@ -1248,7 +1236,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to save settings.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to save settings.')
     } finally {
       setSettingsSaving(false)
     }
@@ -1269,12 +1257,7 @@ export default function LandingPageManagement() {
         formData.append('oldPublicId', settings.festBannerVideoPublicId)
       }
 
-      const response = await api.post('/food/hero-banners/landing/settings/video', formData, {
-        headers: {
-          ...getAuthConfig().headers,
-          'Content-Type': 'multipart/form-data'
-        }
-      })
+      const response = await api.post('/food/hero-banners/landing/settings/video', formData, getAuthConfig())
 
       if (response.data.success) {
         const { videoUrl, publicId } = response.data.data
@@ -1287,7 +1270,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 5000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to upload video file.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to upload video file.')
     } finally {
       setVideoUploading(false)
     }
@@ -1313,7 +1296,7 @@ export default function LandingPageManagement() {
         setAllRestaurants([])
         setError(null)
       } else {
-        const errorMessage = err.response?.data?.message || 'Failed to load restaurants'
+        const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to load restaurants'
         setErrorSafely(errorMessage)
       }
     } finally {
@@ -1334,7 +1317,7 @@ export default function LandingPageManagement() {
         setGourmetRestaurants([])
         setError(null)
       } else {
-        const errorMessage = err.response?.data?.message || 'Failed to load Gourmet restaurants'
+        const errorMessage = (err.response?.data?.message || err.response?.data?.error) || 'Failed to load Gourmet restaurants'
         setErrorSafely(errorMessage)
       }
     } finally {
@@ -1361,7 +1344,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to add restaurant to Gourmet.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to add restaurant to Gourmet.')
     }
   }
   const handleDeleteGourmetRestaurant = async (id) => {
@@ -1377,7 +1360,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to remove restaurant.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to remove restaurant.')
     } finally {
       setGourmetDeleting(null)
     }
@@ -1412,7 +1395,7 @@ export default function LandingPageManagement() {
         setTimeout(() => setSuccess(null), 3000)
       }
     } catch (err) {
-      setErrorSafely(err.response?.data?.message || 'Failed to update restaurant status.')
+      setErrorSafely((err.response?.data?.message || err.response?.data?.error) || 'Failed to update restaurant status.')
     }
   }
 
@@ -2364,3 +2347,4 @@ export default function LandingPageManagement() {
     </div >
   )
 }
+

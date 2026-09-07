@@ -1,4 +1,4 @@
-﻿import { Link, useLocation, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useEffect, useState, useRef } from "react"
 import { ChevronDown, ShoppingCart, Wallet, Search, Mic } from "lucide-react"
 import { Button } from "@food/components/ui/button"
@@ -13,9 +13,14 @@ import { AnimatePresence, motion } from "framer-motion"
 import quickSpicyLogo from "@food/assets/zinzoox-logo.png"
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings"
 import HeaderNotificationBell from "./HeaderNotificationBell"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+import { searchAPI } from "@/services/api"
+import GroceryProductSheet from "@food/components/user/GroceryProductSheet"
+import AccessoriesProductSheet from "@food/components/user/AccessoriesProductSheet"
+import { Loader2 } from "lucide-react"
+
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 
 export default function DesktopNavbar({ showLogo = true }) {
@@ -24,16 +29,31 @@ export default function DesktopNavbar({ showLogo = true }) {
     const { location: userLocation, loading: locationLoading } = useLocationHook()
     const { getCartCount } = useCart()
     const { openLocationSelector } = useLocationSelector()
-    const { setSearchValue } = useSearchOverlay()
+    const { setSearchValue, openSearch } = useSearchOverlay()
     const { vegMode, setVegMode } = useProfile()
     const [heroSearch, setHeroSearch] = useState("")
     const [logoUrl, setLogoUrl] = useState(null)
     const [companyName, setCompanyName] = useState(null)
     const [hasScrolledPastBanner, setHasScrolledPastBanner] = useState(false)
     const navRef = useRef(null)
+    const searchRef = useRef(null)
     const cartCount = getCartCount()
 
+    // Global Search Dropdown State
+    const [searchResults, setSearchResults] = useState({ food: [], grocery: [], accessories: [], services: [] })
+    const [isSearching, setIsSearching] = useState(false)
+    const [showDropdown, setShowDropdown] = useState(false)
+    const [selectedGroceryProduct, setSelectedGroceryProduct] = useState(null)
+    const [selectedAccessoriesProduct, setSelectedAccessoriesProduct] = useState(null)
 
+    // Helper to resolve media URLs consistently
+    const getMediaUrl = (url) => {
+        if (!url || typeof url !== 'string') return null;
+        if (url.startsWith('http')) return url;
+        const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api/v1";
+        const origin = apiBase.split('/api/v1')[0];
+        return `${origin}${url.startsWith('/') ? url : '/' + url}`;
+    };
     // Show area if available, otherwise show city
     // Priority: area > city > "Select"
     const areaName = userLocation?.area && userLocation?.area.trim() ? userLocation.area.trim() : null
@@ -145,6 +165,78 @@ export default function DesktopNavbar({ showLogo = true }) {
         }
     }, [isBannerRoute])
 
+    // Global Search Debounce & Fetch
+    useEffect(() => {
+        const q = heroSearch.trim();
+        if (q.length < 2) {
+            setSearchResults({ food: [], grocery: [], accessories: [], services: [] })
+            setShowDropdown(false)
+            return;
+        }
+
+        const debounceTimer = setTimeout(async () => {
+            setIsSearching(true)
+            setShowDropdown(true)
+            try {
+                const res = await searchAPI.globalSearch({ q, limit: 5 })
+                if (res.data?.success) {
+                    const data = res.data.data.results;
+                    setSearchResults({
+                        food: data.food?.slice(0, 5) || [],
+                        grocery: data.grocery?.slice(0, 5) || [],
+                        accessories: data.accessories?.slice(0, 5) || [],
+                        services: data.services?.slice(0, 5) || []
+                    })
+                }
+            } catch (err) {
+                debugError("Global Search failed", err)
+            } finally {
+                setIsSearching(false)
+            }
+        }, 400);
+
+        return () => clearTimeout(debounceTimer);
+    }, [heroSearch]);
+
+    // Handle click outside to close dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchRef.current && !searchRef.current.contains(event.target)) {
+                setShowDropdown(false)
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [])
+
+    // Escape to close dropdown
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === "Escape") {
+                setShowDropdown(false)
+            }
+        }
+        document.addEventListener("keydown", handleKeyDown)
+        return () => document.removeEventListener("keydown", handleKeyDown)
+    }, [])
+
+    const handleResultClick = (item, type) => {
+        setShowDropdown(false)
+        if (type === "grocery") {
+            setSelectedGroceryProduct(item)
+        } else if (type === "accessories") {
+            setSelectedAccessoriesProduct(item)
+        } else if (type === "food") {
+            const isRestaurant = item.matchType === 'restaurant';
+            const linkTo = isRestaurant ? `/food/user/restaurants/${item._id}` : `/food/user/restaurants/${item.restaurantSlug || item.restaurantId}?dish=${item._id}`;
+            navigate(linkTo)
+        } else if (type === "services") {
+            navigate(`/food/user/services/details/${item._id}`)
+        }
+    }
+
+    const hasAnyResults = Object.values(searchResults).some(arr => arr.length > 0)
+
     return (
         <nav
             ref={navRef}
@@ -213,7 +305,7 @@ export default function DesktopNavbar({ showLogo = true }) {
                         {/* Center: Search Bar & Veg Mode */}
                         <div className="flex-1 max-w-3xl mx-4 flex items-center gap-4">
                             {/* Search Bar */}
-                            <div className="relative flex-1">
+                            <div className="relative flex-1" ref={searchRef}>
                                 <div className="relative bg-gray-100 dark:bg-[#2a2a2a] rounded-lg transition-all duration-300 focus-within:ring-2 focus-within:ring-[#F84E04] focus-within:bg-white dark:focus-within:bg-[#1a1a1a] border border-transparent focus-within:border-[#F84E04]/20">
                                     <div className="flex items-center px-3 py-2">
                                         <Search className="h-4 w-4 text-gray-500 flex-shrink-0 mr-3" />
@@ -224,25 +316,13 @@ export default function DesktopNavbar({ showLogo = true }) {
                                                 setHeroSearch(nextValue)
                                                 setSearchValue(nextValue)
                                             }}
+                                            onClick={() => {
+                                                if (heroSearch.trim().length >= 2) setShowDropdown(true)
+                                            }}
                                             onKeyDown={(e) => {
-                                                if (e.key === "Enter" && heroSearch.trim()) {
-                                                    const q = heroSearch.trim().toLowerCase();
-                                                    const groceryKw = ["grocery", "groceries", "kirana", "supermarket", "milk", "bread", "egg", "vegetable", "fruit", "dairy", "staple"];
-                                                    const servicesKw = ["service", "services", "plumber", "electrician", "cleaning", "repair", "mechanic", "painter", "carpenter"];
-                                                    const accessoriesKw = ["accessory", "accessories", "gadget", "charger", "cable", "phone cover", "watch", "headphone", "earphone", "electronics"];
-                                                    const foodKw = ["food", "dining", "restaurant", "cafe", "hotel", "lunch", "dinner", "biryani", "pizza", "burger"];
-                                                    if (groceryKw.some(kw => q.includes(kw))) {
-                                                        navigate("/food/user/under-250");
-                                                    } else if (servicesKw.some(kw => q.includes(kw))) {
-                                                        navigate("/food/user/services");
-                                                    } else if (accessoriesKw.some(kw => q.includes(kw))) {
-                                                        navigate("/food/user/accessories");
-                                                    } else if (foodKw.some(kw => q.includes(kw))) {
-                                                        navigate("/food/user");
-                                                    } else {
-                                                        navigate(`/food/search?q=${encodeURIComponent(heroSearch.trim())}`);
-                                                    }
-                                                    setHeroSearch("");
+                                                // Prevent Enter from navigating directly, let them use dropdown
+                                                if (e.key === "Enter") {
+                                                    e.preventDefault();
                                                 }
                                             }}
                                             className="h-6 p-0 border-0 bg-transparent text-sm font-medium placeholder:text-gray-500 focus-visible:ring-0 focus-visible:ring-offset-0"
@@ -253,14 +333,143 @@ export default function DesktopNavbar({ showLogo = true }) {
                                                 variant="ghost"
                                                 size="sm"
                                                 className="h-5 w-5 p-0 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full ml-1"
-                                                onClick={() => setHeroSearch("")}
+                                                onClick={() => {
+                                                    setHeroSearch("")
+                                                    setShowDropdown(false)
+                                                }}
                                             >
                                                 <span className="sr-only">Clear</span>
-                                                <span aria-hidden="true">�</span>
+                                                <span aria-hidden="true"></span>
                                             </Button>
                                         )}
                                     </div>
                                 </div>
+                                
+                                {/* Search Dropdown */}
+                                <AnimatePresence>
+                                    {showDropdown && heroSearch.trim().length >= 2 && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            transition={{ duration: 0.15 }}
+                                            className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-gray-800 rounded-xl shadow-xl z-50 overflow-hidden max-h-[60vh] flex flex-col"
+                                        >
+                                            {isSearching ? (
+                                                <div className="flex items-center justify-center p-8">
+                                                    <Loader2 className="h-6 w-6 animate-spin text-[#F84E04]" />
+                                                    <span className="ml-2 text-sm text-gray-500">Searching...</span>
+                                                </div>
+                                            ) : !hasAnyResults ? (
+                                                <div className="p-8 text-center">
+                                                    <p className="text-sm text-gray-500">No results found for "{heroSearch}"</p>
+                                                </div>
+                                            ) : (
+                                                <div className="overflow-y-auto p-2">
+                                                    {/* Grocery Results */}
+                                                    {searchResults.grocery.length > 0 && (
+                                                        <div className="mb-4">
+                                                            <div className="px-3 py-1.5 text-[10px] font-bold tracking-wider text-green-600 uppercase bg-green-50 dark:bg-green-950/20 rounded-md mb-2">Grocery</div>
+                                                            <div className="space-y-1">
+                                                                {searchResults.grocery.map(item => (
+                                                                    <div 
+                                                                        key={`grocery-${item._id}`}
+                                                                        onClick={() => handleResultClick(item, 'grocery')}
+                                                                        className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg cursor-pointer transition-colors"
+                                                                    >
+                                                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 shrink-0">
+                                                                            <img src={getMediaUrl(item.image)} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{item.name}</h4>
+                                                                            <div className="text-xs text-gray-500 truncate">{item.category?.name || "Grocery"}</div>
+                                                                        </div>
+                                                                        <div className="font-bold text-sm shrink-0">₹{item.price}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Accessories Results */}
+                                                    {searchResults.accessories.length > 0 && (
+                                                        <div className="mb-4">
+                                                            <div className="px-3 py-1.5 text-[10px] font-bold tracking-wider text-blue-600 uppercase bg-blue-50 dark:bg-blue-950/20 rounded-md mb-2">Accessories</div>
+                                                            <div className="space-y-1">
+                                                                {searchResults.accessories.map(item => (
+                                                                    <div 
+                                                                        key={`acc-${item._id}`}
+                                                                        onClick={() => handleResultClick(item, 'accessories')}
+                                                                        className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg cursor-pointer transition-colors"
+                                                                    >
+                                                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 shrink-0">
+                                                                            <img src={getMediaUrl(item.image)} className="w-full h-full object-cover mix-blend-multiply dark:mix-blend-normal" />
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{item.name}</h4>
+                                                                            <div className="text-xs text-gray-500 truncate">{item.category?.name || "Accessories"}</div>
+                                                                        </div>
+                                                                        <div className="font-bold text-sm shrink-0">₹{item.price}</div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Food Results */}
+                                                    {searchResults.food.length > 0 && (
+                                                        <div className="mb-4">
+                                                            <div className="px-3 py-1.5 text-[10px] font-bold tracking-wider text-orange-600 uppercase bg-orange-50 dark:bg-orange-950/20 rounded-md mb-2">Food & Restaurants</div>
+                                                            <div className="space-y-1">
+                                                                {searchResults.food.map(item => (
+                                                                    <div 
+                                                                        key={`food-${item._id}`}
+                                                                        onClick={() => handleResultClick(item, 'food')}
+                                                                        className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg cursor-pointer transition-colors"
+                                                                    >
+                                                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 shrink-0">
+                                                                            <img src={getMediaUrl(item.profileImage || item.image)} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{item.restaurantName || item.name}</h4>
+                                                                            <div className="text-xs text-gray-500 truncate capitalize">{item.matchType || "Dish"}</div>
+                                                                        </div>
+                                                                        {item.price && <div className="font-bold text-sm shrink-0">₹{item.price}</div>}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Services Results */}
+                                                    {searchResults.services.length > 0 && (
+                                                        <div className="mb-2">
+                                                            <div className="px-3 py-1.5 text-[10px] font-bold tracking-wider text-purple-600 uppercase bg-purple-50 dark:bg-purple-950/20 rounded-md mb-2">Services</div>
+                                                            <div className="space-y-1">
+                                                                {searchResults.services.map(item => (
+                                                                    <div 
+                                                                        key={`svc-${item._id}`}
+                                                                        onClick={() => handleResultClick(item, 'services')}
+                                                                        className="flex items-center gap-3 p-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 rounded-lg cursor-pointer transition-colors"
+                                                                    >
+                                                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 shrink-0">
+                                                                            <img src={getMediaUrl(item.image)} className="w-full h-full object-cover" />
+                                                                        </div>
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{item.name}</h4>
+                                                                            <div className="text-xs text-gray-500 truncate">{item.category}</div>
+                                                                        </div>
+                                                                        {item.basePrice && <div className="font-bold text-sm shrink-0">₹{item.basePrice}</div>}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
 
                             {/* VEG MODE Toggle - Moved here */}
@@ -291,7 +500,7 @@ export default function DesktopNavbar({ showLogo = true }) {
                             </Link>
 
                             {/* Notification Bell */}
-                            <HeaderNotificationBell 
+                            <HeaderNotificationBell
                                 className="!h-5 !w-5 lg:!h-6 lg:!w-6 text-gray-700 dark:text-gray-300"
                                 triggerClass="h-12 w-12 lg:h-14 lg:w-14 rounded-full p-0 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center justify-center"
                             />
@@ -425,6 +634,16 @@ export default function DesktopNavbar({ showLogo = true }) {
                     </div>
                 </div>
             </div>
+
+            {/* Sheets */}
+            <GroceryProductSheet 
+                selectedProduct={selectedGroceryProduct} 
+                setSelectedProduct={setSelectedGroceryProduct} 
+            />
+            <AccessoriesProductSheet 
+                selectedProduct={selectedAccessoriesProduct} 
+                setSelectedProduct={setSelectedAccessoriesProduct} 
+            />
         </nav>
     )
 }

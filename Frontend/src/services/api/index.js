@@ -19,6 +19,8 @@ const stub = () =>
 export const searchAPI = {
   unifiedSearch: (params = {}) =>
     apiClient.get("/food/search/unified", { params }),
+  globalSearch: (params = {}) =>
+    apiClient.get("/global-search", { params }),
   getAdminCategories: (params = {}) =>
     apiClient.get("/food/search/categories/admin", { params }),
 };
@@ -653,6 +655,8 @@ export const adminAPI = {
     }),
   deleteFood: (id) =>
     apiClient.delete(`/food/admin/foods/${id}`, { contextModule: "admin" }),
+  bulkDeleteFoods: (ids) =>
+    apiClient.delete("/food/admin/foods/bulk", { data: { ids }, contextModule: "admin" }),
   /** Food approvals (admin) - pending items created by restaurants */
   getPendingFoodApprovals: (params = {}) =>
     apiClient.get("/food/admin/foods/pending-approvals", {
@@ -3101,6 +3105,7 @@ export const groceryAdminAPI = {
   createProduct: (data) => apiClient.post("/grocery/admin/products", data, { contextModule: "admin" }),
   updateProduct: (id, data) => apiClient.put(`/grocery/admin/products/${id}`, data, { contextModule: "admin" }),
   deleteProduct: (id) => apiClient.delete(`/grocery/admin/products/${id}`, { contextModule: "admin" }),
+  bulkDeleteProducts: (ids) => apiClient.delete(`/grocery/admin/products/bulk`, { data: { ids }, contextModule: "admin" }),
 
   // Grocery Orders
   getOrders: (params) => apiClient.get("/grocery/admin/orders", { params, contextModule: "admin" }),
@@ -3129,6 +3134,7 @@ export const servicesAdminAPI = {
 export const groceryPublicAPI = {
   getCategories: () => apiClient.get('/food/grocery/categories'),
   getProducts: (params) => apiClient.get('/food/grocery/products', { params }),
+  getProductById: (id) => apiClient.get(`/food/grocery/products/${id}`),
 };
 
 
@@ -3144,6 +3150,7 @@ export const accessoriesAdminAPI = {
   createProduct: (data) => apiClient.post("/accessories/admin/products", data),
   updateProduct: (id, data) => apiClient.put(`/accessories/admin/products/${id}`, data),
   deleteProduct: (id) => apiClient.delete(`/accessories/admin/products/${id}`),
+  bulkDeleteProducts: (ids) => apiClient.delete(`/accessories/admin/products/bulk`, { data: { ids } }),
   toggleProductStatus: (id) => apiClient.patch(`/accessories/admin/products/${id}/status`),
 
   // Accessories Orders
@@ -3155,4 +3162,5 @@ export const accessoriesAdminAPI = {
 export const accessoriesPublicAPI = {
   getCategories: () => apiClient.get("/accessories/public/categories"),
   getProducts: (params) => apiClient.get("/accessories/public/products", { params }),
+  getProductById: (id) => apiClient.get(`/accessories/public/products/${id}`),
 };

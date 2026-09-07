@@ -23,6 +23,7 @@ import { requireRoles } from '../core/roles/role.middleware.js';
 import { getQueuesController } from '../controllers/admin.controller.js';
 import webhookRoutes from '../core/payments/routes/webhook.routes.js'; // ✅ NEW
 import searchRoutes from '../modules/food/search/routes/search.routes.js';
+import globalSearchRoutes from '../modules/globalSearch/routes/globalSearch.routes.js';
 import { submitPublicFeedback } from '../controllers/publicFeedback.controller.js';
 
 const router = express.Router();
@@ -41,6 +42,7 @@ router.use('/v1/food', landingRoutes);
 router.use('/v1/food/restaurant', restaurantRoutes);
 router.use('/v1/food/grocery', groceryPublicRoutes);
 router.use('/v1/food/search', searchRoutes);
+router.use('/v1/global-search', globalSearchRoutes);
 router.use('/v1/uploads', uploadRoutes);
 
 // Public feedback endpoint (no auth - for QR code invoice feedback)

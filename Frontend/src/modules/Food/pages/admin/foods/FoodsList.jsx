@@ -148,6 +148,60 @@ export default function FoodsList() {
     fetchRestaurantsForFilter()
   }, [fetchRestaurantsForFilter])
 
+  const [selectedIds, setSelectedIds] = useState([])
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false)
+
+  // Clear selections when changing page, search, or filters to prevent stale selections
+  useEffect(() => {
+    setSelectedIds([])
+  }, [currentPage, debouncedSearchQuery, selectedRestaurant, selectedCategory])
+
+  const visibleFoodIds = useMemo(() => foods.map(f => String(f.id)), [foods])
+  const isAllVisibleSelected = visibleFoodIds.length > 0 && visibleFoodIds.every(id => selectedIds.includes(id))
+  const isSomeVisibleSelected = visibleFoodIds.length > 0 && visibleFoodIds.some(id => selectedIds.includes(id)) && !isAllVisibleSelected
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(prev => {
+        const newIds = new Set(prev)
+        visibleFoodIds.forEach(id => newIds.add(id))
+        return Array.from(newIds)
+      })
+    } else {
+      setSelectedIds(prev => prev.filter(id => !visibleFoodIds.includes(id)))
+    }
+  }
+
+  const handleSelectOne = (e, id) => {
+    const stringId = String(id)
+    if (e.target.checked) {
+      setSelectedIds(prev => [...prev, stringId])
+    } else {
+      setSelectedIds(prev => prev.filter(selectedId => selectedId !== stringId))
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (!ensureActionAccess('delete')) return
+    try {
+      setIsBulkDeleting(true)
+      const res = await adminAPI.bulkDeleteFoods(selectedIds)
+      if (res.data?.success) {
+        toast.success(res.data.message || `Successfully deleted ${selectedIds.length} items`)
+        setSelectedIds([])
+        setShowBulkDeleteModal(false)
+        fetchAllFoods()
+      } else {
+        toast.error(res.data?.message || "Failed to delete selected items")
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to delete selected items")
+    } finally {
+      setIsBulkDeleting(false)
+    }
+  }
+
   const fetchCategoriesForFilter = useCallback(async () => {
     try {
       const res = await adminAPI.getCategories({ limit: 1000 })
@@ -599,6 +653,16 @@ export default function FoodsList() {
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
+            {selectedIds.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowBulkDeleteModal(true)}
+                className="px-4 py-2.5 rounded-lg bg-[#F84E04] text-white text-sm font-medium hover:bg-[#D94203] transition-colors inline-flex items-center gap-2"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete {selectedIds.length} Items</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={openAddFoodModal}
@@ -740,6 +804,17 @@ export default function FoodsList() {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
+                <th className="px-6 py-4 text-left">
+                  <input
+                    type="checkbox"
+                    checked={isAllVisibleSelected}
+                    ref={input => {
+                      if (input) input.indeterminate = isSomeVisibleSelected;
+                    }}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded border-slate-300 text-[#F84E04] focus:ring-[#F84E04]"
+                  />
+                </th>
                 <th className="px-6 py-4 text-left text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   SL
                 </th>
@@ -795,6 +870,14 @@ export default function FoodsList() {
                     key={food.id}
                     className="hover:bg-slate-50 transition-colors"
                   >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(String(food.id))}
+                        onChange={(e) => handleSelectOne(e, food.id)}
+                        className="w-4 h-4 rounded border-slate-300 text-[#F84E04] focus:ring-[#F84E04]"
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="text-sm font-medium text-slate-700">{(currentPage - 1) * pageSize + index + 1}</span>
                     </td>
@@ -1257,6 +1340,35 @@ export default function FoodsList() {
                 <span>{submittingFood ? "Saving..." : foodFormMode === "edit" ? "Update Food" : "Add Food"}</span>
               </button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showBulkDeleteModal} onOpenChange={setShowBulkDeleteModal}>
+        <DialogContent className="sm:max-w-[400px] p-6">
+          <DialogHeader>
+            <DialogTitle>Confirm Bulk Delete</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 pr-6">
+            <p className="text-sm text-slate-600">
+              Are you sure you want to delete {selectedIds.length} selected item(s)? This action cannot be undone.
+            </p>
+          </div>
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => setShowBulkDeleteModal(false)}
+              className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="px-4 py-2 text-sm font-medium text-white bg-[#F84E04] hover:bg-[#D94203] rounded-lg transition-colors inline-flex items-center gap-2"
+            >
+              {isBulkDeleting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isBulkDeleting ? "Deleting..." : "Delete"}
+            </button>
           </div>
         </DialogContent>
       </Dialog>

@@ -53,3 +53,27 @@ export const getProducts = async (req, res) => {
         return sendError(res, 500, "Failed to fetch grocery products");
     }
 };
+
+/**
+ * Get grocery product by ID
+ */
+export const getProductById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        if (!mongoose.isValidObjectId(id)) {
+            return sendError(res, 400, "Invalid product ID");
+        }
+
+        const product = await GroceryProduct.findOne({ _id: id, isActive: true });
+        
+        if (!product) {
+            return sendError(res, 404, "Product not found");
+        }
+
+        return sendResponse(res, 200, "Grocery product fetched successfully", { product });
+    } catch (error) {
+        console.error("Error fetching grocery product:", error);
+        return sendError(res, 500, "Failed to fetch grocery product");
+    }
+};

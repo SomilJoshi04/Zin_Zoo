@@ -167,6 +167,7 @@ router.delete('/grocery/categories/:id', adminGroceryController.deleteGroceryCat
 
 router.get('/grocery/products', adminGroceryController.getGroceryProducts);
 router.post('/grocery/products', adminGroceryController.createGroceryProduct);
+router.delete('/grocery/products/bulk', adminGroceryController.bulkDeleteGroceryProducts);
 router.put('/grocery/products/:id', adminGroceryController.updateGroceryProduct);
 router.delete('/grocery/products/:id', adminGroceryController.deleteGroceryProduct);
 
@@ -210,6 +211,7 @@ router.patch('/categories/:id/make-global', adminController.makeCategoryGlobal);
 // ----- Foods -----
 router.get('/foods', adminController.getFoods);
 router.post('/foods', adminController.createFood);
+router.delete('/foods/bulk', adminController.bulkDeleteFoods);
 router.patch('/foods/:id', adminController.updateFood);
 router.delete('/foods/:id', adminController.deleteFood);
 router.post('/foods/bulk-approve', adminController.bulkApproveFoodItems);

@@ -2367,7 +2367,14 @@ function RestaurantDetailsContent() {
                     <button
                       key={category.id}
                       type="button"
-                      onClick={() => setSelectedMenuCategory(category.id)}
+                      onClick={() => {
+                        setSelectedMenuCategory(category.id)
+                        setExpandedSections(prev => {
+                          const newSet = new Set(prev)
+                          newSet.add(category.sectionIndex)
+                          return newSet
+                        })
+                      }}
                       className={`flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${selectedMenuCategory === category.id
                         ? "border-[#F84E04] bg-[#FFF1E8] text-[#F84E04]"
                         : "border-gray-300 bg-white text-gray-700"

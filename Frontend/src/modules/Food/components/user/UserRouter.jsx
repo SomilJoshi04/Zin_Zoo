@@ -18,6 +18,7 @@ const CategoryPage = lazy(() => import("@food/pages/user/CategoryPage"))
 const Restaurants = lazy(() => import("@food/pages/user/restaurants/Restaurants"))
 const RestaurantDetails = lazy(() => import("@food/pages/user/restaurants/RestaurantDetails"))
 const SearchResults = lazy(() => import("@food/pages/user/search/ProfessionalSearch"))
+const GlobalSearchResults = lazy(() => import("@food/pages/user/search/GlobalSearchResults"))
 const ProductDetail = lazy(() => import("@food/pages/user/ProductDetail"))
 
 // Cart
@@ -109,6 +110,7 @@ export default function UserRouter() {
           <Route path="restaurants" element={<Restaurants />} />
           <Route path="restaurants/:slug" element={<RestaurantDetails />} />
           <Route path="search" element={<SearchResults />} />
+          <Route path="global-search" element={<GlobalSearchResults />} />
           <Route path="product/:id" element={<ProductDetail />} />
 
           {/* Cart - Now Public */}

@@ -86,6 +86,40 @@ export async function deleteGroceryProduct(req, res, next) {
     }
 }
 
+export async function bulkDeleteGroceryProducts(req, res, next) {
+    try {
+        const { ids } = req.body;
+        
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ success: false, message: 'An array of valid IDs is required' });
+        }
+        
+        // Sanitize & validate ObjectIds, remove duplicates
+        const validIds = [...new Set(ids.filter(id => id && mongoose.Types.ObjectId.isValid(id)))];
+        
+        if (validIds.length === 0) {
+            return res.status(400).json({ success: false, message: 'No valid IDs provided' });
+        }
+        
+        let deletedCount = 0;
+        
+        for (const id of validIds) {
+            const deleted = await GroceryProduct.findByIdAndDelete(id);
+            if (deleted) {
+                deletedCount++;
+            }
+        }
+        
+        res.status(200).json({ 
+            success: true, 
+            message: `Successfully deleted ${deletedCount} grocery products`, 
+            data: { deletedCount } 
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
 // ----- Grocery Orders -----
 export async function getGroceryOrders(req, res, next) {
     try {

@@ -36,6 +36,8 @@ import {
   Loader2,
   Plus,
   Minus,
+  ChevronLeft,
+  ChevronRight,
   Check,
   Share2,
 } from "lucide-react";
@@ -2468,7 +2470,7 @@ export default function Home() {
         <div
           ref={heroShellRef}
           data-home-hero-shell="true"
-          className="relative w-full overflow-hidden aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.8/1] xl:aspect-[3.2/1] rounded-2xl shadow-sm group cursor-pointer bg-white"
+          className="relative w-full overflow-hidden aspect-[16/9] md:aspect-[21/9] lg:aspect-[2.5/1] rounded-2xl shadow-sm group cursor-pointer bg-white"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -2528,6 +2530,26 @@ export default function Home() {
             }}
             aria-label={`Open hero banner ${currentBannerIndex + 1}`}
           />
+
+          {/* Desktop Navigation Arrows */}
+          {heroBannerImages.length > 1 && (
+            <>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setCurrentBannerIndex((prev) => (prev - 1 + heroBannerImages.length) % heroBannerImages.length); }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md backdrop-blur-sm transition-all hover:scale-105"
+                aria-label="Previous banner"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button 
+                onClick={(e) => { e.stopPropagation(); setCurrentBannerIndex((prev) => (prev + 1) % heroBannerImages.length); }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 hidden md:flex items-center justify-center w-10 h-10 rounded-full bg-white/80 hover:bg-white text-gray-800 shadow-md backdrop-blur-sm transition-all hover:scale-105"
+                aria-label="Next banner"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
 
           {/* Indicators removed as requested */}
         </div>

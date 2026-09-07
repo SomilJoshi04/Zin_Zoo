@@ -13,6 +13,7 @@ router.patch('/categories/:id/status', adminController.toggleCategoryStatus);
 // Products
 router.get('/products', adminController.getProducts);
 router.post('/products', adminController.createProduct);
+router.delete('/products/bulk', adminController.bulkDeleteProducts);
 router.put('/products/:id', adminController.updateProduct);
 router.delete('/products/:id', adminController.deleteProduct);
 router.patch('/products/:id/status', adminController.toggleProductStatus);

@@ -5,5 +5,6 @@ const router = express.Router();
 
 router.get('/categories', groceryController.getCategories);
 router.get('/products', groceryController.getProducts);
+router.get('/products/:id', groceryController.getProductById);
 
 export default router;
