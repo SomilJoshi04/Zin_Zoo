@@ -91,6 +91,7 @@ const createEmptyForm = () => ({
   cuisines: "",
   openingTime: "09:00",
   closingTime: "22:00",
+  openDays: [],
   pureVegRestaurant: false,
   restaurantType: "Both",
   zoneId: "",
@@ -288,6 +289,7 @@ export default function RestaurantsList() {
         cuisines: Array.isArray(fullRes.cuisines) ? fullRes.cuisines.join(", ") : "",
         openingTime: fullRes.openingTime || "09:00",
         closingTime: fullRes.closingTime || "22:00",
+        openDays: Array.isArray(fullRes.openDays) ? fullRes.openDays : [],
         pureVegRestaurant: fullRes.pureVegRestaurant || false,
         restaurantType: fullRes.restaurantType || (fullRes.pureVegRestaurant ? "Veg" : "Both"),
         zoneId: getZoneId(fullRes),
@@ -371,6 +373,7 @@ export default function RestaurantsList() {
       const body = {
         ...editForm,
         profileImage: profileImageUrl,
+        openDays: editForm.openDays || [],
         cuisines: editForm.cuisines
           ? editForm.cuisines.split(",").map((c) => c.trim()).filter(Boolean)
           : [],
@@ -481,6 +484,7 @@ export default function RestaurantsList() {
       const body = {
         ...createForm,
         profileImage: profileImageUrl,
+        openDays: createForm.openDays || [],
         cuisines: createForm.cuisines
           ? createForm.cuisines.split(",").map((c) => c.trim()).filter(Boolean)
           : [],
@@ -1409,6 +1413,29 @@ const RestaurantFormFields = ({ form, setForm, zones = [], setSelectedImageFile,
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Closing Time</label>
           <input type="time" value={form.closingTime} onChange={(e) => setForm((p) => ({ ...p, closingTime: e.target.value }))}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-[#F84E04]" />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Open Days</label>
+          <div className="flex flex-wrap gap-2">
+            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+              <label key={day} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                <input type="checkbox"
+                  checked={(form.openDays || []).includes(day)}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setForm(p => ({
+                      ...p,
+                      openDays: checked
+                        ? [...(p.openDays || []), day]
+                        : (p.openDays || []).filter(d => d !== day)
+                    }));
+                  }}
+                  className="w-4 h-4 text-[#F84E04] rounded border-slate-300 focus:ring-[#F84E04]"
+                />
+                <span className="text-sm text-slate-700 dark:text-slate-300">{day}</span>
+              </label>
+            ))}
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurant Type</label>

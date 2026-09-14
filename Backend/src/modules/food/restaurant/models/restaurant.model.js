@@ -114,6 +114,7 @@ const restaurantSchema = new mongoose.Schema(
     },
     openDays: {
       type: [String],
+      enum: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
       default: [],
     } /**
      * Operational toggle controlled by restaurant dashboard.
