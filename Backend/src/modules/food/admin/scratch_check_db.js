@@ -8,7 +8,7 @@ dotenv.config({ path: path.join(__dirname, '../../../../.env') });
 
 async function checkData() {
     try {
-        console.log('Connecting to:', process.env.MONGODB_URI);
+     
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('Connected.');
 
