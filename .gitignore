@@ -35,8 +35,17 @@ Backend/scratch/
 
 # Specific Test Files
 Frontend/src/modules/Food/utils/backendConnectionTest.js
-Backend/src/modules/food/admin/test_save.js
 Backend/src/api/v1/test
+
+# Admin Testing & Scratch Scripts
+Backend/src/modules/food/admin/test_save.js
+Backend/src/modules/food/admin/check_indexes.js
+Backend/src/modules/food/admin/drop_index.js
+Backend/src/modules/food/admin/scratch_check_db.js
+Backend/src/modules/food/admin/scratch_check_wallet_coins.js
+Backend/src/modules/food/admin/set_zero_quantity.js
+Backend/src/modules/food/admin/update_existing_quantities.js
+Backend/src/modules/food/admin/verify_deduct.js
 
 # ── Build Outputs ─────────────────────────────────────────────────────────────
 dist/
