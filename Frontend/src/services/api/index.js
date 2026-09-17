@@ -2423,6 +2423,9 @@ export const userAPI = {
   /** GET /food/user/referrals/details (Bearer USER) */
   getReferralDetails: () =>
     apiClient.get("/food/user/referrals/details", { contextModule: "user" }),
+  /** POST /food/user/referrals/validate (Bearer USER or public) */
+  validateReferralCode: (code) =>
+    apiClient.post("/food/user/referrals/validate", { referralCode: String(code || '').trim().toUpperCase() }, { contextModule: "user" }),
   /** POST /food/user/wallet/topup/order (Bearer USER). Body: { amount } */
   createWalletTopupOrder: (amount) =>
     apiClient.post(

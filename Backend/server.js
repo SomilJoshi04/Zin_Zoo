@@ -51,7 +51,17 @@ const startServer = async () => {
         // 1. Connect to Database (MongoDB)
         await connectDB();
 
-
+        // 1b. Background migration for legacy referral codes (idempotent & non-blocking)
+        try {
+            const { migrateLegacyReferralCodes } = await import('./src/modules/food/user/services/userReferral.service.js');
+            migrateLegacyReferralCodes().then((res) => {
+                if (res?.migrated > 0) {
+                    logger.info(`Migrated ${res.migrated} legacy user referral codes to ZINXXXXX format`);
+                }
+            }).catch(() => {});
+        } catch (err) {
+            logger.warn(`Referral migration check skipped: ${err.message}`);
+        }
 
         // 2. Create HTTP server from Express app
         const httpServer = http.createServer(app);

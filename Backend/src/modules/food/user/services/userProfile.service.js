@@ -1,6 +1,7 @@
 import { FoodUser } from '../../../../core/users/user.model.js';
 import { AuthError, ValidationError } from '../../../../core/auth/errors.js';
 import { uploadImageBuffer, deleteLocalFile } from '../../../../services/localUpload.service.js';
+import { ensureUserReferralCode } from './userReferral.service.js';
 
 const parseIsoDateOrNull = (value) => {
     if (value === undefined) return undefined;
@@ -11,9 +12,12 @@ const parseIsoDateOrNull = (value) => {
 };
 
 export const getCurrentUserProfile = async (userId) => {
-    const user = await FoodUser.findById(userId).lean();
+    let user = await FoodUser.findById(userId);
     if (!user) throw new AuthError('Profile not found');
-    return { user };
+    if (!user.referralCode || /^[0-9a-fA-F]{24}$/.test(user.referralCode)) {
+        await ensureUserReferralCode(user);
+    }
+    return { user: user.toObject() };
 };
 
 export const updateCurrentUserProfile = async (userId, body) => {

@@ -21,7 +21,8 @@ import {
 } from '../controllers/userWallet.controller.js';
 import {
     getUserReferralDetailsController,
-    getUserReferralStatsController
+    getUserReferralStatsController,
+    validateReferralCodeController
 } from '../controllers/userReferral.controller.js';
 import {
     createSafetyEmergencyReportController,
@@ -56,9 +57,10 @@ router.post('/wallet/topup/verify', verifyWalletTopupPaymentController);
 router.get('/coins', getCoinsInfoController);
 router.post('/coins/redeem', submitCoinRedemptionController);
 
-// Referral stats (Bearer USER)
+// Referral (Bearer USER)
 router.get('/referrals/stats', getUserReferralStatsController);
 router.get('/referrals/details', getUserReferralDetailsController);
+router.post('/referrals/validate', validateReferralCodeController);
 
 // Safety / Emergency reports (Bearer USER)
 router.post('/safety-emergency-reports', createSafetyEmergencyReportController);

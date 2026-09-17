@@ -14,6 +14,7 @@ export default function ReferralSettings() {
     referralRewardDelivery: "",
     referralLimitUser: "",
     referralLimitDelivery: "",
+    isActive: true,
   })
 
   const fetchSettings = async () => {
@@ -27,6 +28,7 @@ export default function ReferralSettings() {
           referralRewardDelivery: s.referralRewardDelivery ?? "",
           referralLimitUser: s.referralLimitUser ?? "",
           referralLimitDelivery: s.referralLimitDelivery ?? "",
+          isActive: s.isActive !== false,
         })
       } else {
         setSettings({
@@ -34,6 +36,7 @@ export default function ReferralSettings() {
           referralRewardDelivery: "",
           referralLimitUser: "",
           referralLimitDelivery: "",
+          isActive: true,
         })
       }
     } catch (e) {
@@ -56,7 +59,7 @@ export default function ReferralSettings() {
         referralRewardDelivery: settings.referralRewardDelivery === "" ? 0 : Number(settings.referralRewardDelivery),
         referralLimitUser: settings.referralLimitUser === "" ? 0 : Number(settings.referralLimitUser),
         referralLimitDelivery: settings.referralLimitDelivery === "" ? 0 : Number(settings.referralLimitDelivery),
-        isActive: true,
+        isActive: Boolean(settings.isActive),
       }
       const res = await adminAPI.createOrUpdateReferralSettings(body)
       if (res?.data?.success) {
@@ -68,6 +71,7 @@ export default function ReferralSettings() {
             referralRewardDelivery: saved.referralRewardDelivery ?? "",
             referralLimitUser: saved.referralLimitUser ?? "",
             referralLimitDelivery: saved.referralLimitDelivery ?? "",
+            isActive: saved.isActive !== false,
           })
         }
       } else {
@@ -135,15 +139,31 @@ export default function ReferralSettings() {
               <Loader2 className="w-6 h-6 animate-spin text-orange-600" />
             </div>
           ) : (
-            <div className="max-w-xl">
+            <div className="max-w-xl space-y-4">
+              <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-slate-900 text-sm">Referral Program Status</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">Enable or disable all referral rewards globally.</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.isActive}
+                    onChange={(e) => setSettings((prev) => ({ ...prev, isActive: e.target.checked }))}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+                </label>
+              </div>
+
               <div className="border border-slate-200 rounded-xl p-4">
-                <h3 className="font-semibold text-slate-900 mb-3">User Referral</h3>
+                <h3 className="font-semibold text-slate-900 mb-3">User Referral Rewards</h3>
                 <label className="block text-sm text-slate-600 mb-1">Reward amount (₹)</label>
                 <input
                   value={settings.referralRewardUser}
                   onChange={onChange("referralRewardUser")}
                   inputMode="numeric"
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-orange-500"
                   placeholder="e.g. 50"
                 />
                 <label className="block text-sm text-slate-600 mb-1 mt-3">Max credits per referrer</label>
@@ -151,7 +171,7 @@ export default function ReferralSettings() {
                   value={settings.referralLimitUser}
                   onChange={onChange("referralLimitUser")}
                   inputMode="numeric"
-                  className="w-full border border-slate-200 rounded-lg px-3 py-2"
+                  className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-orange-500"
                   placeholder="e.g. 10"
                 />
               </div>

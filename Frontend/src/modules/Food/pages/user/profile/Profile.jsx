@@ -274,29 +274,26 @@ export default function Profile() {
     };
   }, []);
 
-  const refId =
-    userProfile?._id || userProfile?.id || userProfile?.referralCode || "";
-  const referralLink = refId
-    ? `${window.location.origin}/food/food/user/auth/login?ref=${encodeURIComponent(String(refId))}`
-    : "";
+  const referralCode = String(userProfile?.referralCode || "").toUpperCase();
 
   const handleShareReferral = async () => {
-    if (!referralLink) return;
-    const rewardText = referralReward > 0 ? `\u20B9${referralReward}` : "rewards";
-    const shareText = `Join ${companyName} and earn ${rewardText}.`;
+    if (!referralCode) return;
+    const shareMessage = `🎉 Join me on ${companyName}!\n\nOrder your favorite food easily and enjoy a great food experience with ${companyName} 🍔🍕🛍️\n\nDownload the ${companyName} app and use my referral code during signup:\n\n👉 Referral Code: ${referralCode}\n\nJoin ${companyName} today! ❤️`;
     try {
       if (navigator.share) {
         await navigator.share({
-          title: `${companyName} referral`,
-          text: shareText,
-          url: referralLink,
+          title: `${companyName} Referral`,
+          text: shareMessage,
         });
       } else {
-        const fallbackUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${referralLink}`)}`;
+        const fallbackUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
         window.open(fallbackUrl, "_blank", "noopener,noreferrer");
       }
     } catch (error) {
-      debugError("Failed to share referral:", error);
+      if (error?.name !== "AbortError") {
+        const fallbackUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
+        window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+      }
     }
   };
 
@@ -631,8 +628,8 @@ export default function Profile() {
                       e.stopPropagation();
                       handleShareReferral();
                     }}
-                    className="inline-flex items-center gap-1 text-xs text-[#F84E04] font-medium ml-2 px-2 py-1 rounded-md"
-                    disabled={!referralLink}>
+                    className="inline-flex items-center gap-1 text-xs text-[#F84E04] font-medium ml-2 px-2 py-1 rounded-md disabled:opacity-50"
+                    disabled={!referralCode}>
                     <Share2 className="h-3.5 w-3.5" />
                     Refer
                   </button>

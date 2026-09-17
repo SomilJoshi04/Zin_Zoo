@@ -38,6 +38,15 @@ export const creditReferralReward = async (userId, amountInr, metadata = {}) => 
         return { wallet: await getUserWallet(userId) };
     }
     const wallet = await ensureWallet(userId);
+    const referralLogId = metadata?.referralLogId ? String(metadata.referralLogId) : null;
+    if (referralLogId) {
+        const alreadyCredited = (Array.isArray(wallet.transactions) ? wallet.transactions : []).some(
+            (tx) => tx?.metadata?.referralLogId && String(tx.metadata.referralLogId) === referralLogId
+        );
+        if (alreadyCredited) {
+            return { wallet: await getUserWallet(userId) };
+        }
+    }
     wallet.transactions.unshift({
         type: 'addition',
         amount,

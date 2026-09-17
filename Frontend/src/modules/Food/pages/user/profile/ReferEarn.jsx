@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Share2, Users, Wallet, CircleCheck, Clock3, CircleX } from "lucide-react";
+import { ArrowLeft, Share2, Users, Wallet, CircleCheck, Clock3, CircleX, Copy, Check } from "lucide-react";
 import AnimatedPage from "@food/components/user/AnimatedPage";
 import { Button } from "@food/components/ui/button";
 import { Card, CardContent } from "@food/components/ui/card";
@@ -29,9 +29,11 @@ const statusMeta = {
 
 export default function ReferEarn() {
   const { userProfile } = useProfile();
-  const companyName = useCompanyName();
+  const companyName = useCompanyName() || "ZinZooX";
   const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
   const [stats, setStats] = useState({
+    referralCode: "",
     referralCount: 0,
     totalReferralEarnings: 0,
     rewardAmount: 0,
@@ -52,6 +54,7 @@ export default function ReferEarn() {
         const nextInvited = res?.data?.data?.invitedFriends || [];
         if (!cancelled) {
           setStats({
+            referralCode: String(nextStats.referralCode || userProfile?.referralCode || "").toUpperCase(),
             referralCount: Number(nextStats.referralCount) || 0,
             totalReferralEarnings: Number(nextStats.totalReferralEarnings) || 0,
             rewardAmount: Number(nextStats.rewardAmount) || 0,
@@ -64,7 +67,10 @@ export default function ReferEarn() {
         }
       } catch (error) {
         if (!cancelled) {
-          setStats((prev) => ({ ...prev }));
+          setStats((prev) => ({
+            ...prev,
+            referralCode: String(userProfile?.referralCode || "").toUpperCase()
+          }));
           setInvitedFriends([]);
           toast.error("Failed to load referral details");
         }
@@ -76,43 +82,63 @@ export default function ReferEarn() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [userProfile?.referralCode]);
 
-  const refId = userProfile?._id || userProfile?.id || userProfile?.referralCode || "";
-  const referralLink = refId
-    ? `https://play.google.com/store/apps/details?id=com.zinzoo.user&referrer=${encodeURIComponent(String(refId))}`
-    : "";
+  const activeReferralCode = stats.referralCode || String(userProfile?.referralCode || "").toUpperCase();
 
-  const shareText = useMemo(() => {
-    const rewardText = stats.rewardAmount > 0 ? `\u20B9${stats.rewardAmount}` : "rewards";
-    return `Join ${companyName} and earn ${rewardText}.`;
-  }, [companyName, stats.rewardAmount]);
+  const shareMessage = useMemo(() => {
+    return `🎉 Join me on ${companyName}!\n\nOrder your favorite food easily and enjoy a great food experience with ${companyName} 🍔🍕🛍️\n\nDownload the ${companyName} app and use my referral code during signup:\n\n👉 Referral Code: ${activeReferralCode}\n\nJoin ${companyName} today! ❤️`;
+  }, [companyName, activeReferralCode]);
+
+  const handleCopyCode = async () => {
+    if (!activeReferralCode) {
+      toast.error("Referral code unavailable");
+      return;
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(activeReferralCode);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = activeReferralCode;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopied(true);
+      toast.success("Referral code copied to clipboard!");
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      toast.error("Failed to copy code");
+    }
+  };
 
   const handleShare = async () => {
-    if (!referralLink) {
-      toast.error("Referral link unavailable");
+    if (!activeReferralCode) {
+      toast.error("Referral code unavailable");
       return;
     }
     try {
       if (navigator.share) {
         await navigator.share({
-          title: `${companyName} referral`,
-          text: shareText,
-          url: referralLink,
+          title: `${companyName} Referral`,
+          text: shareMessage,
         });
         return;
       }
 
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(`${shareText} ${referralLink}`);
-        toast.success("Referral link copied");
+        await navigator.clipboard.writeText(shareMessage);
+        toast.success("Referral message copied to clipboard!");
       }
 
-      const fallbackUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${referralLink}`)}`;
-      window.open(fallbackUrl, "_blank", "noopener,noreferrer");
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
+      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       if (error?.name !== "AbortError") {
-        toast.error("Unable to share right now");
+        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
+        window.open(whatsappUrl, "_blank", "noopener,noreferrer");
       }
     }
   };
@@ -121,7 +147,7 @@ export default function ReferEarn() {
     <AnimatedPage className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0a]">
       <div className="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto px-4 py-4 pb-24">
         <div className="flex items-center gap-3 mb-5">
-          <Link to="/user/profile">
+          <Link to="/food/user/profile">
             <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
               <ArrowLeft className="h-5 w-5 text-black dark:text-white" />
             </Button>
@@ -132,31 +158,56 @@ export default function ReferEarn() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left Column: Share and Stats */}
           <div className="space-y-4">
-            <Card className="bg-white dark:bg-[#1a1a1a] rounded-2xl border-0 dark:border-gray-800 shadow-sm">
-              <CardContent className="p-4">
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Invite friends and earn when they sign up.
+            <Card className="bg-white dark:bg-[#1a1a1a] rounded-2xl border-0 dark:border-gray-800 shadow-sm overflow-hidden">
+              <CardContent className="p-5">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Invite your friends to {companyName} and earn rewards!
                 </p>
+                
+                {/* Referral Code Box */}
+                <div className="mt-4 p-4 rounded-xl bg-orange-50/60 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/40 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
+                      Your Referral Code
+                    </p>
+                    <p className="text-2xl font-black tracking-widest text-gray-900 dark:text-white mt-0.5">
+                      {activeReferralCode || "..."}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyCode}
+                    disabled={!activeReferralCode}
+                    className="h-9 px-3 rounded-lg border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400 hover:bg-orange-100/50 flex items-center gap-1.5 font-bold"
+                  >
+                    {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                    <span>{copied ? "Copied" : "Copy Code"}</span>
+                  </Button>
+                </div>
+
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 p-3">
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Reward per invite</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Reward per new user</p>
                     <p className="text-lg font-bold text-[#F84E04]">{"\u20B9"}{stats.rewardAmount}</p>
                   </div>
                   <div className="rounded-xl bg-gray-50 dark:bg-gray-800/50 p-3">
-                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Referral earnings</p>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 font-medium">Referral earnings</p>
                     <p className="text-lg font-bold text-green-600 dark:text-green-400">
                       {"\u20B9"}{stats.totalReferralEarnings}
                     </p>
                   </div>
                 </div>
+
                 <Button
                   type="button"
                   onClick={handleShare}
-                  disabled={!referralLink}
-                  className="w-full mt-3 h-11 rounded-xl bg-[#F84E04] hover:bg-[#d84f0a]"
+                  disabled={!activeReferralCode}
+                  className="w-full mt-4 h-12 rounded-xl bg-[#FF5E00] hover:bg-[#e05300] text-white font-bold shadow-md shadow-orange-500/20"
                 >
                   <Share2 className="h-4 w-4 mr-2" />
-                  Share Invite
+                  Share Referral
                 </Button>
               </CardContent>
             </Card>
@@ -164,27 +215,27 @@ export default function ReferEarn() {
             <div className="grid grid-cols-3 gap-2">
               <Card className="border-0 shadow-sm bg-white dark:bg-[#1a1a1a]">
                 <CardContent className="p-3">
-                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[11px] font-semibold">
                     <Users className="h-3.5 w-3.5" />
-                    Invited
+                    Total Invites
                   </div>
                   <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">{stats.totalInvited}</p>
                 </CardContent>
               </Card>
               <Card className="border-0 shadow-sm bg-white dark:bg-[#1a1a1a]">
                 <CardContent className="p-3">
-                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[11px] font-semibold">
                     <CircleCheck className="h-3.5 w-3.5" />
-                    Credited
+                    Successful
                   </div>
                   <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">{stats.creditedCount}</p>
                 </CardContent>
               </Card>
               <Card className="border-0 shadow-sm bg-white dark:bg-[#1a1a1a]">
                 <CardContent className="p-3">
-                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-[11px]">
+                  <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[11px] font-semibold">
                     <Wallet className="h-3.5 w-3.5" />
-                    Total
+                    Total Earned
                   </div>
                   <p className="text-xl font-bold text-gray-900 dark:text-white mt-1">{"\u20B9"}{stats.totalReferralEarnings}</p>
                 </CardContent>
@@ -196,16 +247,22 @@ export default function ReferEarn() {
           <div>
             <Card className="bg-white dark:bg-[#1a1a1a] rounded-2xl border-0 dark:border-gray-800 shadow-sm h-full">
               <CardContent className="p-4">
-                <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Invited Friends Status</h2>
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Referral History & Status</h2>
 
                 {loading ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Loading referrals...</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 py-6 text-center">Loading referral records...</p>
                 ) : invitedFriends.length === 0 ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    No invited friends yet. Share your referral to start earning.
-                  </p>
+                  <div className="py-10 text-center">
+                    <Users className="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-2" />
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                      No referrals yet
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
+                      Share your referral code with friends and start earning rewards when they register!
+                    </p>
+                  </div>
                 ) : (
-                  <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
+                  <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1">
                     {invitedFriends.map((item) => {
                       const meta = statusMeta[item?.status] || statusMeta.pending;
                       const StatusIcon = meta.icon;
@@ -218,7 +275,7 @@ export default function ReferEarn() {
                       return (
                         <div
                           key={item?.id || item?.refereeId}
-                          className="rounded-xl border border-gray-200 dark:border-gray-800 p-3"
+                          className="rounded-xl border border-gray-100 dark:border-gray-800/80 p-3 bg-gray-50/50 dark:bg-gray-900/30"
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="min-w-0">
@@ -228,17 +285,17 @@ export default function ReferEarn() {
                               <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                 {item?.phone || "Phone hidden"}
                               </p>
-                              <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">Invited on {dateText}</p>
+                              <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">Joined on {dateText}</p>
                             </div>
                             <div className="text-right flex-shrink-0">
                               <span
-                                className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full ${meta.className}`}
+                                className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full ${meta.className}`}
                               >
                                 <StatusIcon className="h-3 w-3" />
                                 {meta.label}
                               </span>
-                              <p className="text-xs mt-2 text-gray-700 dark:text-gray-300">
-                                Earned: {"\u20B9"}{Number(item?.earnedAmount) || 0}
+                              <p className="text-xs font-semibold mt-1.5 text-gray-800 dark:text-gray-200">
+                                Reward: {"\u20B9"}{Number(item?.earnedAmount) || 0}
                               </p>
                             </div>
                           </div>
@@ -255,4 +312,3 @@ export default function ReferEarn() {
     </AnimatedPage>
   );
 }
-

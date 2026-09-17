@@ -3,7 +3,7 @@ import { useNavigate, Link, useSearchParams } from "react-router-dom"
 import { AlertCircle, Loader2 } from "lucide-react"
 import AnimatedPage from "@food/components/user/AnimatedPage"
 import { authAPI } from "@food/api"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { getCachedSettings, getModuleLogoUrl, loadBusinessSettings } from "@food/utils/businessSettings"
 
 const debugLog = (...args) => { }
@@ -18,6 +18,9 @@ export default function SignIn() {
     phone: "",
     countryCode: "+91",
   })
+
+  const [hasReferralCode, setHasReferralCode] = useState(false)
+  const [referralCode, setReferralCode] = useState("")
 
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -37,6 +40,10 @@ export default function SignIn() {
         ...prev,
         phone: phoneDigits || prev.phone,
       }))
+      if (data.referralCode) {
+        setHasReferralCode(true)
+        setReferralCode(String(data.referralCode).toUpperCase())
+      }
     } catch (err) {
       debugError("Error parsing stored auth data:", err)
     }
@@ -106,13 +113,13 @@ export default function SignIn() {
       const fullPhone = `${countryCode} ${phoneDigits}`
       await authAPI.sendOTP(fullPhone, "login", null)
 
-      const ref = String(searchParams.get("ref") || "").trim()
+      const normalizedCode = hasReferralCode ? String(referralCode || "").trim().toUpperCase() : ""
       const authData = {
         method: "phone",
         phone: fullPhone,
         email: null,
         name: null,
-        referralCode: ref || null,
+        referralCode: normalizedCode || null,
         isSignUp: false,
         module: "user",
       }
@@ -356,6 +363,54 @@ export default function SignIn() {
                   onChange={handleChange}
                   className="flex-grow min-w-0 border-none p-0 focus:ring-0 text-gray-800 placeholder-gray-400 font-semibold text-base outline-none tracking-wider bg-transparent"
                 />
+              </div>
+
+              {/* Optional Referral Code Toggle */}
+              <div className="w-full pt-1 px-1">
+                <label className="flex items-center space-x-2 cursor-pointer select-none text-xs font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={hasReferralCode}
+                    onChange={(e) => {
+                      const checked = e.target.checked
+                      setHasReferralCode(checked)
+                      if (!checked) setReferralCode("")
+                    }}
+                    className="w-4 h-4 rounded border-gray-300 text-[#FF5E00] focus:ring-[#FF5E00] cursor-pointer accent-[#FF5E00]"
+                  />
+                  <span>I have a Referral Code</span>
+                </label>
+
+                <AnimatePresence>
+                  {hasReferralCode && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                      animate={{ opacity: 1, height: "auto", marginTop: 8 }}
+                      exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="w-full flex items-center border border-gray-200 rounded-2xl bg-white px-3.5 py-2 focus-within:border-[#FF5E00] focus-within:ring-1 focus-within:ring-[#FF5E00] transition-all shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+                        <svg className="w-4 h-4 text-[#FF5E00] mr-2 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <input
+                          id="referralCode"
+                          name="referralCode"
+                          type="text"
+                          maxLength={15}
+                          placeholder="Referral Code (e.g. ZIN7K4P9)"
+                          value={referralCode}
+                          onChange={(e) => {
+                            const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 15)
+                            setReferralCode(val)
+                          }}
+                          className="w-full border-none p-0 focus:ring-0 text-gray-800 placeholder-gray-400 font-bold text-sm tracking-wider uppercase outline-none bg-transparent"
+                        />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {error && (

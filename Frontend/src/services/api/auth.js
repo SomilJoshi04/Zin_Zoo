@@ -66,7 +66,7 @@ export function requestUserOtp(phone) {
 export function verifyUserOtp(
   phone,
   otp,
-  ref,
+  referralCode,
   name = null,
   fcmToken = null,
   platform = "web",
@@ -91,11 +91,11 @@ export function verifyUserOtp(
   if (otpStr.length !== 4) {
     return Promise.reject(new Error("OTP must be exactly 4 digits"));
   }
-  const refValue = typeof ref === "string" ? ref.trim() : "";
+  const codeValue = typeof referralCode === "string" ? referralCode.trim().toUpperCase() : "";
   return apiClient.post(AUTH.USER_VERIFY_OTP, {
     phone: normalized,
     otp: otpStr,
-    ...(refValue ? { ref: refValue } : {}),
+    ...(codeValue ? { referralCode: codeValue } : {}),
     ...(name ? { name } : {}),
     ...(fcmToken ? { fcmToken, platform } : {}),
   });

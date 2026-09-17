@@ -2,8 +2,9 @@ import mongoose from 'mongoose';
 
 const referralLogSchema = new mongoose.Schema(
     {
-        referrerId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+        referrerId: { type: mongoose.Schema.Types.ObjectId, default: null, index: true },
         refereeId: { type: mongoose.Schema.Types.ObjectId, required: true, index: true },
+        referralCode: { type: String, default: '', trim: true, uppercase: true },
         role: {
             type: String,
             enum: ['USER', 'DELIVERY_PARTNER'],

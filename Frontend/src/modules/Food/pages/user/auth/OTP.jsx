@@ -153,7 +153,7 @@ export default function OTP() {
       const email = authData?.method === "email" ? authData.email : null
       const purpose = authData?.isSignUp ? "register" : "login"
       const providedName = authData?.isSignUp ? authData?.name || null : null
-      const referralCode = authData?.referralCode || null
+      const referralCode = authData?.referralCode ? String(authData.referralCode).trim().toUpperCase() : null
 
       let fcmToken = null;
       let platform = "web";

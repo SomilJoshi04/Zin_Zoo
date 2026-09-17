@@ -13,6 +13,13 @@ const schema = z.object({
     .string()
     .length(4, "OTP must be exactly 4 digits")
     .regex(/^\d{4}$/, "OTP must be numeric and exactly 4 digits"),
+  referralCode: z
+    .string()
+    .trim()
+    .max(30)
+    .optional()
+    .or(z.literal(""))
+    .transform((val) => (val ? String(val).trim().toUpperCase() : "")),
   ref: z.string().trim().max(64).optional().or(z.literal("")),
   fcmToken: z.string().optional(),
   platform: z.preprocess(
