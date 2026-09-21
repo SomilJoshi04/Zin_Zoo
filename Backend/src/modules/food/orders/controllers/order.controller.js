@@ -193,7 +193,7 @@ export async function getOrderByIdAdminController(req, res, next) {
 export async function deleteOrderAdminController(req, res, next) {
     try {
         const adminId = req.user?.userId;
-        const orderId = req.params.orderId;
+        const orderId = req.params.orderId || req.params.id;
         const result = await orderService.deleteOrderAdmin(orderId, adminId);
         return sendResponse(res, 200, 'Order deleted successfully', result);
     } catch (err) {

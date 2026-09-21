@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { FoodOrder, FoodSettings } from '../models/order.model.js';
 import { GroceryOrder } from '../models/groceryOrder.model.js';
 // import { paymentSnapshotFromOrder } from './foodOrderPayment.service.js';
@@ -2332,26 +2332,40 @@ export async function deleteOrderAdmin(orderId, adminId) {
   const identity = buildOrderIdentityFilter(orderId);
   if (!identity) throw new ValidationError("Order id required");
 
-  const order = await FoodOrder.findOne(identity).lean();
+  let order = await FoodOrder.findOne(identity).lean();
+  let isGrocery = false;
+
+  if (!order) {
+    order = await GroceryOrder.findOne(identity).lean();
+    if (order) isGrocery = true;
+  }
+
   if (!order) throw new NotFoundError("Order not found");
 
+  const orderMongoId = order._id;
+  const readableOrderId = String(order.orderId || order.order_id || orderMongoId.toString());
+
   // Keep support tickets but detach deleted order reference.
+  const deletePromise = isGrocery
+    ? GroceryOrder.deleteOne({ _id: orderMongoId })
+    : FoodOrder.deleteOne({ _id: orderMongoId });
+
   await Promise.all([
     FoodSupportTicket.updateMany(
-      { orderId: order._id },
+      { orderId: orderMongoId },
       { $set: { orderId: null } },
     ),
-    FoodTransaction.deleteOne({
-      $or: [{ orderId: order._id }, { orderReadableId: String(order._id.toString()) }],
+    FoodTransaction.deleteMany({
+      $or: [{ orderId: orderMongoId }, { orderReadableId: readableOrderId }],
     }),
-    FoodOrder.deleteOne({ _id: order._id }),
+    deletePromise,
   ]);
 
   // Remove realtime tracking node if present.
   try {
     const db = getFirebaseDB();
-    if (db && order?.orderId) {
-      await db.ref(`active_orders/${order._id.toString()}`).remove();
+    if (db && (order?.orderId || order?.order_id)) {
+      await db.ref(`active_orders/${orderMongoId.toString()}`).remove();
     }
   } catch (err) {
     logger.warn(`Delete order firebase cleanup failed: ${err?.message || err}`);
@@ -2362,8 +2376,8 @@ export async function deleteOrderAdmin(orderId, adminId) {
     const io = getIO();
     if (io) {
       const payload = {
-        orderMongoId: String(order._id),
-        orderId: String(order._id.toString() || ""),
+        orderMongoId: String(orderMongoId),
+        orderId: readableOrderId,
         deletedBy: "ADMIN",
         adminId: adminId ? String(adminId) : null,
       };
@@ -2382,15 +2396,15 @@ export async function deleteOrderAdmin(orderId, adminId) {
   }
 
   enqueueOrderEvent("order_deleted_by_admin", {
-    orderMongoId: String(order._id),
-    orderId: String(order._id.toString() || ""),
+    orderMongoId: String(orderMongoId),
+    orderId: readableOrderId,
     adminId: adminId ? String(adminId) : null,
   });
 
   return {
     deleted: true,
-    orderId: String(order._id.toString() || ""),
-    orderMongoId: String(order._id),
+    orderId: readableOrderId,
+    orderMongoId: String(orderMongoId),
   };
 }
 

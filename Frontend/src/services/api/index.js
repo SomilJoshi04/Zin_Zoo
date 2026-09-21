@@ -3114,6 +3114,7 @@ export const groceryAdminAPI = {
   getOrders: (params) => apiClient.get("/grocery/admin/orders", { params, contextModule: "admin" }),
   getOrderById: (id) => apiClient.get(`/grocery/admin/orders/${id}`, { contextModule: "admin" }),
   updateOrderStatus: (id, data) => apiClient.put(`/grocery/admin/orders/${id}/status`, data, { contextModule: "admin" }),
+  deleteOrder: (orderId) => apiClient.delete(`/food/admin/orders/${String(orderId)}`, { contextModule: "admin" }),
 
   seedGroceryData: () =>
     apiClient.post("/grocery/admin/seed", {}, { contextModule: "admin" }),
@@ -3160,6 +3161,7 @@ export const accessoriesAdminAPI = {
   getOrders: (params) => apiClient.get("/accessories/admin/orders", { params, contextModule: "admin" }),
   getOrderById: (id) => apiClient.get(`/accessories/admin/orders/${id}`, { contextModule: "admin" }),
   updateOrderStatus: (id, data) => apiClient.put(`/accessories/admin/orders/${id}/status`, data, { contextModule: "admin" }),
+  deleteOrder: (orderId) => apiClient.delete(`/food/admin/orders/${String(orderId)}`, { contextModule: "admin" }),
 };
 
 export const accessoriesPublicAPI = {

@@ -1,5 +1,6 @@
 import express from 'express';
 import * as adminController from '../controllers/accessoriesAdmin.controller.js';
+import * as orderController from '../../food/orders/controllers/order.controller.js';
 
 const router = express.Router();
 
@@ -22,5 +23,7 @@ router.patch('/products/:id/status', adminController.toggleProductStatus);
 router.get('/orders', adminController.getOrders);
 router.get('/orders/:id', adminController.getOrderById);
 router.put('/orders/:id/status', adminController.updateOrderStatus);
+router.delete('/orders/:id', orderController.deleteOrderAdminController);
+router.delete('/orders/:orderId', orderController.deleteOrderAdminController);
 
 export default router;

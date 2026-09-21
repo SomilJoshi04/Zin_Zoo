@@ -774,15 +774,13 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
 
     try {
       setDeletingOrderId(order.id || order.orderId)
-      toast.info("Delete order not implemented for accessories yet")
-      // const response = await accessoriesAdminAPI.deleteOrder(orderIdToUse)
-      // toast.success(...)
-      await fetchOrders({ silent: true, withRingCheck: false })
-      //   toast.success(response.data?.message || `Order ${order.orderId} deleted`)
-      //   await fetchOrders({ silent: true, withRingCheck: false })
-      // } else {
-      //   toast.error(response.data?.message || "Failed to delete order")
-      // }
+      const response = await accessoriesAdminAPI.deleteOrder(orderIdToUse)
+      if (response?.data?.deleted || response?.status === 200) {
+        toast.success(response.data?.message || `Order ${order.orderId} deleted`)
+        await fetchOrders({ silent: true, withRingCheck: false })
+      } else {
+        toast.error(response?.data?.message || "Failed to delete order")
+      }
     } catch (error) {
       debugError("Error deleting order:", error)
       toast.error(error.response?.data?.message || "Failed to delete order")

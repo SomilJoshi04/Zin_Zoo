@@ -1,5 +1,6 @@
 import express from 'express';
 import * as groceryAdminController from '../controllers/groceryAdmin.controller.js';
+import * as orderController from '../../orders/controllers/order.controller.js';
 // Add any auth middlewares here if needed, like requireAdminAuth
 
 const router = express.Router();
@@ -20,6 +21,8 @@ router.delete('/products/:id', groceryAdminController.deleteProduct);
 router.get('/orders', groceryAdminController.getOrders);
 router.get('/orders/:id', groceryAdminController.getOrderById);
 router.put('/orders/:id/status', groceryAdminController.updateOrderStatus);
+router.delete('/orders/:id', orderController.deleteOrderAdminController);
+router.delete('/orders/:orderId', orderController.deleteOrderAdminController);
 
 // Seed Data
 router.post('/seed', groceryAdminController.seedGroceryData);
