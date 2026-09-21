@@ -71,6 +71,14 @@ uploads/
 *.sw?
 *.swp
 
+# ── Temporary & Backup Files ──────────────────────────────────────────────────
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*~
+
 # ── Custom / Temporary Build & Deploy Scripts ─────────────────────────────────
 branch_structure.json
 temp_auto_push.bat

@@ -15,11 +15,10 @@ import { useOrdersManagement } from "@food/components/admin/orders/useOrdersMana
 import { Loader2 } from "lucide-react"
 import { OrdersDashboardSkeleton } from "@food/components/ui/loading-skeletons"
 import { useDelayedLoading } from "@food/hooks/useDelayedLoading"
-import alertSound from "@food/assets/audio/alert.mp3"
-import originalSound from "@food/assets/audio/original.mp3"
-const debugLog = (...args) => {}
-const debugWarn = (...args) => {}
-const debugError = (...args) => {}
+import { adminAlertSound } from "@food/utils/adminAlertSound"
+const debugLog = (...args) => { }
+const debugWarn = (...args) => { }
+const debugError = (...args) => { }
 
 
 // Status configuration with titles, colors, and icons
@@ -83,43 +82,16 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
     return `${source}${separator}devcache=${cacheKey}`
   }, [])
 
-  const playDeliveryStyleBuzz = useCallback(async () => {
-    const selectedSound = localStorage.getItem("delivery_alert_sound") || "zomato_tone"
-    const soundFile = selectedSound === "original"
-      ? resolveAudioSource(originalSound, "admin-original")
-      : resolveAudioSource(alertSound, "admin-alert")
-
-    try {
-      if (!notificationAudioRef.current) {
-        notificationAudioRef.current = new Audio(soundFile)
-        notificationAudioRef.current.preload = "auto"
-        notificationAudioRef.current.volume = 1
-      } else if (!notificationAudioRef.current.src.includes(soundFile.split("/").pop())) {
-        notificationAudioRef.current.pause()
-        notificationAudioRef.current.src = soundFile
-        notificationAudioRef.current.load()
-      }
-
-      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-        navigator.vibrate([200, 100, 200, 100, 300])
-      }
-
-      notificationAudioRef.current.muted = false
-      notificationAudioRef.current.volume = 1
-      notificationAudioRef.current.currentTime = 0
-      await notificationAudioRef.current.play()
-      return true
-    } catch (_) {
-      return false
-    }
-  }, [resolveAudioSource])
-
-  const playDefaultRing = useCallback(() => {
-    // Notification sound disabled per user request
-    return;
+  const playDefaultRing = useCallback((orderId) => {
+    adminAlertSound.playAlert({
+      id: orderId || activeOrderAlertRef.current?.orderId || "accessories-order",
+      loop: true,
+      maxDurationMs: ALERT_LOOP_MAX_MS,
+    })
   }, [])
 
   const stopAlertLoop = useCallback(() => {
+    adminAlertSound.stopAlert()
     if (alertLoopTimerRef.current) {
       clearInterval(alertLoopTimerRef.current)
       alertLoopTimerRef.current = null
@@ -128,21 +100,8 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
   }, [])
 
   const startAlertLoop = useCallback(() => {
-    stopAlertLoop()
-    alertLoopStartedAtRef.current = Date.now()
-
-    alertLoopTimerRef.current = setInterval(() => {
-      const elapsed = Date.now() - alertLoopStartedAtRef.current
-      if (elapsed >= ALERT_LOOP_MAX_MS || !activeOrderAlertRef.current) {
-        stopAlertLoop()
-        return
-      }
-
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
-        playDefaultRing()
-      }
-    }, ALERT_LOOP_INTERVAL_MS)
-  }, [playDefaultRing, stopAlertLoop])
+    playDefaultRing()
+  }, [playDefaultRing])
 
   const showBrowserNotification = useCallback(async (title, body, tag) => {
     if (typeof window === "undefined" || typeof Notification === "undefined") return
@@ -175,7 +134,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
         window.focus()
         notification.close()
       }
-    } catch (_) {}
+    } catch (_) { }
   }, [sanitizeNotificationText])
 
   // Unlock audio on first user gesture so rings can play reliably later
@@ -249,7 +208,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
     return () => {
       stopAlertLoop()
       if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-        audioContextRef.current.close().catch(() => {})
+        audioContextRef.current.close().catch(() => { })
       }
       if (notificationAudioRef.current) {
         notificationAudioRef.current.pause()
@@ -308,7 +267,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
             }
             toast.info("New order received")
           }
-}
+        }
 
         seenOrderIdsRef.current = nextOrderIds
         isFirstLoadRef.current = false
@@ -344,17 +303,17 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
           : null
       const date = createdAt
         ? createdAt.toLocaleDateString("en-GB", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-          }).toUpperCase()
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }).toUpperCase()
         : ""
       const time = createdAt
         ? createdAt.toLocaleTimeString("en-US", {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }).toUpperCase()
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        }).toUpperCase()
         : ""
 
       const pricing = order.pricing || {}
@@ -383,7 +342,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
       let paymentStatus = order.paymentStatus
       if (!paymentStatus) {
         const s = String(paymentStatusRaw || "").toLowerCase()
-        
+
         if (s === "refunded") {
           paymentStatus = "Refunded"
         } else if (s === "paid" || s === "authorized" || s === "captured" || s === "settled") {
@@ -424,10 +383,10 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
 
       const items = Array.isArray(order.items)
         ? order.items.map((item) => ({
-            quantity: item.quantity || 1,
-            name: item.name || item.foodName || item.title || "Item",
-            price: item.price || 0,
-          }))
+          quantity: item.quantity || 1,
+          name: item.name || item.foodName || item.title || "Item",
+          price: item.price || 0,
+        }))
         : []
 
       const customerName = order.customerName || order.userId?.name || "N/A"
@@ -520,6 +479,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
       return undefined
     }
 
+    const token = localStorage.getItem("admin_accessToken") || localStorage.getItem("accessToken") || ""
     const socket = io(backendUrl, {
       transports: ["websocket", "polling"],
       reconnection: true,
@@ -527,6 +487,8 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
+      auth: { token },
+      query: { token },
     })
     socketRef.current = socket
 
@@ -560,7 +522,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
       activeOrderAlertRef.current = payload || { orderId }
       playDefaultRing()
       startAlertLoop()
-      toast.info(title, { description: body })
+      toast.info(title, { id: `admin-order-${orderId}`, description: body })
       showBrowserNotification(title, body, `admin-order-${orderId}`)
       fetchOrders({ silent: true, withRingCheck: false })
       window.dispatchEvent(new Event("adminNotificationsUpdated"))
@@ -611,6 +573,12 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
   const orderIdFromUrl = searchParams.get("orderId")
 
   useEffect(() => {
+    if (isViewOrderOpen) {
+      adminAlertSound.stopAlert()
+    }
+  }, [isViewOrderOpen])
+
+  useEffect(() => {
     if (orderIdFromUrl && normalizedOrders.length > 0) {
       const order = normalizedOrders.find(o => o.id === orderIdFromUrl || o._id === orderIdFromUrl || o.orderId === orderIdFromUrl)
       if (order) {
@@ -620,6 +588,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
   }, [orderIdFromUrl, normalizedOrders, handleViewOrder])
 
   const handleAcceptOrder = async (order) => {
+    adminAlertSound.stopAlert()
     const orderIdToUse = order.id || order._id || order.orderId
     if (!orderIdToUse) {
       toast.error("Order ID not found")
@@ -644,6 +613,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
   }
 
   const handleUpdateStatus = async (order, status) => {
+    adminAlertSound.stopAlert()
     const orderIdToUse = order.id || order._id || order.orderId
     if (!orderIdToUse) {
       toast.error("Order ID not found")
@@ -824,7 +794,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
   // Handle refund button click - show modal for wallet payments, confirm dialog for others
   const handleRefund = (order) => {
     const isWalletPayment = order.paymentType === "Wallet" || order.payment?.method === "wallet";
-    
+
     if (isWalletPayment) {
       // Show modal for wallet refunds
       setSelectedOrderForRefund(order)
@@ -832,11 +802,11 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
     } else {
       // For non-wallet payments, use the old confirm dialog flow
       const confirmMessage = `Are you sure you want to process refund for order ${order.orderId}?\n\nThis will initiate a Razorpay refund to the customer's original payment method.`;
-      
+
       if (!confirm(confirmMessage)) {
         return
       }
-      
+
       processRefund(order, null) // null amount means use default
     }
   }
@@ -847,13 +817,13 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
     // Backend accepts either MongoDB ObjectId (24 chars) or orderId string
     // Using MongoDB _id is more reliable for route matching (no dashes/special chars)
     const orderIdToUse = order.id || order._id || order.orderId
-    
+
     if (!orderIdToUse) {
       debugError('? No orderId found in order object:', order)
       toast.error('Order ID not found. Please refresh the page and try again.')
       return
     }
-    
+
     debugLog('?? Order details for refund:', {
       orderIdString: order.orderId,
       mongoId: order.id,
@@ -864,7 +834,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
 
     try {
       setProcessingRefund(orderIdToUse)
-      
+
       debugLog('?? Processing refund for order:', {
         orderId: order.orderId,
         id: order.id,
@@ -876,20 +846,20 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
       setRefundModalOpen(false)
       // const requestData = refundAmount !== null ? { refundAmount: parseFloat(refundAmount) } : {}
       // const response = await accessoriesAdminAPI.processRefund(orderIdToUse, requestData)
-      
+
       // if (response.data?.success) {
       //   const isWalletPayment = order.paymentType === "Wallet" || order.payment?.method === "wallet";
       //   toast.success(response.data?.message || (isWalletPayment 
       //     ? `Wallet refund of \u20B9${refundAmount || order.totalAmount} processed successfully for order ${order.orderId}`
       //     : `Refund sent to the original payment method for order ${order.orderId}`))
-        // Update the order in the local state immediately to show "Refunded" status
-        setOrders(prevOrders => 
-          prevOrders.map(o => 
-            (o.id === order.id || o.orderId === order.orderId)
-              ? { ...o, refundStatus: 'processed' } // Wallet refunds are instant, so mark as processed
-              : o
-          )
+      // Update the order in the local state immediately to show "Refunded" status
+      setOrders(prevOrders =>
+        prevOrders.map(o =>
+          (o.id === order.id || o.orderId === order.orderId)
+            ? { ...o, refundStatus: 'processed' } // Wallet refunds are instant, so mark as processed
+            : o
         )
+      )
       //   // Refresh the orders list to get updated data
       //   await fetchOrders({ silent: true, withRingCheck: false })
       // } else {
@@ -897,7 +867,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
       // }
     } catch (error) {
       debugError("? Error processing refund:", error)
-      
+
       // Log full error details for debugging
       const errorDetails = {
         message: error.message,
@@ -917,10 +887,10 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
         stack: error.stack
       }
       debugError("? Error details:", JSON.stringify(errorDetails, null, 2))
-      
+
       // Show more specific error message
       let errorMessage = "Failed to process refund"
-      
+
       if (error.response) {
         // Server responded with error
         if (error.response.status === 404) {
@@ -941,7 +911,7 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
         // Error in setting up the request
         errorMessage = error.message || "Failed to process refund"
       }
-      
+
       debugError("? Final error message:", errorMessage)
       toast.error(errorMessage)
     } finally {
@@ -969,9 +939,9 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
   return (
     <div className="p-4 lg:p-6 bg-slate-50 min-h-screen w-full max-w-full overflow-x-hidden">
       <h1 className="text-2xl font-bold text-slate-900 tracking-tight">accessories Orders</h1>
-      <OrdersTopbar 
-        title={config.title} 
-        count={count} 
+      <OrdersTopbar
+        title={config.title}
+        count={count}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onFilterClick={() => setIsFilterOpen(true)}
@@ -1019,8 +989,8 @@ export default function accessoriesOrdersPage({ statusKey = "all" }) {
         onConfirm={handleRefundConfirm}
         isProcessing={processingRefund !== null}
       />
-      <OrdersTable 
-        orders={filteredOrders} 
+      <OrdersTable
+        orders={filteredOrders}
         visibleColumns={visibleColumns}
         onViewOrder={handleViewOrder}
         onPrintOrder={handlePrintOrder}

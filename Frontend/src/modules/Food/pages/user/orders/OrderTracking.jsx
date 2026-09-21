@@ -39,6 +39,7 @@ import { orderAPI, restaurantAPI } from "@food/api"
 import { useCompanyName } from "@food/hooks/useCompanyName"
 import { getCachedSettings } from "@food/utils/businessSettings"
 import { useUserNotifications } from "@food/hooks/useUserNotifications"
+import { suppressForegroundNotification } from "@food/utils/firebaseMessaging"
 import circleIcon from "@food/assets/circleicon.png"
 import { RESTAURANT_PIN_SVG, CUSTOMER_PIN_SVG, RIDER_BIKE_SVG } from "@food/constants/mapIcons"
 
@@ -525,6 +526,7 @@ export default function OrderTracking() {
   const [showOrderDetails, setShowOrderDetails] = useState(false)
   const [cancellationReason, setCancellationReason] = useState("")
   const [isCancelling, setIsCancelling] = useState(false)
+  const isCancellingRef = useRef(false)
   const [isInstructionsModalOpen, setIsInstructionsModalOpen] = useState(false)
   const [deliveryInstructions, setDeliveryInstructions] = useState("")
   const [isUpdatingInstructions, setIsUpdatingInstructions] = useState(false)
@@ -1137,17 +1139,26 @@ export default function OrderTracking() {
   };
 
   const handleConfirmCancel = async () => {
+    if (isCancellingRef.current || isCancelling) return;
     if (!cancellationReason.trim()) {
       toast.error('Please provide a reason for cancellation');
       return;
     }
 
+    isCancellingRef.current = true;
     setIsCancelling(true);
     try {
       const cancelLookupId =
         lookupIdsRef.current[0] || normalizeLookupId(orderId)
       const response = await orderAPI.cancelOrder(cancelLookupId, { reason: cancellationReason.trim() });
       if (response.data?.success) {
+        if (cancelLookupId) {
+          suppressForegroundNotification(cancelLookupId, 'order_cancelled', 6000);
+        }
+        const effectiveId = order?._id || order?.id || order?.orderId;
+        if (effectiveId && effectiveId !== cancelLookupId) {
+          suppressForegroundNotification(effectiveId, 'order_cancelled', 6000);
+        }
         const paymentMethod = order?.payment?.method || order?.paymentMethod;
         const successMessage = response.data?.message ||
           (paymentMethod === 'cash' || paymentMethod === 'cod'
@@ -1155,7 +1166,7 @@ export default function OrderTracking() {
             : paymentMethod === 'wallet'
               ? 'Order cancelled successfully. Refund has been credited to your wallet.'
               : 'Order cancelled successfully. Refund has been initiated to your original payment method.');
-        toast.success(successMessage);
+        toast.success(successMessage, { id: `order-cancelled-${cancelLookupId || effectiveId || 'cancel'}` });
         setShowCancelDialog(false);
         setCancellationReason("");
         // Refresh order data
@@ -1171,6 +1182,7 @@ export default function OrderTracking() {
       debugError('Error cancelling order:', error);
       toast.error(error.response?.data?.message || 'Failed to cancel order');
     } finally {
+      isCancellingRef.current = false;
       setIsCancelling(false);
     }
   };

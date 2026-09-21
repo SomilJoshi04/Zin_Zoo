@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { Outlet, useLocation } from "react-router-dom"
 import AdminSidebar from "./AdminSidebar"
 import AdminNavbar from "./AdminNavbar"
+import AdminNotificationManager from "./AdminNotificationManager"
 import { API_BASE_URL } from "@food/api/config"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
@@ -67,6 +68,9 @@ export default function AdminLayout() {
 
   return (
     <div className="h-screen bg-neutral-200 dark:bg-[#0a0a0a] flex overflow-hidden admin-panel">
+      {/* Global Real-Time Notification & Sound Manager */}
+      <AdminNotificationManager />
+
       {/* Mobile Overlay */}
       {sidebarOpen && (
         <div

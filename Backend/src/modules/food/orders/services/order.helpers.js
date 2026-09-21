@@ -407,9 +407,12 @@ export async function broadcastNewOrderToAdmin(order) {
         link = '/admin/food/accessories-orders/all';
     }
 
+    const notifTitle = `New ${moduleName} Order`;
+    const notifMessage = `Order #${payload.orderId} was placed. Total: ₹${Number(totalAmount).toFixed(2)}.`;
+
     await createAdminNotification({
-      title: `New ${moduleName} Order`,
-      message: `Order #${payload.orderId} was placed. Total: ₹${Number(totalAmount).toFixed(2)}.`,
+      title: notifTitle,
+      message: notifMessage,
       type: 'order',
       category: payload.moduleType || 'food',
       link,
@@ -419,7 +422,42 @@ export async function broadcastNewOrderToAdmin(order) {
     const io = getIO();
     if (io) {
       logger.info(`[Socket] Broadcasting new order ${payload.orderId} to admin-orders`);
-      io.to('admin-orders').emit("play_notification_sound", payload);
+      io.to('admin-orders').emit("play_notification_sound", {
+        ...payload,
+        title: notifTitle,
+        message: notifMessage,
+        link
+      });
+      io.to('admin-orders').emit("admin_new_order", {
+        ...payload,
+        title: notifTitle,
+        message: notifMessage,
+        link
+      });
+      io.to('admin-orders').emit("adminNotificationsUpdated", {
+        ...payload,
+        title: notifTitle,
+        message: notifMessage
+      });
+    }
+
+    // Dispatch FCM Push Notification to all active admins
+    try {
+      const { notifyAdminsSafely } = await import('../../../../core/notifications/firebase.service.js');
+      await notifyAdminsSafely({
+        title: `🚨 ${notifTitle}`,
+        body: notifMessage,
+        data: {
+          type: "order_created",
+          orderId: String(payload.orderId),
+          orderMongoId: String(payload.orderMongoId),
+          moduleType: String(payload.moduleType),
+          link
+        }
+      });
+      logger.info(`[FCM] Successfully dispatched new order push notification for #${payload.orderId} to active admins`);
+    } catch (fcmErr) {
+      logger.warn(`Failed to dispatch FCM push notification to admins: ${fcmErr.message}`);
     }
   } catch (err) {
     logger.warn(`Failed to broadcast new order to admin via sockets: ${err.message}`);

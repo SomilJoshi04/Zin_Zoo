@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import useAppBackNavigation from "@food/hooks/useAppBackNavigation"
 import {
@@ -24,6 +24,7 @@ import { useCart } from "@food/context/CartContext"
 import { toast } from "sonner"
 import { getCompanyNameAsync, getCachedSettings } from "@food/utils/businessSettings"
 import { generateThermalInvoice } from "@food/utils/generateThermalInvoice"
+import { suppressForegroundNotification } from "@food/utils/firebaseMessaging"
 const debugLog = (...args) => { }
 const debugWarn = (...args) => { }
 const debugError = (...args) => { }
@@ -44,6 +45,7 @@ export default function UserOrderDetails() {
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [cancellationReason, setCancellationReason] = useState('')
   const [isCancelling, setIsCancelling] = useState(false)
+  const isCancellingRef = useRef(false)
 
   useEffect(() => {
     if (order?.ratings?.restaurants && Array.isArray(order.ratings.restaurants)) {
@@ -304,16 +306,25 @@ export default function UserOrderDetails() {
   };
 
   const handleConfirmCancel = async () => {
+    if (isCancellingRef.current || isCancelling) return;
     if (!cancellationReason.trim()) {
       toast.error('Please provide a reason for cancellation');
       return;
     }
 
+    isCancellingRef.current = true;
     setIsCancelling(true);
+    const targetOrderId = order?._id || order?.id || orderId;
     try {
-      const response = await orderAPI.cancelOrder(order._id || order.id || orderId, { reason: cancellationReason.trim() });
+      const response = await orderAPI.cancelOrder(targetOrderId, { reason: cancellationReason.trim() });
       if (response.data?.success) {
-        toast.success('Order cancelled successfully');
+        if (targetOrderId) {
+          suppressForegroundNotification(targetOrderId, 'order_cancelled', 6000);
+          if (order?.orderId && order.orderId !== targetOrderId) {
+            suppressForegroundNotification(order.orderId, 'order_cancelled', 6000);
+          }
+        }
+        toast.success('Order cancelled successfully', { id: `order-cancelled-${targetOrderId}` });
         setShowCancelDialog(false);
         setCancellationReason('');
 
@@ -329,6 +340,7 @@ export default function UserOrderDetails() {
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to cancel order');
     } finally {
+      isCancellingRef.current = false;
       setIsCancelling(false);
     }
   };

@@ -117,6 +117,10 @@ export const initSocket = async (server) => {
 
         // Auto-join role rooms (lets us emit without a custom join).
         if (userId && role) {
+            if (role === 'ADMIN') {
+                socket.join('admin-orders');
+                logger.info(`Socket ${socket.id} (ADMIN:${userId}) auto-joined admin-orders room`);
+            }
             if (role === 'RESTAURANT') socket.join(roomNames.restaurant(userId));
             if (role === 'USER') socket.join(roomNames.user(userId));
             if (role === 'DELIVERY_PARTNER') {

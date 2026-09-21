@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useMemo, Fragment } from "react"
+import { useState, useEffect, useRef, useMemo, Fragment } from "react"
 import { createPortal } from "react-dom"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Plus, Minus, ArrowLeft, ChevronRight, Clock, MapPin, Phone, FileText, Utensils, Tag, Percent, Share2, ChevronUp, ChevronDown, X, Check, Settings, CreditCard, Wallet, Building2, Sparkles, Banknote, Zap, CheckCircle2, MessageCircle, Send, Mail, Copy, Coins, ShoppingCart, ShoppingBag } from "lucide-react"
@@ -22,6 +22,7 @@ import { useCompanyName } from "@food/hooks/useCompanyName"
 import { getRestaurantAvailabilityStatus } from "@food/utils/restaurantAvailability"
 import useAppBackNavigation from "@food/hooks/useAppBackNavigation"
 import { isModuleAuthenticated } from "@food/utils/auth"
+import { suppressForegroundNotification } from "@food/utils/firebaseMessaging"
 import zoopSound from "@food/assets/audio/zomato_sms.mp3"
 const debugLog = (...args) => { }
 const debugWarn = (...args) => { }
@@ -1679,7 +1680,11 @@ export default function Cart() {
   }
 
 
+  const isPlacingOrderRef = useRef(false)
+
   const handlePlaceOrder = async () => {
+    if (isPlacingOrderRef.current || isPlacingOrder) return;
+
     if (!isModuleAuthenticated('user')) {
       toast.error("Please login to place your order")
       navigate("/food/user/auth/login?redirect=/food/user/cart", { replace: true })
@@ -1710,6 +1715,7 @@ export default function Cart() {
       return
     }
 
+    isPlacingOrderRef.current = true
     setIsPlacingOrder(true)
     setPaymentStage(null)
 
@@ -1867,14 +1873,18 @@ export default function Cart() {
 
       // Cash flow: order placed without online payment
       if (selectedPaymentMethod === "cash") {
-        toast.success("Order placed with Cash on Delivery")
-
         let safeId = order?.orderMongoId || order?._id || order?.orderId || order?.id || null;
         if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
 
         if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
           const subId = order.subOrderIds[0];
           safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
+        }
+
+        const toastId = `order-placed-${safeId || 'cash'}`;
+        toast.success("Order placed with Cash on Delivery", { id: toastId });
+        if (safeId) {
+          suppressForegroundNotification(safeId, 'order_created', 6000);
         }
 
         setPlacedOrderId(safeId)
@@ -1890,20 +1900,25 @@ export default function Cart() {
         } catch {
           // ignore
         }
+        isPlacingOrderRef.current = false
         setIsPlacingOrder(false)
         return
       }
 
       // Wallet flow: order placed with wallet payment (already processed in backend)
       if (selectedPaymentMethod === "wallet") {
-        toast.success("Order placed with Wallet payment")
-
         let safeId = order?.orderMongoId || order?._id || order?.orderId || order?.id || null;
         if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
 
         if (Array.isArray(order?.subOrderIds) && order.subOrderIds.length === 1) {
           const subId = order.subOrderIds[0];
           safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
+        }
+
+        const toastId = `order-placed-${safeId || 'wallet'}`;
+        toast.success("Order placed with Wallet payment", { id: toastId });
+        if (safeId) {
+          suppressForegroundNotification(safeId, 'order_created', 6000);
         }
 
         setPlacedOrderId(safeId)
@@ -1919,6 +1934,7 @@ export default function Cart() {
         } catch {
           // ignore
         }
+        isPlacingOrderRef.current = false
         setIsPlacingOrder(false)
         // Refresh wallet balance
         try {
@@ -2017,10 +2033,6 @@ export default function Cart() {
                 orderId: order?._id || order?.orderId || 'unknown',
                 paymentId: verifyResponse.data.data?.payment?.paymentId
               })
-              toast.dismiss('razorpay-verifying')
-              toast.success("Your order has been placed successfully.")
-              setPaymentStage('success')
-
               let safeId = order?.orderMongoId || order?._id || order?.orderId || order?.id || null;
               if (typeof safeId === 'object' && safeId !== null) safeId = safeId.toString();
 
@@ -2029,6 +2041,14 @@ export default function Cart() {
                 const subId = order.subOrderIds[0];
                 safeId = (typeof subId === 'object' && subId !== null) ? subId.toString() : String(subId);
               }
+
+              const toastId = `order-placed-${safeId || 'online'}`;
+              toast.dismiss('razorpay-verifying')
+              toast.success("Your order has been placed successfully.", { id: toastId })
+              if (safeId) {
+                suppressForegroundNotification(safeId, 'order_created', 6000);
+              }
+              setPaymentStage('success')
 
               setPlacedOrderId(safeId)
               setPlacedOrderIsUnified(order?.isUnified === true || (Array.isArray(order?.subOrderIds) && order?.subOrderIds.length > 1))
@@ -2043,6 +2063,7 @@ export default function Cart() {
               } catch {
                 // ignore
               }
+              isPlacingOrderRef.current = false
               setIsPlacingOrder(false)
             } else {
               throw new Error(verifyResponse.data.message || "Payment verification failed")

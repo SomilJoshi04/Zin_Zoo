@@ -27,7 +27,7 @@ export function AppProviders({ children }) {
       <ReduxProvider store={store}>
         <Router>
           {children}
-          <Toaster position="top-center" richColors offset="80px" closeButton />
+          <Toaster position="top-center" richColors offset="80px" closeButton visibleToasts={1} expand={false} />
         </Router>
       </ReduxProvider>
     </StrictMode>

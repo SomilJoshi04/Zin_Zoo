@@ -15,8 +15,7 @@ import { useOrdersManagement } from "@food/components/admin/orders/useOrdersMana
 import { Loader2 } from "lucide-react"
 import { OrdersDashboardSkeleton } from "@food/components/ui/loading-skeletons"
 import { useDelayedLoading } from "@food/hooks/useDelayedLoading"
-import alertSound from "@food/assets/audio/alert.mp3"
-import originalSound from "@food/assets/audio/original.mp3"
+import { adminAlertSound } from "@food/utils/adminAlertSound"
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -83,43 +82,16 @@ export default function GroceryOrdersPage({ statusKey = "all" }) {
     return `${source}${separator}devcache=${cacheKey}`
   }, [])
 
-  const playDeliveryStyleBuzz = useCallback(async () => {
-    const selectedSound = localStorage.getItem("delivery_alert_sound") || "zomato_tone"
-    const soundFile = selectedSound === "original"
-      ? resolveAudioSource(originalSound, "admin-original")
-      : resolveAudioSource(alertSound, "admin-alert")
-
-    try {
-      if (!notificationAudioRef.current) {
-        notificationAudioRef.current = new Audio(soundFile)
-        notificationAudioRef.current.preload = "auto"
-        notificationAudioRef.current.volume = 1
-      } else if (!notificationAudioRef.current.src.includes(soundFile.split("/").pop())) {
-        notificationAudioRef.current.pause()
-        notificationAudioRef.current.src = soundFile
-        notificationAudioRef.current.load()
-      }
-
-      if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
-        navigator.vibrate([200, 100, 200, 100, 300])
-      }
-
-      notificationAudioRef.current.muted = false
-      notificationAudioRef.current.volume = 1
-      notificationAudioRef.current.currentTime = 0
-      await notificationAudioRef.current.play()
-      return true
-    } catch (_) {
-      return false
-    }
-  }, [resolveAudioSource])
-
-  const playDefaultRing = useCallback(() => {
-    // Notification sound disabled per user request
-    return;
+  const playDefaultRing = useCallback((orderId) => {
+    adminAlertSound.playAlert({
+      id: orderId || activeOrderAlertRef.current?.orderId || "grocery-order",
+      loop: true,
+      maxDurationMs: ALERT_LOOP_MAX_MS,
+    })
   }, [])
 
   const stopAlertLoop = useCallback(() => {
+    adminAlertSound.stopAlert()
     if (alertLoopTimerRef.current) {
       clearInterval(alertLoopTimerRef.current)
       alertLoopTimerRef.current = null
@@ -128,21 +100,8 @@ export default function GroceryOrdersPage({ statusKey = "all" }) {
   }, [])
 
   const startAlertLoop = useCallback(() => {
-    stopAlertLoop()
-    alertLoopStartedAtRef.current = Date.now()
-
-    alertLoopTimerRef.current = setInterval(() => {
-      const elapsed = Date.now() - alertLoopStartedAtRef.current
-      if (elapsed >= ALERT_LOOP_MAX_MS || !activeOrderAlertRef.current) {
-        stopAlertLoop()
-        return
-      }
-
-      if (typeof document !== "undefined" && document.visibilityState === "hidden") {
-        playDefaultRing()
-      }
-    }, ALERT_LOOP_INTERVAL_MS)
-  }, [playDefaultRing, stopAlertLoop])
+    playDefaultRing()
+  }, [playDefaultRing])
 
   const showBrowserNotification = useCallback(async (title, body, tag) => {
     if (typeof window === "undefined" || typeof Notification === "undefined") return
@@ -517,6 +476,7 @@ export default function GroceryOrdersPage({ statusKey = "all" }) {
       return undefined
     }
 
+    const token = localStorage.getItem("admin_accessToken") || localStorage.getItem("accessToken") || ""
     const socket = io(backendUrl, {
       transports: ["websocket", "polling"],
       reconnection: true,
@@ -524,6 +484,8 @@ export default function GroceryOrdersPage({ statusKey = "all" }) {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000,
+      auth: { token },
+      query: { token },
     })
     socketRef.current = socket
 
@@ -557,7 +519,7 @@ export default function GroceryOrdersPage({ statusKey = "all" }) {
       activeOrderAlertRef.current = payload || { orderId }
       playDefaultRing()
       startAlertLoop()
-      toast.info(title, { description: body })
+      toast.info(title, { id: `admin-order-${orderId}`, description: body })
       showBrowserNotification(title, body, `admin-order-${orderId}`)
       fetchOrders({ silent: true, withRingCheck: false })
       window.dispatchEvent(new Event("adminNotificationsUpdated"))
@@ -608,6 +570,12 @@ export default function GroceryOrdersPage({ statusKey = "all" }) {
   const orderIdFromUrl = searchParams.get("orderId")
 
   useEffect(() => {
+    if (isViewOrderOpen) {
+      adminAlertSound.stopAlert()
+    }
+  }, [isViewOrderOpen])
+
+  useEffect(() => {
     if (orderIdFromUrl && normalizedOrders.length > 0) {
       const order = normalizedOrders.find(o => o.id === orderIdFromUrl || o._id === orderIdFromUrl || o.orderId === orderIdFromUrl)
       if (order) {
@@ -617,6 +585,7 @@ export default function GroceryOrdersPage({ statusKey = "all" }) {
   }, [orderIdFromUrl, normalizedOrders, handleViewOrder])
 
   const handleAcceptOrder = async (order) => {
+    adminAlertSound.stopAlert()
     const orderIdToUse = order.id || order._id || order.orderId
     if (!orderIdToUse) {
       toast.error("Order ID not found")
@@ -641,6 +610,7 @@ export default function GroceryOrdersPage({ statusKey = "all" }) {
   }
 
   const handleUpdateStatus = async (order, status) => {
+    adminAlertSound.stopAlert()
     const orderIdToUse = order.id || order._id || order.orderId
     if (!orderIdToUse) {
       toast.error("Order ID not found")

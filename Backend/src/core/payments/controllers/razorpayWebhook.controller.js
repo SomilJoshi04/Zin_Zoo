@@ -39,23 +39,35 @@ export const handleRazorpayWebhook = async (req, res) => {
             const rzOrderId = paymentObj.order_id;
             const rzPaymentId = paymentObj.id;
 
-            // Atomic update to mark as paid if not already
-            const order = await FoodOrder.findOneAndUpdate(
-                { 
-                    "payment.razorpay.orderId": rzOrderId, 
-                    "payment.status": { $ne: 'paid' } 
-                },
-                { 
-                    $set: { 
-                        "payment.status": 'paid', 
-                        "payment.razorpay.paymentId": rzPaymentId 
-                    } 
-                },
-                { new: true }
-            );
+            // 1. Try finding and updating FoodOrder
+            let order = await FoodOrder.findOne({ "payment.razorpay.orderId": rzOrderId });
+            let isGrocery = false;
+
+            if (!order) {
+                const { GroceryOrder } = await import('../../../modules/food/orders/models/groceryOrder.model.js');
+                order = await GroceryOrder.findOne({ "payment.razorpay.orderId": rzOrderId });
+                if (order) isGrocery = true;
+            }
 
             if (order) {
-                // ✅ UPDATED: Wrapped in try-catch to prevent secondary failures from breaking the webhook response
+                const wasPending = order.orderStatus === 'pending_payment';
+                order.payment.status = 'paid';
+                order.payment.razorpay.paymentId = rzPaymentId;
+
+                if (wasPending) {
+                    order.orderStatus = 'confirmed';
+                    if (!Array.isArray(order.statusHistory)) order.statusHistory = [];
+                    order.statusHistory.push({
+                        at: new Date(),
+                        byRole: "SYSTEM",
+                        from: "pending_payment",
+                        to: "confirmed",
+                        note: "Payment synced via Webhook (payment.captured)"
+                    });
+                }
+
+                await order.save();
+
                 try {
                     await foodTransactionService.updateTransactionStatus(order._id, 'captured', {
                         status: 'captured',
@@ -63,12 +75,23 @@ export const handleRazorpayWebhook = async (req, res) => {
                         note: 'Payment status synced via Webhook (payment.captured)'
                     });
                 } catch (ledgerErr) {
-                    logger.error(`Webhook Ledger Error (Order ${order.orderId}): ${ledgerErr.message}`);
+                    logger.error(`Webhook Ledger Error (Order ${order.orderId || order._id}): ${ledgerErr.message}`);
                 }
-                logger.info(`Webhook [payment.captured]: Synced Order ${order.orderId} (Status=paid)`);
+
+                if (wasPending) {
+                    try {
+                        const { broadcastNewOrderToAdmin, notifyRestaurantNewOrder } = await import('../../../modules/food/orders/services/order.helpers.js');
+                        await notifyRestaurantNewOrder(order);
+                        await broadcastNewOrderToAdmin(order);
+                        logger.info(`Webhook successfully triggered notifications for confirmed order ${order.orderId || order._id}`);
+                    } catch (notifErr) {
+                        logger.warn(`Webhook failed to notify admin/restaurant for order ${order._id}: ${notifErr.message}`);
+                    }
+                }
+
+                logger.info(`Webhook [payment.captured]: Synced Order ${order.orderId || order._id} (Status=${order.orderStatus})`);
             } else {
-                // ✅ ADDED: Log warn if order not found but payment was captured
-                logger.warn(`Webhook [payment.captured]: Order not found or already paid for RZ-Order: ${rzOrderId}`);
+                logger.warn(`Webhook [payment.captured]: Order not found for RZ-Order: ${rzOrderId}`);
             }
         }
 

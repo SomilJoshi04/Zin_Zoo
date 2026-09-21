@@ -22,6 +22,49 @@ let lastWebRegistrationAtByModule = new Map();
 let serviceWorkerMessageListenerAttached = false;
 const MESSAGING_APP_NAME = "web-push-app";
 const recentForegroundNotifications = new Map();
+const suppressedActions = new Map();
+
+/**
+ * Suppress foreground FCM alerts for an order action that was already initiated locally by the user.
+ * Prevents double-toasting and sound echoes when the backend push reflects back to the same device.
+ */
+export function suppressForegroundNotification(orderId, eventType = "*", durationMs = 6000) {
+  if (!orderId) return;
+  const canonicalOrderId = String(orderId).trim().toLowerCase();
+  const canonicalType = String(eventType || "*").trim().toLowerCase();
+  const key = `${canonicalOrderId}::${canonicalType}`;
+  suppressedActions.set(key, Date.now() + durationMs);
+}
+
+function isActionSuppressed(orderId, eventType) {
+  if (!orderId) return false;
+  const now = Date.now();
+  for (const [k, expiry] of suppressedActions.entries()) {
+    if (now > expiry) suppressedActions.delete(k);
+  }
+  const canonicalOrderId = String(orderId).trim().toLowerCase();
+  const canonicalType = String(eventType || "").trim().toLowerCase();
+  const exactKey = `${canonicalOrderId}::${canonicalType}`;
+  const wildKey = `${canonicalOrderId}::*`;
+  return suppressedActions.has(exactKey) || suppressedActions.has(wildKey);
+}
+
+function isCancellationOrNegativeEvent(payload = {}) {
+  const type = String(payload?.data?.type || payload?.data?.event || payload?.data?.action || "").toLowerCase();
+  const title = String(payload?.notification?.title || payload?.data?.title || "").toLowerCase();
+  const body = String(payload?.notification?.body || payload?.data?.body || "").toLowerCase();
+  return (
+    type.includes("cancel") ||
+    type.includes("reject") ||
+    type.includes("fail") ||
+    title.includes("cancel") ||
+    title.includes("reject") ||
+    title.includes("fail") ||
+    body.includes("cancel") ||
+    body.includes("reject")
+  );
+}
+
 let pushSoundAudio = null;
 let pushSoundUnlocked = false;
 let pushSoundContext = null;
@@ -131,8 +174,32 @@ function sanitize(value) {
 }
 
 function getNotificationKey(payload = {}) {
+  const rawOrderId =
+    payload?.data?.orderId ||
+    payload?.data?.order_id ||
+    payload?.data?.orderMongoId ||
+    payload?.orderId ||
+    payload?.orderMongoId ||
+    "";
+  const orderId = String(rawOrderId || "").trim().toLowerCase();
+
+  const rawType =
+    payload?.data?.type ||
+    payload?.data?.event ||
+    payload?.data?.action ||
+    payload?.type ||
+    "";
+  const eventType = String(rawType || "").trim().toLowerCase();
+
   const normalizedTitle = normalizeNotificationText(payload?.data?.title || payload?.notification?.title || "");
   const normalizedBody = normalizeNotificationText(payload?.data?.body || payload?.notification?.body || "");
+
+  // If orderId is present, create a deterministic canonical key so all conduits share the exact same key
+  if (orderId) {
+    const statusHint = eventType || (normalizedTitle.toLowerCase().includes("cancel") ? "cancelled" : "update");
+    return `order::${orderId}::${statusHint}`;
+  }
+
   return (
     payload?.data?.notificationId ||
     payload?.data?.messageId ||
@@ -140,7 +207,6 @@ function getNotificationKey(payload = {}) {
     [
       normalizedTitle,
       normalizedBody,
-      payload?.data?.orderId || "",
       payload?.data?.targetUrl || payload?.data?.link || "",
     ].join("::")
   );
@@ -383,6 +449,12 @@ async function triggerWebViewNativeNotification(payload = {}) {
 
 async function playPushSound(payload = {}) {
   try {
+    // Suppress celebration / success chimes when order is cancelled or rejected
+    if (isCancellationOrNegativeEvent(payload)) {
+      pushDebugLog(PUSH_DEBUG_PREFIX, "Push sound muted for cancellation/negative notification", { payload });
+      return;
+    }
+
     pushDebugLog(PUSH_DEBUG_PREFIX, "playPushSound called", {
       notificationKey: getNotificationKey(payload),
       pushSoundUnlocked,
@@ -700,6 +772,23 @@ function showForegroundNotification(payload = {}) {
     return;
   }
 
+  const rawOrderId =
+    payload?.data?.orderId ||
+    payload?.data?.order_id ||
+    payload?.data?.orderMongoId ||
+    payload?.orderId ||
+    payload?.orderMongoId ||
+    "";
+  const orderId = String(rawOrderId || "").trim().toLowerCase();
+  const rawType = payload?.data?.type || payload?.data?.event || payload?.data?.action || "";
+  const eventType = String(rawType || "").trim().toLowerCase();
+
+  // If this action was already performed locally on the active screen, skip duplicate toast/audio
+  if (orderId && isActionSuppressed(orderId, eventType)) {
+    pushDebugLog(PUSH_DEBUG_PREFIX, "Skipping foreground notification: local user action already alerted", { orderId, eventType });
+    return;
+  }
+
   // Extract content from data first (backend often sends here), then notification object
   const titleCandidate = normalizeNotificationText(
     payload?.data?.title || payload?.notification?.title || "",
@@ -711,23 +800,26 @@ function showForegroundNotification(payload = {}) {
   const title = titleCandidate || bodyCandidate || "New update";
   const body = titleCandidate ? (bodyCandidate || inferredBody) : "";
 
-  // Play sound only when app is in foreground
+  // Play sound only when app is in foreground (muted for cancellations)
   playPushSound(payload);
 
-  // App is in foreground - just show in-app toast, NOT system notification
-  // System notification will be handled by service worker only when app is closed/background
+  // App is in foreground - display single idempotent in-app toast
   if (typeof document !== "undefined" && document.visibilityState === "visible") {
     if (!title && !body) {
       pushDebugLog(PUSH_DEBUG_PREFIX, "Skipping blank foreground notification after sanitize");
       return;
     }
     const textMessage = body || "";
-    if (textMessage) {
-      toast.success(`${title}: ${textMessage}`);
+    const isNegative = isCancellationOrNegativeEvent(payload);
+    const toastId = `fcm-${notificationKey}`;
+    const displayMessage = textMessage ? `${title}: ${textMessage}` : title;
+
+    if (isNegative) {
+      toast.info(displayMessage, { id: toastId });
     } else {
-      toast.success(title);
+      toast.success(displayMessage, { id: toastId });
     }
-    saveLocalNotification(title, textMessage, "Bell");
+    saveLocalNotification(title, textMessage, isNegative ? "AlertCircle" : "Bell");
     pushDebugLog(PUSH_DEBUG_PREFIX, "Foreground notification shown as toast", { title, body });
   }
 }

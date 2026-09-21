@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Menu,
@@ -47,6 +47,7 @@ import { adminAPI } from "@food/api";
 import { clearModuleAuth } from "@food/utils/auth";
 import { getCachedSettings, loadBusinessSettings } from "@food/utils/businessSettings";
 import useAdminNotifications from "@food/hooks/useAdminNotifications";
+import { adminAlertSound } from "@food/utils/adminAlertSound";
 const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
@@ -282,6 +283,7 @@ export default function AdminNavbar({ onMenuClick }) {
 
   const notificationCount = unreadCount || 0;
   const openNotificationsPage = () => {
+    adminAlertSound.stopAlert();
     setNotificationsOpen(false);
     navigate("/admin/food/notifications");
   };
