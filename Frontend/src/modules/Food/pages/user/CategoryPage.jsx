@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useEffect, startTransition, useDeferredValue
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { createPortal } from "react-dom"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, Star, Clock, Search, SlidersHorizontal, ChevronDown, Bookmark, BadgePercent, MapPin, ArrowDownUp, Timer, IndianRupee, UtensilsCrossed, ShieldCheck, X, Loader2, Grid2x2 } from "lucide-react"
+import { ArrowLeft, Star, Clock, Search, SlidersHorizontal, ChevronDown, Bookmark, BadgePercent, MapPin, ArrowDownUp, Timer, IndianRupee, UtensilsCrossed, ShieldCheck, X, Loader2, Grid2x2, AlertCircle } from "lucide-react"
 import { Card, CardContent } from "@food/components/ui/card"
 import { Button } from "@food/components/ui/button"
 import { Input } from "@food/components/ui/input"
@@ -1431,12 +1431,24 @@ export default function CategoryPage() {
     }, 400)
   }
 
-  // Check if should show grayscale (user out of service)
-  const shouldShowGrayscale = isOutOfService
+  // Check if should show grayscale (user out of service) - retained for logic compatibility
+  const shouldShowGrayscale = false
   const isCategoryView = false
 
   return (
-    <div className={`min-h-screen bg-white dark:bg-[#0a0a0a] ${shouldShowGrayscale ? 'grayscale opacity-75' : ''}`}>
+    <div className="min-h-screen bg-white dark:bg-[#0a0a0a]">
+      {/* Informative out-of-service banner */}
+      {isOutOfService && (
+        <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800/40 px-4 py-2.5">
+          <div className="max-w-7xl mx-auto flex items-center gap-2.5">
+            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+            <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-300">
+              <span className="font-semibold">Outside service area.</span> ZINZOOX food ordering is not available at your current location. You can still browse restaurants and menus.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Sticky Header */}
       <div className="sticky top-0 md:top-[128px] z-20 bg-[var(--module-theme-color,#F84E04)] md:bg-white md:dark:bg-[#1a1a1a] shadow-md md:shadow-sm">
         <div className="max-w-7xl mx-auto">
@@ -1552,7 +1564,7 @@ export default function CategoryPage() {
                       to={`/user/restaurants/${restaurant.name.toLowerCase().replace(/\s+/g, '-')}${restaurant.dishId ? `?dish=${restaurant.dishId}` : ''}`}
                       className="block"
                     >
-                      <div className={`group ${shouldShowGrayscale ? 'grayscale opacity-75' : ''}`}>
+                      <div className="group">
                         {/* Image Container */}
                         <div className="relative aspect-square rounded-xl md:rounded-2xl overflow-hidden mb-2">
                           {/* Use category dish image if available, otherwise restaurant image */}
@@ -1777,8 +1789,7 @@ export default function CategoryPage() {
 
                   return (
                     <Link key={restaurant.id} to={`/user/restaurants/${restaurantSlug}${restaurant.dishId ? `?dish=${restaurant.dishId}` : ''}`} className="h-full flex">
-                      <Card className={`overflow-hidden cursor-pointer gap-0 border-0 dark:border-gray-800 group bg-white dark:bg-[#1a1a1a] shadow-md hover:shadow-xl transition-all duration-300 py-0 rounded-md h-full flex flex-col w-full ${shouldShowGrayscale ? 'grayscale opacity-75' : ''
-                        }`}>
+                      <Card className="overflow-hidden cursor-pointer gap-0 border-0 dark:border-gray-800 group bg-white dark:bg-[#1a1a1a] shadow-md hover:shadow-xl transition-all duration-300 py-0 rounded-md h-full flex flex-col w-full">
                         {/* Image Section */}
                         <div className="relative h-44 sm:h-52 md:h-60 lg:h-64 xl:h-72 w-full overflow-hidden rounded-t-md flex-shrink-0">
                           {/* Use category dish image if available, otherwise restaurant image */}

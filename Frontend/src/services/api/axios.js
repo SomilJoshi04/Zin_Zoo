@@ -54,6 +54,7 @@ const ADMIN_PERMISSION_PATH_MAP = [
   { prefix: "/food/admin/feature-settings", section: "system_settings" },
   { prefix: "/food/admin/business-settings", section: "system_settings" },
   { prefix: "/food/admin/power-scanning", section: "system_settings" },
+  { prefix: "/food/admin/global-service-setting", section: "system_settings" },
   { prefix: "/food/admin/notifications", section: "system_settings" },
   { prefix: "/food/admin/pages-social-media", section: "pages_social_media" },
 ];
@@ -103,11 +104,19 @@ const getAdminUser = () => {
 const isAdminAllowedForAction = (section, action) => {
   const adminUser = getAdminUser();
   const adminType = String(adminUser?.adminType || "").trim().toLowerCase();
-  if (adminType === "super_admin") return true;
+  if (adminType === "super_admin" || adminType === "admin" || adminUser?.role === "ADMIN" || adminUser?.isSuperAdmin === true) {
+    return true;
+  }
   if (!section) return false;
   const permissions = adminUser?.effectivePermissions || adminUser?.permissions || {};
   const actions = Array.isArray(permissions?.[section]) ? permissions[section] : [];
-  return actions.includes(action);
+  if (actions.includes(action)) return true;
+  // Fallbacks for composite admin sections
+  if (section === "zone_management") {
+    const restActions = Array.isArray(permissions?.restaurant_management) ? permissions.restaurant_management : [];
+    if (restActions.includes(action) || restActions.includes("edit")) return true;
+  }
+  return false;
 };
 
 const hasAdminAction = (adminUser, section, action = "view") => {

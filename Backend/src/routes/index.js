@@ -54,6 +54,7 @@ router.get('/v1/food/admin/power-scanning/public', businessSettingsController.ge
 router.get('/v1/food/admin/restaurant-subscription-settings/public', adminController.getRestaurantSubscriptionSettings);
 router.get('/v1/food/admin/feature-settings/public', adminController.getFeatureSettings);
 router.get('/v1/food/admin/fee-settings/public', adminController.getFeeSettings);
+router.get('/v1/food/admin/global-service-setting/public', businessSettingsController.getGlobalServiceSetting);
 
 // 6. Food Admin API (Secured)
 router.use('/v1/food/admin', authMiddleware, requireRoles('ADMIN'), restaurantAdminRoutes);

@@ -2134,13 +2134,13 @@ function RestaurantDetailsContent() {
 
   const availabilityStatus = getRestaurantAvailabilityStatus(restaurant, new Date(availabilityTick))
   const isRestaurantOffline = !availabilityStatus.isOpen
+  // shouldShowGrayscale controls button-level disable state only (no longer full-page grayscale)
   const shouldShowGrayscale = isOutOfService || isRestaurantOffline
 
   return (
     <AnimatedPage
       id="scrollingelement"
-      className={`min-h-screen bg-white dark:bg-[#1a1a1a] flex flex-col transition-all duration-300 ${shouldShowGrayscale ? 'grayscale opacity-75' : ''
-        }`}
+      className="min-h-screen bg-white dark:bg-[#1a1a1a] flex flex-col transition-all duration-300"
     >
       {/* Header - Back, Search, Menu (like reference image) */}
       <div className="px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 pt-3 md:pt-4 lg:pt-5 pb-2 md:pb-3 bg-white dark:bg-[#1a1a1a]">
@@ -2201,6 +2201,16 @@ function RestaurantDetailsContent() {
           </div>
         </div>
       </div>
+
+      {/* Out-of-service banner – informational, non-intrusive */}
+      {isOutOfService && (
+        <div className="mx-4 sm:mx-6 md:mx-8 mt-2 mb-1 flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700/40 px-4 py-3">
+          <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+          <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+            <span className="font-semibold">Outside service area.</span> You can browse the menu, but ordering is not available from your current location.
+          </p>
+        </div>
+      )}
 
       {/* Main Content Card */}
       <div className="bg-white dark:bg-[#1a1a1a] rounded-t-3xl relative z-10 min-h-[40vh] flex-1">

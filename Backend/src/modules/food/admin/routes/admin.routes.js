@@ -251,6 +251,24 @@ router.patch('/coin-settings', coinSettingsController.updateCoinSettings);
 router.get('/coin-requests', coinRedemptionController.getCoinRequests);
 router.patch('/coin-requests/:id/verify', coinRedemptionController.verifyCoinRequest);
 
+// ----- Global Service Setting -----
+router.get(
+    '/global-service-setting',
+    requireAnyAdminPermission([
+        { section: 'system_settings', action: 'view' },
+        { section: 'zone_management', action: 'view' }
+    ]),
+    businessSettingsController.getGlobalServiceSetting
+);
+router.patch(
+    '/global-service-setting',
+    requireAnyAdminPermission([
+        { section: 'system_settings', action: 'edit' },
+        { section: 'zone_management', action: 'edit' }
+    ]),
+    businessSettingsController.updateGlobalServiceSetting
+);
+
 // ----- Zones -----
 router.get(
     '/zones',

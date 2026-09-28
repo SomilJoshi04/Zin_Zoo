@@ -33,6 +33,34 @@ Backend/scratch/
 */scripts/
 */scratch_files/
 
+# ── Testing & Jest Files ──────────────────────────────────────────────────────
+*.test.js
+*.test.jsx
+*.test.ts
+*.test.tsx
+*.test.mjs
+*.spec.js
+*.spec.jsx
+*.spec.ts
+*.spec.tsx
+*.spec.mjs
+test_*.js
+test_*.jsx
+test_*.mjs
+test_*.ps1
+test_*.sh
+test_*.bat
+check_*.mjs
+find_*.mjs
+test/
+tests/
+__tests__/
+__mocks__/
+*.jest.*
+jest.config.*
+.jest/
+test-results/
+
 # Specific Test Files
 Frontend/src/modules/Food/utils/backendConnectionTest.js
 Backend/src/api/v1/test

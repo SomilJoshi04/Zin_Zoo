@@ -1,4 +1,5 @@
 import { FoodZone } from '../../admin/models/zone.model.js';
+import { FoodBusinessSettings } from '../../admin/models/businessSettings.model.js';
 
 const toFinite = (v) => {
     const n = typeof v === 'number' ? v : parseFloat(String(v));
@@ -31,6 +32,38 @@ export const detectZonePublicController = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'lat and lng are required' });
         }
 
+        // ── Platform-level global service bypass ──────────────────────────────────
+        // When globalFoodServiceEnabled is ON, skip polygon checks entirely and
+        // mark every user as IN_SERVICE with mode: 'GLOBAL'. Existing custom zones
+        // remain stored and will be used again the moment this flag is turned OFF.
+        let isGlobal = false;
+        try {
+            const settings = await FoodBusinessSettings.findOne()
+                .select('globalFoodServiceEnabled')
+                .lean();
+            if (settings?.globalFoodServiceEnabled === true) {
+                isGlobal = true;
+            }
+        } catch (settingsErr) {
+            // Fail-safe: if settings cannot be read, default isGlobal = false, fall back to polygon checks
+            console.error('[ZoneDetection] Failed to read business settings for global service flag:', settingsErr?.message);
+        }
+
+        if (isGlobal) {
+            return res.status(200).json({
+                success: true,
+                message: 'Global service active',
+                data: {
+                    status: 'IN_SERVICE',
+                    mode: 'GLOBAL',
+                    zoneId: null,
+                    zone: null,
+                    globalService: true
+                }
+            });
+        }
+        // ── End global bypass ──────────────────────────────────────────────────────
+
         const zones = await FoodZone.find({ isActive: true }).lean();
         for (const zone of zones) {
             const coords = Array.isArray(zone.coordinates) ? zone.coordinates : [];
@@ -39,7 +72,12 @@ export const detectZonePublicController = async (req, res, next) => {
                 return res.status(200).json({
                     success: true,
                     message: 'Zone detected',
-                    data: { status: 'IN_SERVICE', zoneId: zone._id, zone }
+                    data: {
+                        status: 'IN_SERVICE',
+                        mode: 'ZONE',
+                        zoneId: zone._id,
+                        zone
+                    }
                 });
             }
         }
@@ -47,7 +85,12 @@ export const detectZonePublicController = async (req, res, next) => {
         return res.status(200).json({
             success: true,
             message: 'Out of service',
-            data: { status: 'OUT_OF_SERVICE', zoneId: null, zone: null }
+            data: {
+                status: 'OUT_OF_SERVICE',
+                mode: 'ZONE',
+                zoneId: null,
+                zone: null
+            }
         });
     } catch (error) {
         next(error);

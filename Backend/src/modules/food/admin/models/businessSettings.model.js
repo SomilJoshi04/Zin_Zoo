@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 
 const businessSettingsSchema = new mongoose.Schema(
     {
@@ -60,7 +60,13 @@ const businessSettingsSchema = new mongoose.Schema(
             reviewUrl: { type: String, default: '' },
         },
         restaurantTdsPercentage: { type: Number, default: 0, min: 0, max: 100 },
-        deliveryBoyTdsPercentage: { type: Number, default: 0, min: 0, max: 100 }
+        deliveryBoyTdsPercentage: { type: Number, default: 0, min: 0, max: 100 },
+        /**
+         * Platform-level global food service toggle.
+         * When true  → /zones/detect returns IN_SERVICE for ALL users (bypasses polygon checks).
+         * When false → existing polygon-based detection applies (default, backward-compatible).
+         */
+        globalFoodServiceEnabled: { type: Boolean, default: false }
     },
     { timestamps: true }
 );

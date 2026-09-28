@@ -1,4 +1,4 @@
-﻿import { FoodBusinessSettings } from '../models/businessSettings.model.js';
+import { FoodBusinessSettings } from '../models/businessSettings.model.js';
 import { sendResponse } from '../../../../utils/response.js';
 import { uploadImageBufferDetailed } from '../../../../services/localUpload.service.js';
 import { broadcastPublicUpdate } from '../../../../config/socket.js';
@@ -305,3 +305,52 @@ export async function updateBusinessSettings(req, res, next) {
     }
 }
 
+/**
+ * GET /food/admin/global-service-setting  (admin, also exposed as public)
+ * Returns { globalFoodServiceEnabled: boolean }
+ */
+export async function getGlobalServiceSetting(req, res, next) {
+    try {
+        let settings = await FoodBusinessSettings.findOne().select('globalFoodServiceEnabled').lean();
+        if (!settings) {
+            settings = await FoodBusinessSettings.create({ companyName: 'Zinzoox', email: 'admin@zinzoox.com' });
+        }
+        return sendResponse(res, 200, 'Global service setting fetched', {
+            globalFoodServiceEnabled: settings.globalFoodServiceEnabled ?? false
+        });
+    } catch (error) {
+        next(error);
+    }
+}
+
+/**
+ * PATCH /food/admin/global-service-setting  (admin only)
+ * Body: { globalFoodServiceEnabled: boolean }
+ * Enables/disables the platform-wide service bypass.
+ */
+export async function updateGlobalServiceSetting(req, res, next) {
+    try {
+        const raw = req.body?.globalFoodServiceEnabled;
+        if (typeof raw !== 'boolean') {
+            return res.status(400).json({ success: false, message: 'globalFoodServiceEnabled must be a boolean' });
+        }
+
+        let settings = await FoodBusinessSettings.findOne();
+        if (!settings) {
+            settings = new FoodBusinessSettings({ companyName: 'Zinzoox', email: 'admin@zinzoox.com' });
+        }
+        settings.globalFoodServiceEnabled = raw;
+        await settings.save();
+
+        broadcastPublicUpdate('settings:update', {
+            action: 'global-service-update',
+            data: { globalFoodServiceEnabled: raw }
+        });
+
+        return sendResponse(res, 200, `Global food service ${raw ? 'enabled' : 'disabled'} successfully`, {
+            globalFoodServiceEnabled: raw
+        });
+    } catch (error) {
+        next(error);
+    }
+}

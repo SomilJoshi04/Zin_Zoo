@@ -790,6 +790,19 @@ export const adminAPI = {
   deleteZone: (id) =>
     apiClient.delete(`/food/admin/zones/${id}`, { contextModule: "admin" }),
 
+  // ============================
+  // GLOBAL SERVICE SETTING
+  // ============================
+  /** GET /food/admin/global-service-setting – admin read */
+  getGlobalServiceSetting: () =>
+    apiClient.get("/food/admin/global-service-setting", { contextModule: "admin" }),
+  /** PATCH /food/admin/global-service-setting – toggle platform-wide service */
+  updateGlobalServiceSetting: (enabled) =>
+    apiClient.patch(
+      "/food/admin/global-service-setting",
+      { globalFoodServiceEnabled: Boolean(enabled) },
+      { contextModule: "admin" },
+    ),
   // Global Orders
   getGlobalOrders: (params = {}) =>
     apiClient.get("/food/admin/global-orders", { params, contextModule: "admin" }),
@@ -2551,6 +2564,9 @@ export const zoneAPI = {
   /** Public: list active zones (for onboarding dropdowns). */
   getPublicZones: (params = {}, config = {}) =>
     apiClient.get("/food/zones/public", { params: params ?? {}, ...config }),
+  /** Public: get the platform-level global service toggle value. */
+  getPublicGlobalServiceSetting: () =>
+    apiClient.get("/food/admin/global-service-setting/public"),
 };
 export const uploadAPI = {
   /**

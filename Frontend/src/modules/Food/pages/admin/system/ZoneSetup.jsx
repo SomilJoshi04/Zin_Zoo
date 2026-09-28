@@ -17,6 +17,11 @@ export default function ZoneSetup() {
   const [submitting, setSubmitting] = useState(false)
   const [googleMapsKey, setGoogleMapsKey] = useState("")
 
+  // Platform-level Global Service Setting
+  const [globalServiceEnabled, setGlobalServiceEnabled] = useState(false)
+  const [globalLoading, setGlobalLoading] = useState(false)
+  const [togglingGlobal, setTogglingGlobal] = useState(false)
+
   // Form State
   const [selectedZone, setSelectedZone] = useState(null)
   const [formData, setFormData] = useState({
@@ -52,7 +57,47 @@ export default function ZoneSetup() {
       }
     })
     fetchZones()
+    fetchGlobalServiceSetting()
   }, [])
+
+  const fetchGlobalServiceSetting = async () => {
+    try {
+      setGlobalLoading(true)
+      const res = await adminAPI.getGlobalServiceSetting()
+      if (res?.data?.success) {
+        setGlobalServiceEnabled(Boolean(res.data.data?.globalFoodServiceEnabled))
+      }
+    } catch (err) {
+      console.error("Error fetching global service setting:", err)
+    } finally {
+      setGlobalLoading(false)
+    }
+  }
+
+  const handleToggleGlobalService = async (checked) => {
+    if (togglingGlobal) return
+    const prev = globalServiceEnabled
+    setTogglingGlobal(true)
+    try {
+      const res = await adminAPI.updateGlobalServiceSetting(checked)
+      if (res?.data?.success) {
+        setGlobalServiceEnabled(Boolean(res.data.data?.globalFoodServiceEnabled))
+        toast.success(
+          checked
+            ? "Global Food Service enabled. All user locations are now in-service."
+            : "Global Food Service disabled. Service restricted to active custom zones."
+        )
+      } else {
+        throw new Error(res?.data?.message || "Failed to update global service setting")
+      }
+    } catch (err) {
+      console.error("Error toggling global service:", err)
+      setGlobalServiceEnabled(prev)
+      toast.error(err?.response?.data?.message || err?.message || "Failed to update global service setting")
+    } finally {
+      setTogglingGlobal(false)
+    }
+  }
 
   const fetchZones = async () => {
     try {
@@ -449,7 +494,8 @@ export default function ZoneSetup() {
       }
     } catch (err) {
       console.error("Error deleting zone:", err)
-      toast.error("Failed to delete zone.")
+      const errorMsg = err?.response?.data?.message || err?.message || "Failed to delete zone."
+      toast.error(errorMsg)
     }
   }
 
@@ -468,15 +514,76 @@ export default function ZoneSetup() {
             </p>
           </div>
           <Button
-            onClick={fetchZones}
+            onClick={() => {
+              fetchZones()
+              fetchGlobalServiceSetting()
+            }}
             variant="outline"
             size="sm"
-            disabled={loading}
+            disabled={loading || globalLoading}
             className="w-fit"
           >
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} /> Refresh Zones
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading || globalLoading ? 'animate-spin' : ''}`} /> Refresh Zones
           </Button>
         </div>
+
+        {/* Platform-Level Service Coverage Control */}
+        <Card className="shadow-sm border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden">
+          <CardHeader className="pb-3 border-b border-slate-100 dark:border-zinc-800/80 bg-slate-50/50 dark:bg-zinc-900/50">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#F84E04] bg-[#F84E04]/10 px-2 py-0.5 rounded-full">
+                    Platform Control
+                  </span>
+                  <CardTitle className="text-base font-bold text-slate-900 dark:text-white">
+                    SERVICE COVERAGE
+                  </CardTitle>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">
+                  Control whether ZINZOOX food ordering is available globally or restricted to custom polygon service zones.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3 bg-slate-100 dark:bg-zinc-800 p-2.5 rounded-xl border border-slate-200 dark:border-zinc-700/60 self-start sm:self-auto">
+                <div className="flex flex-col text-right pr-2">
+                  <span className="text-xs font-semibold text-slate-800 dark:text-zinc-200">
+                    Global Service
+                  </span>
+                  <span className={`text-[11px] font-bold ${globalServiceEnabled ? "text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-zinc-400"}`}>
+                    {globalLoading ? "Loading..." : globalServiceEnabled ? "ON (Globally Available)" : "OFF (Restricted to Zones)"}
+                  </span>
+                </div>
+                <Switch
+                  id="global-service-toggle"
+                  checked={globalServiceEnabled}
+                  disabled={globalLoading || togglingGlobal}
+                  onCheckedChange={handleToggleGlobalService}
+                  className="data-[state=checked]:bg-emerald-600"
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-4 pb-4 px-4 sm:px-6">
+            <div className="flex items-start gap-3 rounded-lg p-3 bg-slate-50 dark:bg-zinc-800/40 border border-slate-200/80 dark:border-zinc-800">
+              <Info className="h-5 w-5 text-slate-500 dark:text-zinc-400 flex-shrink-0 mt-0.5" />
+              <div className="text-xs sm:text-sm space-y-1">
+                {globalServiceEnabled ? (
+                  <p className="text-emerald-700 dark:text-emerald-300 font-medium">
+                    <span className="font-bold">ON:</span> Service is available globally. Custom zone restrictions are bypassed. Users at any valid location can browse and place orders.
+                  </p>
+                ) : (
+                  <p className="text-slate-600 dark:text-zinc-300 font-medium">
+                    <span className="font-bold">OFF:</span> Service is available only inside active custom service zones. Users outside all active zones will see an out-of-service notification.
+                  </p>
+                )}
+                <p className="text-[11px] text-slate-400 dark:text-zinc-500">
+                  Note: Custom zones configured below remain saved and will automatically take effect whenever Global Service is turned OFF.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
