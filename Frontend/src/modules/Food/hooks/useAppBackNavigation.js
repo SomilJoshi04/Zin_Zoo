@@ -76,8 +76,7 @@ const resolveBackPath = ({ pathname, search, state }) => {
   if (
     normalizedPath === "/user/dining/restaurants" ||
     normalizedPath === "/user/dining/explore/upto50" ||
-    normalizedPath === "/user/dining/explore/near-rated" ||
-    normalizedPath === "/user/dining/coffee"
+    normalizedPath === "/user/dining/explore/near-rated"
   ) {
     return "/food/user/dining"
   }
@@ -112,8 +111,7 @@ const resolveBackPath = ({ pathname, search, state }) => {
 
   if (
     normalizedPath === "/user/offers" ||
-    normalizedPath === "/user/gourmet" ||
-    normalizedPath === "/user/coffee"
+    normalizedPath === "/user/gourmet"
   ) {
     return "/food/user"
   }

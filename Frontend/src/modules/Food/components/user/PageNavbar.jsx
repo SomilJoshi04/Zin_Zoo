@@ -1,4 +1,4 @@
-﻿import { Link } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useState, useEffect, useRef, useMemo } from "react"
 import { ChevronDown, ShoppingCart, Wallet } from "lucide-react"
 import { Button } from "@food/components/ui/button"
@@ -652,7 +652,7 @@ export default function PageNavbar({
     }
 
     // Final check: If mainLocation is just city name, try one more time to extract from formattedAddress
-    if (mainLocation && (mainLocation.toLowerCase() === location?.city?.toLowerCase() || mainLocation === "Indore")) {
+    if (mainLocation && mainLocation.toLowerCase() === location?.city?.toLowerCase()) {
       debugLog("?????? MainLocation is city, trying to extract locality one more time...")
 
       // First priority: Check if area is available in location object

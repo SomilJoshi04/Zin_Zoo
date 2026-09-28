@@ -58,6 +58,7 @@ const USER_SESSION_PREFERENCE_KEYS = ["userVegMode", "food-under-250-filters"];
 
 import { registerWebPushForCurrentModule } from "@food/utils/firebaseMessaging";
 import DeleteAccountModal from "@food/components/DeleteAccountModal";
+import { executeReferralShare } from "@food/utils/referralShare";
 
 export default function Profile() {
   const { userProfile, vegMode, setVegMode, getDefaultAddress, addresses } =
@@ -278,23 +279,7 @@ export default function Profile() {
 
   const handleShareReferral = async () => {
     if (!referralCode) return;
-    const shareMessage = `🎉 Join me on ${companyName}!\n\nOrder your favorite food easily and enjoy a great food experience with ${companyName} 🍔🍕🛍️\n\nDownload the ${companyName} app and use my referral code during signup:\n\n👉 Referral Code: ${referralCode}\n\nJoin ${companyName} today! ❤️`;
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `${companyName} Referral`,
-          text: shareMessage,
-        });
-      } else {
-        const fallbackUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
-        window.open(fallbackUrl, "_blank", "noopener,noreferrer");
-      }
-    } catch (error) {
-      if (error?.name !== "AbortError") {
-        const fallbackUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
-        window.open(fallbackUrl, "_blank", "noopener,noreferrer");
-      }
-    }
+    await executeReferralShare({ companyName, referralCode, toast });
   };
 
   // Handle logout

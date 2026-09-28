@@ -1,4 +1,4 @@
-﻿import { useMemo, useState, useEffect, useRef, useCallback } from "react"
+import { useMemo, useState, useEffect, useRef, useCallback } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
 import { ChevronLeft, ChevronRight, Plus, MapPin, MoreHorizontal, Navigation, Home, Building2, Briefcase, Phone, X, Crosshair, Search } from "lucide-react"
 import { Button } from "@food/components/ui/button"
@@ -246,8 +246,8 @@ export default function AddressSelectorPage() {
           return
         }
 
-        const refLat = location?.latitude ?? 22.7196
-        const refLng = location?.longitude ?? 75.8577
+        const refLat = Number.isFinite(location?.latitude) ? location.latitude : null
+        const refLng = Number.isFinite(location?.longitude) ? location.longitude : null
         const url =
           `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6` +
           `&countrycodes=in&q=${encodeURIComponent(q)}`

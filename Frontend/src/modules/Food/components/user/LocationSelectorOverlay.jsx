@@ -50,7 +50,7 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
   const { location, loading, requestLocation } = useGeoLocation()
   const { addresses = [], addAddress, updateAddress, setDefaultAddress, userProfile } = useProfile()
   const [showAddressForm, setShowAddressForm] = useState(false)
-  const [mapPosition, setMapPosition] = useState([22.7196, 75.8577]) // Default Indore coordinates [lat, lng]
+  const [mapPosition, setMapPosition] = useState([20.5937, 78.9629]) // India center — no location assumed
   const [addressFormData, setAddressFormData] = useState({
     street: "",
     city: "",
@@ -126,9 +126,9 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
       try {
         setIsKeywordSearching(true)
         // Reference point for "nearest" sorting.
-        // Prefer currently selected map position, fallback to live location, then Indore default.
-        const refLat = Number.isFinite(mapPosition?.[0]) ? Number(mapPosition[0]) : (location?.latitude ?? 22.7196)
-        const refLng = Number.isFinite(mapPosition?.[1]) ? Number(mapPosition[1]) : (location?.longitude ?? 75.8577)
+        // Prefer currently selected map position, fallback to live location, then no bias.
+        const refLat = Number.isFinite(mapPosition?.[0]) ? Number(mapPosition[0]) : (Number.isFinite(location?.latitude) ? location.latitude : null)
+        const refLng = Number.isFinite(mapPosition?.[1]) ? Number(mapPosition[1]) : (Number.isFinite(location?.longitude) ? location.longitude : null)
 
         const url =
           `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=10&q=${encodeURIComponent(q)}`
@@ -463,10 +463,10 @@ export default function LocationSelectorOverlay({ isOpen, onClose }) {
 
         if (!isMounted || !mapContainerRef.current) return
 
-        // Initial location (Indore center or current location)
+        // Initial location — use actual GPS/saved location if available, otherwise India center
         const initialLocation = location?.latitude && location?.longitude
           ? { lat: location.latitude, lng: location.longitude }
-          : { lat: 22.7196, lng: 75.8577 }
+          : { lat: 20.5937, lng: 78.9629 }
 
         // Wait a tiny bit for DOM layout to settle, specifically for absolute/inset layout
         await new Promise(resolve => setTimeout(resolve, 50))

@@ -97,46 +97,8 @@ export function useZone(location) {
 
       let data = await promise
 
-      // Fallback: If out of service or zoneId missing, query active public zones or use a default mock zone
-      if (!data || data.status !== 'IN_SERVICE' || !data.zoneId) {
-        try {
-          const publicRes = await zoneAPI.getPublicZones()
-          const zonesList = publicRes?.data?.data?.zones || []
-          if (zonesList.length > 0) {
-            const fbZone = zonesList[0]
-            data = {
-              status: 'IN_SERVICE',
-              zoneId: fbZone._id || fbZone.id,
-              zone: fbZone
-            }
-          } else {
-            data = {
-              status: 'IN_SERVICE',
-              zoneId: '69b85a63fb04545984776cdb',
-              zone: {
-                _id: '69b85a63fb04545984776cdb',
-                name: 'Indore',
-                zoneName: 'Indore',
-                isActive: true,
-                serviceLocation: { type: 'Point', coordinates: [lng, lat] }
-              }
-            }
-          }
-        } catch (fallbackErr) {
-          data = {
-            status: 'IN_SERVICE',
-            zoneId: '69b85a63fb04545984776cdb',
-            zone: {
-              _id: '69b85a63fb04545984776cdb',
-              name: 'Indore',
-              zoneName: 'Indore',
-              isActive: true,
-              serviceLocation: { type: 'Point', coordinates: [lng, lat] }
-            }
-          }
-        }
-      }
-
+      // Respect the backend's response — do NOT override OUT_OF_SERVICE with a fake zone.
+      // If the user is genuinely out of service area, reflect that truthfully.
       if (key) zoneCache.set(key, { ts: now, payload: data })
       applyZonePayload(data, { setZoneId, setZone, setZoneStatus })
     } catch (err) {
@@ -145,7 +107,7 @@ export function useZone(location) {
         err.response?.data?.message || err.message || "Failed to detect zone",
       );
 
-      // Try to use cached zone if available
+      // Try to use previously verified cached zone on network error (not on OUT_OF_SERVICE)
       const cachedZoneId = localStorage.getItem("userZoneId");
       if (cachedZoneId) {
         const cachedZone = localStorage.getItem("userZone");
@@ -153,45 +115,10 @@ export function useZone(location) {
         setZone(cachedZone ? JSON.parse(cachedZone) : null);
         setZoneStatus("IN_SERVICE");
       } else {
-        // Fallback to active public zones or default mock zone even on error
-        try {
-          const publicRes = await zoneAPI.getPublicZones()
-          const zonesList = publicRes?.data?.data?.zones || []
-          if (zonesList.length > 0) {
-            const fbZone = zonesList[0]
-            setZoneId(fbZone._id || fbZone.id)
-            setZone(fbZone)
-            setZoneStatus("IN_SERVICE")
-            localStorage.setItem("userZoneId", fbZone._id || fbZone.id)
-            localStorage.setItem("userZone", JSON.stringify(fbZone))
-          } else {
-            const mockZone = {
-              _id: '69b85a63fb04545984776cdb',
-              name: 'Indore',
-              zoneName: 'Indore',
-              isActive: true,
-              serviceLocation: { type: 'Point', coordinates: [lng, lat] }
-            }
-            setZoneId(mockZone._id)
-            setZone(mockZone)
-            setZoneStatus("IN_SERVICE")
-            localStorage.setItem("userZoneId", mockZone._id)
-            localStorage.setItem("userZone", JSON.stringify(mockZone))
-          }
-        } catch (fallbackErr) {
-          const mockZone = {
-            _id: '69b85a63fb04545984776cdb',
-            name: 'Indore',
-            zoneName: 'Indore',
-            isActive: true,
-            serviceLocation: { type: 'Point', coordinates: [lng, lat] }
-          }
-          setZoneId(mockZone._id)
-          setZone(mockZone)
-          setZoneStatus("IN_SERVICE")
-          localStorage.setItem("userZoneId", mockZone._id)
-          localStorage.setItem("userZone", JSON.stringify(mockZone))
-        }
+        // No cached zone and network failed — be honest: OUT_OF_SERVICE
+        setZoneId(null);
+        setZone(null);
+        setZoneStatus("OUT_OF_SERVICE");
       }
     } finally {
       setLoading(false);

@@ -91,16 +91,20 @@ export default function LocationPrompt() {
   const handleAllow = async () => {
     setFetchingLocation(true)
     try {
-      localStorage.setItem("locationPromptGranted", "true")
       const loc = await requestLocation()
-      // Store location in localStorage so the prompt won't show next time
       if (loc) {
+        // Only mark granted AFTER permission was actually obtained from GPS
+        localStorage.setItem("locationPromptGranted", "true")
         localStorage.setItem("userLocation", JSON.stringify(loc))
+      } else {
+        // requestLocation returned null — permission was denied or GPS failed
+        localStorage.removeItem("locationPromptGranted")
       }
       setShowPrompt(false)
       document.body.style.overflow = ""
     } catch (err) {
-      // Permission denied or error - just close modal
+      // Permission denied or error — remove the premature flag
+      localStorage.removeItem("locationPromptGranted")
       setShowPrompt(false)
       document.body.style.overflow = ""
     } finally {
@@ -112,10 +116,7 @@ export default function LocationPrompt() {
     sessionStorage.setItem("locationPromptDismissed", "true")
     setShowPrompt(false)
     document.body.style.overflow = ""
-    // Open the manual location selector
-    setTimeout(() => {
-      openLocationSelector()
-    }, 100)
+    // Do NOT force-open the overlay — user chose "Not Now", respect that decision
   }
 
   // Cleanup on unmount

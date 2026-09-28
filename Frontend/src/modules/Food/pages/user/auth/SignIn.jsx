@@ -28,6 +28,16 @@ export default function SignIn() {
   const submittingRef = useRef(false)
 
   useEffect(() => {
+    // Check URL query parameters for referral code (e.g. ?ref=CODE)
+    const queryRef =
+      searchParams.get("ref") ||
+      searchParams.get("referral") ||
+      searchParams.get("referralCode")
+    if (queryRef) {
+      setHasReferralCode(true)
+      setReferralCode(String(queryRef).trim().toUpperCase())
+    }
+
     const stored = sessionStorage.getItem("userAuthData")
     if (!stored) return
 
@@ -40,14 +50,14 @@ export default function SignIn() {
         ...prev,
         phone: phoneDigits || prev.phone,
       }))
-      if (data.referralCode) {
+      if (data.referralCode && !queryRef) {
         setHasReferralCode(true)
         setReferralCode(String(data.referralCode).toUpperCase())
       }
     } catch (err) {
       debugError("Error parsing stored auth data:", err)
     }
-  }, [])
+  }, [searchParams])
 
   useEffect(() => {
     const syncLogo = () => {

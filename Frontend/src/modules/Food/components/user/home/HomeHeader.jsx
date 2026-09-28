@@ -125,7 +125,7 @@ export default function HomeHeader({
               </span>
 
               <span className="text-[9px] font-black text-white/60 uppercase tracking-[0.25em] leading-tight mt-0.5">
-                {location?.city || "Indore"}
+                {location?.city || ""}
               </span>
             </div>
           </div>

@@ -80,10 +80,11 @@ export default function ZoneSetup() {
       const google = await loader.load()
       if (!mapContainerRef.current) return
 
-      const defaultCenter = { lat: 22.7196, lng: 75.8577 } // Default: Indore
+      // India's geographical center — admin can navigate to any city to draw zones
+      const defaultCenter = { lat: 20.5937, lng: 78.9629 }
       const map = new google.maps.Map(mapContainerRef.current, {
         center: defaultCenter,
-        zoom: 12,
+        zoom: 5,
         mapTypeControl: true,
         streetViewControl: false,
         fullscreenControl: false,

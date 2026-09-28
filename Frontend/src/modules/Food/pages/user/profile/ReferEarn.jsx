@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Share2, Users, Wallet, CircleCheck, Clock3, CircleX, Copy, Check } from "lucide-react";
+import { ArrowLeft, Share2, Users, Wallet, CircleCheck, Clock3, CircleX, Copy, Check, Link as LinkIcon, Smartphone } from "lucide-react";
 import AnimatedPage from "@food/components/user/AnimatedPage";
 import { Button } from "@food/components/ui/button";
 import { Card, CardContent } from "@food/components/ui/card";
@@ -8,6 +8,12 @@ import { useCompanyName } from "@food/hooks/useCompanyName";
 import { useProfile } from "@food/context/ProfileContext";
 import { toast } from "sonner";
 import { userAPI } from "@food/api";
+import {
+  generateReferralShareMessage,
+  executeReferralShare,
+  getPlayStoreUrl,
+  getReferralSignupUrl,
+} from "@food/utils/referralShare";
 
 const statusMeta = {
   credited: {
@@ -32,6 +38,7 @@ export default function ReferEarn() {
   const companyName = useCompanyName() || "ZinZooX";
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [stats, setStats] = useState({
     referralCode: "",
     referralCount: 0,
@@ -85,9 +92,14 @@ export default function ReferEarn() {
   }, [userProfile?.referralCode]);
 
   const activeReferralCode = stats.referralCode || String(userProfile?.referralCode || "").toUpperCase();
+  const playStoreUrl = useMemo(() => getPlayStoreUrl(), []);
+  const signupUrl = useMemo(() => getReferralSignupUrl(activeReferralCode), [activeReferralCode]);
 
   const shareMessage = useMemo(() => {
-    return `🎉 Join me on ${companyName}!\n\nOrder your favorite food easily and enjoy a great food experience with ${companyName} 🍔🍕🛍️\n\nDownload the ${companyName} app and use my referral code during signup:\n\n👉 Referral Code: ${activeReferralCode}\n\nJoin ${companyName} today! ❤️`;
+    return generateReferralShareMessage({
+      companyName,
+      referralCode: activeReferralCode,
+    });
   }, [companyName, activeReferralCode]);
 
   const handleCopyCode = async () => {
@@ -114,33 +126,36 @@ export default function ReferEarn() {
     }
   };
 
+  const handleCopyLink = async () => {
+    if (!signupUrl) {
+      toast.error("Signup link unavailable");
+      return;
+    }
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(signupUrl);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = signupUrl;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopiedLink(true);
+      toast.success("Referral signup link copied!");
+      setTimeout(() => setCopiedLink(false), 2500);
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  };
+
   const handleShare = async () => {
     if (!activeReferralCode) {
       toast.error("Referral code unavailable");
       return;
     }
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: `${companyName} Referral`,
-          text: shareMessage,
-        });
-        return;
-      }
-
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(shareMessage);
-        toast.success("Referral message copied to clipboard!");
-      }
-
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
-      window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-    } catch (error) {
-      if (error?.name !== "AbortError") {
-        const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
-        window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-      }
-    }
+    await executeReferralShare({ companyName, referralCode: activeReferralCode, toast });
   };
 
   return (
@@ -165,7 +180,7 @@ export default function ReferEarn() {
                 </p>
                 
                 {/* Referral Code Box */}
-                <div className="mt-4 p-4 rounded-xl bg-orange-50/60 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/40 flex items-center justify-between">
+                <div className="mt-4 p-4 rounded-xl bg-orange-50/60 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-400">
                       Your Referral Code
@@ -174,17 +189,36 @@ export default function ReferEarn() {
                       {activeReferralCode || "..."}
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopyCode}
-                    disabled={!activeReferralCode}
-                    className="h-9 px-3 rounded-lg border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400 hover:bg-orange-100/50 flex items-center gap-1.5 font-bold"
-                  >
-                    {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                    <span>{copied ? "Copied" : "Copy Code"}</span>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyCode}
+                      disabled={!activeReferralCode}
+                      className="h-9 px-3 rounded-lg border-orange-200 dark:border-orange-800 text-orange-600 dark:text-orange-400 hover:bg-orange-100/50 flex items-center gap-1.5 font-bold"
+                    >
+                      {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                      <span>{copied ? "Copied" : "Copy Code"}</span>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyLink}
+                      disabled={!activeReferralCode}
+                      className="h-9 px-3 rounded-lg border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center gap-1.5 font-medium"
+                    >
+                      {copiedLink ? <Check className="h-4 w-4 text-green-600" /> : <LinkIcon className="h-4 w-4" />}
+                      <span>{copiedLink ? "Copied Link" : "Copy Link"}</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* App Download Info Note */}
+                <div className="mt-2.5 px-3 py-2 rounded-lg bg-blue-50/70 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/30 flex items-center gap-2 text-xs text-blue-700 dark:text-blue-300">
+                  <Smartphone className="h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                  <span>Sharing includes Google Play Store app link and your referral code!</span>
                 </div>
 
                 <div className="mt-3 grid grid-cols-2 gap-2">

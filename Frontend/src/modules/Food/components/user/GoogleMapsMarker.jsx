@@ -34,8 +34,8 @@ const USER_PIN_SVG = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
 `)}`;
 
 export default function GoogleMapsMarker({
-  latitude = 22.7196, // default Indore coord
-  longitude = 75.8577,
+  latitude = null, // No default — caller must provide real coordinates
+  longitude = null,
   locationName = "Selected Location",
   locationAddress = "Address Details",
   height = "450px",
@@ -51,7 +51,12 @@ export default function GoogleMapsMarker({
   const [mapError, setMapError] = useState(null);
   const [apiKey, setApiKey] = useState("");
 
-  const destination = useMemo(() => ({ lat: Number(latitude), lng: Number(longitude) }), [latitude, longitude]);
+  const destination = useMemo(() => {
+    const lat = Number(latitude);
+    const lng = Number(longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || (lat === 0 && lng === 0)) return null;
+    return { lat, lng };
+  }, [latitude, longitude]);
 
   // Load API Key
   useEffect(() => {
@@ -160,6 +165,20 @@ export default function GoogleMapsMarker({
         <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
         <h3 className="text-sm font-bold text-slate-800">Map Initialization Failed</h3>
         <p className="text-xs text-slate-500 mt-1 max-w-xs">{loadError?.message || mapError || "Could not load Google Maps client library."}</p>
+      </div>
+    );
+  }
+
+  // Guard: no valid coordinates provided
+  if (!destination) {
+    return (
+      <div
+        style={{ height }}
+        className="w-full bg-slate-50 rounded-2xl border border-slate-200 flex flex-col items-center justify-center p-6 text-center"
+      >
+        <AlertCircle className="w-10 h-10 text-slate-400 mb-3" />
+        <p className="text-sm font-semibold text-slate-500">No location available</p>
+        <p className="text-xs text-slate-400 mt-1">Map will appear once a delivery address is selected.</p>
       </div>
     );
   }
