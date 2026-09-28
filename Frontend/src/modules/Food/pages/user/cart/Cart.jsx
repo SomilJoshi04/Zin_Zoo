@@ -344,7 +344,7 @@ export default function Cart() {
   const [feeSettings, setFeeSettings] = useState({
     deliveryFee: 0,
     deliveryFeeRanges: [],
-    freeDeliveryThreshold: 999999,
+    freeDeliveryThreshold: null,
     platformFee: 0,
     gstRate: 0,
   })
@@ -1148,12 +1148,13 @@ export default function Cart() {
       try {
         const response = await adminAPI.getPublicFeeSettings()
         if (response.data.success && response.data.data.feeSettings) {
+          const fs = response.data.data.feeSettings
           setFeeSettings({
-            deliveryFee: response.data.data.feeSettings.deliveryFee ?? 25,
-            deliveryFeeRanges: response.data.data.feeSettings.deliveryFeeRanges || [],
-            freeDeliveryThreshold: response.data.data.feeSettings.freeDeliveryThreshold ?? 999999,
-            platformFee: response.data.data.feeSettings.platformFee ?? 0,
-            gstRate: response.data.data.feeSettings.gstRate ?? 0,
+            deliveryFee: fs.deliveryFee !== undefined && fs.deliveryFee !== null ? Number(fs.deliveryFee) : 0,
+            deliveryFeeRanges: Array.isArray(fs.deliveryFeeRanges) ? fs.deliveryFeeRanges : [],
+            freeDeliveryThreshold: fs.freeDeliveryThreshold !== undefined && fs.freeDeliveryThreshold !== null ? Number(fs.freeDeliveryThreshold) : null,
+            platformFee: fs.platformFee !== undefined && fs.platformFee !== null ? Number(fs.platformFee) : 0,
+            gstRate: fs.gstRate !== undefined && fs.gstRate !== null ? Number(fs.gstRate) : 0,
           })
         }
       } catch (error) {
@@ -1253,7 +1254,7 @@ export default function Cart() {
       ? 'GST and Store Charges'
       : 'GST and Kitchen Charges')
   const discount = pricing?.discount ?? (appliedCoupon ? Math.min(appliedCoupon.discount, subtotal * 0.5) : 0)
-  const totalBeforeDiscount = subtotal + (deliveryFee === 0 ? (feeSettings.deliveryFee ?? 25) : deliveryFee) + platformFee + gstCharges
+  const totalBeforeDiscount = subtotal + (deliveryFee === 0 ? Number(feeSettings.deliveryFee || 0) : deliveryFee) + platformFee + gstCharges
   const total = subtotal + deliveryFee + platformFee + gstCharges - (pricing?.discount ?? discount)
   const savings = pricing?.savings ?? Math.max(0, totalBeforeDiscount - total)
   const selectedPaymentLabel =
@@ -2562,10 +2563,10 @@ export default function Cart() {
 
               {/* Coupon Section */}
               <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl overflow-hidden border border-slate-100 dark:border-gray-800 shadow-sm flex flex-col">
-                {deliveryFee === 0 && (
+                {deliveryFee === 0 && Number(feeSettings.deliveryFee || 0) > 0 && (
                   <div className="px-4 py-3 md:px-6 md:py-4 border-b border-dashed border-gray-200 dark:border-gray-800 flex items-center gap-3 bg-[#f4fcf7] dark:bg-green-900/10">
                     <CheckCircle2 className="h-5 w-5 text-green-600 fill-green-600/20" />
-                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">You saved {RUPEE_SYMBOL}{feeSettings.deliveryFee ?? 25} on delivery</span>
+                    <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">You saved {RUPEE_SYMBOL}{Number(feeSettings.deliveryFee || 0)} on delivery</span>
                   </div>
                 )}
 
@@ -2876,7 +2877,11 @@ export default function Cart() {
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600 dark:text-gray-400">Delivery Fee</span>
                       <span className={deliveryFee === 0 ? "text-[#F84E04] font-medium" : "text-gray-800 dark:text-gray-200 font-medium"}>
-                        {deliveryFee === 0 ? "FREE" : `${RUPEE_SYMBOL}${deliveryFee.toFixed(2)}`}
+                        {loadingPricing && !pricing ? (
+                          <span className="text-xs text-gray-400 animate-pulse">Calculating...</span>
+                        ) : (
+                          deliveryFee === 0 ? "FREE" : `${RUPEE_SYMBOL}${deliveryFee.toFixed(2)}`
+                        )}
                       </span>
                     </div>
                     {deliveryFeeBreakdownText && (
@@ -2977,7 +2982,7 @@ export default function Cart() {
             {/* Place Order Button */}
             <button
               onClick={handlePlaceOrder}
-              disabled={isPlacingOrder || (selectedPaymentMethod === "wallet" && walletBalance < total)}
+              disabled={isPlacingOrder || (loadingPricing && !pricing) || (selectedPaymentMethod === "wallet" && walletBalance < total)}
               className="w-full text-white px-6 h-12 md:h-14 rounded-2xl font-bold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between transition-transform active:scale-[0.98]"
               style={{
                 background: "linear-gradient(135deg, rgba(var(--module-theme-rgb,248,78,4),0.92), var(--module-theme-color,#F84E04))",
@@ -2986,16 +2991,20 @@ export default function Cart() {
             >
               {(selectedPaymentMethod === "razorpay" || selectedPaymentMethod === "wallet" || selectedPaymentMethod === "cash") && (
                 <div className="text-left flex flex-col justify-center border-r-[1.5px] border-white/20 pr-4">
-                  <span className="text-xs md:text-sm font-semibold text-white/90">{RUPEE_SYMBOL}{total.toFixed(2)}</span>
+                  <span className="text-xs md:text-sm font-semibold text-white/90">
+                    {loadingPricing && !pricing ? "..." : `${RUPEE_SYMBOL}${total.toFixed(2)}`}
+                  </span>
                   <span className="text-[9px] md:text-[10px] uppercase font-bold tracking-wider text-white/80 mt-[-2px]">Total</span>
                 </div>
               )}
               <div className="flex items-center gap-1 mx-auto text-sm md:text-lg tracking-wide">
                 {isPlacingOrder
                   ? "Processing..."
-                  : !hasSavedAddress
-                    ? "Select Address"
-                    : "Place Order"}
+                  : loadingPricing && !pricing
+                    ? "Calculating..."
+                    : !hasSavedAddress
+                      ? "Select Address"
+                      : "Place Order"}
                 <div className="flex align-center h-full">
                   <ChevronRight className="h-4 w-4 md:h-5 md:w-5" />
                 </div>

@@ -25,7 +25,7 @@ export default function Checkout() {
   const [selectedAddressId, setSelectedAddressId] = useState(getAddressId(getDefaultAddress()))
   const [selectedPayment, setSelectedPayment] = useState(getDefaultPaymentMethod()?.id || "")
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
-  const [baseDeliveryFee, setBaseDeliveryFee] = useState(25)
+  const [baseDeliveryFee, setBaseDeliveryFee] = useState(0)
 
   const selectedAddress = addresses.find(addr => getAddressId(addr) === selectedAddressId) || getDefaultAddress()
   const defaultPayment = paymentMethods.find(pm => pm.id === selectedPayment) || getDefaultPaymentMethod()
