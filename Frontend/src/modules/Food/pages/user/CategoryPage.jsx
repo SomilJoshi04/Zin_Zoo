@@ -57,8 +57,9 @@ export default function CategoryPage() {
   const rightContentRef = useRef(null)
   const categoryScrollRef = useRef(null)
   const menuEnrichmentRequestRef = useRef(0)
-  const approvedFoodsCacheRef = useRef(null)
-  const approvedFoodsInFlightRef = useRef(null)
+  const approvedFoodsCacheRef = useRef({})
+  const approvedFoodsInFlightRef = useRef({})
+  const [loadingFoods, setLoadingFoods] = useState(false)
   const hasRestoredCategoryFiltersRef = useRef(false)
 
   // State for categories from admin
@@ -164,56 +165,74 @@ export default function CategoryPage() {
     }
   }
 
-  const fetchApprovedFoods = async (force = false) => {
+  const fetchApprovedFoods = async (categorySlug = null, force = false) => {
+    const rawCategory = categorySlug !== undefined && categorySlug !== null ? categorySlug : (selectedCategory || 'all')
+    const cacheKey = String(rawCategory).toLowerCase().trim()
+
     if (force) {
-      approvedFoodsCacheRef.current = null
+      delete approvedFoodsCacheRef.current[cacheKey]
     }
-    if (Array.isArray(approvedFoodsCacheRef.current)) {
-      return approvedFoodsCacheRef.current
-    }
-
-    if (approvedFoodsInFlightRef.current) {
-      return approvedFoodsInFlightRef.current
+    if (Array.isArray(approvedFoodsCacheRef.current[cacheKey])) {
+      return approvedFoodsCacheRef.current[cacheKey]
     }
 
-    approvedFoodsInFlightRef.current = (async () => {
+    if (approvedFoodsInFlightRef.current[cacheKey]) {
+      return approvedFoodsInFlightRef.current[cacheKey]
+    }
+
+    approvedFoodsInFlightRef.current[cacheKey] = (async () => {
       try {
-        const response = await adminAPI.getFoods({ limit: 1000 })
+        const params = { limit: 1000 }
+        if (cacheKey && cacheKey !== 'all') {
+          params.category = cacheKey
+        }
+        if (zoneId) {
+          params.zoneId = zoneId
+        }
+        const response = await adminAPI.getPublicFoods(params)
         const list = response?.data?.data?.foods || []
         const approvedFoods = Array.isArray(list)
           ? list.filter((food) =>
-            String(food?.approvalStatus || "").toLowerCase() === "approved" &&
+            String(food?.approvalStatus || "approved").toLowerCase() === "approved" &&
             food?.isAvailable !== false
           )
           : []
 
-        approvedFoodsCacheRef.current = approvedFoods
+        approvedFoodsCacheRef.current[cacheKey] = approvedFoods
         return approvedFoods
-      } catch {
-        approvedFoodsCacheRef.current = []
+      } catch (err) {
+        console.error("[CategoryPage] Error fetching public foods:", err)
+        approvedFoodsCacheRef.current[cacheKey] = []
         return []
       } finally {
-        approvedFoodsInFlightRef.current = null
+        delete approvedFoodsInFlightRef.current[cacheKey]
       }
     })()
 
-    return approvedFoodsInFlightRef.current
+    return approvedFoodsInFlightRef.current[cacheKey]
   }
 
   useEffect(() => {
     let cancelled = false
 
     void (async () => {
-      const foods = await fetchApprovedFoods(foodRefreshKey > 0)
-      if (!cancelled) {
-        setApprovedFoodsData(Array.isArray(foods) ? foods : [])
+      setLoadingFoods(true)
+      try {
+        const foods = await fetchApprovedFoods(selectedCategory, foodRefreshKey > 0)
+        if (!cancelled) {
+          setApprovedFoodsData(Array.isArray(foods) ? foods : [])
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingFoods(false)
+        }
       }
     })()
 
     return () => {
       cancelled = true
     }
-  }, [foodRefreshKey])
+  }, [selectedCategory, foodRefreshKey, zoneId])
 
   const socketListeners = useMemo(() => ({
     'food:product:update': () => {
@@ -332,9 +351,9 @@ export default function CategoryPage() {
         if (food?.isAvailable === false) return false
         if (String(food?.approvalStatus || "").toLowerCase() !== "approved") return false
 
-        // Exact ID Match
-        if (food?.categoryId && matchedCategory?.id) {
-          if (String(food.categoryId) === String(matchedCategory.id)) return true
+        // Exact ID Match (food.categoryId is a MongoDB ObjectId, matchedCategory.mongoId is its string)
+        if (food?.categoryId && matchedCategory?.mongoId) {
+          if (String(food.categoryId) === String(matchedCategory.mongoId)) return true
         }
 
         // Exact Name Match
@@ -640,28 +659,34 @@ export default function CategoryPage() {
           const categoriesArray = response.data.data.categories
 
           // Transform API categories to match expected format
+          // Always use slugified name as id/slug so selectedCategory matches keyword keys
           const transformedCategories = [
             { id: 'all', name: "All", image: null, slug: 'all' },
-            ...categoriesArray.map((cat) => ({
-              id: cat.slug || cat.id,
-              name: cat.name,
-              image: cat.image || "",
-              slug: cat.slug || cat.name.toLowerCase().replace(/\s+/g, '-'),
-              type: cat.type,
-            }))
+            ...categoriesArray.map((cat) => {
+              const slug = cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+              return {
+                id: slug,
+                name: cat.name,
+                image: cat.image || "",
+                slug: slug,
+                mongoId: String(cat._id || cat.id || ''),
+                type: cat.type,
+              }
+            })
           ]
 
           setCategories(transformedCategories)
 
           // Generate category keywords dynamically from category names
+          // Key by slugified name (same as id/slug above) so getCategoryKeywords() always hits
           const keywordsMap = {}
           categoriesArray.forEach((cat) => {
-            const categoryId = cat.slug || cat.id
+            const slug = cat.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
             const categoryName = cat.name.toLowerCase()
 
             // Generate keywords from category name
             const words = categoryName.split(/[\s-]+/).filter(w => w.length > 0)
-            keywordsMap[categoryId] = [categoryName, ...words]
+            keywordsMap[slug] = [categoryName, ...words]
           })
 
           setCategoryKeywords(keywordsMap)
@@ -876,15 +901,18 @@ export default function CategoryPage() {
         setLoadingRestaurants(true)
       }
 
-      // Strict zone check: if no zoneId, don't fetch/show anything
-      if (!zoneId) {
+      // Check if user is out of service
+      if (isOutOfService) {
         if (!append) setRestaurantsData([])
         setLoadingRestaurants(false)
         setLoadingMoreRestaurants(false)
         return
       }
 
-      const params = { zoneId, limit: 10, page: pageNum }
+      const params = { limit: 10, page: pageNum }
+      if (zoneId) {
+        params.zoneId = zoneId
+      }
       const response = await restaurantAPI.getRestaurants(params)
 
       if (requestSeq !== restaurantsRequestSeqRef.current) return
@@ -1273,7 +1301,7 @@ export default function CategoryPage() {
     const sourceData = restaurantsData.length > 0 ? restaurantsData : []
     let filtered = [...sourceData]
 
-    // Filter by category - Dynamic filtering based on menu items
+    // Filter by category - Dynamic filtering based on menu items or approved foods
     if (selectedCategory && selectedCategory !== 'all') {
       filtered = filtered.filter(r => {
         if (r.menu) {
@@ -1286,7 +1314,13 @@ export default function CategoryPage() {
             return true
           }
         }
-        return false
+        // Fallback: check if approvedFoodsData has items for this restaurant
+        const rIds = [r.id, r.restaurantId, r.mongoId].filter(Boolean).map(String)
+        const hasApprovedFood = approvedFoodsData.some(f =>
+          rIds.includes(String(f.restaurantId || f.restaurant?.id || f.restaurant?._id || '')) &&
+          (!vegMode || f.foodType === 'Veg')
+        )
+        return hasApprovedFood
       })
     }
 
@@ -1312,7 +1346,7 @@ export default function CategoryPage() {
     const sourceData = restaurantsData.length > 0 ? restaurantsData : []
     let filtered = [...sourceData]
 
-    // Filter by category - Dynamic filtering based on menu items
+    // Filter by category - Dynamic filtering based on menu items or approved foods
     if (selectedCategory && selectedCategory !== 'all') {
       filtered = filtered.filter(r => {
         if (r.menu) {
@@ -1325,7 +1359,13 @@ export default function CategoryPage() {
             return true
           }
         }
-        return false
+        // Fallback: check if approvedFoodsData has items for this restaurant
+        const rIds = [r.id, r.restaurantId, r.mongoId].filter(Boolean).map(String)
+        const hasApprovedFood = approvedFoodsData.some(f =>
+          rIds.includes(String(f.restaurantId || f.restaurant?.id || f.restaurant?._id || '')) &&
+          (!vegMode || f.foodType === 'Veg')
+        )
+        return hasApprovedFood
       })
     }
 
@@ -1351,32 +1391,98 @@ export default function CategoryPage() {
     if (!selectedCategory || selectedCategory === 'all') return []
 
     const foods = []
+    const seenFoodKeys = new Set()
+
+    // Map existing restaurants by id/slug for quick lookup to get enriched details
+    const restaurantById = new Map()
+    restaurantsData.forEach(r => {
+      if (!r) return
+      const ids = [r.id, r.restaurantId, r.mongoId, r.slug].filter(Boolean).map(String)
+      ids.forEach(id => restaurantById.set(id, r))
+    })
+
+    // Helper to test if a restaurant passes zone and operational filters
+    const isRestaurantValid = (restObj) => {
+      if (!restObj) return true
+      const rZoneId = restObj.zoneId || null
+      if (zoneId && rZoneId && String(rZoneId) !== String(zoneId)) {
+        return false
+      }
+      const availability = getRestaurantAvailabilityStatus(restObj, new Date(availabilityTick))
+      return availability.isOpen
+    }
+
+    // 1. First add matching foods from approvedFoodsData (direct from search API)
+    if (Array.isArray(approvedFoodsData)) {
+      approvedFoodsData.forEach(food => {
+        if (!food || food.isAvailable === false) return
+        if (String(food.approvalStatus || 'approved').toLowerCase() !== 'approved') return
+
+        // Veg mode filter
+        if (vegMode && food.foodType !== 'Veg') return
+
+        const rid = String(food.restaurantId || food.restaurant?.id || food.restaurant?._id || '').trim()
+        const linkedRestaurant = restaurantById.get(rid) || food.restaurant || {}
+
+        // Check zone & operational availability on restaurant
+        if (!isRestaurantValid(linkedRestaurant)) return
+
+        const restName = linkedRestaurant.restaurantName || linkedRestaurant.name || food.restaurantName || 'Restaurant'
+        const restSlug = linkedRestaurant.slug || food.restaurantSlug || slugify(restName)
+        const restRating = Number(linkedRestaurant.rating || linkedRestaurant.avgRating || food.restaurant?.rating || 0) || 4.5
+        const restDeliveryTime = linkedRestaurant.deliveryTime || linkedRestaurant.estimatedDeliveryTime || food.restaurant?.deliveryTime || '25-30 mins'
+
+        const foodKey = String(food.itemId || food.id || food._id || `${rid}-${food.name}`)
+        if (seenFoodKeys.has(foodKey)) return
+        seenFoodKeys.add(foodKey)
+
+        foods.push({
+          itemId: foodKey,
+          id: foodKey,
+          _id: food._id || foodKey,
+          name: food.name,
+          price: Number(food.price || 0),
+          originalPrice: Number(food.originalPrice || food.price || 0),
+          image: normalizeImageUrl(food.image),
+          foodType: food.foodType || 'Non-Veg',
+          description: food.description || '',
+          restaurantName: restName,
+          restaurantSlug: restSlug,
+          restaurant: {
+            ...linkedRestaurant,
+            id: rid || String(linkedRestaurant.id || linkedRestaurant._id || ''),
+            name: restName,
+            slug: restSlug,
+            rating: restRating,
+            deliveryTime: restDeliveryTime,
+            zoneId: linkedRestaurant.zoneId || food.restaurant?.zoneId || null,
+          }
+        })
+      })
+    }
+
+    // 2. Also add any dishes from enriched restaurant menus in restaurantsData
     restaurantsData.forEach((restaurant) => {
       if (!restaurant) return
+      if (!isRestaurantValid(restaurant)) return
 
-      // Zone filter
-      const restaurantZoneId = restaurant.zoneId || null;
-      if (zoneId && restaurantZoneId && String(restaurantZoneId) !== String(zoneId)) {
-        return;
-      }
-
-      // Check operational status (open/active)
-      const availability = getRestaurantAvailabilityStatus(restaurant, new Date(availabilityTick));
-      if (!availability?.isOpen) return;
+      const restaurantSlug = restaurant.slug || (restaurant.name ? restaurant.name.toLowerCase().replace(/\s+/g, "-") : "")
 
       if (restaurant.menu) {
         const dishes = getAllCategoryDishesFromMenu(restaurant.menu, selectedCategory)
         dishes.forEach((dish) => {
           if (!dish) return
+          if (vegMode && dish.foodType !== "Veg") return
 
-          // Veg mode filter
-          if (vegMode && dish.foodType !== "Veg") return;
+          const foodKey = String(dish.itemId || dish.id || `${restaurant.id}-${dish.name}`)
+          if (seenFoodKeys.has(foodKey)) return
+          seenFoodKeys.add(foodKey)
 
           foods.push({
             ...dish,
             restaurant: restaurant,
             restaurantName: restaurant.name || "Restaurant",
-            restaurantSlug: restaurant.slug || (restaurant.name ? restaurant.name.toLowerCase().replace(/\s+/g, "-") : ""),
+            restaurantSlug,
           })
         })
       }
@@ -1402,11 +1508,13 @@ export default function CategoryPage() {
     }
 
     return result
-  }, [selectedCategory, restaurantsData, zoneId, vegMode, availabilityTick, deferredSearchQuery, sortBy])
+  }, [selectedCategory, restaurantsData, zoneId, vegMode, availabilityTick, deferredSearchQuery, sortBy, approvedFoodsData, categories, categoryKeywords])
 
   const [isSwitchingCategory, setIsSwitchingCategory] = useState(false)
   const showRestaurantSkeleton = useDelayedLoading(
-    isLoadingFilterResults || loadingRestaurants || isSwitchingCategory || (isEnrichingMenus && selectedCategory !== 'all' && filteredRecommended.length === 0),
+    isLoadingFilterResults ||
+    (selectedCategory === 'all' ? loadingRestaurants : (loadingFoods && categoryFoods.length === 0)) ||
+    isSwitchingCategory,
     { delay: 140, minDuration: 360 }
   )
 
@@ -1712,9 +1820,9 @@ export default function CategoryPage() {
                               {/* Restaurant Name Badge */}
                               <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-650 dark:text-slate-400 font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
                                 {food.restaurantName}
-                                {Number(food.restaurant.rating) > 0 && (
+                                {Number(food.restaurant?.rating) > 0 && (
                                   <span className="inline-flex items-center gap-0.5 text-amber-500">
-                                    ★ {Number(food.restaurant.rating).toFixed(1)}
+                                    ★ {Number(food.restaurant?.rating).toFixed(1)}
                                   </span>
                                 )}
                               </span>
@@ -1732,7 +1840,7 @@ export default function CategoryPage() {
                                 <span className="text-xs text-gray-400 line-through font-normal">₹{food.originalPrice}</span>
                               )}
                               <span className="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-700" />
-                              {food.restaurant.deliveryTime && (
+                              {food.restaurant?.deliveryTime && (
                                 <span className="text-xs text-gray-500 dark:text-gray-400 font-normal inline-flex items-center gap-1">
                                   <Clock className="w-3.5 h-3.5" /> {food.restaurant.deliveryTime}
                                 </span>
