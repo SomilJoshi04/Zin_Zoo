@@ -1378,7 +1378,7 @@ export function useLocation() {
 
         if (navigator.permissions && navigator.permissions.query) {
           const result = await navigator.permissions.query({ name: 'geolocation' })
-          if (result.state === 'granted' || result.state === 'prompt') {
+          if (result.state === 'granted') {
             await tryAutoResolveLocation()
           } else if (mode === "current") {
             // Denied and we wanted current: clear it
@@ -1386,7 +1386,7 @@ export function useLocation() {
             setPermissionGranted(false)
           }
         } else {
-          await tryAutoResolveLocation()
+          setPermissionGranted(false)
         }
       } catch (err) {
         debugError("Initialization error", err)

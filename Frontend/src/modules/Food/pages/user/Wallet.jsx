@@ -15,6 +15,8 @@ const debugLog = (...args) => {}
 const debugWarn = (...args) => {}
 const debugError = (...args) => {}
 
+const ONLINE_PAYMENTS_ENABLED = false
+
 const TRANSACTION_TYPES = {
   ALL: "all",
   ADDITIONS: "additions",
@@ -460,11 +462,12 @@ export default function Wallet() {
                       </div>
 
                       <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm lg:text-base text-center md:text-left max-w-md">
-                        Add money to enjoy one-tap, seamless payments
+                        Use your wallet balance for seamless payments
                       </p>
                     </div>
                   </div>
 
+                  {ONLINE_PAYMENTS_ENABLED && (
                   <div className="flex-shrink-0 w-full md:w-auto">
                     <Button
                       className="w-full md:w-auto md:min-w-[200px] lg:min-w-[240px] h-12 md:h-14 lg:h-16 text-white font-semibold text-sm md:text-base lg:text-lg rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
@@ -480,6 +483,7 @@ export default function Wallet() {
                       Add money
                     </Button>
                   </div>
+                  )}
                 </div>
 
                 <div className="space-y-4 md:space-y-6 lg:space-y-8">
@@ -787,11 +791,11 @@ export default function Wallet() {
         )}
       </div>
 
-      <AddMoneyModal
+      {ONLINE_PAYMENTS_ENABLED && <AddMoneyModal
         open={addMoneyModalOpen}
         onOpenChange={setAddMoneyModalOpen}
         onSuccess={fetchWalletData}
-      />
+      />}
 
       {coinsInfo?.settings && (
         <RedeemCoinsModal

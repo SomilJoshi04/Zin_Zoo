@@ -7,7 +7,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "
 import { useNavigate } from "react-router-dom"
 import { servicesUserAPI } from "@food/api"
 import { toast } from "sonner"
-import { initRazorpayPayment } from "@food/utils/razorpay"
 
 export default function ServiceBookingForm({ isOpen, onClose, service, categoryTitle }) {
   const navigate = useNavigate()
@@ -18,7 +17,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
     name: "",
     phone: "",
     address: "",
-    paymentMode: ""
+    paymentMode: "pay_after_service"
   })
 
   if (!service) return null
@@ -92,7 +91,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
       const price = Number(service.price || service.basePrice || 0)
       const visiting = Number(service.visitingCharge || 0)
       const totalAmount = price + visiting
-      const res = await servicesUserAPI.createBooking({
+      await servicesUserAPI.createBooking({
         serviceName: service.name,
         category: categoryTitle,
         customerName: formData.name,
@@ -105,48 +104,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
         paymentMode: formData.paymentMode
       })
 
-      const booking = res.data?.data?.booking
-      const razorpay = res.data?.data?.razorpay
-
-      if (formData.paymentMode === 'pay_upfront' && razorpay) {
-        try {
-          await initRazorpayPayment({
-            key: razorpay.key,
-            amount: razorpay.amount,
-            currency: razorpay.currency || 'INR',
-            order_id: razorpay.orderId,
-            name: "Zin Zoo",
-            description: `Booking for ${service.name}`,
-            prefill: {
-              name: formData.name,
-              contact: formData.phone
-            },
-            handler: async (paymentResponse) => {
-              try {
-                await servicesUserAPI.verifyBookingPayment(booking._id, {
-                  razorpayPaymentId: paymentResponse.razorpay_payment_id,
-                  razorpayOrderId: paymentResponse.razorpay_order_id,
-                  razorpaySignature: paymentResponse.razorpay_signature
-                })
-                setStep(3)
-              } catch (verifyErr) {
-                console.error("Payment verification failed:", verifyErr)
-                toast.error(verifyErr.response?.data?.message || "Payment verification failed.")
-              }
-            },
-            modal: {
-              ondismiss: () => {
-                toast.error("Payment cancelled. Please try again.")
-              }
-            }
-          })
-        } catch (paymentErr) {
-          console.error("Razorpay error:", paymentErr)
-          toast.error(paymentErr.message || "Failed to initialize payment.")
-        }
-      } else {
-        setStep(3)
-      }
+      setStep(3)
     } catch (error) {
       console.error(error)
       toast.error(error.response?.data?.message || "Failed to book service")
@@ -163,7 +121,7 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
         name: "",
         phone: "",
         address: "",
-        paymentMode: ""
+        paymentMode: "pay_after_service"
       })
     }, 500)
   }
@@ -280,21 +238,6 @@ export default function ServiceBookingForm({ isOpen, onClose, service, categoryT
                   <div className="space-y-4">
                     <h3 className="font-bold text-gray-900 dark:text-white">Payment Method</h3>
                     
-                    <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.paymentMode === 'pay_upfront' ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-gray-200 dark:border-gray-800'}`}>
-                      <input 
-                        type="radio" 
-                        name="paymentMode" 
-                        value="pay_upfront" 
-                        checked={formData.paymentMode === 'pay_upfront'} 
-                        onChange={handleChange} 
-                        className="w-5 h-5 text-orange-500 focus:ring-orange-500"
-                      />
-                      <div>
-                        <div className="font-bold text-gray-900 dark:text-white">Pay Online Now</div>
-                        <div className="text-xs text-gray-500">Credit/Debit Card, UPI, Wallets</div>
-                      </div>
-                    </label>
-
                     <label className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${formData.paymentMode === 'pay_after_service' ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'border-gray-200 dark:border-gray-800'}`}>
                       <input 
                         type="radio" 

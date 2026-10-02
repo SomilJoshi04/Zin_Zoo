@@ -188,6 +188,10 @@ export default function UnifiedOTPFastLogin() {
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
   }
 
+  const focusOtpInput = (index) => {
+    document.getElementById(`otp-${index}`)?.focus({ preventScroll: true })
+  }
+
   // Service images (served from public folder)
   const foodIcon = "/super-app/food.png"
   const taxiIcon = "/super-app/taxi.png"
@@ -202,7 +206,7 @@ export default function UnifiedOTPFastLogin() {
   ]
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[#0a0a0a] flex flex-col pt-0 sm:pt-0">
+    <div className="min-h-[100dvh] bg-white dark:bg-[#0a0a0a] flex flex-col pt-0 sm:pt-0">
       {/* Top Banner section */}
       <div className="w-full bg-[#F84E04] dark:bg-[#D6005E] rounded-b-[2.5rem] p-6 text-center text-white relative overflow-hidden shadow-2xl">
         <div className="absolute inset-0 bg-white/5 opacity-50 blur-3xl rounded-full -top-1/2 -left-1/4 animate-pulse" />
@@ -228,7 +232,7 @@ export default function UnifiedOTPFastLogin() {
         </div>
       </div>
 
-      <div className="flex-1 max-w-[480px] mx-auto w-full px-6 py-4 flex flex-col justify-center -mt-8 relative z-20">
+      <div className="flex-1 max-w-[480px] mx-auto w-full px-6 py-4 pt-12 flex flex-col justify-start -mt-8 relative z-20">
         {/* Main Card */}
         <div className="bg-white dark:bg-[#1a1a1a] rounded-[2rem] p-6 sm:p-8 md:p-12 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] dark:shadow-none border border-gray-50 dark:border-gray-800">
            <div className="text-center mb-6 space-y-2">
@@ -297,13 +301,13 @@ export default function UnifiedOTPFastLogin() {
                           
                           // Focus next
                           if (index < 3 && val) {
-                            document.getElementById(`otp-${index + 1}`)?.focus();
+                            focusOtpInput(index + 1);
                           }
                         }}
                         onKeyDown={(e) => {
                           if (e.key === "Backspace") {
                             if (!otp[index] && index > 0) {
-                              document.getElementById(`otp-${index - 1}`)?.focus();
+                              focusOtpInput(index - 1);
                             } else {
                               const newOtp = otp.split("");
                               newOtp[index] = "";
@@ -316,7 +320,7 @@ export default function UnifiedOTPFastLogin() {
                           const pasteData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
                           if (pasteData) {
                             setOtp(pasteData);
-                            document.getElementById(`otp-${Math.min(pasteData.length, 3)}`)?.focus();
+                            focusOtpInput(Math.min(pasteData.length, 3));
                           }
                         }}
                         className="w-14 h-14 sm:w-16 sm:h-16 text-center text-xl sm:text-3xl font-black bg-gray-50 dark:bg-gray-900 border-2 border-gray-100 dark:border-gray-800 focus:border-[#F84E04] rounded-xl sm:rounded-2xl outline-none transition-all text-gray-900 dark:text-white"

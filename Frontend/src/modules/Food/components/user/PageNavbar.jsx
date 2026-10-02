@@ -69,10 +69,10 @@ export default function PageNavbar({
         let shouldRequest = false
         if (navigator.permissions?.query) {
           const result = await navigator.permissions.query({ name: 'geolocation' })
-          shouldRequest = result.state === 'granted' || result.state === 'prompt'
+          shouldRequest = result.state === 'granted'
         } else {
           // Fallback for webviews/browsers without Permissions API support.
-          shouldRequest = true
+          shouldRequest = false
         }
 
         if (!shouldRequest) {
