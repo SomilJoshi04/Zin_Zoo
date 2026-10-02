@@ -1,7 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom"
 import { useEffect, useState, createContext, useContext, useRef, useCallback } from "react"
 import { ProfileProvider } from "@food/context/ProfileContext"
-import LocationPrompt from "./LocationPrompt"
 import { CartProvider } from "@food/context/CartContext"
 import { OrdersProvider } from "@food/context/OrdersContext"
 const debugLog = (...args) => {}
@@ -271,7 +270,6 @@ export default function UserLayout() {
                 <div className="hidden md:block">
                   {showDesktopNavbar && <DesktopNavbar />}
                 </div>
-                <LocationPrompt />
                 <main className={showDesktopNavbar ? "md:pt-32" : ""}>
                   <Outlet />
                 </main>
