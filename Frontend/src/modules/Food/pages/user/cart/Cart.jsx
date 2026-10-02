@@ -3293,26 +3293,6 @@ export default function Cart() {
 
                 <div className="space-y-3 overflow-y-auto pr-1 custom-scrollbar pb-4 flex-1 min-h-0">
                   {[
-                    /* {
-                      id: 'razorpay',
-                      name: 'Online Payment',
-                      description: 'UPI, Cards, Netbanking',
-                      icon: <Zap className="w-5 h-5" />,
-                      color: 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400',
-                      selectedColor: 'bg-emerald-500 text-white',
-                      badge: 'SECURE'
-                    }, */
-                    {
-                      id: 'wallet',
-                      name: 'Quick Wallet',
-                      description: 'Pay from your wallet',
-                      icon: <Wallet className="w-5 h-5" />,
-                      color: 'bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
-                      selectedColor: 'bg-blue-500 text-white',
-                      subInfo: `Bal: ${RUPEE_SYMBOL}${walletBalance.toFixed(0)}`,
-                      disabled: walletBalance < total,
-                      disabledText: 'Low Balance'
-                    },
                     {
                       id: 'cash',
                       name: 'Cash on Delivery',
