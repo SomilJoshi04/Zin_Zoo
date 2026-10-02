@@ -371,6 +371,12 @@ export default function Cart() {
     }
   }, [isCodEnabled, selectedPaymentMethod])
 
+  useEffect(() => {
+    if (selectedPaymentMethod === "razorpay") {
+      setSelectedPaymentMethod(isCodEnabled ? "cash" : "wallet")
+    }
+  }, [isCodEnabled, selectedPaymentMethod])
+
 
   const availableTimeSlots = useMemo(() => {
     if (!isScheduled || !scheduledDate || !restaurantData) return []
@@ -1260,9 +1266,7 @@ export default function Cart() {
   const selectedPaymentLabel =
     selectedPaymentMethod === "wallet"
       ? "Wallet"
-      : selectedPaymentMethod === "razorpay"
-        ? "Online Payment"
-        : "Cash on Delivery"
+      : "Cash on Delivery"
 
   // Restaurant name from data or cart
   const restaurantName = restaurantData?.name || cart[0]?.restaurant || "Restaurant"
