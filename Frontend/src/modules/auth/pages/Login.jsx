@@ -281,12 +281,6 @@ export default function UnifiedOTPFastLogin() {
                       <button type="button" onClick={handleEditNumber} className="text-xs text-[#F84E04] font-black underline cursor-pointer">Edit</button>
                    </div>
 
-                  <div className="text-center">
-                    <p className="inline-flex items-center justify-center rounded-full bg-[#F84E04]/10 px-4 py-2 text-sm font-black text-[#F84E04]">
-                      OTP - 1234
-                    </p>
-                  </div>
-
                   <div className="flex justify-center gap-3 mt-4">
                     {[0, 1, 2, 3].map((index) => (
                       <input
